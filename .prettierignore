@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+build
+dist
+.turbo
+.git
+drizzle
+bun.lock
+package-lock.json
+*.tsbuildinfo
+.ai/
+.agents/
+.claude/
+.codex/
+.opencode/

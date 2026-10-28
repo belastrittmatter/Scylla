@@ -1,0 +1,4 @@
+multi_agent = true
+
+[mcp_servers.scylla_calendar]
+url = "http://localhost:3000/api/mcp"
