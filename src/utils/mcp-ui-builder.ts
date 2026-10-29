@@ -27,8 +27,8 @@ function getMcpUiMtimeKey(): number {
   try {
     let maxMtime = fs.statSync(globalsCssPath).mtimeMs;
     for (const dir of [mcpUiDir, sharedUiDir]) {
-      if (!fs.existsSync(dir)) continue;
-      for (const entry of fs.readdirSync(dir)) {
+      if (!fs.existsSync(/*turbopackIgnore: true*/ dir)) continue;
+      for (const entry of fs.readdirSync(/*turbopackIgnore: true*/ dir)) {
         const stat = fs.statSync(path.join(dir, entry));
         if (stat.mtimeMs > maxMtime) maxMtime = stat.mtimeMs;
       }

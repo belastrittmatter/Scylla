@@ -339,6 +339,8 @@ export interface CalendarEventItem {
   id: string;
   title: string;
   description?: string;
+  seriesId?: string;
+  recurringEventId?: string;
   location?: string;
   meetingUrl?: string;
   start: string;

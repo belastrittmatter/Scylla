@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { X, Check, Search, Plus, Loader2 } from "lucide-react";
 
 export interface SelectedAttendee {
+  id?: string;
   name?: string;
   email: string;
   avatarUrl?: string;

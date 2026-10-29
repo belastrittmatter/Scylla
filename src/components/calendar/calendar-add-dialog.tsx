@@ -188,7 +188,7 @@ export function CalendarAddDialog({
 
   const handleProjectChange = async (
     projId: string | null,
-    option?: ProjectOption,
+    option?: ProjectOption | null,
   ) => {
     setSelectedProjectId(projId);
     setSelectedProject(option || null);
