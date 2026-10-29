@@ -27,7 +27,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   {
     id: "calendar",
     title: "Calendar",
-    url: "/",
+    url: "/calendar",
     icon: CalendarDays,
   },
   {

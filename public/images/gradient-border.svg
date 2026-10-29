@@ -1,0 +1,11 @@
+<svg width="560" height="2" viewBox="0 0 560 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 1H560" stroke="url(#paint0_radial_scylla_silver)" stroke-opacity="0.9"/>
+<defs>
+<radialGradient id="paint0_radial_scylla_silver" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(280 1.642) scale(336 0.88)">
+<stop stop-color="#FFFFFF" stop-opacity="0.35"/>
+<stop offset="0.4" stop-color="#A1A1AA" stop-opacity="0.2"/>
+<stop offset="0.85" stop-color="#09090B" stop-opacity="0"/>
+<stop offset="1" stop-color="#09090B" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>

@@ -71,34 +71,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              render={<Link href="/" />}
+              render={
+                <Link
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.replace("/");
+                  }}
+                />
+              }
               className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:p-0!"
             >
-              {/* Collapsed sidebar icon: small logo mark */}
+              {/* Collapsed sidebar icon: small logo mark as before */}
               <div className="hidden aspect-square size-8 items-center justify-center group-data-[collapsible=icon]:flex">
                 <Image
                   src={WORKSPACE_INFO.logoUrl}
                   alt={WORKSPACE_INFO.brand}
-                  width={28}
-                  height={28}
+                  width={20}
+                  height={20}
                   priority
-                  className="size-7 object-contain dark:invert"
+                  className="size-5 object-contain dark:invert"
                 />
               </div>
 
-              {/* Expanded sidebar logo: small logo with 'Calendar' text */}
-              <div className="flex flex-1 items-center gap-1 group-data-[collapsible=icon]:hidden">
-                <Image
-                  src={WORKSPACE_INFO.logoUrl}
+              {/* Expanded sidebar logo: long Scylla logo from landing with proper light/dark mode */}
+              <div className="flex flex-1 items-center group-data-[collapsible=icon]:hidden">
+                <img
+                  src="/images/logo.svg"
                   alt={WORKSPACE_INFO.brand}
-                  width={28}
-                  height={28}
-                  priority
-                  className="size-7 shrink-0 object-contain dark:invert"
+                  className="h-5.5 w-auto object-contain invert dark:invert-0"
                 />
-                <span className="mt-1 text-[18px] font-semibold text-neutral-900 dark:text-neutral-100">
-                  Calendar
-                </span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

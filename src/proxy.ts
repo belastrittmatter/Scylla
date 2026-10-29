@@ -26,11 +26,9 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   // 1. Kiểm tra các trang protected thuộc (auth)
-  const isProtectedPage =
-    pathname === "/" ||
-    PROTECTED_PAGE_PREFIXES.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-    );
+  const isProtectedPage = PROTECTED_PAGE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
   if (isProtectedPage && !sessionCookie) {
     const signInUrl = new URL("/auth/sign-in", request.url);
@@ -52,12 +50,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào homepage /
+  // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào /calendar
   if (
     sessionCookie &&
     (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")
   ) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/calendar", request.url));
   }
 
   return NextResponse.next();
