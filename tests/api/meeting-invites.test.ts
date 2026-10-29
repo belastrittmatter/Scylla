@@ -92,7 +92,7 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
       now.getTime() + 24 * 3600 * 1000 + 45 * 60 * 1000,
     ).toISOString();
 
-    expect(
+    await expect(
       MeetingInviteService.bookSlot({
         slug: invite.slug,
         guestName: "Uninvited Intruder",
@@ -101,6 +101,20 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
         endTime,
       }),
     ).rejects.toThrow("restricted to invited recipients only");
+
+    // Verify allowed email whitelist is not leaked
+    try {
+      await MeetingInviteService.bookSlot({
+        slug: invite.slug,
+        guestName: "Uninvited Intruder",
+        guestEmail: "uninvited@unknown.com",
+        startTime,
+        endTime,
+      });
+      expect.unreachable("Should have thrown error");
+    } catch (err) {
+      expect((err as Error).message).not.toContain("vip.client@partner.com");
+    }
   });
 
   it("allows booking from authorized guest email on restricted invite and books the room", async () => {
