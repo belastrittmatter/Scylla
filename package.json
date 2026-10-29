@@ -8,6 +8,7 @@
     "build:mcp-ui": "bun run scripts/bundle-mcp-ui.ts --write",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose -f ../docker-compose.yml up -d",
