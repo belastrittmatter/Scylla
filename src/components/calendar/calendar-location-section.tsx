@@ -79,7 +79,7 @@ export function CalendarLocationSection({
 
       {locationType === "room" && (
         <Select
-          value={selectedRoomId}
+          value={selectedRoomId || undefined}
           onValueChange={(val) => {
             if (val) onRoomChange(val);
           }}
@@ -93,6 +93,11 @@ export function CalendarLocationSection({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            {rooms.length === 0 && (
+              <div className="text-muted-foreground px-2 py-2 text-center text-xs">
+                No rooms available
+              </div>
+            )}
             {Array.from(groupedRooms.entries()).map(([loc, roomList]) => (
               <SelectGroup key={loc}>
                 <SelectLabel className="text-muted-foreground px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">

@@ -40,7 +40,9 @@ export function CalendarDateTimeSection({
   const dateObj = React.useMemo(() => {
     if (!dateStr) return undefined;
     const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(y, m - 1, d);
+    if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) return undefined;
+    const date = new Date(y, m - 1, d);
+    return isNaN(date.getTime()) ? undefined : date;
   }, [dateStr]);
 
   return (

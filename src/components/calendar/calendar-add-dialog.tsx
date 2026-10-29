@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, addMinutes, addDays } from "date-fns";
+import { format, addMinutes, addDays, isValid } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +74,13 @@ function getDefaultTimes(): { start: string; end: string } {
   };
 }
 
+function generateSeriesId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `series_${crypto.randomUUID()}`;
+  }
+  return `series_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+}
+
 export function CalendarAddDialog({
   open,
   onOpenChange,
@@ -91,7 +98,9 @@ export function CalendarAddDialog({
 
   const [title, setTitle] = React.useState("");
   const [dateStr, setDateStr] = React.useState(
-    format(selectedDate, "yyyy-MM-dd"),
+    selectedDate && isValid(selectedDate)
+      ? format(selectedDate, "yyyy-MM-dd")
+      : format(new Date(), "yyyy-MM-dd"),
   );
   const [startTime, setStartTime] = React.useState("09:00");
   const [endTime, setEndTime] = React.useState("09:30");
@@ -114,20 +123,26 @@ export function CalendarAddDialog({
   const [description, setDescription] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const [prevOpen, setPrevOpen] = React.useState(open);
-  if (!prevOpen && open) {
-    setPrevOpen(true);
-    setDateStr(format(selectedDate, "yyyy-MM-dd"));
-    const defaults = getDefaultTimes();
-    setStartTime(initialStartTime || defaults.start);
-    setEndTime(initialEndTime || defaults.end);
-    setRepeatFrequency("none");
-    setSelectedProjectId(null);
-    setSelectedProject(null);
-    setSelectedAttendees([]);
-  } else if (prevOpen && !open) {
-    setPrevOpen(false);
-  }
+  React.useEffect(() => {
+    if (open) {
+      const formattedDate =
+        selectedDate && isValid(selectedDate)
+          ? format(selectedDate, "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd");
+      setDateStr(formattedDate);
+      const defaults = getDefaultTimes();
+      setStartTime(initialStartTime || defaults.start);
+      setEndTime(initialEndTime || defaults.end);
+      setRepeatFrequency("none");
+      setSelectedProjectId(null);
+      setSelectedProject(null);
+      setSelectedAttendees([]);
+      setTitle("");
+      setDescription("");
+      setSelectedEventType(null);
+      setLocationType("virtual");
+    }
+  }, [open, selectedDate, initialStartTime, initialEndTime]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -136,17 +151,17 @@ export function CalendarAddDialog({
     apiClient.eventTypes
       .list()
       .then((data) => {
-        if (active) setEventTypes(data);
+        if (active && Array.isArray(data)) setEventTypes(data);
       })
       .catch(() => {});
 
     apiClient.rooms
       .list()
       .then((res) => {
-        if (active) {
+        if (active && Array.isArray(res)) {
           setRooms(res);
-          if (res.length > 0 && !selectedRoomId) {
-            setSelectedRoomId(res[0].id);
+          if (res.length > 0) {
+            setSelectedRoomId((prev) => (prev ? prev : res[0].id));
           }
         }
       })
@@ -155,7 +170,7 @@ export function CalendarAddDialog({
     return () => {
       active = false;
     };
-  }, [open, selectedRoomId]);
+  }, [open]);
 
   const handleStartTimeChange = (val: string) => {
     setStartTime(val);
@@ -311,6 +326,12 @@ export function CalendarAddDialog({
       const baseStartDate = new Date(`${dateStr}T${startTime}:00`);
       const baseEndDate = new Date(`${dateStr}T${endTime}:00`);
 
+      if (isNaN(baseStartDate.getTime()) || isNaN(baseEndDate.getTime())) {
+        toast.error("Please enter a valid date and time");
+        setIsSubmitting(false);
+        return;
+      }
+
       if (baseStartDate >= baseEndDate) {
         toast.error("End time must be after start time");
         setIsSubmitting(false);
@@ -330,9 +351,12 @@ export function CalendarAddDialog({
         baseEndDate,
       );
       const isRecurring = datesToSchedule.length > 1;
-      const seriesId = isRecurring
-        ? `series_${crypto.randomUUID()}`
-        : undefined;
+      const seriesId = isRecurring ? generateSeriesId() : undefined;
+
+      const roomToAssign =
+        locationType === "room" && selectedRoomId.trim()
+          ? selectedRoomId.trim()
+          : undefined;
 
       for (const slot of datesToSchedule) {
         const seriesTag = seriesId ? `<!--series:${seriesId}-->` : "";
@@ -347,7 +371,7 @@ export function CalendarAddDialog({
           title: finalTitle,
           description: finalDescription,
           eventTypeId: selectedEventType?.id,
-          roomId: locationType === "room" ? selectedRoomId : undefined,
+          roomId: roomToAssign,
           projectId: selectedProjectId || undefined,
           startTime: slot.start,
           endTime: slot.end,
@@ -366,8 +390,8 @@ export function CalendarAddDialog({
             data: {
               category: "shared",
               location:
-                locationType === "room"
-                  ? rooms.find((r) => r.id === selectedRoomId)?.name
+                locationType === "room" && roomToAssign
+                  ? rooms.find((r) => r.id === roomToAssign)?.name || "Meeting Room"
                   : "Google Meet",
               description: booking.description ?? undefined,
               seriesId,
