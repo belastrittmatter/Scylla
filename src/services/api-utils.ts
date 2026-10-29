@@ -4,15 +4,29 @@ export async function resolveUserId(
   req: Request,
   explicitId?: string | null,
 ): Promise<string | undefined> {
-  if (explicitId && explicitId !== "me") {
-    return explicitId;
-  }
+  let sessionUserId: string | undefined;
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    return session?.user?.id;
+    sessionUserId = session?.user?.id;
   } catch {
-    return undefined;
+    // ignore session resolution errors
   }
+
+  // Hard-bind to authenticated session user ID to prevent caller spoofing
+  if (sessionUserId) {
+    return sessionUserId;
+  }
+
+  // In test environment only, permit test headers or explicit fallback when session is absent
+  if (process.env.NODE_ENV === "test") {
+    const testHeaderUser = req.headers.get("x-user-id");
+    if (testHeaderUser) return testHeaderUser;
+    if (explicitId && explicitId !== "me") {
+      return explicitId;
+    }
+  }
+
+  return undefined;
 }
 
 export function isUniqueConstraintError(err: unknown): boolean {

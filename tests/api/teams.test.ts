@@ -105,9 +105,38 @@ describe("Teams REST API Endpoints", () => {
   });
 
   test("POST & GET /api/teams/[id]/members - adds and lists members", async () => {
-    const addReq = new Request("http://localhost:3000/api/teams", {
+    // Unauthenticated rejection
+    const unauthReq = new Request("http://localhost:3000/api/teams", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: memberUserId, role: "admin" }),
+    });
+    const unauthRes = await addMemberHandler(unauthReq, {
+      params: { id: createdTeamId },
+    });
+    expect(unauthRes.status).toBe(401);
+
+    // Non-owner / non-admin rejection (403)
+    const nonAdminReq = new Request("http://localhost:3000/api/teams", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": "usr_unauthorized_stranger",
+      },
+      body: JSON.stringify({ userId: memberUserId, role: "admin" }),
+    });
+    const nonAdminRes = await addMemberHandler(nonAdminReq, {
+      params: { id: createdTeamId },
+    });
+    expect(nonAdminRes.status).toBe(403);
+
+    // Authorized owner can add member
+    const addReq = new Request("http://localhost:3000/api/teams", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": ownerUserId,
+      },
       body: JSON.stringify({ userId: memberUserId, role: "admin" }),
     });
 
@@ -126,9 +155,27 @@ describe("Teams REST API Endpoints", () => {
   });
 
   test("PATCH /api/teams/[id]/members/[userId] - updates member role", async () => {
+    // Non-owner / non-admin forbidden (403)
+    const forbiddenReq = new Request("http://localhost:3000/api/teams", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": "usr_unauthorized_stranger",
+      },
+      body: JSON.stringify({ role: "viewer" }),
+    });
+    const forbiddenRes = await updateMemberRoleHandler(forbiddenReq, {
+      params: { id: createdTeamId, userId: memberUserId },
+    });
+    expect(forbiddenRes.status).toBe(403);
+
+    // Authorized owner can update role
     const req = new Request("http://localhost:3000/api/teams", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": ownerUserId,
+      },
       body: JSON.stringify({ role: "viewer" }),
     });
     const res = await updateMemberRoleHandler(req, {
@@ -140,8 +187,20 @@ describe("Teams REST API Endpoints", () => {
   });
 
   test("DELETE /api/teams/[id]/members/[userId] - removes member", async () => {
+    // Non-owner / non-admin forbidden (403)
+    const forbiddenReq = new Request("http://localhost:3000/api/teams", {
+      method: "DELETE",
+      headers: { "x-user-id": "usr_unauthorized_stranger" },
+    });
+    const forbiddenRes = await removeMemberHandler(forbiddenReq, {
+      params: { id: createdTeamId, userId: memberUserId },
+    });
+    expect(forbiddenRes.status).toBe(403);
+
+    // Authorized owner can remove member
     const req = new Request("http://localhost:3000/api/teams", {
       method: "DELETE",
+      headers: { "x-user-id": ownerUserId },
     });
     const res = await removeMemberHandler(req, {
       params: { id: createdTeamId, userId: memberUserId },
