@@ -24,7 +24,9 @@ export function useProjects(teamId?: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const url = teamId ? `/api/projects?teamId=${encodeURIComponent(teamId)}` : "/api/projects";
+      const url = teamId
+        ? `/api/projects?teamId=${encodeURIComponent(teamId)}`
+        : "/api/projects";
       const res = await fetch(url);
       const json = await res.json();
       if (!res.ok) {
@@ -32,7 +34,8 @@ export function useProjects(teamId?: string) {
       }
       setProjects(Array.isArray(json) ? json : json.data || []);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred";
+      const msg =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -43,7 +46,9 @@ export function useProjects(teamId?: string) {
     let ignore = false;
     const load = async () => {
       try {
-        const url = teamId ? `/api/projects?teamId=${encodeURIComponent(teamId)}` : "/api/projects";
+        const url = teamId
+          ? `/api/projects?teamId=${encodeURIComponent(teamId)}`
+          : "/api/projects";
         const res = await fetch(url);
         const json = await res.json();
         if (ignore) return;
@@ -53,7 +58,9 @@ export function useProjects(teamId?: string) {
         setProjects(Array.isArray(json) ? json : json.data || []);
       } catch (err: unknown) {
         if (!ignore) {
-          setError(err instanceof Error ? err.message : "An unexpected error occurred");
+          setError(
+            err instanceof Error ? err.message : "An unexpected error occurred",
+          );
         }
       } finally {
         if (!ignore) {
@@ -98,7 +105,7 @@ export function useProjects(teamId?: string) {
       description?: string | null;
       status?: ProjectStatus;
       color?: string | null;
-    }
+    },
   ) => {
     const res = await fetch(`/api/projects/${id}`, {
       method: "PATCH",
@@ -110,7 +117,9 @@ export function useProjects(teamId?: string) {
       throw new Error(json.error || "Failed to update project");
     }
     const updated = json.data ?? json;
-    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
+    setProjects((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+    );
     return updated as ProjectItem;
   };
 

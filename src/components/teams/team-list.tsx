@@ -14,10 +14,14 @@ import type { TeamItem } from "@/hooks/use-teams";
 interface TeamListProps {
   teams: TeamItem[];
   isLoading: boolean;
-  onCreateTeam: (data: { name: string; slug?: string; description?: string }) => Promise<TeamItem>;
+  onCreateTeam: (data: {
+    name: string;
+    slug?: string;
+    description?: string;
+  }) => Promise<TeamItem>;
   onUpdateTeam: (
     id: string,
-    data: { name?: string; slug?: string; description?: string }
+    data: { name?: string; slug?: string; description?: string },
   ) => Promise<TeamItem>;
   onDeleteTeam: (id: string) => Promise<void>;
 }
@@ -38,7 +42,8 @@ export function TeamList({
     const q = search.toLowerCase().trim();
     if (!q) return teams;
     return teams.filter(
-      (t) => t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q)
+      (t) =>
+        t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q),
     );
   }, [teams, search]);
 

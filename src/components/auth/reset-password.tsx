@@ -12,7 +12,13 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -45,24 +51,31 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     viewPaths,
     Link,
   } = useAuth();
-  const signInURL = getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo);
+  const signInURL = getAuthLinkURL(
+    `${basePaths.auth}/${viewPaths.auth.signIn}`,
+    redirectTo,
+  );
 
-  const { mutateAsync: resetPassword, isPending } = useResetPassword(authClient, {
-    onError: (error) => {
-      // The haveIBeenPwned plugin rejects on the password itself, so it
-      // belongs against the field rather than in a toast.
-      if (isPasswordCompromisedError(error)) {
-        setIsCompromised(true);
-      }
+  const { mutateAsync: resetPassword, isPending } = useResetPassword(
+    authClient,
+    {
+      onError: (error) => {
+        // The haveIBeenPwned plugin rejects on the password itself, so it
+        // belongs against the field rather than in a toast.
+        if (isPasswordCompromisedError(error)) {
+          setIsCompromised(true);
+        }
+      },
+      onSuccess: () => {
+        toast.success(localization.auth.passwordResetSuccess);
+        navigate({ to: signInURL });
+      },
     },
-    onSuccess: () => {
-      toast.success(localization.auth.passwordResetSuccess);
-      navigate({ to: signInURL });
-    },
-  });
+  );
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
   const [isCompromised, setIsCompromised] = useState(false);
 
   useEffect(() => {
@@ -98,7 +111,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
   return (
     <Card className={cn("w-full max-w-sm", className)}>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">{localization.auth.resetPassword}</CardTitle>
+        <CardTitle className="text-xl font-semibold">
+          {localization.auth.resetPassword}
+        </CardTitle>
       </CardHeader>
 
       <CardContent>
@@ -113,23 +128,26 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                       maxLength: emailAndPassword?.maxPasswordLength,
                       maxLengthMessage: localization.auth.tooLong.replace(
                         "{{max}}",
-                        String(emailAndPassword?.maxPasswordLength)
+                        String(emailAndPassword?.maxPasswordLength),
                       ),
                       minLength: emailAndPassword?.minPasswordLength,
                       minLengthMessage: localization.auth.tooShort.replace(
                         "{{min}}",
-                        String(emailAndPassword?.minPasswordLength)
+                        String(emailAndPassword?.minPasswordLength),
                       ),
                       requiredMessage: localization.auth.fieldRequired,
                     }),
                 }}
               >
                 {(field) => {
-                  const isInvalid = isAuthFormFieldInvalid(field.state.meta) || isCompromised;
+                  const isInvalid =
+                    isAuthFormFieldInvalid(field.state.meta) || isCompromised;
 
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor="password">{localization.auth.password}</FieldLabel>
+                      <FieldLabel htmlFor="password">
+                        {localization.auth.password}
+                      </FieldLabel>
 
                       <InputGroup>
                         <InputGroupInput
@@ -174,7 +192,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                       </InputGroup>
 
                       {isCompromised ? (
-                        <FieldError>{localization.auth.passwordCompromised}</FieldError>
+                        <FieldError>
+                          {localization.auth.passwordCompromised}
+                        </FieldError>
                       ) : (
                         <field.AuthFormFieldError />
                       )}
@@ -195,19 +215,19 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                         maxLength: emailAndPassword?.maxPasswordLength,
                         maxLengthMessage: localization.auth.tooLong.replace(
                           "{{max}}",
-                          String(emailAndPassword?.maxPasswordLength)
+                          String(emailAndPassword?.maxPasswordLength),
                         ),
                         minLength: emailAndPassword?.minPasswordLength,
                         minLengthMessage: localization.auth.tooShort.replace(
                           "{{min}}",
-                          String(emailAndPassword?.minPasswordLength)
+                          String(emailAndPassword?.minPasswordLength),
                         ),
                         requiredMessage: localization.auth.fieldRequired,
                       }) ??
                       validateMatchingValue(
                         value,
                         fieldApi.form.getFieldValue("password"),
-                        localization.auth.passwordsDoNotMatch
+                        localization.auth.passwordsDoNotMatch,
                       ),
                   }}
                 >
@@ -224,15 +244,21 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                           <InputGroupInput
                             id="confirmPassword"
                             name={field.name}
-                            type={isConfirmPasswordVisible ? "text" : "password"}
+                            type={
+                              isConfirmPasswordVisible ? "text" : "password"
+                            }
                             autoComplete="new-password"
-                            placeholder={localization.auth.confirmPasswordPlaceholder}
+                            placeholder={
+                              localization.auth.confirmPasswordPlaceholder
+                            }
                             required
                             minLength={emailAndPassword?.minPasswordLength}
                             maxLength={emailAndPassword?.maxPasswordLength}
                             disabled={isPending}
                             onBlur={field.handleBlur}
-                            onChange={(event) => field.handleChange(event.target.value)}
+                            onChange={(event) =>
+                              field.handleChange(event.target.value)
+                            }
                             aria-invalid={isInvalid}
                             value={field.state.value}
                           />
@@ -251,7 +277,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                                   : localization.auth.showPassword
                               }
                               onClick={() => {
-                                setIsConfirmPasswordVisible((visible) => !visible);
+                                setIsConfirmPasswordVisible(
+                                  (visible) => !visible,
+                                );
                               }}
                             >
                               {isConfirmPasswordVisible ? <EyeOff /> : <Eye />}
@@ -279,7 +307,10 @@ export function ResetPassword({ className }: ResetPasswordProps) {
           <FieldDescription className="text-center">
             {localization.auth.rememberYourPassword}{" "}
             <Link
-              href={getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo)}
+              href={getAuthLinkURL(
+                `${basePaths.auth}/${viewPaths.auth.signIn}`,
+                redirectTo,
+              )}
               className="underline underline-offset-4"
             >
               {localization.auth.signIn}

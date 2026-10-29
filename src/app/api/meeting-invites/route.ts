@@ -19,11 +19,17 @@ export async function POST(req: Request) {
     try {
       body = (await req.json()) as CreateMeetingInviteBody;
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     if (!body?.title) {
-      return Response.json({ error: "Meeting title is required" }, { status: 400 });
+      return Response.json(
+        { error: "Meeting title is required" },
+        { status: 400 },
+      );
     }
 
     // Resolve current user / organizer
@@ -38,11 +44,18 @@ export async function POST(req: Request) {
     }
 
     if (!organizerUserId) {
-      return Response.json({ error: "Unauthorized: organizer user ID required" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized: organizer user ID required" },
+        { status: 401 },
+      );
     }
 
-    const memberEmails: string[] = Array.isArray(body.memberEmails) ? body.memberEmails : [];
-    const allowedEmails: string[] = Array.isArray(body.allowedEmails) ? body.allowedEmails : [];
+    const memberEmails: string[] = Array.isArray(body.memberEmails)
+      ? body.memberEmails
+      : [];
+    const allowedEmails: string[] = Array.isArray(body.allowedEmails)
+      ? body.allowedEmails
+      : [];
 
     const invite = await MeetingInviteService.createInvite({
       title: body.title,
@@ -65,12 +78,17 @@ export async function POST(req: Request) {
         invite,
         bookingUrl,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to create meeting invite" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Failed to create meeting invite",
+      },
+      { status: 500 },
     );
   }
 }
@@ -89,12 +107,16 @@ export async function GET(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const invites = await MeetingInviteService.listInvitesByOrganizer(sessionUserId);
+    const invites =
+      await MeetingInviteService.listInvitesByOrganizer(sessionUserId);
     return Response.json(invites, { status: 200 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to list meeting invites" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to list meeting invites",
+      },
+      { status: 500 },
     );
   }
 }

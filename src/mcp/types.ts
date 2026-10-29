@@ -16,5 +16,8 @@ export interface McpToolContext {
   userId?: string;
   getAccessToken: () => Promise<string | null>;
   getCurrentUser: () => Promise<McpUser>;
-  resolveAttendeeEmail: (attendeeOrQuery: string, token?: string | null) => Promise<string>;
+  resolveAttendeeEmail: (
+    attendeeOrQuery: string,
+    token?: string | null,
+  ) => Promise<string>;
 }

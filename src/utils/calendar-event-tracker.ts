@@ -33,7 +33,7 @@ export class CalendarEventTracker {
    * and reported as cleared (not deleted).
    */
   public static async cleanupAll(
-    deleteFn?: (eventId: string) => Promise<unknown>
+    deleteFn?: (eventId: string) => Promise<unknown>,
   ): Promise<{ deleted: string[]; failed: string[] }> {
     const deleted: string[] = [];
     const failed: string[] = [];

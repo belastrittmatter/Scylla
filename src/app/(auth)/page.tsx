@@ -4,7 +4,10 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 
 const CalendarDashboard = dynamic(
-  () => import("@/components/calendar/calendar-dashboard").then((m) => m.CalendarDashboard),
+  () =>
+    import("@/components/calendar/calendar-dashboard").then(
+      (m) => m.CalendarDashboard,
+    ),
   {
     ssr: false,
     loading: () => (
@@ -12,7 +15,7 @@ const CalendarDashboard = dynamic(
         Loading calendar...
       </div>
     ),
-  }
+  },
 );
 
 export default function HomePage() {

@@ -3,7 +3,10 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
 import { McpHeaderControls } from "@/components/mcp-ui/mcp-header-controls";
-import { getIctMinutes, getTimelinePercent } from "@/components/mcp-ui/schedule-helpers";
+import {
+  getIctMinutes,
+  getTimelinePercent,
+} from "@/components/mcp-ui/schedule-helpers";
 import {
   type AgendaData,
   type AgendaEvent,
@@ -27,12 +30,16 @@ const WORK_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17] as const;
 
 function getDayHours(dayEvents: readonly AgendaEvent[]): number[] {
   const hours = new Set<number>(WORK_HOURS);
-  for (const ev of dayEvents) hours.add(Math.floor(getIctMinutes(ev.start) / 60));
+  for (const ev of dayEvents)
+    hours.add(Math.floor(getIctMinutes(ev.start) / 60));
   return Array.from(hours).sort((a, b) => a - b);
 }
 
 // shortcut: character-based width estimate (~1.2 chars per 1% timeline width), upgrade to ResizeObserver if variable font widths matter
-export function formatTimelineBlockLabel(title: string, widthPct: number): string {
+export function formatTimelineBlockLabel(
+  title: string,
+  widthPct: number,
+): string {
   if (widthPct < 6) return "";
   const maxChars = Math.floor(widthPct * 1.2);
   if (title.length <= maxChars) return title;
@@ -40,16 +47,24 @@ export function formatTimelineBlockLabel(title: string, widthPct: number): strin
   return `${title.slice(0, maxChars - 3).trimEnd()}...`;
 }
 
-export function AgendaApp({ initialData }: { readonly initialData?: unknown }): React.JSX.Element {
+export function AgendaApp({
+  initialData,
+}: {
+  readonly initialData?: unknown;
+}): React.JSX.Element {
   const { data, setData, callTool } = useMcpBridge<AgendaData>(initialData);
   const [curDay, setCurDay] = React.useState("");
-  const [expandedMap, setExpandedMap] = React.useState<Record<string, boolean>>({});
+  const [expandedMap, setExpandedMap] = React.useState<Record<string, boolean>>(
+    {},
+  );
   const [isSyncing, setIsSyncing] = React.useState(false);
 
   const handleSync = async (): Promise<void> => {
     setIsSyncing(true);
     try {
-      const res = await callTool("get_my_agenda", { date: data?.baseDate || undefined });
+      const res = await callTool("get_my_agenda", {
+        date: data?.baseDate || undefined,
+      });
       const updated = extractData<AgendaData>(res);
       if (updated) setData(updated);
     } catch {
@@ -70,11 +85,18 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
   const activeDay = groups[curDay] ? curDay : (dayKeys[0] ?? "");
   const activeDayIndex = dayKeys.indexOf(activeDay);
   const visibleDays = activeDay ? [activeDay] : [];
-  const titleText = data?.user?.name ? `Calendar Agenda · ${data.user.name}` : "Calendar Agenda";
-  const subText = data?.baseDate ? `Starting ${data.baseDate} (ICT)` : "Upcoming Schedule";
+  const titleText = data?.user?.name
+    ? `Calendar Agenda · ${data.user.name}`
+    : "Calendar Agenda";
+  const subText = data?.baseDate
+    ? `Starting ${data.baseDate} (ICT)`
+    : "Upcoming Schedule";
 
   return (
-    <Card size="sm" className="border-border bg-card text-card-foreground shadow-xs">
+    <Card
+      size="sm"
+      className="border-border bg-card text-card-foreground shadow-xs"
+    >
       <CardHeader className="border-border/60 border-b">
         <CardTitle id="title" className="text-sm font-semibold">
           {titleText}
@@ -90,7 +112,10 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                 {events.length} event{events.length === 1 ? "" : "s"}
               </span>
             </Badge>
-            <McpHeaderControls isSyncing={isSyncing} onSync={() => void handleSync()} />
+            <McpHeaderControls
+              isSyncing={isSyncing}
+              onSync={() => void handleSync()}
+            />
           </div>
         </CardAction>
       </CardHeader>
@@ -118,7 +143,9 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                 size="icon-xs"
                 aria-label="Previous day"
                 disabled={activeDayIndex <= 0}
-                onClick={() => activeDayIndex > 0 && setCurDay(dayKeys[activeDayIndex - 1])}
+                onClick={() =>
+                  activeDayIndex > 0 && setCurDay(dayKeys[activeDayIndex - 1])
+                }
               >
                 <ChevronLeftIcon className="size-3.5" />
               </Button>
@@ -131,7 +158,8 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                 aria-label="Next day"
                 disabled={activeDayIndex >= dayKeys.length - 1}
                 onClick={() =>
-                  activeDayIndex < dayKeys.length - 1 && setCurDay(dayKeys[activeDayIndex + 1])
+                  activeDayIndex < dayKeys.length - 1 &&
+                  setCurDay(dayKeys[activeDayIndex + 1])
                 }
               >
                 <ChevronRightIcon className="size-3.5" />
@@ -167,7 +195,8 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                     </div>
                     {dayEvents.map((ev, i) => {
                       const sPct = getTimelinePercent(getIctMinutes(ev.start));
-                      const rawWidth = getTimelinePercent(getIctMinutes(ev.end)) - sPct;
+                      const rawWidth =
+                        getTimelinePercent(getIctMinutes(ev.end)) - sPct;
                       const width = Math.max(2, rawWidth);
                       const fullTitle = ev.title || ev.summary || "Busy";
                       const label = formatTimelineBlockLabel(fullTitle, width);
@@ -188,7 +217,7 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                       const isBreak = h === 12;
                       const hourLabel = `${String(h).padStart(2, "0")}:00`;
                       const hourEvents = dayEvents.filter(
-                        (ev) => Math.floor(getIctMinutes(ev.start) / 60) === h
+                        (ev) => Math.floor(getIctMinutes(ev.start) / 60) === h,
                       );
                       return (
                         <div
@@ -203,7 +232,10 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-2.5 py-1">
                             {isBreak && (
                               <div className="text-muted-foreground flex items-center justify-between text-[11px] italic">
-                                <span>12:00 – 13:00 · Break (Outside regular working hours)</span>
+                                <span>
+                                  12:00 – 13:00 · Break (Outside regular working
+                                  hours)
+                                </span>
                               </div>
                             )}
                             {hourEvents.map((ev, idx) => {
@@ -215,7 +247,10 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                                 <div
                                   key={rowKey}
                                   onClick={() =>
-                                    setExpandedMap((p) => ({ ...p, [rowKey]: !p[rowKey] }))
+                                    setExpandedMap((p) => ({
+                                      ...p,
+                                      [rowKey]: !p[rowKey],
+                                    }))
                                   }
                                   className="text-foreground flex cursor-pointer items-center justify-between gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 px-2.5 py-1.5 transition-colors hover:bg-blue-500/15"
                                 >
@@ -229,7 +264,9 @@ export function AgendaApp({ initialData }: { readonly initialData?: unknown }): 
                                       </div>
                                       <div className="text-muted-foreground truncate text-[11px]">
                                         {ev.location ||
-                                          (ev.meetingUrl ? "Google Meet" : "No location")}
+                                          (ev.meetingUrl
+                                            ? "Google Meet"
+                                            : "No location")}
                                         {expandedMap[rowKey]
                                           ? ` · Status: ${ev.status || "confirmed"}`
                                           : ""}

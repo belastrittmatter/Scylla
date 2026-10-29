@@ -7,7 +7,11 @@ import {
   addTaskCommentSchema,
   listTaskCommentsSchema,
 } from "../schemas/crud-schemas";
-import { resolveTeamAndVerifyAccess, formatToolSuccess, formatToolError } from "./auth-helpers";
+import {
+  resolveTeamAndVerifyAccess,
+  formatToolSuccess,
+  formatToolError,
+} from "./auth-helpers";
 
 export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
   server.registerTool(
@@ -32,7 +36,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
@@ -58,7 +62,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
@@ -81,11 +85,14 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           userId: currentUser.id,
           content,
         });
-        return formatToolSuccess({ message: "Comment added successfully", comment });
+        return formatToolSuccess({
+          message: "Comment added successfully",
+          comment,
+        });
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
@@ -105,10 +112,14 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           resolveTeamAndVerifyAccess(task.teamId, currentUser.id),
           TaskService.getTaskComments(task.id),
         ]);
-        return formatToolSuccess({ taskId: task.id, comments, count: comments.length });
+        return formatToolSuccess({
+          taskId: task.id,
+          comments,
+          count: comments.length,
+        });
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 }

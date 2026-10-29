@@ -65,18 +65,27 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <Field>
           <FieldLabel>Status</FieldLabel>
-          <Select value={status} onValueChange={(val) => val && onStatusChange(val as TaskStatus)}>
+          <Select
+            value={status}
+            onValueChange={(val) => val && onStatusChange(val as TaskStatus)}
+          >
             <SelectTrigger className="h-9 w-full text-sm">
               <SelectValue>
                 <span className="flex items-center gap-2">
-                  <span className={`size-2 rounded-full ${curStatus?.dot || "bg-neutral-400"}`} />
+                  <span
+                    className={`size-2 rounded-full ${curStatus?.dot || "bg-neutral-400"}`}
+                  />
                   <span>{curStatus?.label || status}</span>
                 </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {TASK_FORM_STATUSES.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="text-sm">
+                <SelectItem
+                  key={item.value}
+                  value={item.value}
+                  className="text-sm"
+                >
                   <div className="flex items-center gap-2">
                     <span className={`size-2 rounded-full ${item.dot}`} />
                     <span>{item.label}</span>
@@ -91,16 +100,24 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
           <FieldLabel>Priority</FieldLabel>
           <Select
             value={priority}
-            onValueChange={(val) => val && onPriorityChange(val as TaskPriority)}
+            onValueChange={(val) =>
+              val && onPriorityChange(val as TaskPriority)
+            }
           >
             <SelectTrigger className="h-9 w-full text-sm">
               <SelectValue>
-                <span className={curPriority?.color || ""}>{curPriority?.label || priority}</span>
+                <span className={curPriority?.color || ""}>
+                  {curPriority?.label || priority}
+                </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {TASK_FORM_PRIORITIES.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="text-sm">
+                <SelectItem
+                  key={item.value}
+                  value={item.value}
+                  className="text-sm"
+                >
                   <span className={item.color}>{item.label}</span>
                 </SelectItem>
               ))}
@@ -134,7 +151,9 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
               step={15}
               value={estimatedMinutes || ""}
               onChange={(e) =>
-                onEstimatedMinutesChange(Math.max(0, parseInt(e.target.value, 10) || 0))
+                onEstimatedMinutesChange(
+                  Math.max(0, parseInt(e.target.value, 10) || 0),
+                )
               }
               placeholder="e.g. 60"
               className="text-sm"
@@ -162,7 +181,9 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
       </div>
 
       <Field>
-        <FieldLabel htmlFor="task-description">Description / Acceptance Criteria</FieldLabel>
+        <FieldLabel htmlFor="task-description">
+          Description / Acceptance Criteria
+        </FieldLabel>
         <Textarea
           id="task-description"
           rows={4}

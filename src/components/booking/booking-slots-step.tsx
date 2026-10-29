@@ -61,14 +61,19 @@ export function BookingSlotsStep({
           {loadingSlots ? (
             <div className="text-muted-foreground flex h-48 flex-col items-center justify-center gap-2 text-center">
               <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
-              <span className="text-xs font-medium">Checking mutual availability...</span>
+              <span className="text-xs font-medium">
+                Checking mutual availability...
+              </span>
             </div>
           ) : slots.length === 0 ? (
             <div className="border-border flex h-48 flex-col items-center justify-center rounded-2xl border border-dashed p-4 text-center">
               <Clock className="text-muted-foreground/40 mb-2 h-8 w-8" />
-              <p className="text-foreground text-xs font-semibold">No open slots</p>
+              <p className="text-foreground text-xs font-semibold">
+                No open slots
+              </p>
               <p className="text-muted-foreground mt-1 text-[11px]">
-                No mutual free time found for all required attendees on this date.
+                No mutual free time found for all required attendees on this
+                date.
               </p>
             </div>
           ) : (

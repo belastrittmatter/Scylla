@@ -87,11 +87,16 @@ export function TaskBoardApp({
 }): React.JSX.Element {
   const { data, setData, callTool } = useMcpBridge<TaskBoardData>(initialData);
   const [prio, setPrio] = React.useState("all");
-  const [hiddenCols, setHiddenCols] = React.useState<Record<string, boolean>>(DEFAULT_HIDDEN_COLS);
+  const [hiddenCols, setHiddenCols] =
+    React.useState<Record<string, boolean>>(DEFAULT_HIDDEN_COLS);
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = React.useState<string | null>(null);
-  const [statusMsg, setStatusMsg] = React.useState("Drag cards between columns to update status");
-  const [expandedTaskIds, setExpandedTaskIds] = React.useState<Record<string, boolean>>({});
+  const [statusMsg, setStatusMsg] = React.useState(
+    "Drag cards between columns to update status",
+  );
+  const [expandedTaskIds, setExpandedTaskIds] = React.useState<
+    Record<string, boolean>
+  >({});
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [now, setNow] = React.useState(() => Date.now());
 
@@ -99,7 +104,7 @@ export function TaskBoardApp({
 
   React.useEffect(() => {
     const hasActive = allTasks.some(
-      (t) => t.status === "in_progress" && Boolean(t.activeSessionStartedAt)
+      (t) => t.status === "in_progress" && Boolean(t.activeSessionStartedAt),
     );
     if (!hasActive) return;
 
@@ -153,7 +158,7 @@ export function TaskBoardApp({
 
   const handleDrop = async (
     e: React.DragEvent<HTMLDivElement>,
-    newStatus: string
+    newStatus: string,
   ): Promise<void> => {
     e.preventDefault();
     setDragOverCol(null);
@@ -184,7 +189,10 @@ export function TaskBoardApp({
                   const elapsed = t.activeSessionStartedAt
                     ? Math.max(
                         0,
-                        Math.floor((nowTs - parseTimestampMs(t.activeSessionStartedAt)) / 1000)
+                        Math.floor(
+                          (nowTs - parseTimestampMs(t.activeSessionStartedAt)) /
+                            1000,
+                        ),
                       )
                     : 0;
                   return {
@@ -197,36 +205,44 @@ export function TaskBoardApp({
                 return { ...t, status: st };
               }),
             }
-          : prev
+          : prev,
       );
 
     updateLocal(newStatus);
     setStatusMsg(`Saving "${target.title}"...`);
     try {
       await callTool("update_task", { taskId: target.id, status: newStatus });
-      setStatusMsg(`Saved "${target.title}" → ${newStatus.replace("_", " ")} ✓`);
+      setStatusMsg(
+        `Saved "${target.title}" → ${newStatus.replace("_", " ")} ✓`,
+      );
     } catch {
       setData((prev) =>
         prev
           ? {
               ...prev,
               tasks: (prev.tasks ?? []).map((t): KanbanTask =>
-                String(t.id) === String(id) ? prevTask : t
+                String(t.id) === String(id) ? prevTask : t,
               ),
             }
-          : prev
+          : prev,
       );
       setStatusMsg("Failed to sync status change with DB");
     }
   };
 
   return (
-    <Card size="sm" className="border-border bg-card text-card-foreground shadow-xs">
+    <Card
+      size="sm"
+      className="border-border bg-card text-card-foreground shadow-xs"
+    >
       <CardHeader className="border-border/60 border-b">
         <CardTitle id="title" className="text-sm font-semibold">
           {titleText}
         </CardTitle>
-        <CardDescription id="kb-status" className="text-muted-foreground text-xs">
+        <CardDescription
+          id="kb-status"
+          className="text-muted-foreground text-xs"
+        >
           {statusMsg}
         </CardDescription>
         <CardAction>
@@ -247,14 +263,19 @@ export function TaskBoardApp({
                 </button>
               ))}
             </div>
-            <McpHeaderControls isSyncing={isSyncing} onSync={() => void handleSync()} />
+            <McpHeaderControls
+              isSyncing={isSyncing}
+              onSync={() => void handleSync()}
+            />
           </div>
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-2.5 pt-2">
         {hiddenColList.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <span className="text-muted-foreground text-[11px]">Hidden columns:</span>
+            <span className="text-muted-foreground text-[11px]">
+              Hidden columns:
+            </span>
             {hiddenColList.map((col) => (
               <Button
                 key={col.id}
@@ -272,12 +293,15 @@ export function TaskBoardApp({
               >
                 <EyeIcon className="size-3" />
                 <span>
-                  {col.label} ({filteredTasks.filter((t) => t.status === col.id).length})
+                  {col.label} (
+                  {filteredTasks.filter((t) => t.status === col.id).length})
                 </span>
               </Button>
             ))}
             {visibleCols.length >= 3 && (
-              <span className="text-muted-foreground/70 text-[10px]">(max 3 visible)</span>
+              <span className="text-muted-foreground/70 text-[10px]">
+                (max 3 visible)
+              </span>
             )}
           </div>
         )}
@@ -312,7 +336,10 @@ export function TaskBoardApp({
                   <div className="mb-2 flex shrink-0 items-center justify-between gap-1 px-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-semibold">{col.label}</span>
-                      <Badge variant="outline" className="bg-background h-4 px-1.5 text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className="bg-background h-4 px-1.5 text-[10px]"
+                      >
                         {colTasks.length}
                       </Badge>
                     </div>
@@ -341,24 +368,35 @@ export function TaskBoardApp({
                       colTasks.map((t) => {
                         const pr = (t.priority || "medium").toLowerCase();
                         const isActive =
-                          t.status === "in_progress" && Boolean(t.activeSessionStartedAt);
+                          t.status === "in_progress" &&
+                          Boolean(t.activeSessionStartedAt);
                         const activeElapsed =
                           isActive && t.activeSessionStartedAt
                             ? Math.max(
                                 0,
                                 Math.floor(
-                                  (now - parseTimestampMs(t.activeSessionStartedAt)) / 1000
-                                )
+                                  (now -
+                                    parseTimestampMs(
+                                      t.activeSessionStartedAt,
+                                    )) /
+                                    1000,
+                                ),
                               )
                             : 0;
-                        const totalSpent = (t.totalSpentSeconds || 0) + activeElapsed;
+                        const totalSpent =
+                          (t.totalSpentSeconds || 0) + activeElapsed;
                         const estMinutes =
-                          t.estimatedMinutes ?? (t.status === "in_progress" ? 60 : null);
+                          t.estimatedMinutes ??
+                          (t.status === "in_progress" ? 60 : null);
                         const estSeconds = estMinutes ? estMinutes * 60 : null;
                         const ratio = estSeconds ? totalSpent / estSeconds : 0;
                         const percent = Math.min(100, Math.round(ratio * 100));
                         const barColor =
-                          ratio > 1 ? "bg-red-500" : ratio >= 0.8 ? "bg-amber-500" : "bg-blue-500";
+                          ratio > 1
+                            ? "bg-red-500"
+                            : ratio >= 0.8
+                              ? "bg-amber-500"
+                              : "bg-blue-500";
                         const showTimer = t.status === "in_progress";
                         const showTimeSpent = !showTimer && totalSpent > 0;
 
@@ -374,7 +412,12 @@ export function TaskBoardApp({
                                 /* ignore */
                               }
                             }}
-                            onClick={() => setExpandedTaskIds((p) => ({ ...p, [t.id]: !p[t.id] }))}
+                            onClick={() =>
+                              setExpandedTaskIds((p) => ({
+                                ...p,
+                                [t.id]: !p[t.id],
+                              }))
+                            }
                             className="border-border bg-card shadow-2xs hover:border-foreground/30 cursor-grab rounded-md border p-2 transition-all active:cursor-grabbing"
                           >
                             <div className="line-clamp-2 text-xs font-medium leading-snug">
@@ -422,7 +465,9 @@ export function TaskBoardApp({
                                 <div className="text-muted-foreground flex items-center justify-between text-[10px]">
                                   <span>⏱ {formatCompactTime(totalSpent)}</span>
                                   {estMinutes ? (
-                                    <span>Est: {formatCompactTime(estSeconds || 0)}</span>
+                                    <span>
+                                      Est: {formatCompactTime(estSeconds || 0)}
+                                    </span>
                                   ) : null}
                                 </div>
                                 {estSeconds ? (
@@ -448,7 +493,9 @@ export function TaskBoardApp({
                                   />
                                   {pr}
                                 </span>
-                                {!isActive && totalSpent === 0 && t.estimatedMinutes ? (
+                                {!isActive &&
+                                totalSpent === 0 &&
+                                t.estimatedMinutes ? (
                                   <span className="text-muted-foreground/75 font-normal">
                                     ~
                                     {t.estimatedMinutes >= 60

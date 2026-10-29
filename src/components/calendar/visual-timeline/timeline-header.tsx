@@ -8,7 +8,10 @@ interface TimelineHeaderProps {
   selectedEndMin: number;
 }
 
-export function TimelineHeader({ selectedStartMin, selectedEndMin }: TimelineHeaderProps) {
+export function TimelineHeader({
+  selectedStartMin,
+  selectedEndMin,
+}: TimelineHeaderProps) {
   return (
     <div className="flex flex-col justify-between gap-4 border-b border-neutral-200/80 pb-5 sm:flex-row sm:items-center dark:border-neutral-800">
       <div>
@@ -23,20 +26,27 @@ export function TimelineHeader({ selectedStartMin, selectedEndMin }: TimelineHea
       <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
         <div className="flex items-center gap-1.5">
           <span className="shadow-2xs size-2.5 rounded-full bg-rose-500" />
-          <span className="text-neutral-600 dark:text-neutral-300">Person Busy</span>
+          <span className="text-neutral-600 dark:text-neutral-300">
+            Person Busy
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="shadow-2xs size-2.5 rounded-full bg-indigo-600" />
-          <span className="text-neutral-600 dark:text-neutral-300">Room Booked</span>
+          <span className="text-neutral-600 dark:text-neutral-300">
+            Room Booked
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="shadow-2xs size-2.5 rounded-full bg-emerald-500" />
-          <span className="text-neutral-600 dark:text-neutral-300">All Free Overlap</span>
+          <span className="text-neutral-600 dark:text-neutral-300">
+            All Free Overlap
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="shadow-2xs size-2.5 rounded-full bg-amber-400 ring-2 ring-amber-300" />
           <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-            Selected ({formatMinutes(selectedStartMin)}–{formatMinutes(selectedEndMin)})
+            Selected ({formatMinutes(selectedStartMin)}–
+            {formatMinutes(selectedEndMin)})
           </span>
         </div>
       </div>

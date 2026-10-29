@@ -28,7 +28,9 @@ export async function getSessionUserId(): Promise<string | null> {
  * In production, an authenticated session is strictly required.
  * In development or testing environments, falls back to the primary user if unauthenticated.
  */
-export async function resolveActionUserId(explicitId?: string | null): Promise<string> {
+export async function resolveActionUserId(
+  explicitId?: string | null,
+): Promise<string> {
   if (explicitId) return explicitId;
   const sessionUserId = await getSessionUserId();
   if (sessionUserId) return sessionUserId;

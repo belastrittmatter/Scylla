@@ -8,7 +8,10 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const teamId = url.searchParams.get("teamId");
     if (!teamId) {
-      return Response.json({ error: "teamId parameter is required" }, { status: 400 });
+      return Response.json(
+        { error: "teamId parameter is required" },
+        { status: 400 },
+      );
     }
 
     const projectId = url.searchParams.get("projectId") || undefined;
@@ -17,8 +20,12 @@ export async function GET(req: Request) {
     const assigneeId = url.searchParams.get("assigneeId") || undefined;
     const overdue = url.searchParams.get("overdue") === "true";
 
-    const status = statusParam ? (statusParam.split(",") as TaskStatus[]) : undefined;
-    const priority = priorityParam ? (priorityParam.split(",") as TaskPriority[]) : undefined;
+    const status = statusParam
+      ? (statusParam.split(",") as TaskStatus[])
+      : undefined;
+    const priority = priorityParam
+      ? (priorityParam.split(",") as TaskPriority[])
+      : undefined;
 
     const tasks = await TaskService.listTasks({
       teamId,
@@ -33,7 +40,7 @@ export async function GET(req: Request) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to list tasks" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -44,14 +51,17 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     const parseResult = CreateTaskSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,7 +70,7 @@ export async function POST(req: Request) {
     if (!creatorId) {
       return Response.json(
         { error: "creatorId is required when unauthenticated" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -81,7 +91,8 @@ export async function POST(req: Request) {
 
     return Response.json(newTask, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to create task";
+    const message =
+      err instanceof Error ? err.message : "Failed to create task";
     if (message.includes("not found")) {
       return Response.json({ error: message }, { status: 404 });
     }

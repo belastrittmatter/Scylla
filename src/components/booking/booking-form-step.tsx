@@ -40,11 +40,17 @@ export function BookingFormStep({
   onSubmit,
 }: BookingFormStepProps) {
   const isGuestEmailAllowed = (email: string) => {
-    if (!invite.isRestricted || !invite.allowedEmails || invite.allowedEmails.length === 0) {
+    if (
+      !invite.isRestricted ||
+      !invite.allowedEmails ||
+      invite.allowedEmails.length === 0
+    ) {
       return true;
     }
     const clean = email.trim().toLowerCase();
-    return invite.allowedEmails.some((allowed) => allowed.toLowerCase() === clean);
+    return invite.allowedEmails.some(
+      (allowed) => allowed.toLowerCase() === clean,
+    );
   };
 
   const isEmailRestrictedMismatch =
@@ -82,9 +88,12 @@ export function BookingFormStep({
         <div className="flex items-start gap-2.5 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-3.5 text-xs">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
           <div>
-            <p className="text-foreground font-semibold">Restricted Meeting Invitation</p>
+            <p className="text-foreground font-semibold">
+              Restricted Meeting Invitation
+            </p>
             <p className="text-muted-foreground mt-0.5 text-[11px]">
-              Only email addresses pre-approved by the meeting organizer can confirm this booking.
+              Only email addresses pre-approved by the meeting organizer can
+              confirm this booking.
             </p>
           </div>
         </div>
@@ -92,7 +101,10 @@ export function BookingFormStep({
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="guestName" className="text-foreground text-xs font-medium">
+          <Label
+            htmlFor="guestName"
+            className="text-foreground text-xs font-medium"
+          >
             Your Full Name <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -107,7 +119,10 @@ export function BookingFormStep({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="guestEmail" className="text-foreground text-xs font-medium">
+          <Label
+            htmlFor="guestEmail"
+            className="text-foreground text-xs font-medium"
+          >
             Your Email Address <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -120,7 +135,8 @@ export function BookingFormStep({
             required
             className={cn(
               "rounded-xl focus-visible:ring-orange-500",
-              isEmailRestrictedMismatch && "border-destructive focus-visible:ring-destructive"
+              isEmailRestrictedMismatch &&
+                "border-destructive focus-visible:ring-destructive",
             )}
           />
           {isEmailRestrictedMismatch ? (
@@ -130,13 +146,17 @@ export function BookingFormStep({
             </p>
           ) : (
             <p className="text-muted-foreground text-[11px]">
-              Meeting confirmation and calendar invites will be sent to this address.
+              Meeting confirmation and calendar invites will be sent to this
+              address.
             </p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="guestNotes" className="text-foreground text-xs font-medium">
+          <Label
+            htmlFor="guestNotes"
+            className="text-foreground text-xs font-medium"
+          >
             Additional Notes or Agenda Items (Optional)
           </Label>
           <Textarea

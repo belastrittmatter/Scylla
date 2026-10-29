@@ -4,22 +4,32 @@ import * as React from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { Team, Project } from "./task-types";
 
-export function findTeamBySlugOrId(teams: Team[], identifier?: string | null): Team | undefined {
+export function findTeamBySlugOrId(
+  teams: Team[],
+  identifier?: string | null,
+): Team | undefined {
   if (!identifier) return undefined;
   const lower = identifier.toLowerCase();
-  return teams.find((t) => t.slug.toLowerCase() === lower || t.id === identifier);
+  return teams.find(
+    (t) => t.slug.toLowerCase() === lower || t.id === identifier,
+  );
 }
 
 export function findProjectBySlugOrId(
   projects: Project[],
-  identifier?: string | null
+  identifier?: string | null,
 ): Project | undefined {
   if (!identifier || identifier === "all") return undefined;
   const lower = identifier.toLowerCase();
-  return projects.find((p) => p.slug.toLowerCase() === lower || p.id === identifier);
+  return projects.find(
+    (p) => p.slug.toLowerCase() === lower || p.id === identifier,
+  );
 }
 
-export function buildTaskWorkspaceUrl(teamSlug: string, projectSlug?: string | null): string {
+export function buildTaskWorkspaceUrl(
+  teamSlug: string,
+  projectSlug?: string | null,
+): string {
   if (!projectSlug || projectSlug === "all") {
     return `/tasks/${teamSlug}`;
   }
@@ -58,7 +68,8 @@ export function useTaskWorkspaceRouting({
   const pathProjSlug = isTasksPath ? pathSlugs[1] : initialProjectSlug;
 
   const queryTeam = searchParams?.get("team") || searchParams?.get("teamId");
-  const queryProjectId = searchParams?.get("projectId") || searchParams?.get("project");
+  const queryProjectId =
+    searchParams?.get("projectId") || searchParams?.get("project");
 
   // Derive the active team strictly from URL path or query params
   const activeTeam = React.useMemo(() => {
@@ -72,7 +83,10 @@ export function useTaskWorkspaceRouting({
       }
     }
 
-    return findTeamBySlugOrId(teams, pathTeamSlug) || findTeamBySlugOrId(teams, queryTeam);
+    return (
+      findTeamBySlugOrId(teams, pathTeamSlug) ||
+      findTeamBySlugOrId(teams, queryTeam)
+    );
   }, [teams, pathTeamSlug, queryTeam, queryProjectId, projects]);
 
   // Derive the active project within the active team strictly from URL path or query params
@@ -96,7 +110,7 @@ export function useTaskWorkspaceRouting({
     if (!activeTeam || (!queryTeam && !queryProjectId)) return;
     const targetUrl = buildTaskWorkspaceUrl(
       activeTeam.slug,
-      activeProject ? activeProject.slug : null
+      activeProject ? activeProject.slug : null,
     );
     if (pathname?.startsWith("/tasks") && pathname !== targetUrl) {
       router.replace(targetUrl, { scroll: false });
@@ -111,7 +125,7 @@ export function useTaskWorkspaceRouting({
       const targetUrl = buildTaskWorkspaceUrl(targetTeam.slug);
       router.push(targetUrl, { scroll: false });
     },
-    [teams, router]
+    [teams, router],
   );
 
   const handleSelectProject = React.useCallback(
@@ -125,7 +139,7 @@ export function useTaskWorkspaceRouting({
       const targetUrl = buildTaskWorkspaceUrl(activeTeam.slug, targetProj.slug);
       router.push(targetUrl, { scroll: false });
     },
-    [activeTeam, projects, router]
+    [activeTeam, projects, router],
   );
 
   const handleProjectCreated = React.useCallback(
@@ -134,7 +148,7 @@ export function useTaskWorkspaceRouting({
       const targetUrl = buildTaskWorkspaceUrl(activeTeam.slug, created.slug);
       router.push(targetUrl, { scroll: false });
     },
-    [activeTeam, router]
+    [activeTeam, router],
   );
 
   const handleTeamCreated = React.useCallback(
@@ -142,7 +156,7 @@ export function useTaskWorkspaceRouting({
       const targetUrl = buildTaskWorkspaceUrl(created.slug);
       router.push(targetUrl, { scroll: false });
     },
-    [router]
+    [router],
   );
 
   return {

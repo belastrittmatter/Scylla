@@ -8,7 +8,7 @@ function IconStack({ className, children, style, ...props }: IconStackProps) {
       data-slot="icon-stack"
       className={cn(
         "text-foreground **:data-[slot=icon-stack-layer]:fill-background w-18 relative h-20",
-        className
+        className,
       )}
       style={
         {

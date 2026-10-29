@@ -13,8 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "cn";
-import type { BookedResult, InviteOrganizer, InviteRoom, InviteMember } from "./booking-types";
-import { formatSlotTime, formatFullDate, buildGoogleCalendarUrl } from "./booking-utils";
+import type {
+  BookedResult,
+  InviteOrganizer,
+  InviteRoom,
+  InviteMember,
+} from "./booking-types";
+import {
+  formatSlotTime,
+  formatFullDate,
+  buildGoogleCalendarUrl,
+} from "./booking-utils";
 
 interface BookingSuccessViewProps {
   bookedResult: BookedResult;
@@ -37,7 +46,8 @@ export function BookingSuccessView({
   members,
   onReset,
 }: BookingSuccessViewProps) {
-  const meetUrl = bookedResult.booking.googleMeetUrl || bookedResult.booking.meetingUrl;
+  const meetUrl =
+    bookedResult.booking.googleMeetUrl || bookedResult.booking.meetingUrl;
 
   return (
     <div className="bg-background flex min-h-screen items-center justify-center p-4">
@@ -63,14 +73,17 @@ export function BookingSuccessView({
 
             <div className="text-foreground/80 flex items-center gap-2.5 text-sm">
               <CalendarIcon className="h-4 w-4 shrink-0 text-orange-500" />
-              <span>{formatFullDate(bookedResult.booking.startTime, timeZone)}</span>
+              <span>
+                {formatFullDate(bookedResult.booking.startTime, timeZone)}
+              </span>
             </div>
 
             <div className="text-foreground/80 flex items-center gap-2.5 text-sm">
               <Clock className="h-4 w-4 shrink-0 text-orange-500" />
               <span>
                 {formatSlotTime(bookedResult.booking.startTime, timeZone)} -{" "}
-                {formatSlotTime(bookedResult.booking.endTime, timeZone)} ({timeZone})
+                {formatSlotTime(bookedResult.booking.endTime, timeZone)} (
+                {timeZone})
               </span>
             </div>
 
@@ -113,12 +126,19 @@ export function BookingSuccessView({
                 </Badge>
               )}
               {members.map((m) => (
-                <Badge key={m.id} variant="outline" className="border-border gap-1.5 px-2.5 py-1">
+                <Badge
+                  key={m.id}
+                  variant="outline"
+                  className="border-border gap-1.5 px-2.5 py-1"
+                >
                   <span className="bg-muted-foreground h-2 w-2 rounded-full" />
                   {m.name || m.email}
                 </Badge>
               ))}
-              <Badge variant="secondary" className="gap-1.5 px-2.5 py-1 font-medium">
+              <Badge
+                variant="secondary"
+                className="gap-1.5 px-2.5 py-1 font-medium"
+              >
                 <span className="bg-foreground h-2 w-2 rounded-full" />
                 {guestName} (Guest)
               </Badge>
@@ -127,12 +147,16 @@ export function BookingSuccessView({
 
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <a
-              href={buildGoogleCalendarUrl(bookedResult.booking, bookedResult.invite, room)}
+              href={buildGoogleCalendarUrl(
+                bookedResult.booking,
+                bookedResult.invite,
+                room,
+              )}
               target="_blank"
               rel="noreferrer"
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "h-10 flex-1 gap-2 rounded-xl bg-orange-600 font-medium text-white shadow-sm hover:bg-orange-500"
+                "h-10 flex-1 gap-2 rounded-xl bg-orange-600 font-medium text-white shadow-sm hover:bg-orange-500",
               )}
             >
               <CalendarPlus className="h-4 w-4" />
@@ -146,7 +170,7 @@ export function BookingSuccessView({
                 rel="noreferrer"
                 className={cn(
                   buttonVariants({ variant: "outline" }),
-                  "border-border text-foreground hover:bg-muted/60 h-10 flex-1 gap-2 rounded-xl font-medium"
+                  "border-border text-foreground hover:bg-muted/60 h-10 flex-1 gap-2 rounded-xl font-medium",
                 )}
               >
                 <Video className="h-4 w-4" />

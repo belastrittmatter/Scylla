@@ -23,8 +23,24 @@ export const MOCK_ROOMS = [
 ];
 
 export const MOCK_DIRECTORY_USERS = [
-  { id: "usr_alex_rivera", name: { fullName: "Alex Rivera" }, primaryEmail: "alex@example.com" },
-  { id: "usr_sarah_chen", name: { fullName: "Sarah Chen" }, primaryEmail: "sarah@example.com" },
-  { id: "usr_test_user", name: { fullName: "Test User" }, primaryEmail: "test@example.com" },
-  { id: "usr_user1", name: { fullName: "User One" }, primaryEmail: "user1@example.com" },
+  {
+    id: "usr_alex_rivera",
+    name: { fullName: "Alex Rivera" },
+    primaryEmail: "alex@example.com",
+  },
+  {
+    id: "usr_sarah_chen",
+    name: { fullName: "Sarah Chen" },
+    primaryEmail: "sarah@example.com",
+  },
+  {
+    id: "usr_test_user",
+    name: { fullName: "Test User" },
+    primaryEmail: "test@example.com",
+  },
+  {
+    id: "usr_user1",
+    name: { fullName: "User One" },
+    primaryEmail: "user1@example.com",
+  },
 ];

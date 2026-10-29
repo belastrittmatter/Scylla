@@ -46,8 +46,14 @@ export function ProjectCard({
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-              <Link href={`/tasks/${teamSlug}/${project.slug}`} className="hover:underline">
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <Link
+                href={`/tasks/${teamSlug}/${project.slug}`}
+                className="hover:underline"
+              >
                 <CardTitle className="text-base font-semibold leading-none">
                   {project.name}
                 </CardTitle>
@@ -63,12 +69,21 @@ export function ProjectCard({
 
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon" className="size-8 text-neutral-400" />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-neutral-400"
+                />
+              }
             >
               <MoreVertical className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuItem onClick={() => onEdit(project)} className="cursor-pointer gap-2">
+              <DropdownMenuItem
+                onClick={() => onEdit(project)}
+                className="cursor-pointer gap-2"
+              >
                 <Edit2 className="size-3.5" />
                 <span>Edit Project</span>
               </DropdownMenuItem>
@@ -93,7 +108,9 @@ export function ProjectCard({
         <div className="flex items-center justify-between">
           <ProjectStatusBadge
             status={project.status}
-            onStatusChange={(newStatus) => onStatusChange(project.id, newStatus)}
+            onStatusChange={(newStatus) =>
+              onStatusChange(project.id, newStatus)
+            }
           />
         </div>
       </CardContent>

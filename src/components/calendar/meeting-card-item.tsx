@@ -37,7 +37,9 @@ export function MeetingCardItem({
           <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-800 dark:text-neutral-200">
             <Clock className="size-3.5 text-neutral-400" />
             {meeting.startTime} – {meeting.endTime}
-            <span className="font-normal text-neutral-400">({meeting.duration})</span>
+            <span className="font-normal text-neutral-400">
+              ({meeting.duration})
+            </span>
           </span>
 
           <span className="text-neutral-300 dark:text-neutral-700">•</span>
@@ -71,7 +73,9 @@ export function MeetingCardItem({
             )}
             {meeting.location}
             {meeting.roomDetails?.floor && (
-              <span className="text-neutral-400">• {meeting.roomDetails.floor}</span>
+              <span className="text-neutral-400">
+                • {meeting.roomDetails.floor}
+              </span>
             )}
           </span>
         </div>

@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { Plus, Search, Loader2 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Teammate } from "@/services/user";
 import type { ParticipantSchedule } from "./timeline-types";
@@ -90,7 +94,9 @@ export function TimelineParticipantSection({
                         <p className="truncate text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                           {usr.name}
                         </p>
-                        <p className="truncate text-[10px] text-neutral-400">{usr.email}</p>
+                        <p className="truncate text-[10px] text-neutral-400">
+                          {usr.email}
+                        </p>
                       </div>
                       <Plus className="size-3.5 text-neutral-400" />
                     </div>
@@ -126,7 +132,10 @@ export function TimelineParticipantSection({
               <div className="flex min-w-0 items-center gap-2">
                 <Avatar size="sm" className="size-7 shrink-0 text-[10px]">
                   {participant.avatar ? (
-                    <AvatarImage src={participant.avatar} alt={participant.name} />
+                    <AvatarImage
+                      src={participant.avatar}
+                      alt={participant.name}
+                    />
                   ) : null}
                   <AvatarFallback className="bg-neutral-200 font-bold text-neutral-700">
                     {participant.name
@@ -139,7 +148,9 @@ export function TimelineParticipantSection({
                   <p className="truncate text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                     {participant.name}
                   </p>
-                  <p className="truncate text-[10px] text-neutral-400">{participant.email}</p>
+                  <p className="truncate text-[10px] text-neutral-400">
+                    {participant.email}
+                  </p>
                 </div>
               </div>
 

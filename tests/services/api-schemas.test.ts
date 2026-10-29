@@ -20,20 +20,30 @@ describe("API Zod Schemas Validation", () => {
     const invalidEmpty = CreateTeamSchema.safeParse({ name: "" });
     expect(invalidEmpty.success).toBe(false);
 
-    const invalidTooLong = CreateTeamSchema.safeParse({ name: "a".repeat(101) });
+    const invalidTooLong = CreateTeamSchema.safeParse({
+      name: "a".repeat(101),
+    });
     expect(invalidTooLong.success).toBe(false);
   });
 
   test("UpdateTeamSchema validates partial fields and constraints", () => {
-    const valid = UpdateTeamSchema.safeParse({ name: "Platform", description: "Infra team" });
+    const valid = UpdateTeamSchema.safeParse({
+      name: "Platform",
+      description: "Infra team",
+    });
     expect(valid.success).toBe(true);
 
-    const invalid = UpdateTeamSchema.safeParse({ description: "a".repeat(501) });
+    const invalid = UpdateTeamSchema.safeParse({
+      description: "a".repeat(501),
+    });
     expect(invalid.success).toBe(false);
   });
 
   test("AddTeamMemberSchema validates role enum and accepts email or userId", () => {
-    const validUserId = AddTeamMemberSchema.safeParse({ userId: "u1", role: "admin" });
+    const validUserId = AddTeamMemberSchema.safeParse({
+      userId: "u1",
+      role: "admin",
+    });
     expect(validUserId.success).toBe(true);
 
     const validEmail = AddTeamMemberSchema.safeParse({
@@ -42,13 +52,18 @@ describe("API Zod Schemas Validation", () => {
     });
     expect(validEmail.success).toBe(true);
 
-    const invalidRole = AddTeamMemberSchema.safeParse({ userId: "u1", role: "superhero" });
+    const invalidRole = AddTeamMemberSchema.safeParse({
+      userId: "u1",
+      role: "superhero",
+    });
     expect(invalidRole.success).toBe(false);
 
     const missingBoth = AddTeamMemberSchema.safeParse({ role: "admin" });
     expect(missingBoth.success).toBe(false);
 
-    const invalidEmail = AddTeamMemberSchema.safeParse({ email: "not-an-email" });
+    const invalidEmail = AddTeamMemberSchema.safeParse({
+      email: "not-an-email",
+    });
     expect(invalidEmail.success).toBe(false);
   });
 

@@ -50,7 +50,10 @@ export function MeetingDetailDialog({
   const [attendeeFilter, setAttendeeFilter] = React.useState("");
 
   // Reset editing mode and filter when dialog closes or selected meeting changes
-  const [prevKey, setPrevKey] = React.useState({ open, meetingId: meeting?.id });
+  const [prevKey, setPrevKey] = React.useState({
+    open,
+    meetingId: meeting?.id,
+  });
   if (prevKey.open !== open || prevKey.meetingId !== meeting?.id) {
     setPrevKey({ open, meetingId: meeting?.id });
     setIsEditingDescription(false);
@@ -66,7 +69,7 @@ export function MeetingDetailDialog({
     return meeting.attendees.filter(
       (a) =>
         (a.name && a.name.toLowerCase().includes(q)) ||
-        (a.email && a.email.toLowerCase().includes(q))
+        (a.email && a.email.toLowerCase().includes(q)),
     );
   }, [meeting, attendeeFilter]);
 
@@ -92,7 +95,8 @@ export function MeetingDetailDialog({
   };
 
   const handleCopyLink = async () => {
-    const link = meeting.meetingUrl || `https://meet.google.com/room/${meeting.id}`;
+    const link =
+      meeting.meetingUrl || `https://meet.google.com/room/${meeting.id}`;
     const ok = await copyToClipboard(link);
     if (ok) {
       setCopied(true);
@@ -174,7 +178,9 @@ export function MeetingDetailDialog({
                   className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-medium text-orange-600 hover:text-orange-700 hover:underline dark:text-orange-400"
                 >
                   <Pencil className="size-3" />
-                  <span>{meeting.description ? "Edit notes" : "Add notes"}</span>
+                  <span>
+                    {meeting.description ? "Edit notes" : "Add notes"}
+                  </span>
                 </button>
               )}
             </div>
@@ -197,7 +203,10 @@ export function MeetingDetailDialog({
           </div>
 
           {/* Location & Room Details */}
-          <MeetingDetailLocationSection meeting={meeting} onJoinCall={handleJoinCall} />
+          <MeetingDetailLocationSection
+            meeting={meeting}
+            onJoinCall={handleJoinCall}
+          />
 
           {/* Organizer & Attendees */}
           <MeetingDetailAttendeesSection

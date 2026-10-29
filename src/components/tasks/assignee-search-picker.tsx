@@ -4,7 +4,11 @@ import * as React from "react";
 import { Search, X, Check, ChevronDown, UserX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { TaskUser } from "./task-types";
 import { getUserAvatarColor } from "./task-utils";
 import { cn } from "@/lib/utils";
@@ -26,8 +30,11 @@ export function AssigneeSearchPicker({
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const selectedUser = React.useMemo(
-    () => (assigneeId === "unassigned" ? null : users.find((u) => u.id === assigneeId) || null),
-    [users, assigneeId]
+    () =>
+      assigneeId === "unassigned"
+        ? null
+        : users.find((u) => u.id === assigneeId) || null,
+    [users, assigneeId],
   );
 
   const filteredUsers = React.useMemo(() => {
@@ -37,7 +44,7 @@ export function AssigneeSearchPicker({
       (u) =>
         u.name.toLowerCase().includes(q) ||
         (u.email && u.email.toLowerCase().includes(q)) ||
-        (u.role && u.role.toLowerCase().includes(q))
+        (u.role && u.role.toLowerCase().includes(q)),
     );
   }, [users, searchQuery]);
 
@@ -63,22 +70,30 @@ export function AssigneeSearchPicker({
         className={cn(
           "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-neutral-200/90 bg-transparent px-3 text-sm outline-none transition-colors dark:border-neutral-800",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-          "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
         )}
       >
         <div className="flex items-center gap-2 truncate">
           {selectedUser ? (
             <>
               <Avatar className="size-5 shrink-0 text-[9px]">
-                <AvatarImage src={selectedUser.avatarUrl} alt={selectedUser.name} />
-                <AvatarFallback className={getUserAvatarColor(selectedUser.name)}>
-                  {selectedUser.initials || selectedUser.name.slice(0, 2).toUpperCase()}
+                <AvatarImage
+                  src={selectedUser.avatarUrl}
+                  alt={selectedUser.name}
+                />
+                <AvatarFallback
+                  className={getUserAvatarColor(selectedUser.name)}
+                >
+                  {selectedUser.initials ||
+                    selectedUser.name.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
                 {selectedUser.name}
               </span>
-              <span className="shrink-0 text-xs text-neutral-400">({selectedUser.role})</span>
+              <span className="shrink-0 text-xs text-neutral-400">
+                ({selectedUser.role})
+              </span>
             </>
           ) : (
             <span className="text-muted-foreground">Unassigned</span>
@@ -115,7 +130,8 @@ export function AssigneeSearchPicker({
               onClick={() => selectAssignee("unassigned")}
               className={cn(
                 "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                (!selectedUser || assigneeId === "unassigned") && "bg-accent/60 font-medium"
+                (!selectedUser || assigneeId === "unassigned") &&
+                  "bg-accent/60 font-medium",
               )}
             >
               <div className="flex items-center gap-2 text-neutral-500">
@@ -137,7 +153,7 @@ export function AssigneeSearchPicker({
                 onClick={() => selectAssignee(u.id)}
                 className={cn(
                   "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                  isSelected && "bg-accent/60 font-medium"
+                  isSelected && "bg-accent/60 font-medium",
                 )}
               >
                 <div className="flex items-center gap-2.5 truncate pr-2">
@@ -156,7 +172,9 @@ export function AssigneeSearchPicker({
                     </span>
                   </div>
                 </div>
-                {isSelected && <Check className="text-primary size-3.5 shrink-0" />}
+                {isSelected && (
+                  <Check className="text-primary size-3.5 shrink-0" />
+                )}
               </button>
             );
           })}

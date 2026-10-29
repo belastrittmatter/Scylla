@@ -14,7 +14,8 @@ interface RegisteredToolDef {
 }
 
 function getTools(server: unknown): Record<string, RegisteredToolDef> {
-  return (server as { _registeredTools: Record<string, RegisteredToolDef> })._registeredTools;
+  return (server as { _registeredTools: Record<string, RegisteredToolDef> })
+    ._registeredTools;
 }
 
 describe("MCP Project CRUD Tools Suite", () => {
@@ -26,11 +27,21 @@ describe("MCP Project CRUD Tools Suite", () => {
       [ownerId, "proj_owner@example.com", "Project Owner"],
       [strangerId, "proj_stranger@example.com", "Project Stranger"],
     ]) {
-      const exists = await db.select().from(user).where(eq(user.id, id)).limit(1);
+      const exists = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, id))
+        .limit(1);
       if (exists.length === 0) {
         await db
           .insert(user)
-          .values({ id, email, name, createdAt: new Date(), updatedAt: new Date() });
+          .values({
+            id,
+            email,
+            name,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
       }
     }
   });
@@ -85,7 +96,9 @@ describe("MCP Project CRUD Tools Suite", () => {
     const strangerTools = getTools(strangerServer);
 
     // 1. get_project with metrics
-    const getRes = await ownerTools["get_project"].handler({ projectId: project.id });
+    const getRes = await ownerTools["get_project"].handler({
+      projectId: project.id,
+    });
     expect(getRes.isError).toBeFalsy();
     const getData = JSON.parse(getRes.content[0].text);
     expect(getData.project.name).toBe("iOS v2 Release");
@@ -94,7 +107,9 @@ describe("MCP Project CRUD Tools Suite", () => {
     expect(getData.metrics.inProgressTasks).toBe(1);
 
     // 2. get_project by stranger fails
-    const strangerGet = await strangerTools["get_project"].handler({ projectId: project.id });
+    const strangerGet = await strangerTools["get_project"].handler({
+      projectId: project.id,
+    });
     expect(strangerGet.isError).toBe(true);
 
     // 3. update_project
@@ -117,15 +132,21 @@ describe("MCP Project CRUD Tools Suite", () => {
     expect(strangerUpdate.isError).toBe(true);
 
     // 5. delete_project by stranger fails
-    const strangerDelete = await strangerTools["delete_project"].handler({ projectId: project.id });
+    const strangerDelete = await strangerTools["delete_project"].handler({
+      projectId: project.id,
+    });
     expect(strangerDelete.isError).toBe(true);
 
     // 6. delete_project by owner succeeds
-    const deleteRes = await ownerTools["delete_project"].handler({ projectId: project.id });
+    const deleteRes = await ownerTools["delete_project"].handler({
+      projectId: project.id,
+    });
     expect(deleteRes.isError).toBeFalsy();
 
     // 7. Verify deletion
-    const verifyGet = await ownerTools["get_project"].handler({ projectId: project.id });
+    const verifyGet = await ownerTools["get_project"].handler({
+      projectId: project.id,
+    });
     expect(verifyGet.isError).toBe(true);
   });
 });

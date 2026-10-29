@@ -4,7 +4,8 @@ import * as schema from "./schema";
 
 const pool = new Pool({
   connectionString:
-    process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/mcp_db",
+    process.env.DATABASE_URL ||
+    "postgres://postgres:postgres@localhost:5432/mcp_db",
 });
 
 export const db = drizzle(pool, { schema });

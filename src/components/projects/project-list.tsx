@@ -40,7 +40,7 @@ interface ProjectListProps {
       description?: string | null;
       status?: ProjectStatus;
       color?: string | null;
-    }
+    },
   ) => Promise<ProjectItem>;
   onDeleteProject: (id: string) => Promise<void>;
 }
@@ -57,7 +57,9 @@ export function ProjectList({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectItem | null>(
+    null,
+  );
 
   const filtered = useMemo(() => {
     return projects.filter((p) => {
@@ -84,12 +86,16 @@ export function ProjectList({
             />
           </div>
           <div className="w-36">
-            <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val ?? "all")}>
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => setStatusFilter(val ?? "all")}
+            >
               <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="All Statuses">
                   {statusFilter === "all"
                     ? "All Statuses"
-                    : PROJECT_STATUS_CONFIG[statusFilter as ProjectStatus]?.label || statusFilter}
+                    : PROJECT_STATUS_CONFIG[statusFilter as ProjectStatus]
+                        ?.label || statusFilter}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -123,7 +129,9 @@ export function ProjectList({
         <div className="rounded-xl border border-dashed border-neutral-300 p-12 text-center dark:border-neutral-700">
           <FolderKanban className="mx-auto mb-3 size-10 text-neutral-400" />
           <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-            {search || statusFilter !== "all" ? "No matching projects" : "No projects yet"}
+            {search || statusFilter !== "all"
+              ? "No matching projects"
+              : "No projects yet"}
           </h3>
           <p className="mx-auto mt-1 max-w-sm text-xs text-neutral-500">
             {search || statusFilter !== "all"

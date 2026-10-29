@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { extractData, type McpViewType } from "@/components/mcp-ui/mcp-ui-types";
+import {
+  extractData,
+  type McpViewType,
+} from "@/components/mcp-ui/mcp-ui-types";
 
 export * from "@/components/mcp-ui/mcp-ui-types";
 
@@ -9,7 +12,10 @@ declare global {
   interface Window {
     __MCP_VIEW__?: McpViewType;
     __MCP_DATA__?: unknown;
-    callTool?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+    callTool?: (
+      name: string,
+      args: Record<string, unknown>,
+    ) => Promise<unknown>;
     askAi?: (text: string) => void;
   }
 }
@@ -23,38 +29,55 @@ interface PendingRpc {
 export function useMcpBridge<T>(initialData?: unknown): {
   data: T | null;
   setData: React.Dispatch<React.SetStateAction<T | null>>;
-  callTool: <R = unknown>(name: string, args: Record<string, unknown>) => Promise<R>;
+  callTool: <R = unknown>(
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<R>;
   askAi: (text: string) => void;
 } {
   const [data, setData] = React.useState<T | null>(() => {
-    const raw = initialData ?? (typeof window !== "undefined" ? window.__MCP_DATA__ : null);
+    const raw =
+      initialData ??
+      (typeof window !== "undefined" ? window.__MCP_DATA__ : null);
     return extractData<T>(raw);
   });
   const rpcIdRef = React.useRef(10);
   const pendingRef = React.useRef<Map<number, PendingRpc>>(new Map());
 
-  const callTool = React.useCallback(<R = unknown>(name: string, args: Record<string, unknown>) => {
-    return new Promise<R>((resolve, reject) => {
-      const id = ++rpcIdRef.current;
-      const timer = setTimeout(() => {
-        if (pendingRef.current.has(id)) {
+  const callTool = React.useCallback(
+    <R = unknown>(name: string, args: Record<string, unknown>) => {
+      return new Promise<R>((resolve, reject) => {
+        const id = ++rpcIdRef.current;
+        const timer = setTimeout(() => {
+          if (pendingRef.current.has(id)) {
+            pendingRef.current.delete(id);
+            reject(new Error(`Host timeout (15s) calling ${name}`));
+          }
+        }, 15000);
+        pendingRef.current.set(id, {
+          resolve: resolve as (v: unknown) => void,
+          reject,
+          timer,
+        });
+        try {
+          window.parent.postMessage(
+            {
+              jsonrpc: "2.0",
+              id,
+              method: "tools/call",
+              params: { name, arguments: args },
+            },
+            "*",
+          );
+        } catch (err) {
+          clearTimeout(timer);
           pendingRef.current.delete(id);
-          reject(new Error(`Host timeout (15s) calling ${name}`));
+          reject(err instanceof Error ? err : new Error(String(err)));
         }
-      }, 15000);
-      pendingRef.current.set(id, { resolve: resolve as (v: unknown) => void, reject, timer });
-      try {
-        window.parent.postMessage(
-          { jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments: args } },
-          "*"
-        );
-      } catch (err) {
-        clearTimeout(timer);
-        pendingRef.current.delete(id);
-        reject(err instanceof Error ? err : new Error(String(err)));
-      }
-    });
-  }, []);
+      });
+    },
+    [],
+  );
 
   const askAi = React.useCallback((text: string) => {
     try {
@@ -70,7 +93,7 @@ export function useMcpBridge<T>(initialData?: unknown): {
           method: "ui/message",
           params: { role: "user", content: [{ type: "text", text }] },
         },
-        "*"
+        "*",
       );
     } catch {
       // ignore if outside iframe
@@ -95,7 +118,11 @@ export function useMcpBridge<T>(initialData?: unknown): {
           { isError?: boolean; content?: { text?: string }[] } | undefined;
         if (errObj || resObj?.isError) {
           pending.reject(
-            new Error(errObj?.message || resObj?.content?.[0]?.text || "Tool call failed")
+            new Error(
+              errObj?.message ||
+                resObj?.content?.[0]?.text ||
+                "Tool call failed",
+            ),
           );
         } else {
           pending.resolve(msg.result);
@@ -106,8 +133,12 @@ export function useMcpBridge<T>(initialData?: unknown): {
       if (msgId === 1 && msg.result !== undefined) {
         try {
           window.parent.postMessage(
-            { jsonrpc: "2.0", method: "ui/notifications/initialized", params: {} },
-            "*"
+            {
+              jsonrpc: "2.0",
+              method: "ui/notifications/initialized",
+              params: {},
+            },
+            "*",
           );
         } catch {
           // ignore
@@ -127,11 +158,14 @@ export function useMcpBridge<T>(initialData?: unknown): {
           method: "ui/initialize",
           params: {
             protocolVersion: "2026-01-26",
-            appInfo: { name: "scylla-calendar-tasks-mcp-app", version: "1.0.0" },
+            appInfo: {
+              name: "scylla-calendar-tasks-mcp-app",
+              version: "1.0.0",
+            },
             appCapabilities: {},
           },
         },
-        "*"
+        "*",
       );
     } catch {
       // ignore

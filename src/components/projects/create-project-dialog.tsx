@@ -25,7 +25,15 @@ import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badg
 import type { ProjectStatus } from "@/services/project/project-types";
 import type { ProjectItem } from "@/hooks/use-projects";
 
-const PRESET_COLORS = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#6366f1"];
+const PRESET_COLORS = [
+  "#3b82f6",
+  "#10b981",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#6366f1",
+];
 
 interface CreateProjectDialogProps {
   teamId: string;
@@ -130,7 +138,9 @@ export function CreateProjectDialog({
                 <Label htmlFor="proj-status">Status</Label>
                 <Select
                   value={status}
-                  onValueChange={(val) => val && setStatus(val as ProjectStatus)}
+                  onValueChange={(val) =>
+                    val && setStatus(val as ProjectStatus)
+                  }
                 >
                   <SelectTrigger className="h-9 text-xs">
                     <SelectValue placeholder="Status">
@@ -178,7 +188,11 @@ export function CreateProjectDialog({
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !name.trim()}>

@@ -1,5 +1,8 @@
 import { describe, expect, test, beforeAll } from "bun:test";
-import { GET as listTeamsHandler, POST as createTeamHandler } from "../../src/app/api/teams/route";
+import {
+  GET as listTeamsHandler,
+  POST as createTeamHandler,
+} from "../../src/app/api/teams/route";
 import {
   GET as getTeamHandler,
   PATCH as updateTeamHandler,
@@ -63,7 +66,9 @@ describe("Teams REST API Endpoints", () => {
   });
 
   test("GET /api/teams - lists teams for user", async () => {
-    const req = new Request(`http://localhost:3000/api/teams?userId=${ownerUserId}`);
+    const req = new Request(
+      `http://localhost:3000/api/teams?userId=${ownerUserId}`,
+    );
     const res = await listTeamsHandler(req);
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -73,7 +78,9 @@ describe("Teams REST API Endpoints", () => {
 
   test("GET /api/teams/[id] - retrieves team by id or slug", async () => {
     const req = new Request("http://localhost:3000/api/teams");
-    const resById = await getTeamHandler(req, { params: { id: createdTeamId } });
+    const resById = await getTeamHandler(req, {
+      params: { id: createdTeamId },
+    });
     expect(resById.status).toBe(200);
     const teamById = await resById.json();
     expect(teamById.id).toBe(createdTeamId);
@@ -104,11 +111,15 @@ describe("Teams REST API Endpoints", () => {
       body: JSON.stringify({ userId: memberUserId, role: "admin" }),
     });
 
-    const addRes = await addMemberHandler(addReq, { params: { id: createdTeamId } });
+    const addRes = await addMemberHandler(addReq, {
+      params: { id: createdTeamId },
+    });
     expect(addRes.status).toBe(201);
 
     const listReq = new Request("http://localhost:3000/api/teams");
-    const listRes = await listMembersHandler(listReq, { params: { id: createdTeamId } });
+    const listRes = await listMembersHandler(listReq, {
+      params: { id: createdTeamId },
+    });
     expect(listRes.status).toBe(200);
     const members = await listRes.json();
     expect(members.length).toBe(2);
@@ -129,7 +140,9 @@ describe("Teams REST API Endpoints", () => {
   });
 
   test("DELETE /api/teams/[id]/members/[userId] - removes member", async () => {
-    const req = new Request("http://localhost:3000/api/teams", { method: "DELETE" });
+    const req = new Request("http://localhost:3000/api/teams", {
+      method: "DELETE",
+    });
     const res = await removeMemberHandler(req, {
       params: { id: createdTeamId, userId: memberUserId },
     });
@@ -137,7 +150,9 @@ describe("Teams REST API Endpoints", () => {
   });
 
   test("DELETE /api/teams/[id] - deletes team", async () => {
-    const req = new Request("http://localhost:3000/api/teams", { method: "DELETE" });
+    const req = new Request("http://localhost:3000/api/teams", {
+      method: "DELETE",
+    });
     const res = await deleteTeamHandler(req, { params: { id: createdTeamId } });
     expect(res.status).toBe(200);
 

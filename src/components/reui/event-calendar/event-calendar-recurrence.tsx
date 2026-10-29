@@ -22,12 +22,20 @@ const PERIOD_MS: Record<EventCalendarRecurrenceRule["freq"], number> = {
   yearly: 31556952000, // 365.2425 days
 };
 
-const WEEKDAYS: EventCalendarWeekday[] = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const WEEKDAYS: EventCalendarWeekday[] = [
+  "SU",
+  "MO",
+  "TU",
+  "WE",
+  "TH",
+  "FR",
+  "SA",
+];
 
 class EventCalendarRecurrenceError extends Error {
   constructor(part: string) {
     super(
-      `Unsupported recurrence part: ${part}. Use the getOccurrences prop to plug a full RRULE engine for exotic rules.`
+      `Unsupported recurrence part: ${part}. Use the getOccurrences prop to plug a full RRULE engine for exotic rules.`,
     );
     this.name = "EventCalendarRecurrenceError";
   }
@@ -38,7 +46,10 @@ class EventCalendarRecurrenceError extends Error {
  * structured subset. Pass the display time zone so Z-less UNTIL values are
  * interpreted as wall time in that zone rather than the machine zone.
  */
-function parseRRuleString(input: string, timeZone?: string): EventCalendarRecurrenceRule {
+function parseRRuleString(
+  input: string,
+  timeZone?: string,
+): EventCalendarRecurrenceRule {
   const body = input.trim().replace(/^RRULE:/i, "");
   const rule: Partial<EventCalendarRecurrenceRule> = {};
 
@@ -51,7 +62,12 @@ function parseRRuleString(input: string, timeZone?: string): EventCalendarRecurr
     switch (key) {
       case "FREQ": {
         const freq = value.toLowerCase();
-        if (freq !== "daily" && freq !== "weekly" && freq !== "monthly" && freq !== "yearly") {
+        if (
+          freq !== "daily" &&
+          freq !== "weekly" &&
+          freq !== "monthly" &&
+          freq !== "yearly"
+        ) {
           throw new EventCalendarRecurrenceError(`FREQ=${value}`);
         }
         rule.freq = freq;
@@ -70,7 +86,9 @@ function parseRRuleString(input: string, timeZone?: string): EventCalendarRecurr
         rule.byWeekday = value.split(",").map((token) => {
           // RFC 5545 3.1: enumerated values are case-insensitive, and FREQ is
           // already folded above - rejecting "mo" here would be inconsistent
-          const match = /^(-?\d+)?(SU|MO|TU|WE|TH|FR|SA)$/.exec(token.trim().toUpperCase());
+          const match = /^(-?\d+)?(SU|MO|TU|WE|TH|FR|SA)$/.exec(
+            token.trim().toUpperCase(),
+          );
           if (!match) throw new EventCalendarRecurrenceError(`BYDAY=${token}`);
           const day = match[2] as EventCalendarWeekday;
           return match[1] ? { day, ordinal: parseInt(match[1], 10) } : day;
@@ -111,7 +129,7 @@ function parseRRuleDate(value: string, timeZone?: string): Date {
   // RFC 5545 basic formats: YYYYMMDD or YYYYMMDDTHHMMSS(Z). The T and Z
   // designators are case-insensitive too (RFC 5545 3.1), so fold before matching.
   const match = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?)?$/.exec(
-    value.trim().toUpperCase()
+    value.trim().toUpperCase(),
   );
   if (!match) throw new EventCalendarRecurrenceError(`UNTIL=${value}`);
   const [, y, m, d, hh = "23", mm = "59", ss = "59", z] = match;
@@ -131,23 +149,25 @@ function parseRRuleDate(value: string, timeZone?: string): Date {
 /** Serializes the structured subset back to an RRULE line (without prefix). */
 function formatRRuleString(rule: EventCalendarRecurrenceRule): string {
   const parts: string[] = [`FREQ=${rule.freq.toUpperCase()}`];
-  if (rule.interval && rule.interval > 1) parts.push(`INTERVAL=${rule.interval}`);
+  if (rule.interval && rule.interval > 1)
+    parts.push(`INTERVAL=${rule.interval}`);
   if (rule.count) parts.push(`COUNT=${rule.count}`);
   if (rule.until) {
     const u = rule.until;
     const pad = (n: number) => String(n).padStart(2, "0");
     parts.push(
-      `UNTIL=${u.getUTCFullYear()}${pad(u.getUTCMonth() + 1)}${pad(u.getUTCDate())}T${pad(u.getUTCHours())}${pad(u.getUTCMinutes())}${pad(u.getUTCSeconds())}Z`
+      `UNTIL=${u.getUTCFullYear()}${pad(u.getUTCMonth() + 1)}${pad(u.getUTCDate())}T${pad(u.getUTCHours())}${pad(u.getUTCMinutes())}${pad(u.getUTCSeconds())}Z`,
     );
   }
   if (rule.byWeekday?.length) {
     parts.push(
       `BYDAY=${rule.byWeekday
         .map((d) => (typeof d === "string" ? d : `${d.ordinal}${d.day}`))
-        .join(",")}`
+        .join(",")}`,
     );
   }
-  if (rule.byMonthDay?.length) parts.push(`BYMONTHDAY=${rule.byMonthDay.join(",")}`);
+  if (rule.byMonthDay?.length)
+    parts.push(`BYMONTHDAY=${rule.byMonthDay.join(",")}`);
   if (rule.byMonth?.length) parts.push(`BYMONTH=${rule.byMonth.join(",")}`);
   if (rule.weekStart) parts.push(`WKST=${rule.weekStart}`);
   return parts.join(";");
@@ -155,9 +175,11 @@ function formatRRuleString(rule: EventCalendarRecurrenceRule): string {
 
 function resolveRule(
   recurrence: EventCalendarRecurrenceRule | string,
-  timeZone?: string
+  timeZone?: string,
 ): EventCalendarRecurrenceRule {
-  return typeof recurrence === "string" ? parseRRuleString(recurrence, timeZone) : recurrence;
+  return typeof recurrence === "string"
+    ? parseRRuleString(recurrence, timeZone)
+    : recurrence;
 }
 
 /**
@@ -175,7 +197,7 @@ function resolveRule(
 function expandRecurrence<TData>(
   event: CalendarEvent<TData>,
   range: EventCalendarDateRange,
-  ctx: { timeZone: string }
+  ctx: { timeZone: string },
 ): EventCalendarOccurrence<TData>[] {
   const allDay = event.allDay ?? false;
 
@@ -214,11 +236,19 @@ function expandRecurrence<TData>(
   // hour meeting is still two hours.
   const daySpan = Math.round(durationMs / 86400000);
   const wallDaySpan =
-    daySpan > 0 && addDays(zonedStart, daySpan).getTime() === event.end.getTime() ? daySpan : null;
+    daySpan > 0 &&
+    addDays(zonedStart, daySpan).getTime() === event.end.getTime()
+      ? daySpan
+      : null;
   const endFor = (start: Date): Date =>
     wallDaySpan === null
       ? new Date(start.getTime() + durationMs)
-      : new Date(addDays(new TZDate(start.getTime(), ctx.timeZone), wallDaySpan).getTime());
+      : new Date(
+          addDays(
+            new TZDate(start.getTime(), ctx.timeZone),
+            wallDaySpan,
+          ).getTime(),
+        );
   // Excluded instants matched exactly; filtering happens at push time so an
   // exception still consumes its COUNT slot (Google-style numbering).
   const exTimes = new Set((rule.exDates ?? []).map((d) => d.getTime()));
@@ -229,10 +259,12 @@ function expandRecurrence<TData>(
           ...new Set(
             rule.byWeekday.map((d) => {
               if (typeof d !== "string") {
-                throw new EventCalendarRecurrenceError("BYDAY ordinal outside monthly/yearly");
+                throw new EventCalendarRecurrenceError(
+                  "BYDAY ordinal outside monthly/yearly",
+                );
               }
               return WEEKDAYS.indexOf(d);
-            })
+            }),
           ),
         ]
       : null;
@@ -240,7 +272,8 @@ function expandRecurrence<TData>(
   // BYDAY resolved inside a month: monthly, and yearly within each BYMONTH
   // (FREQ=YEARLY;BYMONTH=11;BYDAY=4TH is Thanksgiving, not "the anchor's day")
   const monthlyByDay =
-    (rule.freq === "monthly" || rule.freq === "yearly") && rule.byWeekday?.length
+    (rule.freq === "monthly" || rule.freq === "yearly") &&
+    rule.byWeekday?.length
       ? rule.byWeekday
       : null;
 
@@ -260,22 +293,28 @@ function expandRecurrence<TData>(
 
   // month-shaped BY* parts make the per-period occurrence count variable
   const hasMonthDayParts =
-    (rule.freq === "monthly" && Boolean(rule.byMonthDay?.length || monthlyByDay)) ||
+    (rule.freq === "monthly" &&
+      Boolean(rule.byMonthDay?.length || monthlyByDay)) ||
     (rule.freq === "yearly" &&
       Boolean(rule.byMonth?.length || rule.byMonthDay?.length || monthlyByDay));
 
-  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const daysInMonth = (year: number, month: number) =>
+    new Date(year, month + 1, 0).getDate();
 
   // RFC 5545 3.3.10 LIMIT filters: at these frequencies a BY* part narrows the
   // set instead of reshaping it. Dropping them silently expanded the series as
   // if the part were absent (FREQ=DAILY;BYDAY=MO filled every day). Filtering
   // here rather than at push time keeps COUNT numbering RFC-correct: a
   // candidate the filter removes is not an occurrence and consumes no slot.
-  const limitByMonth = rule.freq !== "yearly" && validByMonth.length > 0 ? validByMonth : null;
-  const limitByMonthDay = rule.freq === "daily" && rule.byMonthDay?.length ? rule.byMonthDay : null;
+  const limitByMonth =
+    rule.freq !== "yearly" && validByMonth.length > 0 ? validByMonth : null;
+  const limitByMonthDay =
+    rule.freq === "daily" && rule.byMonthDay?.length ? rule.byMonthDay : null;
   const limitByWeekday =
     rule.freq === "daily" && rule.byWeekday?.length
-      ? rule.byWeekday.map((d) => WEEKDAYS.indexOf(typeof d === "string" ? d : d.day))
+      ? rule.byWeekday.map((d) =>
+          WEEKDAYS.indexOf(typeof d === "string" ? d : d.day),
+        )
       : null;
   const hasLimits = Boolean(limitByMonth || limitByMonthDay || limitByWeekday);
 
@@ -307,7 +346,7 @@ function expandRecurrence<TData>(
       zonedStart.getMinutes(),
       zonedStart.getSeconds(),
       zonedStart.getMilliseconds(),
-      ctx.timeZone
+      ctx.timeZone,
     );
 
   /** Selected days-of-month, ascending: BYMONTHDAY (and) BYDAY, else the clamped anchor day. */
@@ -334,7 +373,10 @@ function expandRecurrence<TData>(
           byDayMatches.push(...matches); // plain BYDAY: every matching weekday
         } else {
           // 2TU = 2nd Tuesday, -1FR = last Friday; absent ordinals skip
-          const pick = ordinal > 0 ? matches[ordinal - 1] : matches[matches.length + ordinal];
+          const pick =
+            ordinal > 0
+              ? matches[ordinal - 1]
+              : matches[matches.length + ordinal];
           if (pick !== undefined) byDayMatches.push(pick);
         }
       }
@@ -383,7 +425,9 @@ function expandRecurrence<TData>(
 
   /** Candidates of one period with the LIMIT filters applied. */
   const candidatesFor = (period: number): TZDate[] =>
-    hasLimits ? periodCandidates(period).filter(passesLimits) : periodCandidates(period);
+    hasLimits
+      ? periodCandidates(period).filter(passesLimits)
+      : periodCandidates(period);
 
   /** Earliest/latest instant a period can produce - loop bounds without expanding it. */
   const periodEdge = (period: number, edge: "first" | "last"): TZDate => {
@@ -391,26 +435,44 @@ function expandRecurrence<TData>(
     if (rule.freq === "weekly") {
       const base = addWeeks(zonedStart, period * interval);
       if (!weeklyDays) return base;
-      return addDays(base, (edge === "first" ? 0 : 6) - fromWeekStart(base.getDay()));
+      return addDays(
+        base,
+        (edge === "first" ? 0 : 6) - fromWeekStart(base.getDay()),
+      );
     }
     if (rule.freq === "monthly") {
       const anchor = addMonths(zonedStart, period * interval);
       const year = anchor.getFullYear();
       const month = anchor.getMonth();
-      return zonedDate(year, month, edge === "first" ? 1 : daysInMonth(year, month));
+      return zonedDate(
+        year,
+        month,
+        edge === "first" ? 1 : daysInMonth(year, month),
+      );
     }
     const year = addYears(zonedStart, period * interval).getFullYear();
-    const month = (edge === "first" ? yearlyMonths[0] : yearlyMonths[yearlyMonths.length - 1]) - 1;
-    return zonedDate(year, month, edge === "first" ? 1 : daysInMonth(year, month));
+    const month =
+      (edge === "first"
+        ? yearlyMonths[0]
+        : yearlyMonths[yearlyMonths.length - 1]) - 1;
+    return zonedDate(
+      year,
+      month,
+      edge === "first" ? 1 : daysInMonth(year, month),
+    );
   };
 
   // O(1) fast-forward: land a couple of periods before the window instead of
   // iterating from DTSTART, so years-old series still reach the visible range.
   const aheadMs = range.start.getTime() - durationMs - zonedStart.getTime();
   const stepMs = PERIOD_MS[rule.freq] * interval;
-  let startPeriod = aheadMs > 0 ? Math.max(0, Math.floor(aheadMs / stepMs) - 2) : 0;
+  let startPeriod =
+    aheadMs > 0 ? Math.max(0, Math.floor(aheadMs / stepMs) - 2) : 0;
   // mean-length drift is bounded well under one period - refine forward
-  while (periodEdge(startPeriod, "last").getTime() + durationMs <= range.start.getTime()) {
+  while (
+    periodEdge(startPeriod, "last").getTime() + durationMs <=
+    range.start.getTime()
+  ) {
     startPeriod++;
   }
 
@@ -427,7 +489,9 @@ function expandRecurrence<TData>(
       // week 0 only counts selected weekdays at/after DTSTART's, inside the
       // WKST-aligned week that holds it
       const anchorOffset = fromWeekStart(zonedStart.getDay());
-      const firstWeek = weeklyDays.filter((d) => fromWeekStart(d) >= anchorOffset).length;
+      const firstWeek = weeklyDays.filter(
+        (d) => fromWeekStart(d) >= anchorOffset,
+      ).length;
       index = firstWeek + (startPeriod - 1) * weeklyDays.length;
     } else {
       index = startPeriod; // one occurrence per period

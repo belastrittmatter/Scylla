@@ -11,7 +11,12 @@ function TasksSlugContent() {
   const teamSlug = Array.isArray(slug) ? slug[0] : slug;
   const projectSlug = Array.isArray(slug) ? slug[1] : undefined;
 
-  return <TaskDashboard initialTeamSlug={teamSlug} initialProjectSlug={projectSlug} />;
+  return (
+    <TaskDashboard
+      initialTeamSlug={teamSlug}
+      initialProjectSlug={projectSlug}
+    />
+  );
 }
 
 export default function TasksSlugPage() {

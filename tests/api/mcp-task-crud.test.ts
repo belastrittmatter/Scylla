@@ -13,7 +13,8 @@ interface RegisteredToolDef {
 }
 
 function getTools(server: unknown): Record<string, RegisteredToolDef> {
-  return (server as { _registeredTools: Record<string, RegisteredToolDef> })._registeredTools;
+  return (server as { _registeredTools: Record<string, RegisteredToolDef> })
+    ._registeredTools;
 }
 
 describe("MCP Task CRUD & Comments Suite", () => {
@@ -25,11 +26,21 @@ describe("MCP Task CRUD & Comments Suite", () => {
       [ownerId, "task_owner@example.com", "Task Owner"],
       [strangerId, "task_stranger@example.com", "Task Stranger"],
     ]) {
-      const exists = await db.select().from(user).where(eq(user.id, id)).limit(1);
+      const exists = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, id))
+        .limit(1);
       if (exists.length === 0) {
         await db
           .insert(user)
-          .values({ id, email, name, createdAt: new Date(), updatedAt: new Date() });
+          .values({
+            id,
+            email,
+            name,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
       }
     }
   });
@@ -76,7 +87,9 @@ describe("MCP Task CRUD & Comments Suite", () => {
     expect(getData.task.comments).toBeArray();
 
     // 2. get_task by stranger fails
-    const strangerGet = await strangerTools["get_task"].handler({ taskId: task.id });
+    const strangerGet = await strangerTools["get_task"].handler({
+      taskId: task.id,
+    });
     expect(strangerGet.isError).toBe(true);
 
     // 3. add_task_comment by stranger fails
@@ -96,18 +109,24 @@ describe("MCP Task CRUD & Comments Suite", () => {
     expect(commentData.comment.content).toContain("Token hierarchy");
 
     // 5. list_task_comments by owner
-    const listCommentsRes = await ownerTools["list_task_comments"].handler({ taskId: task.id });
+    const listCommentsRes = await ownerTools["list_task_comments"].handler({
+      taskId: task.id,
+    });
     expect(listCommentsRes.isError).toBeFalsy();
     const listCommentsData = JSON.parse(listCommentsRes.content[0].text);
     expect(listCommentsData.count).toBe(1);
     expect(listCommentsData.comments[0].content).toContain("Figma");
 
     // 6. delete_task by stranger fails
-    const strangerDelete = await strangerTools["delete_task"].handler({ taskId: task.id });
+    const strangerDelete = await strangerTools["delete_task"].handler({
+      taskId: task.id,
+    });
     expect(strangerDelete.isError).toBe(true);
 
     // 7. delete_task by owner succeeds
-    const deleteRes = await ownerTools["delete_task"].handler({ taskId: task.id });
+    const deleteRes = await ownerTools["delete_task"].handler({
+      taskId: task.id,
+    });
     expect(deleteRes.isError).toBeFalsy();
 
     // 8. Verify deleted task can no longer be retrieved

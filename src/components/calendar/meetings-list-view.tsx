@@ -15,7 +15,8 @@ interface MeetingsListViewProps {
   onSelectMeeting: (meeting: MeetingItem) => void;
 }
 
-type MeetingStatusFilter = "all" | "today" | "upcoming" | "completed" | "room" | "virtual";
+type MeetingStatusFilter =
+  "all" | "today" | "upcoming" | "completed" | "room" | "virtual";
 
 export function MeetingsListView({
   meetings,
@@ -23,7 +24,8 @@ export function MeetingsListView({
   onOpenAddMeeting,
   onSelectMeeting,
 }: MeetingsListViewProps) {
-  const [statusFilter, setStatusFilter] = React.useState<MeetingStatusFilter>("all");
+  const [statusFilter, setStatusFilter] =
+    React.useState<MeetingStatusFilter>("all");
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
   // Benchmark today = 2025-01-10
@@ -36,10 +38,13 @@ export function MeetingsListView({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchTitle = meeting.title.toLowerCase().includes(q);
-        const matchDesc = meeting.description?.toLowerCase().includes(q) ?? false;
+        const matchDesc =
+          meeting.description?.toLowerCase().includes(q) ?? false;
         const matchLoc = meeting.location.toLowerCase().includes(q);
         const matchOrg = meeting.organizer.name.toLowerCase().includes(q);
-        const matchAtt = meeting.attendees.some((a) => a.name.toLowerCase().includes(q));
+        const matchAtt = meeting.attendees.some((a) =>
+          a.name.toLowerCase().includes(q),
+        );
         if (!matchTitle && !matchDesc && !matchLoc && !matchOrg && !matchAtt) {
           return false;
         }
@@ -50,7 +55,9 @@ export function MeetingsListView({
         return meeting.date === benchmarkTodayStr;
       }
       if (statusFilter === "upcoming") {
-        return meeting.status === "upcoming" || meeting.status === "in-progress";
+        return (
+          meeting.status === "upcoming" || meeting.status === "in-progress"
+        );
       }
       if (statusFilter === "completed") {
         return meeting.status === "completed";
@@ -94,7 +101,8 @@ export function MeetingsListView({
 
   const handleCopyLink = async (e: React.MouseEvent, meeting: MeetingItem) => {
     e.stopPropagation();
-    const link = meeting.meetingUrl || `https://meet.google.com/room/${meeting.id}`;
+    const link =
+      meeting.meetingUrl || `https://meet.google.com/room/${meeting.id}`;
     const ok = await copyToClipboard(link);
     if (ok) {
       setCopiedId(meeting.id);
@@ -203,7 +211,8 @@ export function MeetingsListView({
                       )}
                     </div>
                     <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                      {items.length} {items.length === 1 ? "meeting" : "meetings"}
+                      {items.length}{" "}
+                      {items.length === 1 ? "meeting" : "meetings"}
                     </span>
                   </div>
 

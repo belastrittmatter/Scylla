@@ -25,7 +25,14 @@ import {
   updateTaskAction,
   createTaskAction,
 } from "@/actions";
-import type { TaskItem, TaskStatus, TaskFilters, Team, Project, TaskUser } from "./task-types";
+import type {
+  TaskItem,
+  TaskStatus,
+  TaskFilters,
+  Team,
+  Project,
+  TaskUser,
+} from "./task-types";
 import type { WorkspaceTeamMember } from "@/services/task/workspace-types";
 
 const STATUS_BADGES: Record<string, string> = {
@@ -53,21 +60,34 @@ interface WorkspaceCacheSnapshot {
 }
 
 let clientWorkspaceCache: WorkspaceCacheSnapshot | null = null;
-let inflightWorkspaceRequest: ReturnType<typeof getWorkspaceDataAction> | null = null;
+let inflightWorkspaceRequest: ReturnType<typeof getWorkspaceDataAction> | null =
+  null;
 
-export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashboardProps = {}) {
-  const [teams, setTeams] = React.useState<Team[]>(() => clientWorkspaceCache?.teams ?? []);
+export function TaskDashboard({
+  initialTeamSlug,
+  initialProjectSlug,
+}: TaskDashboardProps = {}) {
+  const [teams, setTeams] = React.useState<Team[]>(
+    () => clientWorkspaceCache?.teams ?? [],
+  );
   const [projects, setProjects] = React.useState<Project[]>(
-    () => clientWorkspaceCache?.projects ?? []
+    () => clientWorkspaceCache?.projects ?? [],
   );
-  const [tasks, setTasks] = React.useState<TaskItem[]>(() => clientWorkspaceCache?.tasks ?? []);
-  const [users, setUsers] = React.useState<TaskUser[]>(() => clientWorkspaceCache?.users ?? []);
+  const [tasks, setTasks] = React.useState<TaskItem[]>(
+    () => clientWorkspaceCache?.tasks ?? [],
+  );
+  const [users, setUsers] = React.useState<TaskUser[]>(
+    () => clientWorkspaceCache?.users ?? [],
+  );
   const [teamMembers, setTeamMembers] = React.useState<WorkspaceTeamMember[]>(
-    () => clientWorkspaceCache?.teamMembers ?? []
+    () => clientWorkspaceCache?.teamMembers ?? [],
   );
-  const [isLoading, setIsLoading] = React.useState<boolean>(() => !clientWorkspaceCache);
+  const [isLoading, setIsLoading] = React.useState<boolean>(
+    () => !clientWorkspaceCache,
+  );
   const [viewMode, setViewMode] = React.useState<"kanban" | "table">("kanban");
-  const [filters, setFilters] = React.useState<TaskFilters>(INITIAL_TASK_FILTERS);
+  const [filters, setFilters] =
+    React.useState<TaskFilters>(INITIAL_TASK_FILTERS);
   const [selectedTask, setSelectedTask] = React.useState<TaskItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = React.useState(false);
@@ -81,11 +101,16 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
     handleSelectProject,
     handleProjectCreated,
     handleTeamCreated,
-  } = useTaskWorkspaceRouting({ teams, projects, initialTeamSlug, initialProjectSlug });
+  } = useTaskWorkspaceRouting({
+    teams,
+    projects,
+    initialTeamSlug,
+    initialProjectSlug,
+  });
 
   const activeTeam = React.useMemo(
     () => teams.find((t) => t.id === selectedTeamId) || null,
-    [teams, selectedTeamId]
+    [teams, selectedTeamId],
   );
 
   const { assignees: drawerUsers } = useTeamAssignees({
@@ -142,18 +167,22 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
 
   const teamProjects = React.useMemo(
     () => projects.filter((p) => p.teamId === selectedTeamId),
-    [projects, selectedTeamId]
+    [projects, selectedTeamId],
   );
 
   const filteredTasks = React.useMemo(() => {
     if (!selectedTeamId || !selectedProjectId) return [];
     const scoped = tasks.filter(
-      (t) => t.teamId === selectedTeamId && t.projectId === selectedProjectId
+      (t) => t.teamId === selectedTeamId && t.projectId === selectedProjectId,
     );
     return filterTasks(scoped, filters);
   }, [tasks, selectedTeamId, selectedProjectId, filters]);
 
-  const handleMoveTask = (taskId: string, status: TaskStatus, targetIndex?: number) => {
+  const handleMoveTask = (
+    taskId: string,
+    status: TaskStatus,
+    targetIndex?: number,
+  ) => {
     setTasks((prev) => {
       const taskIndex = prev.findIndex((t) => t.id === taskId);
       if (taskIndex === -1) return prev;
@@ -165,10 +194,13 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
 
       if (status === "in_progress" && currentTask.status !== "in_progress") {
         activeSessionStartedAt = now.toISOString();
-      } else if (currentTask.status === "in_progress" && status !== "in_progress") {
+      } else if (
+        currentTask.status === "in_progress" &&
+        status !== "in_progress"
+      ) {
         if (activeSessionStartedAt) {
           const elapsed = Math.round(
-            (now.getTime() - parseTimestampMs(activeSessionStartedAt)) / 1000
+            (now.getTime() - parseTimestampMs(activeSessionStartedAt)) / 1000,
           );
           // Anti-spam filter: discard optimistic elapsed time if moved out in < 1 minute (60s)
           if (elapsed >= 60) {
@@ -190,10 +222,17 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
       const targetColumnTasks = withoutTask.filter((t) => t.status === status);
 
       let insertIndex = withoutTask.length;
-      if (targetIndex !== undefined && targetIndex >= 0 && targetIndex < targetColumnTasks.length) {
+      if (
+        targetIndex !== undefined &&
+        targetIndex >= 0 &&
+        targetIndex < targetColumnTasks.length
+      ) {
         const referenceTask = targetColumnTasks[targetIndex];
         insertIndex = withoutTask.findIndex((t) => t.id === referenceTask.id);
-      } else if (targetIndex !== undefined && targetIndex >= targetColumnTasks.length) {
+      } else if (
+        targetIndex !== undefined &&
+        targetIndex >= targetColumnTasks.length
+      ) {
         if (targetColumnTasks.length > 0) {
           const lastTask = targetColumnTasks[targetColumnTasks.length - 1];
           insertIndex = withoutTask.findIndex((t) => t.id === lastTask.id) + 1;
@@ -241,8 +280,8 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
         selectedTeamId,
         sessionUser?.id || users[0]?.id || "",
         activeProj,
-        currentUser
-      )
+        currentUser,
+      ),
     );
     setIsDrawerOpen(true);
   };
@@ -266,7 +305,8 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
             creator: null,
             project: proj,
             totalSpentSeconds: 0,
-            activeSessionStartedAt: item.status === "in_progress" ? new Date().toISOString() : null,
+            activeSessionStartedAt:
+              item.status === "in_progress" ? new Date().toISOString() : null,
           },
           ...prev,
         ]);
@@ -288,7 +328,8 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
           } else if (t.status === "in_progress") {
             if (activeSessionStartedAt) {
               const elapsed = Math.round(
-                (now.getTime() - parseTimestampMs(activeSessionStartedAt)) / 1000
+                (now.getTime() - parseTimestampMs(activeSessionStartedAt)) /
+                  1000,
               );
               if (elapsed >= 60) {
                 totalSpentSeconds += elapsed;
@@ -303,7 +344,7 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
           totalSpentSeconds,
           activeSessionStartedAt,
         };
-      })
+      }),
     );
     updateTaskAction(item.id, {
       ...item,
@@ -317,7 +358,11 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
     handleProjectCreated(p);
   };
 
-  const handleCreatedTeam = async (data: { name: string; slug?: string; description?: string }) => {
+  const handleCreatedTeam = async (data: {
+    name: string;
+    slug?: string;
+    description?: string;
+  }) => {
     const res = await fetch("/api/teams", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -348,8 +393,8 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
             No teams yet
           </h2>
           <p className="mt-2 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-            Teams organize your projects, tasks, and members in one place. Create your first team to
-            get started.
+            Teams organize your projects, tasks, and members in one place.
+            Create your first team to get started.
           </p>
           <div className="mt-6 flex items-center gap-3">
             <Button onClick={() => setIsCreateTeamOpen(true)} className="gap-2">
@@ -379,7 +424,9 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
         selectedProjectId={selectedProjectId}
         onSelectTeam={handleSelectTeam}
         onSelectProject={handleSelectProject}
-        onOpenCreateProject={selectedTeamId ? () => setIsCreateProjectOpen(true) : undefined}
+        onOpenCreateProject={
+          selectedTeamId ? () => setIsCreateProjectOpen(true) : undefined
+        }
       />
 
       {!selectedTeamId ? (
@@ -391,11 +438,15 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                   Select a Team
                 </h1>
                 <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  Choose a team to view its projects and tasks, or create a new team to get started.
+                  Choose a team to view its projects and tasks, or create a new
+                  team to get started.
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button onClick={() => setIsCreateTeamOpen(true)} className="gap-2">
+                <Button
+                  onClick={() => setIsCreateTeamOpen(true)}
+                  className="gap-2"
+                >
                   <Plus className="size-4" />
                   <span>Create Team</span>
                 </Button>
@@ -407,8 +458,12 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {teams.map((team) => {
-                const teamProjectCount = projects.filter((p) => p.teamId === team.id).length;
-                const teamTaskCount = tasks.filter((t) => t.teamId === team.id).length;
+                const teamProjectCount = projects.filter(
+                  (p) => p.teamId === team.id,
+                ).length;
+                const teamTaskCount = tasks.filter(
+                  (t) => t.teamId === team.id,
+                ).length;
                 return (
                   <button
                     key={team.id}
@@ -421,7 +476,9 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                         <div className="flex size-10 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-700 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-300">
                           <Users className="size-5" />
                         </div>
-                        <span className="font-mono text-xs text-neutral-400">@{team.slug}</span>
+                        <span className="font-mono text-xs text-neutral-400">
+                          @{team.slug}
+                        </span>
                       </div>
                       <h3 className="mt-4 font-semibold text-neutral-900 group-hover:text-neutral-950 dark:text-neutral-100 dark:group-hover:text-white">
                         {team.name}
@@ -433,11 +490,13 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                     <div className="mt-5 flex items-center justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
                       <div className="flex items-center gap-3">
                         <span>
-                          {teamProjectCount} {teamProjectCount === 1 ? "project" : "projects"}
+                          {teamProjectCount}{" "}
+                          {teamProjectCount === 1 ? "project" : "projects"}
                         </span>
                         <span>•</span>
                         <span>
-                          {teamTaskCount} {teamTaskCount === 1 ? "task" : "tasks"}
+                          {teamTaskCount}{" "}
+                          {teamTaskCount === 1 ? "task" : "tasks"}
                         </span>
                       </div>
                       <ArrowRight className="size-4 text-neutral-400 transition-transform group-hover:translate-x-1" />
@@ -457,7 +516,9 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                 <span className="mt-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                   Create New Team
                 </span>
-                <span className="mt-1 text-xs text-neutral-400">Add a team workspace</span>
+                <span className="mt-1 text-xs text-neutral-400">
+                  Add a team workspace
+                </span>
               </button>
             </div>
           </div>
@@ -473,17 +534,24 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                 No projects in {activeTeam?.name || "this team"} yet
               </h2>
               <p className="mt-2 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-                Create your first project to start organizing tasks, assigning teammates, and
-                tracking progress.
+                Create your first project to start organizing tasks, assigning
+                teammates, and tracking progress.
               </p>
               <div className="mt-6 flex items-center gap-3">
-                <Button onClick={() => setIsCreateProjectOpen(true)} className="gap-2">
+                <Button
+                  onClick={() => setIsCreateProjectOpen(true)}
+                  className="gap-2"
+                >
                   <Plus className="size-4" />
                   <span>Create Project</span>
                 </Button>
                 <Button
                   variant="outline"
-                  render={<Link href={`/teams/${activeTeam?.slug || selectedTeamId}/projects`} />}
+                  render={
+                    <Link
+                      href={`/teams/${activeTeam?.slug || selectedTeamId}/projects`}
+                    />
+                  }
                 >
                   Manage Projects
                 </Button>
@@ -504,17 +572,25 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                     Select a Project
                   </h1>
                   <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    Choose a project to open its task board, or create a new project.
+                    Choose a project to open its task board, or create a new
+                    project.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button onClick={() => setIsCreateProjectOpen(true)} className="gap-2">
+                  <Button
+                    onClick={() => setIsCreateProjectOpen(true)}
+                    className="gap-2"
+                  >
                     <Plus className="size-4" />
                     <span>Create Project</span>
                   </Button>
                   <Button
                     variant="outline"
-                    render={<Link href={`/teams/${activeTeam?.slug || selectedTeamId}/projects`} />}
+                    render={
+                      <Link
+                        href={`/teams/${activeTeam?.slug || selectedTeamId}/projects`}
+                      />
+                    }
                   >
                     Manage Projects
                   </Button>
@@ -523,7 +599,9 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {teamProjects.map((project) => {
-                  const projectTasks = tasks.filter((t) => t.projectId === project.id);
+                  const projectTasks = tasks.filter(
+                    (t) => t.projectId === project.id,
+                  );
                   return (
                     <button
                       key={project.id}
@@ -536,7 +614,9 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                           <div className="flex items-center gap-2.5">
                             <span
                               className="shadow-xs size-3.5 shrink-0 rounded-full"
-                              style={{ backgroundColor: project.color || "#3b82f6" }}
+                              style={{
+                                backgroundColor: project.color || "#3b82f6",
+                              }}
                             />
                             <span className="font-mono text-xs text-neutral-400">
                               @{project.slug}
@@ -563,7 +643,8 @@ export function TaskDashboard({ initialTeamSlug, initialProjectSlug }: TaskDashb
                       </div>
                       <div className="mt-5 flex items-center justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
                         <span className="font-medium">
-                          {projectTasks.length} {projectTasks.length === 1 ? "task" : "tasks"}
+                          {projectTasks.length}{" "}
+                          {projectTasks.length === 1 ? "task" : "tasks"}
                         </span>
                         <ArrowRight className="size-4 text-neutral-400 transition-transform group-hover:translate-x-1" />
                       </div>

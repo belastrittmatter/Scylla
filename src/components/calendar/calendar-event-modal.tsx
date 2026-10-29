@@ -61,7 +61,10 @@ export function CalendarEventModal({
     }
   }
 
-  const attendees = React.useMemo(() => event?.data?.attendees || [], [event?.data?.attendees]);
+  const attendees = React.useMemo(
+    () => event?.data?.attendees || [],
+    [event?.data?.attendees],
+  );
 
   const filteredAttendees = React.useMemo(() => {
     if (!attendeeFilter.trim()) return attendees;
@@ -69,7 +72,7 @@ export function CalendarEventModal({
     return attendees.filter(
       (a) =>
         (a.name && a.name.toLowerCase().includes(q)) ||
-        (a.email && a.email.toLowerCase().includes(q))
+        (a.email && a.email.toLowerCase().includes(q)),
     );
   }, [attendees, attendeeFilter]);
 
@@ -81,7 +84,7 @@ export function CalendarEventModal({
 
   const durationMinutes = Math.max(
     1,
-    Math.round((event.end.getTime() - event.start.getTime()) / 60000)
+    Math.round((event.end.getTime() - event.start.getTime()) / 60000),
   );
   const durationLabel =
     durationMinutes >= 60
@@ -174,9 +177,13 @@ export function CalendarEventModal({
               >
                 <span
                   className="size-1.5 rounded-full"
-                  style={{ backgroundColor: event.data.project.color || "#2563eb" }}
+                  style={{
+                    backgroundColor: event.data.project.color || "#2563eb",
+                  }}
                 />
-                <span className="max-w-[120px] truncate">{event.data.project.name}</span>
+                <span className="max-w-[120px] truncate">
+                  {event.data.project.name}
+                </span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
@@ -207,7 +214,8 @@ export function CalendarEventModal({
             <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
               <Clock className="size-4 shrink-0 text-neutral-400" />
               <span>
-                {format(event.start, "h:mm a")} – {format(event.end, "h:mm a")} ({durationLabel})
+                {format(event.start, "h:mm a")} – {format(event.end, "h:mm a")}{" "}
+                ({durationLabel})
               </span>
             </div>
           </div>
@@ -218,7 +226,9 @@ export function CalendarEventModal({
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 <div
                   className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
-                  style={{ backgroundColor: event.data.project.color || "#2563eb" }}
+                  style={{
+                    backgroundColor: event.data.project.color || "#2563eb",
+                  }}
                 >
                   <FolderGit2 className="size-4" />
                 </div>
@@ -263,7 +273,10 @@ export function CalendarEventModal({
                     <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                       Google Meet
                     </p>
-                    <p className="truncate text-[11px] text-neutral-500" title={meetingUrl}>
+                    <p
+                      className="truncate text-[11px] text-neutral-500"
+                      title={meetingUrl}
+                    >
                       {meetingUrl}
                     </p>
                   </div>
@@ -304,7 +317,10 @@ export function CalendarEventModal({
           )}
 
           {/* Location & Room Details */}
-          <CalendarEventLocationSection roomDetails={roomDetails} location={location} />
+          <CalendarEventLocationSection
+            roomDetails={roomDetails}
+            location={location}
+          />
 
           {/* Organizer */}
           {organizer && (
@@ -316,7 +332,10 @@ export function CalendarEventModal({
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <Avatar className="size-7 shrink-0 text-[10px]">
                     {organizer.avatar && (
-                      <AvatarImage src={organizer.avatar} alt={organizer.name} />
+                      <AvatarImage
+                        src={organizer.avatar}
+                        alt={organizer.name}
+                      />
                     )}
                     <AvatarFallback className="bg-orange-500 text-[10px] font-bold text-white">
                       {(organizer.name || organizer.email || "H")
@@ -333,14 +352,18 @@ export function CalendarEventModal({
                     </p>
                     {organizer.email &&
                       organizer.name &&
-                      organizer.email.toLowerCase() !== organizer.name.toLowerCase() && (
+                      organizer.email.toLowerCase() !==
+                        organizer.name.toLowerCase() && (
                         <p className="mt-0.5 truncate text-[10px] leading-tight text-neutral-500 dark:text-neutral-400">
                           {organizer.email}
                         </p>
                       )}
                   </div>
                 </div>
-                <Badge variant="secondary" className="shrink-0 gap-1 text-[10px] font-medium">
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 gap-1 text-[10px] font-medium"
+                >
                   <ShieldCheck className="size-3 text-orange-600" /> Host
                 </Badge>
               </div>

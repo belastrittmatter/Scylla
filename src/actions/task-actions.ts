@@ -18,9 +18,15 @@ import {
   CreateTaskPayloadSchema,
   CreateTaskCommentPayloadSchema,
 } from "./schemas";
-import { getSessionUserId, resolveActionUserId, type ActionResult } from "./auth-helper";
+import {
+  getSessionUserId,
+  resolveActionUserId,
+  type ActionResult,
+} from "./auth-helper";
 
-export async function getWorkspaceDataAction(): Promise<ActionResult<WorkspaceData>> {
+export async function getWorkspaceDataAction(): Promise<
+  ActionResult<WorkspaceData>
+> {
   try {
     const userId = await getSessionUserId();
     const data = await TaskService.getWorkspaceData(userId || undefined);
@@ -28,51 +34,65 @@ export async function getWorkspaceDataAction(): Promise<ActionResult<WorkspaceDa
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to load workspace data",
+      error:
+        err instanceof Error ? err.message : "Failed to load workspace data",
     };
   }
 }
 
 export async function updateTaskStatusAction(
   taskId: string,
-  status: string
+  status: string,
 ): Promise<ActionResult<Task>> {
   try {
     const idParse = z.string().min(1, "Task ID is required").safeParse(taskId);
     if (!idParse.success)
-      return { success: false, error: idParse.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: idParse.error.issues.map((i) => i.message).join(", "),
+      };
 
     const statusParse = UpdateTaskStatusSchema.safeParse({ status });
     if (!statusParse.success)
-      return { success: false, error: statusParse.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: statusParse.error.issues.map((i) => i.message).join(", "),
+      };
 
     const userId = await resolveActionUserId().catch(() => null);
     const updated = await TaskService.updateTask(
       idParse.data,
       { status: statusParse.data.status },
-      userId ?? undefined
+      userId ?? undefined,
     );
     return { success: true, data: updated };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to update task status",
+      error:
+        err instanceof Error ? err.message : "Failed to update task status",
     };
   }
 }
 
 export async function updateTaskAction(
   taskId: string,
-  payload: UpdateTaskActionPayload
+  payload: UpdateTaskActionPayload,
 ): Promise<ActionResult<Task>> {
   try {
     const idParse = z.string().min(1, "Task ID is required").safeParse(taskId);
     if (!idParse.success)
-      return { success: false, error: idParse.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: idParse.error.issues.map((i) => i.message).join(", "),
+      };
 
     const payloadParse = UpdateTaskPayloadSchema.safeParse(payload);
     if (!payloadParse.success)
-      return { success: false, error: payloadParse.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: payloadParse.error.issues.map((i) => i.message).join(", "),
+      };
 
     const parsedData = payloadParse.data;
     const dueDate = parsedData.dueDate
@@ -85,21 +105,27 @@ export async function updateTaskAction(
     const updated = await TaskService.updateTask(
       idParse.data,
       { ...parsedData, dueDate },
-      userId ?? undefined
+      userId ?? undefined,
     );
     return { success: true, data: updated };
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Failed to update task" };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to update task",
+    };
   }
 }
 
 export async function createProjectAction(
-  payload: CreateProjectActionPayload
+  payload: CreateProjectActionPayload,
 ): Promise<ActionResult<Project>> {
   try {
     const parseResult = CreateProjectPayloadSchema.safeParse(payload);
     if (!parseResult.success)
-      return { success: false, error: parseResult.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: parseResult.error.issues.map((i) => i.message).join(", "),
+      };
 
     const created = await ProjectService.createProject({
       name: parseResult.data.name,
@@ -118,12 +144,15 @@ export async function createProjectAction(
 }
 
 export async function createTaskAction(
-  payload: CreateTaskActionPayload
+  payload: CreateTaskActionPayload,
 ): Promise<ActionResult<Task>> {
   try {
     const parseResult = CreateTaskPayloadSchema.safeParse(payload);
     if (!parseResult.success)
-      return { success: false, error: parseResult.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: parseResult.error.issues.map((i) => i.message).join(", "),
+      };
 
     const creatorId = await resolveActionUserId();
     const parsedData = parseResult.data;
@@ -147,12 +176,15 @@ export async function createTaskAction(
     });
     return { success: true, data: created };
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Failed to create task" };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to create task",
+    };
   }
 }
 
 export async function getTaskCommentsAction(
-  taskId: string
+  taskId: string,
 ): Promise<ActionResult<Array<TaskComment & { user: TaskUser | null }>>> {
   try {
     if (!taskId) return { success: false, error: "Task ID is required" };
@@ -161,7 +193,8 @@ export async function getTaskCommentsAction(
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to fetch task comments",
+      error:
+        err instanceof Error ? err.message : "Failed to fetch task comments",
     };
   }
 }
@@ -173,7 +206,10 @@ export async function createTaskCommentAction(payload: {
   try {
     const parseResult = CreateTaskCommentPayloadSchema.safeParse(payload);
     if (!parseResult.success)
-      return { success: false, error: parseResult.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: parseResult.error.issues.map((i) => i.message).join(", "),
+      };
 
     const userId = await resolveActionUserId();
     const comment = await TaskService.createTaskComment({
@@ -183,6 +219,9 @@ export async function createTaskCommentAction(payload: {
     });
     return { success: true, data: comment };
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Failed to add comment" };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to add comment",
+    };
   }
 }

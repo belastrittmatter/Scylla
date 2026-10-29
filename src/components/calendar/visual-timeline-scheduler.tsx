@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
 import type { Teammate } from "@/services/user";
-import type { ParticipantSchedule, TimeInterval } from "./visual-timeline/timeline-types";
+import type {
+  ParticipantSchedule,
+  TimeInterval,
+} from "./visual-timeline/timeline-types";
 import {
   DAY_START_MIN,
   DAY_END_MIN,
@@ -25,7 +28,10 @@ export type {
   ParticipantSchedule,
   RoomSchedule,
 } from "./visual-timeline/timeline-types";
-export { MOCK_PARTICIPANTS, MOCK_ROOM_SCHEDULES } from "./visual-timeline/timeline-types";
+export {
+  MOCK_PARTICIPANTS,
+  MOCK_ROOM_SCHEDULES,
+} from "./visual-timeline/timeline-types";
 
 interface VisualTimelineSchedulerProps {
   selectedRoomId: string;
@@ -46,7 +52,8 @@ export function VisualTimelineScheduler({
   selectedParticipants,
   onToggleParticipant,
 }: VisualTimelineSchedulerProps) {
-  const [participants, setParticipants] = React.useState<ParticipantSchedule[]>(MOCK_PARTICIPANTS);
+  const [participants, setParticipants] =
+    React.useState<ParticipantSchedule[]>(MOCK_PARTICIPANTS);
   const { data: session } = useSession();
   const userSearch = useUserSearch({ limit: 5 });
   const [isSyncingRooms, setIsSyncingRooms] = React.useState(false);
@@ -72,7 +79,7 @@ export function VisualTimelineScheduler({
                     name: session.user.name || p.name,
                     avatar: session.user.image ?? p.avatar,
                   }
-                : p
+                : p,
             );
           }
           return [
@@ -94,9 +101,13 @@ export function VisualTimelineScheduler({
     setIsSyncingRooms(true);
     try {
       const res = await apiClient.rooms.sync();
-      toast.success(`Google Workspace room catalog synced! (${res.rooms.length} rooms)`);
+      toast.success(
+        `Google Workspace room catalog synced! (${res.rooms.length} rooms)`,
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to sync room catalog");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to sync room catalog",
+      );
     } finally {
       setIsSyncingRooms(false);
     }
@@ -104,7 +115,7 @@ export function VisualTimelineScheduler({
 
   const handleAddTeammate = (teammate: Teammate) => {
     const existing = participants.find(
-      (p) => p.email.toLowerCase() === teammate.email.toLowerCase()
+      (p) => p.email.toLowerCase() === teammate.email.toLowerCase(),
     );
     if (existing) {
       if (!selectedParticipants.includes(existing.id)) {
@@ -120,7 +131,9 @@ export function VisualTimelineScheduler({
       name: teammate.name,
       email: teammate.email,
       avatar: teammate.image ?? undefined,
-      busySlots: [{ startMin: 11 * 60, endMin: 12 * 60, label: "Busy: 11:00-12:00" }],
+      busySlots: [
+        { startMin: 11 * 60, endMin: 12 * 60, label: "Busy: 11:00-12:00" },
+      ],
     };
 
     setParticipants((prev) => [...prev, newParticipant]);
@@ -159,21 +172,29 @@ export function VisualTimelineScheduler({
 
         onSelectTimeSlot(startMin, endMin);
         toast.success(
-          `Found ${openSlots.length} conflict-free slots via /api/slots/find! Selected ${firstSlot.start.slice(11, 16)}–${firstSlot.end.slice(11, 16)}.`
+          `Found ${openSlots.length} conflict-free slots via /api/slots/find! Selected ${firstSlot.start.slice(11, 16)}–${firstSlot.end.slice(11, 16)}.`,
         );
       } else {
         toast.info("No open slots found for all chosen participants");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error querying backend slot finder");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Error querying backend slot finder",
+      );
     } finally {
       setIsComputingSlots(false);
     }
   };
 
   const sharedFreeIntervals = React.useMemo(() => {
-    let freeIntervals: TimeInterval[] = [{ startMin: DAY_START_MIN, endMin: DAY_END_MIN }];
-    const activeParticipants = participants.filter((p) => selectedParticipants.includes(p.id));
+    let freeIntervals: TimeInterval[] = [
+      { startMin: DAY_START_MIN, endMin: DAY_END_MIN },
+    ];
+    const activeParticipants = participants.filter((p) =>
+      selectedParticipants.includes(p.id),
+    );
 
     for (const p of activeParticipants) {
       for (const busy of p.busySlots) {
@@ -197,7 +218,10 @@ export function VisualTimelineScheduler({
     return freeIntervals.filter((i) => i.endMin - i.startMin >= 15);
   }, [participants, selectedParticipants]);
 
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>, roomId?: string) => {
+  const handleTimelineClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    roomId?: string,
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
@@ -215,7 +239,10 @@ export function VisualTimelineScheduler({
 
   return (
     <div className="flex w-full flex-col rounded-2xl border border-neutral-200/90 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <TimelineHeader selectedStartMin={selectedStartMin} selectedEndMin={selectedEndMin} />
+      <TimelineHeader
+        selectedStartMin={selectedStartMin}
+        selectedEndMin={selectedEndMin}
+      />
 
       <div className="relative mt-6 select-none overflow-x-auto">
         <div className="min-w-[850px]">

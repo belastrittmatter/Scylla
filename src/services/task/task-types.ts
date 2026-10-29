@@ -1,7 +1,13 @@
 import { z } from "zod";
 import type { Task } from "@/db/schema";
 
-export const TaskStatusSchema = z.enum(["todo", "in_progress", "in_review", "done", "cancelled"]);
+export const TaskStatusSchema = z.enum([
+  "todo",
+  "in_progress",
+  "in_review",
+  "done",
+  "cancelled",
+]);
 export type TaskStatus = z.infer<typeof TaskStatusSchema>;
 
 export const TaskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
@@ -61,8 +67,18 @@ export type TaskFilterInput = z.infer<typeof TaskFilterSchema>;
 
 export interface TaskWithRelations extends Task {
   creator?: { id: string; name: string; email: string; image?: string | null };
-  assignee?: { id: string; name: string; email: string; image?: string | null } | null;
-  project?: { id: string; name: string; slug: string; color?: string | null } | null;
+  assignee?: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+  } | null;
+  project?: {
+    id: string;
+    name: string;
+    slug: string;
+    color?: string | null;
+  } | null;
 }
 
 export type {

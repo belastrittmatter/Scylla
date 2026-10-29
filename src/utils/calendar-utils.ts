@@ -60,7 +60,7 @@ export function calculateEventPosition(
   startIso: string,
   endIso: string,
   startHour = CALENDAR_START_HOUR,
-  rowHeight = CALENDAR_ROW_HEIGHT
+  rowHeight = CALENDAR_ROW_HEIGHT,
 ) {
   const start = parseISO(startIso);
   const end = parseISO(endIso);
@@ -78,7 +78,7 @@ export function calculateEventPosition(
 export function calculateCurrentTimeTop(
   targetDate: Date,
   startHour = CALENDAR_START_HOUR,
-  rowHeight = CALENDAR_ROW_HEIGHT
+  rowHeight = CALENDAR_ROW_HEIGHT,
 ) {
   const currentHourFloat = targetDate.getHours() + targetDate.getMinutes() / 60;
   const offset = currentHourFloat - startHour;

@@ -11,7 +11,8 @@ interface RegisteredToolDef {
 }
 
 function getTools(server: unknown): Record<string, RegisteredToolDef> {
-  return (server as { _registeredTools: Record<string, RegisteredToolDef> })._registeredTools;
+  return (server as { _registeredTools: Record<string, RegisteredToolDef> })
+    ._registeredTools;
 }
 
 describe("MCP Team CRUD Tools Suite", () => {
@@ -25,17 +26,29 @@ describe("MCP Team CRUD Tools Suite", () => {
       [memberId, "member_crud@example.com", "Team Member"],
       [strangerId, "stranger_crud@example.com", "Stranger"],
     ]) {
-      const exists = await db.select().from(user).where(eq(user.id, id)).limit(1);
+      const exists = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, id))
+        .limit(1);
       if (exists.length === 0) {
         await db
           .insert(user)
-          .values({ id, email, name, createdAt: new Date(), updatedAt: new Date() });
+          .values({
+            id,
+            email,
+            name,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
       }
     }
   });
 
   afterAll(async () => {
-    await db.delete(user).where(inArray(user.id, [ownerId, memberId, strangerId]));
+    await db
+      .delete(user)
+      .where(inArray(user.id, [ownerId, memberId, strangerId]));
   });
 
   it("registers all 7 team CRUD tools", async () => {
@@ -127,7 +140,9 @@ describe("MCP Team CRUD Tools Suite", () => {
     expect(removeMemberRes.isError).toBeFalsy();
 
     // 10. delete_team by stranger fails
-    const strangerDelete = await strangerTools["delete_team"].handler({ teamId });
+    const strangerDelete = await strangerTools["delete_team"].handler({
+      teamId,
+    });
     expect(strangerDelete.isError).toBe(true);
 
     // 11. delete_team by owner succeeds

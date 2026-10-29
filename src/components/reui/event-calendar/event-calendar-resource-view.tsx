@@ -77,7 +77,10 @@ function EventCalendarResourceView({
 
   const startHour = dayStartHour ?? settings.dayStartHour;
   const endHour = dayEndHour ?? settings.dayEndHour;
-  const interval = Math.min(Math.max(intervalProp ?? viewConfig.interval, 5), 240);
+  const interval = Math.min(
+    Math.max(intervalProp ?? viewConfig.interval, 5),
+    240,
+  );
   const contained = viewConfig.scrollMode !== "page";
   const day = zonedStartOfDay(anchorDate, settings.timeZone);
 
@@ -86,7 +89,7 @@ function EventCalendarResourceView({
       flattenResources(settings.resources)
         .filter(({ resource }) => !resource.children?.length)
         .map(({ resource }) => resource),
-    [settings.resources]
+    [settings.resources],
   );
 
   // Initial scroll + api.scrollToTime (same contract as the time grid)
@@ -95,8 +98,12 @@ function EventCalendarResourceView({
     if (!contained) return;
     const el = scrollRef.current;
     if (!el) return;
-    const viewport = el.querySelector<HTMLElement>("[data-slot=scroll-area-viewport]");
-    const slotRow = el.querySelector<HTMLElement>("[data-slot=event-calendar-time-gutter] > div");
+    const viewport = el.querySelector<HTMLElement>(
+      "[data-slot=scroll-area-viewport]",
+    );
+    const slotRow = el.querySelector<HTMLElement>(
+      "[data-slot=event-calendar-time-gutter] > div",
+    );
     const slotPx = slotRow?.getBoundingClientRect().height || 64;
     const pxPerMinute = slotPx / interval;
     const scrollTo = (minutes: number) => {
@@ -120,16 +127,18 @@ function EventCalendarResourceView({
     // 0px for overlay scrollbars and the custom ScrollArea, so both modes
     // lay out identically.
     const root = el.closest<HTMLElement>(
-      "[data-slot=event-calendar-time-grid], [data-slot=event-calendar-resource-view]"
+      "[data-slot=event-calendar-time-grid], [data-slot=event-calendar-resource-view]",
     );
     const syncScrollbarGutter = () => {
       root?.style.setProperty(
         "--ec-scrollbar-w",
-        `${viewport ? viewport.offsetWidth - viewport.clientWidth : 0}px`
+        `${viewport ? viewport.offsetWidth - viewport.clientWidth : 0}px`,
       );
     };
     syncScrollbarGutter();
-    const gutterObserver = viewport ? new ResizeObserver(syncScrollbarGutter) : null;
+    const gutterObserver = viewport
+      ? new ResizeObserver(syncScrollbarGutter)
+      : null;
     if (viewport) gutterObserver?.observe(viewport);
     return () => {
       instance.internals.registerScrollHandler(null);
@@ -158,16 +167,22 @@ function EventCalendarResourceView({
   // All-day segments for renderAllDaySection - the same index bucket the
   // cells read; inert (stable empty array, so the subscription never
   // re-renders) while the override is unset.
-  const allDaySegments = useEventCalendarSelector<unknown, EventCalendarSegment[]>(
+  const allDaySegments = useEventCalendarSelector<
+    unknown,
+    EventCalendarSegment[]
+  >(
     () =>
       viewConfig.renderAllDaySection
-        ? (instance.internals.getIndex().byDay.get(getDayKey(day, settings.timeZone))?.allDay ??
+        ? (instance.internals
+            .getIndex()
+            .byDay.get(getDayKey(day, settings.timeZone))?.allDay ??
           EMPTY_ALL_DAY_SEGMENTS)
         : EMPTY_ALL_DAY_SEGMENTS,
     {
       isEqual: (a, b) =>
-        a === b || (a.length === b.length && a.every((segment, i) => segment === b[i])),
-    }
+        a === b ||
+        (a.length === b.length && a.every((segment, i) => segment === b[i])),
+    },
   );
 
   const gridTemplateColumns = `repeat(${resources.length || 1}, minmax(var(--ec-resource-col-min,8rem), 1fr))`;
@@ -195,7 +210,11 @@ function EventCalendarResourceView({
         ))}
       </div>
       {effective.nowIndicator && (
-        <EventCalendarNowIndicator days={[day]} startHour={startHour} endHour={endHour} />
+        <EventCalendarNowIndicator
+          days={[day]}
+          startHour={startHour}
+          endHour={endHour}
+        />
       )}
     </div>
   );
@@ -207,7 +226,7 @@ function EventCalendarResourceView({
       "flex flex-col border-t",
       contained && "min-h-0 flex-1 overflow-hidden",
       viewConfig.classNames?.timeGrid,
-      className
+      className,
     ),
     style: { "--ec-hour-height": "4rem" } as CSSProperties,
     children: (
@@ -216,8 +235,9 @@ function EventCalendarResourceView({
         <div
           className={cn(
             "pe-(--ec-scrollbar-w,0px) flex border-b",
-            !contained && "bg-background top-(--ec-sticky-offset,0px) sticky z-20",
-            viewConfig.classNames?.timeGridHeader
+            !contained &&
+              "bg-background top-(--ec-sticky-offset,0px) sticky z-20",
+            viewConfig.classNames?.timeGridHeader,
           )}
         >
           <div className="w-(--ec-gutter-width,4.5rem) shrink-0 border-e" />
@@ -228,10 +248,11 @@ function EventCalendarResourceView({
                 data-slot="event-calendar-resource-header"
                 className={cn(
                   "min-w-0 truncate border-e px-2 py-1.5 text-center font-medium last:border-e-0",
-                  viewConfig.classNames?.resourceHeader
+                  viewConfig.classNames?.resourceHeader,
                 )}
               >
-                {viewConfig.renderResourceHeader?.({ resource }) ?? resource.title}
+                {viewConfig.renderResourceHeader?.({ resource }) ??
+                  resource.title}
               </div>
             ))}
           </div>
@@ -242,7 +263,7 @@ function EventCalendarResourceView({
             data-slot="event-calendar-all-day-section"
             className={cn(
               "pe-(--ec-scrollbar-w,0px) flex border-b",
-              viewConfig.classNames?.allDaySection
+              viewConfig.classNames?.allDaySection,
             )}
           >
             {viewConfig.renderAllDaySection?.({
@@ -257,14 +278,17 @@ function EventCalendarResourceView({
                     // baseline as the first all-day chip and stays top-aligned when
                     // the chips wrap onto more lanes (mirrors the time-grid label)
                     "text-muted-foreground w-(--ec-gutter-width,4.5rem) shrink-0 border-e pe-2.5 ps-2 pt-1.5",
-                    viewConfig.classNames?.allDayLabel
+                    viewConfig.classNames?.allDayLabel,
                   )}
                 >
                   <span className="flex h-[calc(var(--ec-month-bar-h,1.625rem)-0.125rem)] items-center justify-end">
                     {settings.i18n.labels.allDay}
                   </span>
                 </div>
-                <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns }}>
+                <div
+                  className="grid min-w-0 flex-1"
+                  style={{ gridTemplateColumns }}
+                >
                   {resources.map((resource) => (
                     <EventCalendarResourceAllDayCell
                       key={resource.id}
@@ -322,7 +346,7 @@ function EventCalendarResourceAllDayCell({
   const gestures = useEventCalendarGestures();
   const { segments } = useEventCalendarDay(day);
   const mine = segments.allDay.filter(
-    (segment) => segment.occurrence.event.resourceId === resource.id
+    (segment) => segment.occurrence.event.resourceId === resource.id,
   );
   const dayStart = zonedStartOfDay(day, settings.timeZone);
   const dayEnd = addDays(toZoned(dayStart, settings.timeZone), 1);
@@ -334,11 +358,15 @@ function EventCalendarResourceAllDayCell({
         ? viewConfig.offDays
         : true
       : false,
-    settings.weekendDays
+    settings.weekendDays,
   );
   const offClassName =
-    (typeof viewConfig.offDays === "object" && viewConfig.offDays.className) || "bg-muted/25";
-  const isDropTarget = useEventCalendarSelector<unknown, "valid" | "invalid" | null>((state) => {
+    (typeof viewConfig.offDays === "object" && viewConfig.offDays.className) ||
+    "bg-muted/25";
+  const isDropTarget = useEventCalendarSelector<
+    unknown,
+    "valid" | "invalid" | null
+  >((state) => {
     const drag = state.drag;
     if (!drag || !drag.proposedDayGranular) return null;
     const covered = drag.proposedStart < dayEnd && drag.proposedEnd > dayStart;
@@ -375,15 +403,19 @@ function EventCalendarResourceAllDayCell({
             EVENT_CALENDAR_SLOT_DRAFT.segment,
             EVENT_CALENDAR_SLOT_DRAFT.segmentStart,
             EVENT_CALENDAR_SLOT_DRAFT.segmentEnd,
-            viewConfig.classNames?.slotDraft
+            viewConfig.classNames?.slotDraft,
           ),
-        viewConfig.classNames?.allDayCell
+        viewConfig.classNames?.allDayCell,
       )}
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) gestures.beginCreate(e, day, true);
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !wasRecentDrag() && !wasRecentChipPress()) {
+        if (
+          e.target === e.currentTarget &&
+          !wasRecentDrag() &&
+          !wasRecentChipPress()
+        ) {
           settings.onSlotClick?.(
             {
               date: dayStart,
@@ -391,7 +423,7 @@ function EventCalendarResourceAllDayCell({
               view: "resource",
               resourceId: resource.id,
             },
-            e
+            e,
           );
         }
       }}
@@ -412,8 +444,10 @@ function EventCalendarResourceAllDayCell({
           data-drop-target={isDropTarget}
           className={cn(
             "pointer-events-none absolute inset-0.5 z-10 rounded-sm border border-dashed",
-            isDropTarget === "valid" ? "border-primary/50" : "border-destructive/60",
-            viewConfig.classNames?.dropIndicator
+            isDropTarget === "valid"
+              ? "border-primary/50"
+              : "border-destructive/60",
+            viewConfig.classNames?.dropIndicator,
           )}
         />
       )}
@@ -447,10 +481,11 @@ function EventCalendarResourceColumn({
         ? viewConfig.offDays
         : true
       : false,
-    settings.weekendDays
+    settings.weekendDays,
   );
   const offClassName =
-    (typeof viewConfig.offDays === "object" && viewConfig.offDays.className) || "bg-muted/25";
+    (typeof viewConfig.offDays === "object" && viewConfig.offDays.className) ||
+    "bg-muted/25";
 
   const timeZone = settings.timeZone;
   const dayStart = zonedStartOfDay(day, timeZone);
@@ -495,13 +530,17 @@ function EventCalendarResourceColumn({
       // Moves carry a proposedResourceId (they can cross columns); resizes stay
       // in place and leave it undefined, so fall back to the event's own
       // resource - otherwise the resize ghost is filtered out of every column.
-      const targetResourceId = drag.proposedResourceId ?? drag.occurrence.event.resourceId;
+      const targetResourceId =
+        drag.proposedResourceId ?? drag.occurrence.event.resourceId;
       if (targetResourceId !== resource.id) return null;
       const from = Math.max(
         (drag.proposedStart.getTime() - dayStart.getTime()) / 60000,
-        boundsStartMin
+        boundsStartMin,
       );
-      const to = Math.min((drag.proposedEnd.getTime() - dayStart.getTime()) / 60000, boundsEndMin);
+      const to = Math.min(
+        (drag.proposedEnd.getTime() - dayStart.getTime()) / 60000,
+        boundsEndMin,
+      );
       if (to <= from) return null;
       return {
         window: [from, to] as [number, number],
@@ -524,13 +563,16 @@ function EventCalendarResourceColumn({
           a.valid === b.valid &&
           a.proposedStart.getTime() === b.proposedStart.getTime() &&
           a.proposedEnd.getTime() === b.proposedEnd.getTime()),
-    }
+    },
   );
 
   // Instants behind `draftWindow` below, for the range readout. Same
   // resource filter, so a draft on a neighbouring resource never labels this
   // column.
-  const draftRange = useEventCalendarSelector<unknown, { start: Date; end: Date } | null>(
+  const draftRange = useEventCalendarSelector<
+    unknown,
+    { start: Date; end: Date } | null
+  >(
     (state) => {
       const draft = state.slotDraft;
       if (!draft || draft.allDay || draft.resourceId !== resource.id) {
@@ -545,22 +587,32 @@ function EventCalendarResourceColumn({
           b !== null &&
           a.start.getTime() === b.start.getTime() &&
           a.end.getTime() === b.end.getTime()),
-    }
+    },
   );
 
-  const draftWindow = useEventCalendarSelector<unknown, [number, number] | null>(
+  const draftWindow = useEventCalendarSelector<
+    unknown,
+    [number, number] | null
+  >(
     (state) => {
       const draft = state.slotDraft;
       if (!draft || draft.allDay || draft.resourceId !== resource.id) {
         return null;
       }
-      const from = Math.max((draft.start.getTime() - dayStart.getTime()) / 60000, boundsStartMin);
-      const to = Math.min((draft.end.getTime() - dayStart.getTime()) / 60000, boundsEndMin);
+      const from = Math.max(
+        (draft.start.getTime() - dayStart.getTime()) / 60000,
+        boundsStartMin,
+      );
+      const to = Math.min(
+        (draft.end.getTime() - dayStart.getTime()) / 60000,
+        boundsEndMin,
+      );
       return to > from ? [from, to] : null;
     },
     {
-      isEqual: (a, b) => a === b || (a !== null && b !== null && a[0] === b[0] && a[1] === b[1]),
-    }
+      isEqual: (a, b) =>
+        a === b || (a !== null && b !== null && a[0] === b[0] && a[1] === b[1]),
+    },
   );
 
   return (
@@ -572,7 +624,9 @@ function EventCalendarResourceColumn({
       data-ec-bounds-start={boundsStartMin}
       data-ec-bounds-end={boundsEndMin}
       data-ec-resource={resource.id}
-      data-drop-target={dragGhost ? (dragGhost.valid ? "valid" : "invalid") : undefined}
+      data-drop-target={
+        dragGhost ? (dragGhost.valid ? "valid" : "invalid") : undefined
+      }
       role="group"
       aria-label={resource.title}
       className={cn(
@@ -582,7 +636,7 @@ function EventCalendarResourceColumn({
         // header marks it); only a consumer todayClassName can tint it
         isToday && viewConfig.todayClassName,
         viewConfig.dayClassName?.(day),
-        viewConfig.classNames?.dayColumn
+        viewConfig.classNames?.dayColumn,
       )}
       style={{
         height: `calc(var(--ec-hour-height) * ${boundsMinutes / 60})`,
@@ -592,16 +646,21 @@ function EventCalendarResourceColumn({
         if (e.target === e.currentTarget) gestures.beginCreate(e, day, false);
       }}
       onClick={(e) => {
-        if (e.target !== e.currentTarget || wasRecentDrag() || wasRecentChipPress()) return;
+        if (
+          e.target !== e.currentTarget ||
+          wasRecentDrag() ||
+          wasRecentChipPress()
+        )
+          return;
         const rect = e.currentTarget.getBoundingClientRect();
         const pxPerMinute = rect.height / boundsMinutes;
         const minutes = snapMinutes(
           boundsStartMin + (e.clientY - rect.top) / pxPerMinute,
-          settings.snapDuration
+          settings.snapDuration,
         );
         const clamped = Math.min(
           Math.max(minutes, boundsStartMin),
-          boundsEndMin - settings.slotDuration
+          boundsEndMin - settings.slotDuration,
         );
         settings.onSlotClick?.(
           {
@@ -611,7 +670,7 @@ function EventCalendarResourceColumn({
             view: "resource",
             resourceId: resource.id,
           },
-          e
+          e,
         );
       }}
     >
@@ -650,7 +709,7 @@ function EventCalendarResourceColumn({
                 endMin - startMin < viewConfig.compactEventMinutes
                   ? "h-full gap-1 py-0 leading-4"
                   : "h-full flex-col items-start justify-start gap-0 py-1",
-                viewConfig.classNames?.timedChip
+                viewConfig.classNames?.timedChip,
               )}
             />
           </div>
@@ -667,16 +726,23 @@ function EventCalendarResourceColumn({
           className={cn(
             "min-h-(--ec-event-min-h,1.5rem) pointer-events-none absolute inset-x-0.5 z-50",
             dragGhost.kind === "move"
-              ? cn(EVENT_CALENDAR_GHOST.move, !dragGhost.valid && EVENT_CALENDAR_GHOST.invalid)
+              ? cn(
+                  EVENT_CALENDAR_GHOST.move,
+                  !dragGhost.valid && EVENT_CALENDAR_GHOST.invalid,
+                )
               : cn(
                   EVENT_CALENDAR_GHOST.resize,
-                  !dragGhost.valid && EVENT_CALENDAR_GHOST.invalidResize
+                  !dragGhost.valid && EVENT_CALENDAR_GHOST.invalidResize,
                 ),
-            viewConfig.classNames?.dragGhost
+            viewConfig.classNames?.dragGhost,
           )}
           style={
             {
-              ...minuteBlockStyle(dragGhost.window[0], dragGhost.window[1], boundsStartMin),
+              ...minuteBlockStyle(
+                dragGhost.window[0],
+                dragGhost.window[1],
+                boundsStartMin,
+              ),
               "--ec-event-color": dragGhost.color ?? "var(--color-primary)",
             } as CSSProperties
           }
@@ -700,12 +766,13 @@ function EventCalendarResourceColumn({
                 endMin: dragGhost.window[1],
               }}
               className={cn(
-                dragGhost.window[1] - dragGhost.window[0] < viewConfig.compactEventMinutes
+                dragGhost.window[1] - dragGhost.window[0] <
+                  viewConfig.compactEventMinutes
                   ? "h-full gap-1 py-0 leading-4"
                   : "h-full flex-col items-start justify-start gap-0 py-1",
                 viewConfig.classNames?.timedChip,
                 "inset-ring-0",
-                !dragGhost.valid && EVENT_CALENDAR_GHOST.invalidContent
+                !dragGhost.valid && EVENT_CALENDAR_GHOST.invalidContent,
               )}
             />
           )}
@@ -717,9 +784,13 @@ function EventCalendarResourceColumn({
           className={cn(
             EVENT_CALENDAR_SLOT_DRAFT.box,
             "pointer-events-none absolute inset-x-0.5 z-40 overflow-hidden",
-            viewConfig.classNames?.slotDraft
+            viewConfig.classNames?.slotDraft,
           )}
-          style={minuteBlockStyle(draftWindow[0], draftWindow[1], boundsStartMin)}
+          style={minuteBlockStyle(
+            draftWindow[0],
+            draftWindow[1],
+            boundsStartMin,
+          )}
         >
           {draftRange && (
             <span className={cn("block", EVENT_CALENDAR_SLOT_DRAFT.label)}>
@@ -727,7 +798,7 @@ function EventCalendarResourceColumn({
                 toZoned(draftRange.start, settings.timeZone),
                 toZoned(draftRange.end, settings.timeZone),
                 false,
-                { locale: settings.locale }
+                { locale: settings.locale },
               )}
             </span>
           )}

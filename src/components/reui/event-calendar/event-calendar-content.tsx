@@ -28,7 +28,10 @@ const DEFAULT_VIEW_COMPONENTS: Record<CalendarView, ComponentType> = {
   resource: EventCalendarResourceView,
 };
 
-interface EventCalendarContentProps extends Omit<useRender.ComponentProps<"div">, "children"> {
+interface EventCalendarContentProps extends Omit<
+  useRender.ComponentProps<"div">,
+  "children"
+> {
   /** Swap individual view implementations. */
   components?: Partial<Record<CalendarView, ComponentType>>;
   /** Replaces the switchboard entirely; read useEventCalendarView() inside. */
@@ -63,7 +66,7 @@ function EventCalendarContent({
       "relative flex min-h-0 min-w-0 flex-1 flex-col",
       "data-loading:pointer-events-none data-loading:opacity-60",
       viewConfig.classNames?.content,
-      className
+      className,
     ),
     children: children ?? <ActiveView />,
   };

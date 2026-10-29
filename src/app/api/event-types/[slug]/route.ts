@@ -41,8 +41,13 @@ export async function GET(_req: Request, context: RouteParams) {
     return Response.json({ eventType: et, host }, { status: 200 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch event type details" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch event type details",
+      },
+      { status: 500 },
     );
   }
 }

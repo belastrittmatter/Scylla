@@ -18,7 +18,8 @@ describe("Domain Services", () => {
       expect(alexResults.length).toBeGreaterThan(0);
       expect(alexResults[0].name).toContain("Alex");
 
-      const emailResults = await UserService.searchTeammates("user1@example.com");
+      const emailResults =
+        await UserService.searchTeammates("user1@example.com");
       expect(emailResults.length).toBe(1);
       expect(emailResults[0].email).toBe("user1@example.com");
     });
@@ -32,7 +33,9 @@ describe("Domain Services", () => {
 
     test("searchTeammates includes Google Directory users even when DB has users", async () => {
       const results = await UserService.searchTeammates("Sarah");
-      expect(results.some((u) => u.email.includes("sarah@example.com"))).toBe(true);
+      expect(results.some((u) => u.email.includes("sarah@example.com"))).toBe(
+        true,
+      );
     });
 
     test("searchTeammates respects limit parameter", async () => {
@@ -56,7 +59,9 @@ describe("Domain Services", () => {
     });
 
     test("listRooms filters by features", async () => {
-      const rooms = await RoomService.listRooms({ features: ["video-conference"] });
+      const rooms = await RoomService.listRooms({
+        features: ["video-conference"],
+      });
       expect(rooms.length).toBeGreaterThan(0);
       for (const r of rooms) {
         expect(r.features).toContain("video-conference");
@@ -82,7 +87,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         9,
         0,
-        0
+        0,
       );
       const end = new Date(
         nextDate.getFullYear(),
@@ -90,7 +95,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         17,
         0,
-        0
+        0,
       );
 
       const slots = await SchedulerService.findSlots({
@@ -121,7 +126,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         10,
         0,
-        0
+        0,
       );
       const meetingEnd = new Date(
         nextDate.getFullYear(),
@@ -129,7 +134,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         11,
         0,
-        0
+        0,
       );
 
       // Create a booking where usr_test_user is organizer, and usr_alex_rivera is in attendees JSON
@@ -147,7 +152,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         9,
         0,
-        0
+        0,
       );
       const dayEnd = new Date(
         nextDate.getFullYear(),
@@ -155,7 +160,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         17,
         0,
-        0
+        0,
       );
 
       // Search slots for alex@example.com on that day
@@ -209,7 +214,10 @@ describe("Domain Services", () => {
       const now = new Date();
       const bookingDate = new Date(now.getTime() + 48 * 3600 * 1000);
 
-      const agenda = await BookingService.getAgenda("usr_alex_rivera", bookingDate);
+      const agenda = await BookingService.getAgenda(
+        "usr_alex_rivera",
+        bookingDate,
+      );
       expect(Array.isArray(agenda)).toBe(true);
       expect(agenda.some((b) => b.id === createdBookingId)).toBe(true);
     });
@@ -225,8 +233,12 @@ describe("Domain Services", () => {
       });
 
       expect(updated.id).toBe(createdBookingId);
-      expect(new Date(updated.startTime).toISOString()).toBe(newStart.toISOString());
-      expect(new Date(updated.endTime).toISOString()).toBe(newEnd.toISOString());
+      expect(new Date(updated.startTime).toISOString()).toBe(
+        newStart.toISOString(),
+      );
+      expect(new Date(updated.endTime).toISOString()).toBe(
+        newEnd.toISOString(),
+      );
     });
 
     test("cancel cancels booking and deletes GCal event", async () => {
@@ -235,7 +247,10 @@ describe("Domain Services", () => {
 
       const now = new Date();
       const bookingDate = new Date(now.getTime() + 50 * 3600 * 1000);
-      const agenda = await BookingService.getAgenda("usr_alex_rivera", bookingDate);
+      const agenda = await BookingService.getAgenda(
+        "usr_alex_rivera",
+        bookingDate,
+      );
       expect(agenda.some((b) => b.id === createdBookingId)).toBe(false);
     });
 
@@ -248,7 +263,7 @@ describe("Domain Services", () => {
         BookingService.reschedule(createdBookingId, {
           startTime: newStart,
           endTime: newEnd,
-        })
+        }),
       ).rejects.toThrow("Cannot reschedule a cancelled booking");
     });
 

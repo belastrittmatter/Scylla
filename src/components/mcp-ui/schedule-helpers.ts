@@ -8,7 +8,9 @@ import {
 export const WORKDAY_START_MIN = 8 * 60; // 08:00
 export const WORKDAY_END_MIN = 18 * 60; // 18:00
 export const STEP_15_MS = 15 * 60 * 1000;
-export const TIMELINE_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
+export const TIMELINE_HOURS = [
+  8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+] as const;
 
 export function getIctMinutes(iso?: string): number {
   if (!iso || !iso.includes("T")) return WORKDAY_START_MIN;
@@ -20,25 +22,30 @@ export function getIctMinutes(iso?: string): number {
 
 export function getTimelinePercent(min: number): number {
   const clamped = Math.max(WORKDAY_START_MIN, Math.min(WORKDAY_END_MIN, min));
-  return ((clamped - WORKDAY_START_MIN) / (WORKDAY_END_MIN - WORKDAY_START_MIN)) * 100;
+  return (
+    ((clamped - WORKDAY_START_MIN) / (WORKDAY_END_MIN - WORKDAY_START_MIN)) *
+    100
+  );
 }
 
 export function isIntervalBusy(
   busy: readonly BusyInterval[] | undefined,
   startIso: string,
-  endIso: string
+  endIso: string,
 ): boolean {
   if (!busy || busy.length === 0) return false;
   const sMs = new Date(startIso).getTime();
   const eMs = new Date(endIso).getTime();
-  return busy.some((b) => sMs < new Date(b.end).getTime() && eMs > new Date(b.start).getTime());
+  return busy.some(
+    (b) => sMs < new Date(b.end).getTime() && eMs > new Date(b.start).getTime(),
+  );
 }
 
 export function isRoomBusyAt(
   room: ScheduleRoom | null,
   freeMsSet: Set<number> | null,
   startIso: string,
-  endIso: string
+  endIso: string,
 ): boolean {
   if (!room) return false;
   if (isIntervalBusy(room.busy, startIso, endIso)) return true;
@@ -46,12 +53,16 @@ export function isRoomBusyAt(
   return false;
 }
 
-export function mergeFreeWindows(slots: readonly ScheduleSlot[]): BusyInterval[] {
+export function mergeFreeWindows(
+  slots: readonly ScheduleSlot[],
+): BusyInterval[] {
   if (slots.length === 0) return [];
   const sorted = [...slots].sort(
-    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
   );
-  const merged: { start: string; end: string }[] = [{ start: sorted[0].start, end: sorted[0].end }];
+  const merged: { start: string; end: string }[] = [
+    { start: sorted[0].start, end: sorted[0].end },
+  ];
   for (let i = 1; i < sorted.length; i++) {
     const prev = merged[merged.length - 1];
     const cur = sorted[i];
@@ -69,7 +80,7 @@ export function mergeFreeWindows(slots: readonly ScheduleSlot[]): BusyInterval[]
 export function expandTo15MinSlots(
   mutualSlots: readonly ScheduleSlot[],
   durationMinutes: number,
-  allBusy: readonly BusyInterval[] = []
+  allBusy: readonly BusyInterval[] = [],
 ): ScheduleSlot[] {
   if (mutualSlots.length === 0) return [];
   const durationMs = Math.max(15, durationMinutes) * 60 * 1000;
@@ -104,7 +115,7 @@ export function expandTo15MinSlots(
 export function pickRecommendedRoom(
   rooms: readonly ScheduleRoom[],
   attendeeCount: number,
-  slots: readonly ScheduleSlot[]
+  slots: readonly ScheduleSlot[],
 ): ScheduleRoom | null {
   if (rooms.length === 0) return null;
   const needed = Math.max(1, attendeeCount);
@@ -123,7 +134,7 @@ export function pickRecommendedRoom(
 export function getRoomBusyIntervals(
   room: ScheduleRoom | null,
   freeMsSet: Set<number> | null,
-  allSlots: readonly ScheduleSlot[]
+  allSlots: readonly ScheduleSlot[],
 ): BusyInterval[] {
   if (!room) return [];
   if (!freeMsSet) return mergeFreeWindows(room.busy ?? []);
@@ -137,11 +148,12 @@ export function findClosestSlotByClientX(
   clientX: number,
   rectLeft: number,
   rectWidth: number,
-  slots: readonly ScheduleSlot[]
+  slots: readonly ScheduleSlot[],
 ): ScheduleSlot | null {
   if (slots.length === 0 || rectWidth <= 0) return null;
   const pct = Math.max(0, Math.min(1, (clientX - rectLeft) / rectWidth));
-  const targetMin = WORKDAY_START_MIN + pct * (WORKDAY_END_MIN - WORKDAY_START_MIN);
+  const targetMin =
+    WORKDAY_START_MIN + pct * (WORKDAY_END_MIN - WORKDAY_START_MIN);
   let best = slots[0];
   let bestDist = Infinity;
   for (const s of slots) {

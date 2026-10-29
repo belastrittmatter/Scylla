@@ -26,7 +26,13 @@ export async function reconcileDeletedGoogleEvents(params: {
   timeMinIso: string;
   timeMaxIso: string;
 }): Promise<Set<string>> {
-  const { bookings, activeGcalIds, cancelledGcalIds = new Set(), timeMinIso, timeMaxIso } = params;
+  const {
+    bookings,
+    activeGcalIds,
+    cancelledGcalIds = new Set(),
+    timeMinIso,
+    timeMaxIso,
+  } = params;
 
   const minMs = new Date(timeMinIso).getTime();
   const maxMs = new Date(timeMaxIso).getTime();
@@ -40,7 +46,10 @@ export async function reconcileDeletedGoogleEvents(params: {
     if (!gcalId) continue;
 
     // 1. Explicit cancellation reported by Google Calendar
-    if (cancelledGcalIds.has(gcalId) || cancelledGcalIds.has(`gcal-${gcalId}`)) {
+    if (
+      cancelledGcalIds.has(gcalId) ||
+      cancelledGcalIds.has(`gcal-${gcalId}`)
+    ) {
       toCancelIds.push(b.id);
       continue;
     }
@@ -55,7 +64,9 @@ export async function reconcileDeletedGoogleEvents(params: {
       const isPresentInGoogle =
         activeGcalIds.has(gcalId) ||
         activeGcalIds.has(`gcal-${gcalId}`) ||
-        Array.from(activeGcalIds).some((id) => id.replace(/^gcal-/, "") === gcalId);
+        Array.from(activeGcalIds).some(
+          (id) => id.replace(/^gcal-/, "") === gcalId,
+        );
 
       if (!isPresentInGoogle) {
         toCancelIds.push(b.id);

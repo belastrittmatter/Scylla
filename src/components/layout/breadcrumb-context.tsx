@@ -13,7 +13,11 @@ const BreadcrumbContext = createContext<BreadcrumbContextType>({
   setLabel: () => {},
 });
 
-export function BreadcrumbProvider({ children }: { children: React.ReactNode }) {
+export function BreadcrumbProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
 
   const setLabel = useCallback((segment: string, label: string) => {

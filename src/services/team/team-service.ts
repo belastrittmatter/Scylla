@@ -1,5 +1,11 @@
 import { db } from "@/db";
-import { user, team, teamMember, type Team, type TeamMember } from "@/db/schema";
+import {
+  user,
+  team,
+  teamMember,
+  type Team,
+  type TeamMember,
+} from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import {
@@ -14,12 +20,18 @@ import {
   type TeamWithMembers,
   type TeamMemberWithUser,
 } from "./team-types";
-import { teamWithMembersQuery, memberWithUserQuery, sortTeamMembersByRole } from "./team-helpers";
+import {
+  teamWithMembersQuery,
+  memberWithUserQuery,
+  sortTeamMembersByRole,
+} from "./team-helpers";
 
 export class TeamService {
   public static async createTeam(input: CreateTeamInput): Promise<Team> {
     const validated = CreateTeamSchema.parse(input);
-    const slug = validated.slug ? slugify(validated.slug) : slugify(validated.name);
+    const slug = validated.slug
+      ? slugify(validated.slug)
+      : slugify(validated.name);
 
     return await db.transaction(async (tx) => {
       const [newTeam] = await tx
@@ -42,7 +54,9 @@ export class TeamService {
     });
   }
 
-  public static async getTeamById(teamId: string): Promise<TeamWithMembers | null> {
+  public static async getTeamById(
+    teamId: string,
+  ): Promise<TeamWithMembers | null> {
     const record = await db.query.team.findFirst({
       where: eq(team.id, teamId),
       ...teamWithMembersQuery,
@@ -54,7 +68,9 @@ export class TeamService {
     return record as TeamWithMembers;
   }
 
-  public static async getTeamBySlug(slug: string): Promise<TeamWithMembers | null> {
+  public static async getTeamBySlug(
+    slug: string,
+  ): Promise<TeamWithMembers | null> {
     const record = await db.query.team.findFirst({
       where: eq(team.slug, slug),
       ...teamWithMembersQuery,
@@ -79,12 +95,14 @@ export class TeamService {
       .where(
         inArray(
           team.id,
-          memberships.map((m) => m.teamId)
-        )
+          memberships.map((m) => m.teamId),
+        ),
       );
   }
 
-  public static async addTeamMember(input: AddTeamMemberInput): Promise<TeamMemberWithUser> {
+  public static async addTeamMember(
+    input: AddTeamMemberInput,
+  ): Promise<TeamMemberWithUser> {
     const validated = AddTeamMemberSchema.parse(input);
     let targetUserId = validated.userId;
 
@@ -128,8 +146,13 @@ export class TeamService {
     return (memberWithUser ?? member) as TeamMemberWithUser;
   }
 
-  public static async removeTeamMember(teamId: string, userId: string): Promise<boolean> {
-    const targetTeam = await db.query.team.findFirst({ where: eq(team.id, teamId) });
+  public static async removeTeamMember(
+    teamId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const targetTeam = await db.query.team.findFirst({
+      where: eq(team.id, teamId),
+    });
     if (targetTeam?.ownerId === userId) {
       throw new Error("Cannot remove the owner of the team");
     }
@@ -145,7 +168,7 @@ export class TeamService {
   public static async updateMemberRole(
     teamId: string,
     userId: string,
-    role: TeamRole
+    role: TeamRole,
   ): Promise<TeamMember> {
     const validated = UpdateMemberRoleSchema.parse({ role });
     const [updated] = await db
@@ -160,14 +183,22 @@ export class TeamService {
     return updated;
   }
 
-  public static async updateTeam(teamId: string, input: UpdateTeamInput): Promise<Team> {
+  public static async updateTeam(
+    teamId: string,
+    input: UpdateTeamInput,
+  ): Promise<Team> {
     const validated = UpdateTeamSchema.parse(input);
     const updateData: Partial<typeof team.$inferInsert> = {};
     if (validated.name !== undefined) updateData.name = validated.name;
     if (validated.slug !== undefined) updateData.slug = slugify(validated.slug);
-    if (validated.description !== undefined) updateData.description = validated.description;
+    if (validated.description !== undefined)
+      updateData.description = validated.description;
 
-    const [updated] = await db.update(team).set(updateData).where(eq(team.id, teamId)).returning();
+    const [updated] = await db
+      .update(team)
+      .set(updateData)
+      .where(eq(team.id, teamId))
+      .returning();
     if (!updated) {
       throw new Error(`Team with id "${teamId}" not found`);
     }
@@ -175,11 +206,16 @@ export class TeamService {
   }
 
   public static async deleteTeam(teamId: string): Promise<boolean> {
-    const deleted = await db.delete(team).where(eq(team.id, teamId)).returning();
+    const deleted = await db
+      .delete(team)
+      .where(eq(team.id, teamId))
+      .returning();
     return deleted.length > 0;
   }
 
-  public static async listTeamMembers(teamId: string): Promise<TeamMemberWithUser[]> {
+  public static async listTeamMembers(
+    teamId: string,
+  ): Promise<TeamMemberWithUser[]> {
     const members = (await db.query.teamMember.findMany({
       where: eq(teamMember.teamId, teamId),
       ...memberWithUserQuery,

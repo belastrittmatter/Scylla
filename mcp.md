@@ -494,7 +494,10 @@ Inspecting the library implementation in `@better-auth/oauth-provider/dist/autho
    const oauthQuery = extractOAuthQuery(window.location.search);
    await fetch("/api/auth/oauth2/consent", {
      method: "POST",
-     headers: { "Content-Type": "application/json", Accept: "application/json" },
+     headers: {
+       "Content-Type": "application/json",
+       Accept: "application/json",
+     },
      body: JSON.stringify({
        accept,
        scope: scope || undefined,
@@ -647,6 +650,7 @@ Both `find_common_meeting_slots` and `book_meeting` automatically pass all incom
 ### 8.1 Visual Density & Cognitive Load in Chat Clients
 
 Raw JSON responses and lengthy bulleted lists for calendar availability and multi-column Kanban boards generate excessive cognitive load. To elevate agent interaction, our server implements **SEP-1865 MCP Apps** (`text/html;profile=mcp-app`) across three registered `ui://` resources:
+
 - `ui://calendar/agenda` (`get_my_agenda`)
 - `ui://calendar/schedule-comparison` (`find_common_meeting_slots`, `compare_schedules`)
 - `ui://tasks/kanban-board` (`get_task_board`)
@@ -730,7 +734,7 @@ To advance this MCP server from a prototype to a tier-1 enterprise agent platfor
           },
         },
       ],
-    })
+    }),
   );
   ```
 
@@ -747,9 +751,15 @@ To advance this MCP server from a prototype to a tier-1 enterprise agent platfor
     async (uri) => {
       const agenda = await getAgendaForUser(currentUserId, new Date());
       return {
-        contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(agenda) }],
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: "application/json",
+            text: JSON.stringify(agenda),
+          },
+        ],
       };
-    }
+    },
   );
   ```
 - **Real-Time Subscription Notifications**: Learning how to implement `notifications/resources/updated` so the MCP server can push SSE events to connected clients whenever calendar events change.

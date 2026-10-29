@@ -5,7 +5,11 @@ import { format, parseISO } from "date-fns";
 import { Calendar as CalendarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "cn";
 
 interface TaskDatePickerProps {
@@ -14,7 +18,11 @@ interface TaskDatePickerProps {
   className?: string;
 }
 
-export function TaskDatePicker({ value, onChange, className }: TaskDatePickerProps) {
+export function TaskDatePicker({
+  value,
+  onChange,
+  className,
+}: TaskDatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const dateObj = React.useMemo(() => {
@@ -38,7 +46,7 @@ export function TaskDatePicker({ value, onChange, className }: TaskDatePickerPro
               size="sm"
               className={cn(
                 "h-9 w-full justify-start px-3 text-left text-sm font-normal",
-                !value && "text-muted-foreground"
+                !value && "text-muted-foreground",
               )}
             >
               <CalendarIcon className="mr-2 size-4 shrink-0 text-neutral-500" />

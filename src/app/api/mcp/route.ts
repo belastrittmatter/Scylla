@@ -1,6 +1,10 @@
 import { auth } from "@/lib/auth";
 import { requireMcpAuth } from "@better-auth/mcp";
-import { createMcpHandler, McpServer, type AuthInfo } from "@modelcontextprotocol/server";
+import {
+  createMcpHandler,
+  McpServer,
+  type AuthInfo,
+} from "@modelcontextprotocol/server";
 import { registerAllMcpTools } from "@/mcp/tools";
 import { registerAllMcpPrompts } from "@/mcp/prompts";
 import { createMcpToolContext } from "@/mcp/context";
@@ -23,7 +27,7 @@ export async function createCalendarMcpServer(authInfo?: CalendarMcpAuthInfo) {
     },
     {
       instructions: MCP_SERVER_INSTRUCTIONS,
-    }
+    },
   );
 
   const toolCtx = createMcpToolContext(authInfo?.sub);
@@ -35,21 +39,25 @@ export async function createCalendarMcpServer(authInfo?: CalendarMcpAuthInfo) {
 
 export const mcpServerHandler = createMcpHandler(
   async (ctx) => {
-    return createCalendarMcpServer(ctx.authInfo as CalendarMcpAuthInfo | undefined);
+    return createCalendarMcpServer(
+      ctx.authInfo as CalendarMcpAuthInfo | undefined,
+    );
   },
   {
     legacy: "stateless",
-  }
+  },
 );
 
 const handler = requireMcpAuth(
   auth,
   (request, claims) => {
-    return mcpServerHandler.fetch(request, { authInfo: claims as unknown as AuthInfo });
+    return mcpServerHandler.fetch(request, {
+      authInfo: claims as unknown as AuthInfo,
+    });
   },
   {
     resource,
-  }
+  },
 );
 
 export { handler as GET, handler as POST };

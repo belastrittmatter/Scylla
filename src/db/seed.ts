@@ -89,7 +89,10 @@ export async function seedDatabase() {
 
   // 3. Seed default user schedules
   for (const u of defaultUsers) {
-    const existing = await db.select().from(schedule).where(eq(schedule.userId, u.id));
+    const existing = await db
+      .select()
+      .from(schedule)
+      .where(eq(schedule.userId, u.id));
 
     if (existing.length === 0) {
       await db.insert(schedule).values({
@@ -110,7 +113,8 @@ export async function seedDatabase() {
 }
 
 const isDirectExecution =
-  (import.meta as unknown as { main?: boolean }).main || process.argv[1]?.endsWith("seed.ts");
+  (import.meta as unknown as { main?: boolean }).main ||
+  process.argv[1]?.endsWith("seed.ts");
 
 if (isDirectExecution) {
   seedDatabase()

@@ -5,7 +5,11 @@ import {
   buildPersonalCalendarMarkdown,
   buildTaskBoardMarkdown,
 } from "@/utils/mcp-markdown-builder";
-import { getAgendaUiHtml, getScheduleUiHtml, getTaskBoardUiHtml } from "@/utils/mcp-ui-builder";
+import {
+  getAgendaUiHtml,
+  getScheduleUiHtml,
+  getTaskBoardUiHtml,
+} from "@/utils/mcp-ui-builder";
 import { db, user } from "@/db";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { UserService } from "@/services/user";
@@ -26,7 +30,9 @@ interface McpServerWithInternals {
   _registeredTools: Record<string, RegisteredToolDef>;
 }
 
-function getRegisteredTools(server: unknown): Record<string, RegisteredToolDef> {
+function getRegisteredTools(
+  server: unknown,
+): Record<string, RegisteredToolDef> {
   return (server as McpServerWithInternals)._registeredTools;
 }
 
@@ -36,7 +42,11 @@ describe("MCP Tools & Utilities Suite", () => {
 
   beforeEach(async () => {
     // Ensure test user exists in DB
-    const existing = await db.select().from(user).where(eq(user.id, testUserId)).limit(1);
+    const existing = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, testUserId))
+      .limit(1);
     if (existing.length === 0) {
       await db.insert(user).values({
         id: testUserId,
@@ -98,7 +108,10 @@ describe("MCP Tools & Utilities Suite", () => {
       const server = await createCalendarMcpServer({ sub: testUserId });
       const tool = getRegisteredTools(server)["resolve_user"];
 
-      const res = await tool.handler({ query: "xyz_nonexistent_person_999", limit: 5 });
+      const res = await tool.handler({
+        query: "xyz_nonexistent_person_999",
+        limit: 5,
+      });
       const parsed = JSON.parse(res.content[0].text);
       expect(parsed.found).toBe(false);
       expect(parsed.bestMatch).toBeNull();
@@ -124,7 +137,11 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(markdown).toContain("# Schedule Comparison");
       expect(markdown.toLowerCase()).toContain("sarah");
       const structured = (
-        res as { structuredContent?: { targetUser?: { name?: string; email?: string } } }
+        res as {
+          structuredContent?: {
+            targetUser?: { name?: string; email?: string };
+          };
+        }
       ).structuredContent;
       expect(structured?.targetUser?.name).not.toBe("me");
       expect(structured?.targetUser?.email).toContain("sarah");
@@ -194,7 +211,9 @@ describe("MCP Tools & Utilities Suite", () => {
       });
 
       expect(res.isError).toBe(true);
-      expect(res.content[0].text).toContain("Could not find any teammate or contact");
+      expect(res.content[0].text).toContain(
+        "Could not find any teammate or contact",
+      );
     }, 15000);
 
     it("incorporates roomId and suggestedTitle into schedule comparison and UI", async () => {
@@ -215,8 +234,12 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(markdown).toContain("Suggested Title");
       expect(res.structuredContent).toBeDefined();
       expect(res.structuredContent?.selectedRoomId).toBe("room_1");
-      expect(res.structuredContent?.suggestedTitle).toBe("Quarterly Strategy Sync: Alice & Sarah");
-      expect(res.structuredContent?.suggestedAgenda).toBe("Review Q4 roadmap milestones");
+      expect(res.structuredContent?.suggestedTitle).toBe(
+        "Quarterly Strategy Sync: Alice & Sarah",
+      );
+      expect(res.structuredContent?.suggestedAgenda).toBe(
+        "Review Q4 roadmap milestones",
+      );
     }, 15000);
   });
 
@@ -237,7 +260,9 @@ describe("MCP Tools & Utilities Suite", () => {
       const parsed = JSON.parse(res.content[0].text);
       expect(parsed.slug).toBeDefined();
       expect(parsed.bookingUrl).toContain(`/book/${parsed.slug}`);
-      expect(parsed.markdownLink).toContain(`[Book Meeting: Product Design Review]`);
+      expect(parsed.markdownLink).toContain(
+        `[Book Meeting: Product Design Review]`,
+      );
       expect(parsed.duration).toBe(45);
       expect(parsed.locationType).toBe("meet");
     }, 15000);
@@ -262,10 +287,13 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(parsed.eventId).toBeDefined();
       expect(parsed.meetingUrl).toBeDefined();
       // Attendees should include Sarah's resolved email
-      const attendeeEmails = parsed.attendees.map((a: string | { email: string }) =>
-        typeof a === "string" ? a : a.email
+      const attendeeEmails = parsed.attendees.map(
+        (a: string | { email: string }) =>
+          typeof a === "string" ? a : a.email,
       );
-      expect(attendeeEmails.some((e: string) => e.includes("sarah"))).toBe(true);
+      expect(attendeeEmails.some((e: string) => e.includes("sarah"))).toBe(
+        true,
+      );
     }, 15000);
 
     it("links meeting to project and updates via reschedule_meeting tool", async () => {
@@ -332,11 +360,27 @@ describe("MCP Tools & Utilities Suite", () => {
           title: "Engineering Manager",
         },
         dateStr: "2026-10-20",
-        currentUserBusy: [{ start: "2026-10-20T09:00:00.000Z", end: "2026-10-20T10:00:00.000Z" }],
-        targetUserBusy: [{ start: "2026-10-20T11:00:00.000Z", end: "2026-10-20T12:00:00.000Z" }],
+        currentUserBusy: [
+          {
+            start: "2026-10-20T09:00:00.000Z",
+            end: "2026-10-20T10:00:00.000Z",
+          },
+        ],
+        targetUserBusy: [
+          {
+            start: "2026-10-20T11:00:00.000Z",
+            end: "2026-10-20T12:00:00.000Z",
+          },
+        ],
         mutualSlots: [
-          { start: "2026-10-20T10:00:00.000Z", end: "2026-10-20T10:30:00.000Z" },
-          { start: "2026-10-20T14:00:00.000Z", end: "2026-10-20T14:30:00.000Z" },
+          {
+            start: "2026-10-20T10:00:00.000Z",
+            end: "2026-10-20T10:30:00.000Z",
+          },
+          {
+            start: "2026-10-20T14:00:00.000Z",
+            end: "2026-10-20T14:30:00.000Z",
+          },
         ],
         durationMinutes: 30,
       });
@@ -357,12 +401,17 @@ describe("MCP Tools & Utilities Suite", () => {
           { name: "Charlie Designer", email: "charlie@example.com" },
         ],
         dateStr: "2026-10-20",
-        mutualSlots: [{ start: "2026-10-20T10:00:00.000Z", end: "2026-10-20T10:30:00.000Z" }],
+        mutualSlots: [
+          {
+            start: "2026-10-20T10:00:00.000Z",
+            end: "2026-10-20T10:30:00.000Z",
+          },
+        ],
         durationMinutes: 30,
       });
 
       expect(markdown).toContain(
-        "# Schedule Comparison: Alice Developer, Bob Manager & Charlie Designer"
+        "# Schedule Comparison: Alice Developer, Bob Manager & Charlie Designer",
       );
     });
 
@@ -406,7 +455,9 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(markdown).toContain("# Calendar Agenda: Alex Morgan");
       expect(markdown).toContain("Sprint Planning");
       expect(markdown).toContain("Architecture Review");
-      expect(markdown).toContain("[Join Meeting](https://meet.google.com/abc-defg-hij)");
+      expect(markdown).toContain(
+        "[Join Meeting](https://meet.google.com/abc-defg-hij)",
+      );
     });
   });
 
@@ -474,7 +525,9 @@ describe("MCP Tools & Utilities Suite", () => {
 
       const parsed = JSON.parse(res.content[0].text);
       expect(parsed.count).toBeGreaterThan(0);
-      expect(parsed.teams.some((t: { id: string }) => t.id === testTeamId)).toBe(true);
+      expect(
+        parsed.teams.some((t: { id: string }) => t.id === testTeamId),
+      ).toBe(true);
     });
 
     it("create_project and list_projects manage team projects", async () => {
@@ -501,7 +554,9 @@ describe("MCP Tools & Utilities Suite", () => {
       const listParsed = JSON.parse(listRes.content[0].text);
       expect(listParsed.projects.length).toBeGreaterThan(0);
       expect(
-        listParsed.projects.some((p: { id: string }) => p.id === createdParsed.project.id)
+        listParsed.projects.some(
+          (p: { id: string }) => p.id === createdParsed.project.id,
+        ),
       ).toBe(true);
     });
 
@@ -530,7 +585,11 @@ describe("MCP Tools & Utilities Suite", () => {
       const noProjParsed = JSON.parse(noProjRes.content[0].text);
       expect(noProjParsed.requiresProjectSelection).toBe(true);
       expect(noProjParsed.projects.length).toBeGreaterThan(0);
-      expect(noProjParsed.projects.some((p: { id: string }) => p.id === testProjectId)).toBe(true);
+      expect(
+        noProjParsed.projects.some(
+          (p: { id: string }) => p.id === testProjectId,
+        ),
+      ).toBe(true);
 
       // 1b. Create Task with required projectId
       const createRes = await createTaskTool.handler({
@@ -557,7 +616,9 @@ describe("MCP Tools & Utilities Suite", () => {
         priority: "high",
       });
       const listParsed = JSON.parse(listRes.content[0].text);
-      expect(listParsed.tasks.some((t: { id: string }) => t.id === taskId)).toBe(true);
+      expect(
+        listParsed.tasks.some((t: { id: string }) => t.id === taskId),
+      ).toBe(true);
 
       // 3a. If user wants to update/assign project without specifying which project, update_task returns options
       const updateNoProjRes = await updateTaskTool.handler({
@@ -576,7 +637,9 @@ describe("MCP Tools & Utilities Suite", () => {
       });
       const updatedParsed = JSON.parse(updateRes.content[0].text);
       expect(updatedParsed.task.status).toBe("in_progress");
-      expect(updatedParsed.task.title).toBe("Implement MCP Task Tools (In Progress)");
+      expect(updatedParsed.task.title).toBe(
+        "Implement MCP Task Tools (In Progress)",
+      );
 
       // 4. Get Task Board View
       const boardRes = await getBoardTool.handler({
@@ -584,7 +647,9 @@ describe("MCP Tools & Utilities Suite", () => {
       });
       expect(boardRes.content.length).toBeGreaterThanOrEqual(2);
       expect(boardRes.content[0].text).toContain("# Task Board:");
-      expect(boardRes.content[0].text).toContain("Implement MCP Task Tools (In Progress)");
+      expect(boardRes.content[0].text).toContain(
+        "Implement MCP Task Tools (In Progress)",
+      );
 
       // 5. Reject cross-team projectId on create_task and update_task
       await expect(
@@ -592,14 +657,14 @@ describe("MCP Tools & Utilities Suite", () => {
           teamId: testTeamId,
           title: "Invalid Project Task",
           projectId: "proj_nonexistent_other_team",
-        })
+        }),
       ).rejects.toThrow("not found in team");
 
       await expect(
         updateTaskTool.handler({
           taskId,
           projectId: "proj_nonexistent_other_team",
-        })
+        }),
       ).rejects.toThrow("not found in task's team");
     });
 
@@ -611,7 +676,8 @@ describe("MCP Tools & Utilities Suite", () => {
       const listTasksTool = getRegisteredTools(server)["list_tasks"];
       const getBoardTool = getRegisteredTools(server)["get_task_board"];
       const getActiveTasksTool = getRegisteredTools(server)["get_active_tasks"];
-      const getTaskTimelineTool = getRegisteredTools(server)["get_task_timeline"];
+      const getTaskTimelineTool =
+        getRegisteredTools(server)["get_task_timeline"];
 
       // Setup project
       const projRes = await createProjectTool.handler({
@@ -645,7 +711,9 @@ describe("MCP Tools & Utilities Suite", () => {
       });
       const activeParsed = JSON.parse(activeRes.content[0].text);
       expect(activeParsed.activeTasks.length).toBeGreaterThan(0);
-      const activeTask = activeParsed.activeTasks.find((t: { id: string }) => t.id === taskId);
+      const activeTask = activeParsed.activeTasks.find(
+        (t: { id: string }) => t.id === taskId,
+      );
       expect(activeTask).toBeDefined();
       expect(activeTask.activeSessionStartedAt).toBeDefined();
       expect(typeof activeTask.elapsedSessionSeconds).toBe("number");
@@ -670,8 +738,12 @@ describe("MCP Tools & Utilities Suite", () => {
         hasActiveSession: true,
       });
       const listActiveParsed = JSON.parse(listActiveRes.content[0].text);
-      expect(listActiveParsed.tasks.some((t: { id: string }) => t.id === taskId)).toBe(true);
-      const foundTask = listActiveParsed.tasks.find((t: { id: string }) => t.id === taskId);
+      expect(
+        listActiveParsed.tasks.some((t: { id: string }) => t.id === taskId),
+      ).toBe(true);
+      const foundTask = listActiveParsed.tasks.find(
+        (t: { id: string }) => t.id === taskId,
+      );
       expect(foundTask.estimatedMinutes).toBe(90);
       expect(foundTask.activeSessionStartedAt).toBeDefined();
       expect(typeof foundTask.totalSpentSeconds).toBe("number");
@@ -681,7 +753,9 @@ describe("MCP Tools & Utilities Suite", () => {
         hasActiveSession: false,
       });
       const listInactiveParsed = JSON.parse(listInactiveRes.content[0].text);
-      expect(listInactiveParsed.tasks.some((t: { id: string }) => t.id === taskId)).toBe(false);
+      expect(
+        listInactiveParsed.tasks.some((t: { id: string }) => t.id === taskId),
+      ).toBe(false);
 
       // 5. get_task_board includes time metrics in structuredContent and markdown
       const boardRes = await getBoardTool.handler({
@@ -746,7 +820,9 @@ describe("MCP Tools & Utilities Suite", () => {
         mutualSlots: [],
       });
       expect(fivePersonScheduleHtml).toContain("window.__MCP_DATA__ =");
-      expect(fivePersonScheduleHtml).toContain("User 1, User 2, User 3, User 4 &amp; User 5");
+      expect(fivePersonScheduleHtml).toContain(
+        "User 1, User 2, User 3, User 4 &amp; User 5",
+      );
 
       const taskHtml = getTaskBoardUiHtml({ teamName: "Core", tasks: [] });
       expect(taskHtml).toContain('data-slot="card"');
@@ -813,7 +889,11 @@ describe("MCP Tools & Utilities Suite", () => {
         server as unknown as {
           _registeredPrompts: Record<
             string,
-            { handler: (args: Record<string, unknown>) => Promise<{ messages: { content: { text: string } }[] }> }
+            {
+              handler: (
+                args: Record<string, unknown>,
+              ) => Promise<{ messages: { content: { text: string } }[] }>;
+            }
           >;
         }
       )._registeredPrompts;
@@ -821,10 +901,15 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(registeredPrompts["book_meeting_flow"]).toBeDefined();
 
       const promptDef = registeredPrompts["book_meeting_flow"];
-      const promptResult = await promptDef.handler({ targetUser: "alex morgan", date: "today" });
+      const promptResult = await promptDef.handler({
+        targetUser: "alex morgan",
+        date: "today",
+      });
       expect(promptResult.messages).toHaveLength(1);
       expect(promptResult.messages[0].content.text).toContain("alex morgan");
-      expect(promptResult.messages[0].content.text).toContain("offline meeting room or online");
+      expect(promptResult.messages[0].content.text).toContain(
+        "offline meeting room or online",
+      );
       expect(promptResult.messages[0].content.text).toContain("minCapacity");
     });
 
@@ -834,7 +919,11 @@ describe("MCP Tools & Utilities Suite", () => {
         server as unknown as {
           _registeredPrompts: Record<
             string,
-            { handler: (args: Record<string, unknown>) => Promise<{ messages: { content: { text: string } }[] }> }
+            {
+              handler: (
+                args: Record<string, unknown>,
+              ) => Promise<{ messages: { content: { text: string } }[] }>;
+            }
           >;
         }
       )._registeredPrompts;
@@ -842,10 +931,15 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(registeredPrompts["create_task_flow"]).toBeDefined();
 
       const promptDef = registeredPrompts["create_task_flow"];
-      const promptResult = await promptDef.handler({ teamId: "eng-team", title: "Write API docs" });
+      const promptResult = await promptDef.handler({
+        teamId: "eng-team",
+        title: "Write API docs",
+      });
       expect(promptResult.messages).toHaveLength(1);
       expect(promptResult.messages[0].content.text).toContain("Write API docs");
-      expect(promptResult.messages[0].content.text).toContain("Every task requires a project");
+      expect(promptResult.messages[0].content.text).toContain(
+        "Every task requires a project",
+      );
     });
   });
 });

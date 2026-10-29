@@ -14,7 +14,10 @@ export async function GET(req: Request) {
     if (limitParam !== null) {
       const parsedLimit = parseInt(limitParam, 10);
       if (isNaN(parsedLimit) || parsedLimit <= 0) {
-        return Response.json({ error: "Invalid limit parameter" }, { status: 400 });
+        return Response.json(
+          { error: "Invalid limit parameter" },
+          { status: 400 },
+        );
       }
       limit = parsedLimit;
     }
@@ -32,7 +35,10 @@ export async function GET(req: Request) {
 
     let googleAccount = null;
     if (sessionUserId) {
-      const accounts = await db.select().from(account).where(eq(account.userId, sessionUserId));
+      const accounts = await db
+        .select()
+        .from(account)
+        .where(eq(account.userId, sessionUserId));
       googleAccount = accounts.find((a) => a.providerId === "google") || null;
     }
     if (!googleAccount) {
@@ -54,7 +60,7 @@ export async function GET(req: Request) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to search users" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

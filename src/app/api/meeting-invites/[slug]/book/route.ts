@@ -16,14 +16,20 @@ export async function POST(req: Request, context: RouteParams) {
   try {
     const { slug } = await context.params;
     if (!slug) {
-      return Response.json({ error: "Slug parameter is required" }, { status: 400 });
+      return Response.json(
+        { error: "Slug parameter is required" },
+        { status: 400 },
+      );
     }
 
     let body: BookSlotBody;
     try {
       body = (await req.json()) as BookSlotBody;
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     const { guestName, guestEmail, startTime, endTime, notes } = body || {};
@@ -31,7 +37,7 @@ export async function POST(req: Request, context: RouteParams) {
     if (!guestName || !guestEmail || !startTime || !endTime) {
       return Response.json(
         { error: "guestName, guestEmail, startTime, and endTime are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +54,7 @@ export async function POST(req: Request, context: RouteParams) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to book meeting" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

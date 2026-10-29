@@ -9,23 +9,40 @@ import {
   validateAdditionalFieldRequired,
   validateAdditionalFieldValue,
 } from "@better-auth-ui/core";
-import { type AnyFormApi, createFormHook, createFormHookContexts } from "@tanstack/react-form";
-import { type ComponentProps, type FormEvent, type ReactNode, useRef } from "react";
+import {
+  type AnyFormApi,
+  createFormHook,
+  createFormHookContexts,
+} from "@tanstack/react-form";
+import {
+  type ComponentProps,
+  type FormEvent,
+  type ReactNode,
+  useRef,
+} from "react";
 
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { AdditionalField, type AdditionalFieldProps } from "./additional-field";
 
-const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
+const { fieldContext, formContext, useFieldContext, useFormContext } =
+  createFormHookContexts();
 
 const DEFAULT_AUTH_FORM_SERVER_ERROR = "Unable to submit this form. Try again.";
 
 export function focusFirstInvalidAuthFormControl(form: HTMLFormElement) {
   requestAnimationFrame(() => {
     form
-      .querySelector<HTMLElement>('[aria-invalid="true"]:not([disabled]), :invalid:not([disabled])')
+      .querySelector<HTMLElement>(
+        '[aria-invalid="true"]:not([disabled]), :invalid:not([disabled])',
+      )
       ?.focus();
   });
 }
@@ -48,7 +65,9 @@ function AuthFormServerError() {
     <form.Subscribe selector={(state) => state.errorMap.onServer}>
       {(error) => {
         const formError =
-          error && typeof error === "object" && "form" in error ? error.form : error;
+          error && typeof error === "object" && "form" in error
+            ? error.form
+            : error;
         const errors = getFormFieldErrors(formError ? [formError] : []);
         return errors.length > 0 ? <FieldError errors={errors} /> : null;
       }}
@@ -56,7 +75,11 @@ function AuthFormServerError() {
   );
 }
 
-export function setAuthFormServerError(form: AnyFormApi, error: unknown, fallbackMessage: string) {
+export function setAuthFormServerError(
+  form: AnyFormApi,
+  error: unknown,
+  fallbackMessage: string,
+) {
   const normalized = normalizeAuthFormServerError(error, fallbackMessage);
   form.setErrorMap({
     onServer: {
@@ -70,7 +93,10 @@ export function clearAuthFormServerError(form: AnyFormApi) {
   form.setErrorMap({ onServer: { fields: {} } });
 }
 
-export function clearAuthFormFieldServerError(form: AnyFormApi, fieldName: string) {
+export function clearAuthFormFieldServerError(
+  form: AnyFormApi,
+  fieldName: string,
+) {
   form.setErrorMap({ onServer: undefined });
   if (!fieldName) return;
 
@@ -87,7 +113,7 @@ export function clearAuthFormFieldServerError(form: AnyFormApi, fieldName: strin
 export async function runAuthFormAction(
   form: AnyFormApi,
   action: () => Promise<unknown>,
-  serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR
+  serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR,
 ) {
   clearAuthFormServerError(form);
   try {
@@ -103,7 +129,7 @@ export async function runAuthFormAction(
 
 export async function submitAuthForm(
   form: AnyFormApi,
-  serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR
+  serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR,
 ) {
   clearAuthFormServerError(form);
   try {
@@ -150,7 +176,9 @@ function AuthFormRoot({
   return (
     <form
       {...props}
-      onInvalid={(event) => focusFirstInvalidAuthFormControl(event.currentTarget)}
+      onInvalid={(event) =>
+        focusFirstInvalidAuthFormControl(event.currentTarget)
+      }
       onInput={(event) => {
         const target = event.target;
         const fieldName =
@@ -177,7 +205,12 @@ type AuthFormTextFieldProps = Omit<
   label: ReactNode;
 };
 
-function AuthFormTextField({ description, id, label, ...props }: AuthFormTextFieldProps) {
+function AuthFormTextField({
+  description,
+  id,
+  label,
+  ...props
+}: AuthFormTextFieldProps) {
   const field = useFieldContext<string>();
   const form = useFormContext();
   const isInvalid = isAuthFormFieldInvalid(field.state.meta);
@@ -214,16 +247,22 @@ function AuthFormSubmitButton({
   const form = useFormContext();
 
   return (
-    <form.Subscribe selector={(state) => [state.isSubmitting, state.isValidating] as const}>
+    <form.Subscribe
+      selector={(state) => [state.isSubmitting, state.isValidating] as const}
+    >
       {([isSubmitting, isValidating]) => (
         <Button
           {...props}
           aria-busy={isPending || isSubmitting || undefined}
-          aria-disabled={disabled || isPending || isSubmitting || isValidating || undefined}
+          aria-disabled={
+            disabled || isPending || isSubmitting || isValidating || undefined
+          }
           disabled={disabled || isPending || isSubmitting || isValidating}
           type="submit"
         >
-          {isPending || isSubmitting ? <Spinner data-icon="inline-start" /> : null}
+          {isPending || isSubmitting ? (
+            <Spinner data-icon="inline-start" />
+          ) : null}
           {children}
         </Button>
       )}
@@ -244,7 +283,9 @@ function AuthFormAdditionalField(props: AuthFormAdditionalFieldProps) {
   return (
     <AdditionalField
       {...props}
-      errors={isInvalid ? getFormFieldErrors(field.state.meta.errors) : undefined}
+      errors={
+        isInvalid ? getFormFieldErrors(field.state.meta.errors) : undefined
+      }
       isInvalid={isInvalid}
       name={field.name}
       onBlur={field.handleBlur}
@@ -288,7 +329,7 @@ export function isAuthFormFieldInvalid({
 
 export function getAuthAdditionalFieldValidators(
   field: AdditionalFieldConfig,
-  requiredMessage: string
+  requiredMessage: string,
 ) {
   return {
     onChange: ({ value }: { value: AdditionalFieldFormValue }) =>
@@ -298,7 +339,8 @@ export function getAuthAdditionalFieldValidators(
           validateAdditionalFieldValue(field, value)
       : undefined,
     onChangeAsyncDebounceMs: field.validate
-      ? (field.validateDebounceMs ?? DEFAULT_ADDITIONAL_FIELD_VALIDATION_DEBOUNCE_MS)
+      ? (field.validateDebounceMs ??
+        DEFAULT_ADDITIONAL_FIELD_VALIDATION_DEBOUNCE_MS)
       : undefined,
   };
 }

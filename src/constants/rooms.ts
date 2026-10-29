@@ -12,7 +12,12 @@ export const HCM_MEETING_ROOMS: RoomDefinition[] = [
     name: "Sai Gon 14",
     capacity: 14,
     location: "Floor 1, East Wing",
-    facilities: ['Dual 75" 4K Displays', "Google Meet Room Kit", "Acoustic Baffles", "Whiteboard"],
+    facilities: [
+      'Dual 75" 4K Displays',
+      "Google Meet Room Kit",
+      "Acoustic Baffles",
+      "Whiteboard",
+    ],
   },
   {
     id: "bangkok-6",

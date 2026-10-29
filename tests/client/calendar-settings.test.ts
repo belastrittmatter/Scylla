@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { DEFAULT_CALENDAR_SETTINGS, type CalendarSettings } from "@/hooks/use-calendar-settings";
+import {
+  DEFAULT_CALENDAR_SETTINGS,
+  type CalendarSettings,
+} from "@/hooks/use-calendar-settings";
 
 describe("Calendar Settings & Storage Defaults", () => {
   beforeEach(() => {
@@ -56,8 +59,13 @@ describe("Calendar Settings & Storage Defaults", () => {
         timeFormat: "24h",
       };
 
-      globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify(sampleSettings));
-      const retrieved = JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY) || "{}");
+      globalThis.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(sampleSettings),
+      );
+      const retrieved = JSON.parse(
+        globalThis.localStorage.getItem(STORAGE_KEY) || "{}",
+      );
 
       expect(retrieved.defaultView).toBe("agenda");
       expect(retrieved.timeFormat).toBe("24h");

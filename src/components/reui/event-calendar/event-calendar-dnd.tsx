@@ -92,7 +92,7 @@ function markChipPress(): void {
     () => {
       lastChipPressAt = performance.now();
     },
-    { once: true, capture: true }
+    { once: true, capture: true },
   );
 }
 function wasRecentChipPress(): boolean {
@@ -135,7 +135,10 @@ function snapToPixel(value: number): number {
   return Math.round(value * dpr) / dpr;
 }
 
-function collectSurface(origin: HTMLElement, fallbackRoot?: HTMLElement | null): Surface {
+function collectSurface(
+  origin: HTMLElement,
+  fallbackRoot?: HTMLElement | null,
+): Surface {
   // A gesture from a portaled surface (the "+N more" popover) has no calendar
   // ancestor, so fall back to the root the host registered on the instance.
   const root =
@@ -164,7 +167,9 @@ function collectSurface(origin: HTMLElement, fallbackRoot?: HTMLElement | null):
       }
     }
   }
-  const viewport = root?.querySelector<HTMLElement>("[data-slot=scroll-area-viewport]") ?? null;
+  const viewport =
+    root?.querySelector<HTMLElement>("[data-slot=scroll-area-viewport]") ??
+    null;
   const viewportStartScrollTop = viewport?.scrollTop ?? 0;
   return {
     columns,
@@ -176,7 +181,10 @@ function collectSurface(origin: HTMLElement, fallbackRoot?: HTMLElement | null):
   };
 }
 
-function findColumn(surface: Surface, clientX: number): TimeColumnRect | undefined {
+function findColumn(
+  surface: Surface,
+  clientX: number,
+): TimeColumnRect | undefined {
   const scrollAdjusted = surface.columns;
   let best: TimeColumnRect | undefined;
   for (const col of scrollAdjusted) {
@@ -185,22 +193,36 @@ function findColumn(surface: Surface, clientX: number): TimeColumnRect | undefin
     // clamp to nearest horizontal column
     const bestDist = Math.min(
       Math.abs(clientX - best.rect.left),
-      Math.abs(clientX - best.rect.right)
+      Math.abs(clientX - best.rect.right),
     );
-    const dist = Math.min(Math.abs(clientX - col.rect.left), Math.abs(clientX - col.rect.right));
+    const dist = Math.min(
+      Math.abs(clientX - col.rect.left),
+      Math.abs(clientX - col.rect.right),
+    );
     if (dist < bestDist) best = col;
   }
   return best;
 }
 
-function findCell(surface: Surface, x: number, y: number): DayCellRect | undefined {
+function findCell(
+  surface: Surface,
+  x: number,
+  y: number,
+): DayCellRect | undefined {
   return surface.cells.find(
     (cell) =>
-      x >= cell.rect.left && x < cell.rect.right && y >= cell.rect.top && y < cell.rect.bottom
+      x >= cell.rect.left &&
+      x < cell.rect.right &&
+      y >= cell.rect.top &&
+      y < cell.rect.bottom,
   );
 }
 
-function pointerMinutes(surface: Surface, col: TimeColumnRect, clientY: number): number {
+function pointerMinutes(
+  surface: Surface,
+  col: TimeColumnRect,
+  clientY: number,
+): number {
   const scrollDelta = surface.scrollTop - surface.viewportStartScrollTop;
   const boundsMinutes = col.boundsEndMin - col.boundsStartMin;
   const pxPerMinute = col.rect.height / Math.max(1, boundsMinutes);
@@ -240,7 +262,7 @@ function beginBlockedGesture<TData>(
   instance: EventCalendarInstance<TData>,
   startEvent: PointerEvent,
   segment: EventCalendarSegment<TData>,
-  gesture: "move" | "resize"
+  gesture: "move" | "resize",
 ) {
   const startX = startEvent.clientX;
   const startY = startEvent.clientY;
@@ -259,7 +281,10 @@ function beginBlockedGesture<TData>(
   let finished = false;
   const onMove = (e: PointerEvent) => {
     if (e.pointerId !== pointerId || activated) return;
-    if (Math.hypot(e.clientX - startX, e.clientY - startY) < activation.moveDistancePx) {
+    if (
+      Math.hypot(e.clientX - startX, e.clientY - startY) <
+      activation.moveDistancePx
+    ) {
       return;
     }
     activated = true;
@@ -315,7 +340,9 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     origin
       .closest<HTMLElement>("[data-slot=event-calendar]")
       ?.querySelector<HTMLElement>("[data-slot=event-calendar-announcer]") ??
-    internals.getRootEl()?.querySelector<HTMLElement>("[data-slot=event-calendar-announcer]") ??
+    internals
+      .getRootEl()
+      ?.querySelector<HTMLElement>("[data-slot=event-calendar-announcer]") ??
     null;
 
   const isTouch = startEvent.pointerType === "touch";
@@ -323,7 +350,9 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
   // the same long-press as a move, so a finger landing on the (invisible on
   // touch) handle strip can never start a resize the user never asked for
   let active = kind.startsWith("resize") && !isTouch;
-  let surface: Surface | null = active ? collectSurface(origin, internals.getRootEl()) : null;
+  let surface: Surface | null = active
+    ? collectSurface(origin, internals.getRootEl())
+    : null;
   let rafScroll: number | null = null;
   let lastProposalKey = "";
   let touchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -338,7 +367,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
   const occurrence = segment?.occurrence;
   const isBar = occurrence
     ? occurrence.allDay ||
-      occurrence.end.getTime() - occurrence.start.getTime() > 24 * 60 * 60 * 1000
+      occurrence.end.getTime() - occurrence.start.getTime() >
+        24 * 60 * 60 * 1000
     : false;
 
   // Preserve the grab offset so the event does not jump to the pointer
@@ -351,7 +381,9 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
    * one day the lead is 0 and the duration is the occurrence's, i.e. unchanged.
    */
   let grabLeadMs = 0;
-  let grabSegDurationMs = occurrence ? occurrence.end.getTime() - occurrence.start.getTime() : 0;
+  let grabSegDurationMs = occurrence
+    ? occurrence.end.getTime() - occurrence.start.getTime()
+    : 0;
   /**
    * Which day of a multi-day bar was grabbed. Without it the day-granular move
    * slides the bar's START under the pointer, so a Mon-Fri bar grabbed on
@@ -372,7 +404,11 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     : "grabbing";
   const setBodyDragging = (on: boolean, invalid = false) => {
     document.body.classList.toggle("ec-dragging", on);
-    document.body.style.cursor = on ? (invalid ? "not-allowed" : gestureCursor) : "";
+    document.body.style.cursor = on
+      ? invalid
+        ? "not-allowed"
+        : gestureCursor
+      : "";
     document.body.style.userSelect = on ? "none" : "";
     if (!on) document.body.style.removeProperty("-webkit-user-select");
   };
@@ -390,14 +426,22 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
         const originDay = zonedStartOfDay(occurrence.start, timeZone);
         // end is exclusive, so step back an instant for the last covered day
         const lastDay = zonedStartOfDay(
-          new Date(Math.max(occurrence.end.getTime() - 1, occurrence.start.getTime())),
-          timeZone
+          new Date(
+            Math.max(occurrence.end.getTime() - 1, occurrence.start.getTime()),
+          ),
+          timeZone,
         );
-        const offset = differenceInCalendarDays(zonedStartOfDay(grabCell.day, timeZone), originDay);
+        const offset = differenceInCalendarDays(
+          zonedStartOfDay(grabCell.day, timeZone),
+          originDay,
+        );
         // A gesture from the "+N more" popover grabs over whatever cell that
         // floating surface happens to cover, so only a day the event actually
         // spans can be the grabbed day.
-        if (offset >= 0 && offset <= differenceInCalendarDays(lastDay, originDay)) {
+        if (
+          offset >= 0 &&
+          offset <= differenceInCalendarDays(lastDay, originDay)
+        ) {
           grabDayOffset = offset;
         }
       }
@@ -405,12 +449,19 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
         const col = findColumn(surface, startX);
         if (col) {
           const colDayStart = zonedStartOfDay(col.day, timeZone);
-          const segStartMs = Math.max(occurrence.start.getTime(), colDayStart.getTime());
+          const segStartMs = Math.max(
+            occurrence.start.getTime(),
+            colDayStart.getTime(),
+          );
           grabLeadMs = segStartMs - occurrence.start.getTime();
           grabSegDurationMs =
-            Math.min(occurrence.end.getTime(), addDays(colDayStart, 1).getTime()) - segStartMs;
+            Math.min(
+              occurrence.end.getTime(),
+              addDays(colDayStart, 1).getTime(),
+            ) - segStartMs;
           grabOffsetMin =
-            pointerMinutes(surface, col, startY) - (segStartMs - colDayStart.getTime()) / 60000;
+            pointerMinutes(surface, col, startY) -
+            (segStartMs - colDayStart.getTime()) / 60000;
         }
       }
     }
@@ -419,7 +470,7 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
   };
 
   const computeProposal = (
-    e: PointerEvent
+    e: PointerEvent,
   ): {
     start: Date;
     end: Date;
@@ -442,12 +493,18 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
       const col = findColumn(surface, startX);
       if (!col) return null;
       if (createAnchorMin === null) {
-        createAnchorMin = snapMinutes(pointerMinutes(surface, col, startY), snap);
+        createAnchorMin = snapMinutes(
+          pointerMinutes(surface, col, startY),
+          snap,
+        );
       }
       const anchorMin = createAnchorMin;
       const curMin = snapMinutes(pointerMinutes(surface, col, e.clientY), snap);
       const lo = Math.max(col.boundsStartMin, Math.min(anchorMin, curMin));
-      const hi = Math.min(col.boundsEndMin, Math.max(anchorMin, curMin, lo + snap));
+      const hi = Math.min(
+        col.boundsEndMin,
+        Math.max(anchorMin, curMin, lo + snap),
+      );
       const dayStart = zonedStartOfDay(col.day, timeZone);
       return {
         start: addMinutes(dayStart, lo),
@@ -465,7 +522,12 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
 
     // A timed event dropped on the all-day lane (a day cell inside a surface
     // that also has time columns) converts to a full-day event on that day.
-    if (kind === "move" && !isBar && surface.columns.length > 0 && overCell !== undefined) {
+    if (
+      kind === "move" &&
+      !isBar &&
+      surface.columns.length > 0 &&
+      overCell !== undefined
+    ) {
       const targetDay = zonedStartOfDay(overCell.day, timeZone);
       return {
         start: targetDay,
@@ -475,7 +537,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
       };
     }
 
-    const useCells = surface.columns.length === 0 || (isBar && overCell !== undefined);
+    const useCells =
+      surface.columns.length === 0 || (isBar && overCell !== undefined);
 
     if (useCells) {
       const cell = overCell ?? findCell(surface, startX, startY);
@@ -485,7 +548,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
         const originDay = zonedStartOfDay(occurrence.start, timeZone);
         // minus the grabbed day: the bar follows the pointer by the distance
         // travelled, it does not re-anchor its start under the pointer
-        const delta = differenceInCalendarDays(targetDay, originDay) - grabDayOffset;
+        const delta =
+          differenceInCalendarDays(targetDay, originDay) - grabDayOffset;
         const start = addDays(toZoned(occurrence.start, timeZone), delta);
         return {
           start,
@@ -497,7 +561,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
       // bar edge resize: day granularity
       if (kind === "resize-start") {
         const time =
-          occurrence.start.getTime() - zonedStartOfDay(occurrence.start, timeZone).getTime();
+          occurrence.start.getTime() -
+          zonedStartOfDay(occurrence.start, timeZone).getTime();
         const start = new Date(targetDay.getTime() + time);
         if (start >= occurrence.end) return null;
         return {
@@ -509,7 +574,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
       }
       const time = occurrence.allDay
         ? 0
-        : occurrence.end.getTime() - zonedStartOfDay(occurrence.end, timeZone).getTime();
+        : occurrence.end.getTime() -
+          zonedStartOfDay(occurrence.end, timeZone).getTime();
       const end = occurrence.allDay
         ? addDays(targetDay, 1)
         : new Date(addDays(targetDay, time > 0 ? 0 : 1).getTime() + time);
@@ -535,9 +601,11 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
       const chipDurationMin = Math.round(grabSegDurationMs / 60000);
       const clamped = Math.min(
         Math.max(newStartMin, col.boundsStartMin),
-        col.boundsEndMin - chipDurationMin
+        col.boundsEndMin - chipDurationMin,
       );
-      const start = new Date(addMinutes(dayStart, clamped).getTime() - grabLeadMs);
+      const start = new Date(
+        addMinutes(dayStart, clamped).getTime() - grabLeadMs,
+      );
       return {
         start,
         end: new Date(start.getTime() + durationMs),
@@ -552,12 +620,16 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     // a 23:30 pointer in the start day's column would apply 1410 minutes to
     // the end's next-day anchor and jump the end a full day late (and a
     // midnight-ending event computes occEndMin 0 against its own day).
-    const occStartMinInCol = Math.round((occurrence.start.getTime() - dayStart.getTime()) / 60000);
-    const occEndMinInCol = Math.round((occurrence.end.getTime() - dayStart.getTime()) / 60000);
+    const occStartMinInCol = Math.round(
+      (occurrence.start.getTime() - dayStart.getTime()) / 60000,
+    );
+    const occEndMinInCol = Math.round(
+      (occurrence.end.getTime() - dayStart.getTime()) / 60000,
+    );
     if (kind === "resize-start") {
       const clamped = Math.min(
         Math.max(min, col.boundsStartMin),
-        Math.min(occEndMinInCol - snap, col.boundsEndMin)
+        Math.min(occEndMinInCol - snap, col.boundsEndMin),
       );
       const start = addMinutes(dayStart, clamped);
       if (start >= occurrence.end) return null;
@@ -565,7 +637,7 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     }
     const clamped = Math.max(
       Math.min(min, col.boundsEndMin),
-      Math.max(occStartMinInCol + snap, col.boundsStartMin)
+      Math.max(occStartMinInCol + snap, col.boundsStartMin),
     );
     const end = addMinutes(dayStart, clamped);
     if (end <= occurrence.start) return null;
@@ -624,7 +696,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
 
   const createCarry = () => {
     if (kind !== "move") return;
-    const chip = origin.closest<HTMLElement>("[data-slot=event-calendar-event]") ?? origin;
+    const chip =
+      origin.closest<HTMLElement>("[data-slot=event-calendar-event]") ?? origin;
     const rect = chip.getBoundingClientRect();
     // The clone is re-parented to <body>, escaping the calendar's inherited
     // font-size, so copy the source chip's resolved type - this keeps the carry
@@ -833,7 +906,8 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
       end: drag.proposedEnd,
       allDay: drag.proposedAllDay,
       resourceId: drag.proposedResourceId,
-      source: kind === "move" ? "drag" : (kind as "resize-start" | "resize-end"),
+      source:
+        kind === "move" ? "drag" : (kind as "resize-start" | "resize-end"),
     });
     // the polite live region is the only feedback a screen-reader user gets
     // that the drop landed, and on what; a vetoed commit stays silent
@@ -842,7 +916,7 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
         toZoned(drag.proposedStart, timeZone),
         toZoned(drag.proposedEnd, timeZone),
         drag.proposedAllDay,
-        { locale: settings.locale }
+        { locale: settings.locale },
       )}`;
     }
   };
@@ -882,7 +956,7 @@ function useEventCalendarGestures<TData = unknown>() {
       dragCarryInvalid: classNames?.dragCarryInvalid,
       dropHint: classNames?.dropHint,
     }),
-    [classNames]
+    [classNames],
   );
 
   // An in-flight gesture lives on window listeners and body-appended overlays,
@@ -903,16 +977,18 @@ function useEventCalendarGestures<TData = unknown>() {
       const event = segment.occurrence.event;
       return interactions.drag && !event.readOnly && event.draggable !== false;
     },
-    [instance]
+    [instance],
   );
 
   const canResize = useCallback(
     (segment: EventCalendarSegment<TData>) => {
       const { interactions } = instance.getState();
       const event = segment.occurrence.event;
-      return interactions.resize && !event.readOnly && event.resizable !== false;
+      return (
+        interactions.resize && !event.readOnly && event.resizable !== false
+      );
     },
-    [instance]
+    [instance],
   );
 
   const beginMove = useCallback(
@@ -932,11 +1008,15 @@ function useEventCalendarGestures<TData = unknown>() {
         ui,
       });
     },
-    [instance, canDrag, ui]
+    [instance, canDrag, ui],
   );
 
   const beginResize = useCallback(
-    (e: React.PointerEvent, segment: EventCalendarSegment<TData>, edge: "start" | "end") => {
+    (
+      e: React.PointerEvent,
+      segment: EventCalendarSegment<TData>,
+      edge: "start" | "end",
+    ) => {
       if (e.button !== 0) return;
       if (!canResize(segment)) {
         e.stopPropagation();
@@ -954,7 +1034,7 @@ function useEventCalendarGestures<TData = unknown>() {
         ui,
       });
     },
-    [instance, canResize, ui]
+    [instance, canResize, ui],
   );
 
   const beginCreate = useCallback(
@@ -971,7 +1051,7 @@ function useEventCalendarGestures<TData = unknown>() {
         ui,
       });
     },
-    [instance, ui]
+    [instance, ui],
   );
 
   return { beginMove, beginResize, beginCreate, canDrag, canResize };

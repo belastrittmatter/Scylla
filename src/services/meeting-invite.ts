@@ -1,5 +1,10 @@
 import { db } from "@/db";
-import { meetingInvite, user, meetingRoom, type MeetingInvite } from "@/db/schema";
+import {
+  meetingInvite,
+  user,
+  meetingRoom,
+  type MeetingInvite,
+} from "@/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
 import { SchedulerService, type TimeSlot } from "./scheduler";
 import { BookingService } from "./booking";
@@ -39,7 +44,9 @@ export class MeetingInviteService {
     return `${base || "meet"}-${randomSuffix}`;
   }
 
-  public static async createInvite(input: CreateMeetingInviteInput): Promise<MeetingInvite> {
+  public static async createInvite(
+    input: CreateMeetingInviteInput,
+  ): Promise<MeetingInvite> {
     const slug = this.generateSlug(input.title);
     const [created] = await db
       .insert(meetingInvite)
@@ -53,7 +60,9 @@ export class MeetingInviteService {
         locationType: input.locationType || (input.roomId ? "room" : "meet"),
         roomId: input.roomId || null,
         isRestricted: Boolean(input.isRestricted),
-        allowedEmails: (input.allowedEmails || []).map((e) => e.trim().toLowerCase()),
+        allowedEmails: (input.allowedEmails || []).map((e) =>
+          e.trim().toLowerCase(),
+        ),
         isActive: true,
       })
       .returning();
@@ -72,14 +81,18 @@ export class MeetingInviteService {
     const inv = invites[0];
 
     const lowerMemberEmails = Array.from(
-      new Set(inv.memberEmails.map((email) => email.toLowerCase()))
+      new Set(inv.memberEmails.map((email) => email.toLowerCase())),
     );
 
     // Fetch organizer, room, and member user records in parallel
     const [organizers, rooms, matchedUsers] = await Promise.all([
       db.select().from(user).where(eq(user.id, inv.organizerUserId)).limit(1),
       inv.roomId
-        ? db.select().from(meetingRoom).where(eq(meetingRoom.id, inv.roomId)).limit(1)
+        ? db
+            .select()
+            .from(meetingRoom)
+            .where(eq(meetingRoom.id, inv.roomId))
+            .limit(1)
         : Promise.resolve([]),
       lowerMemberEmails.length > 0
         ? db.select().from(user).where(inArray(user.email, lowerMemberEmails))
@@ -88,7 +101,9 @@ export class MeetingInviteService {
 
     const organizer = organizers[0] || null;
     const room = rooms[0] || null;
-    const userByEmail = new Map(matchedUsers.map((u) => [u.email.toLowerCase(), u]));
+    const userByEmail = new Map(
+      matchedUsers.map((u) => [u.email.toLowerCase(), u]),
+    );
 
     const members = inv.memberEmails.map((email) => {
       const u = userByEmail.get(email.toLowerCase());
@@ -101,7 +116,12 @@ export class MeetingInviteService {
     return {
       invite: inv,
       organizer: organizer
-        ? { id: organizer.id, name: organizer.name, email: organizer.email, image: organizer.image }
+        ? {
+            id: organizer.id,
+            name: organizer.name,
+            email: organizer.email,
+            image: organizer.image,
+          }
         : null,
       room,
       members,
@@ -119,7 +139,7 @@ export class MeetingInviteService {
   public static async getAvailableSlots(
     slug: string,
     dateStr: string,
-    timeZone = "Asia/Ho_Chi_Minh"
+    timeZone = "Asia/Ho_Chi_Minh",
   ): Promise<TimeSlot[]> {
     const details = await this.getInviteBySlug(slug);
     if (!details || !details.invite.isActive) {
@@ -135,8 +155,12 @@ export class MeetingInviteService {
 
     // Compute a search window around the requested date
     const baseDate = new Date(`${dateStr}T12:00:00.000Z`);
-    const startDate = new Date(baseDate.getTime() - 24 * 3600 * 1000).toISOString();
-    const endDate = new Date(baseDate.getTime() + 24 * 3600 * 1000).toISOString();
+    const startDate = new Date(
+      baseDate.getTime() - 24 * 3600 * 1000,
+    ).toISOString();
+    const endDate = new Date(
+      baseDate.getTime() + 24 * 3600 * 1000,
+    ).toISOString();
 
     const slots = await SchedulerService.findSlots({
       attendees: Array.from(allAttendees),
@@ -170,11 +194,17 @@ export class MeetingInviteService {
 
     const { invite, organizer } = details;
 
-    if (invite.isRestricted && invite.allowedEmails && invite.allowedEmails.length > 0) {
-      const allowedSet = new Set(invite.allowedEmails.map((e) => e.toLowerCase()));
+    if (
+      invite.isRestricted &&
+      invite.allowedEmails &&
+      invite.allowedEmails.length > 0
+    ) {
+      const allowedSet = new Set(
+        invite.allowedEmails.map((e) => e.toLowerCase()),
+      );
       if (!allowedSet.has(input.guestEmail.trim().toLowerCase())) {
         throw new Error(
-          `This meeting invitation is restricted to invited recipients only: ${invite.allowedEmails.join(", ")}`
+          `This meeting invitation is restricted to invited recipients only: ${invite.allowedEmails.join(", ")}`,
         );
       }
     }
@@ -184,10 +214,13 @@ export class MeetingInviteService {
         ...(organizer?.email ? [organizer.email.toLowerCase()] : []),
         ...invite.memberEmails.map((e) => e.toLowerCase()),
         input.guestEmail.trim().toLowerCase(),
-      ])
+      ]),
     ).map((email) => ({
       email,
-      name: email === input.guestEmail.toLowerCase() ? input.guestName.trim() : undefined,
+      name:
+        email === input.guestEmail.toLowerCase()
+          ? input.guestName.trim()
+          : undefined,
     }));
 
     const description = [
