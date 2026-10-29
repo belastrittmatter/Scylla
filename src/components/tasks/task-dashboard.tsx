@@ -129,9 +129,6 @@ export function TaskDashboard({
 
   React.useEffect(() => {
     let isMounted = true;
-    if (!clientWorkspaceCache) {
-      setIsLoading(true);
-    }
     if (!inflightWorkspaceRequest) {
       inflightWorkspaceRequest = getWorkspaceDataAction().finally(() => {
         inflightWorkspaceRequest = null;
