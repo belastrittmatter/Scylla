@@ -85,16 +85,6 @@ async function handleBusyQuery(params: {
       .where(eq(account.userId, sessionUserId));
     googleAccount = accounts.find((a) => a.providerId === "google") || null;
   }
-  if (!googleAccount) {
-    const anyGoogle = await db
-      .select()
-      .from(account)
-      .where(eq(account.providerId, "google"))
-      .limit(1);
-    if (anyGoogle.length > 0) {
-      googleAccount = anyGoogle[0];
-    }
-  }
 
   // 2. Resolve target emails
   const targetEmails = new Set<string>();

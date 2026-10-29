@@ -90,39 +90,29 @@ export async function GET(req: Request) {
       SchedulerService.getUserSchedule(activeUserId || sessionUserEmail),
       (async () => {
         let acct = null;
-        if (activeUserId) {
+        if (sessionUserId) {
           const accounts = await db
             .select()
             .from(account)
-            .where(eq(account.userId, activeUserId));
+            .where(eq(account.userId, sessionUserId));
           acct = accounts.find((a) => a.providerId === "google") || null;
-        }
-        if (!acct) {
-          const anyGoogleAccounts = await db
-            .select()
-            .from(account)
-            .where(eq(account.providerId, "google"))
-            .limit(1);
-          if (anyGoogleAccounts.length > 0) {
-            acct = anyGoogleAccounts[0];
-          }
         }
         return acct;
       })(),
       Promise.all([
         db.select().from(meetingRoom),
         db.select().from(user),
-        activeUserId
+        sessionUserId
           ? db
               .select()
               .from(booking)
               .where(
                 or(
-                  eq(booking.organizerUserId, activeUserId),
-                  eq(booking.userId, activeUserId),
+                  eq(booking.organizerUserId, sessionUserId),
+                  eq(booking.userId, sessionUserId),
                 ),
               )
-          : db.select().from(booking).limit(50),
+          : Promise.resolve([]),
       ]).catch((dbErr) => {
         console.warn("Failed to fetch DB bookings for calendar:", dbErr);
         return null;
