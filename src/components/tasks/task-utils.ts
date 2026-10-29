@@ -21,7 +21,8 @@ const AVATAR_PALETTE = [
 export function getUserAvatarColor(name: string): string {
   if (!name) return AVATAR_PALETTE[0];
   let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash << 5) - hash + name.charCodeAt(i);
+  for (let i = 0; i < name.length; i++)
+    hash = (hash << 5) - hash + name.charCodeAt(i);
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 }
 
@@ -30,7 +31,9 @@ export function getUserAvatarColor(name: string): string {
  * Prevents timezone shift bugs where database timestamps without timezone offsets (e.g. "YYYY-MM-DD HH:mm:ss.sss")
  * are inadvertently parsed using the server or browser's local timezone.
  */
-export function parseDbTimestampToIso(val: string | Date | null | undefined): string | null {
+export function parseDbTimestampToIso(
+  val: string | Date | null | undefined,
+): string | null {
   if (!val) return null;
   if (val instanceof Date) return val.toISOString();
   const str = String(val).trim();
@@ -39,14 +42,18 @@ export function parseDbTimestampToIso(val: string | Date | null | undefined): st
     return new Date(str).toISOString();
   }
   const normalized = str.replace(" ", "T");
-  return new Date(normalized.endsWith("Z") ? normalized : `${normalized}Z`).toISOString();
+  return new Date(
+    normalized.endsWith("Z") ? normalized : `${normalized}Z`,
+  ).toISOString();
 }
 
 /**
  * Safely parses a timestamp string or Date into epoch milliseconds in UTC.
  * If the input string lacks timezone info, treats it as UTC rather than local time.
  */
-export function parseTimestampMs(val: string | number | Date | null | undefined): number {
+export function parseTimestampMs(
+  val: string | number | Date | null | undefined,
+): number {
   if (val === null || val === undefined) return 0;
   if (typeof val === "number") return Number.isFinite(val) ? val : 0;
   if (val instanceof Date) return val.getTime();
@@ -56,7 +63,9 @@ export function parseTimestampMs(val: string | number | Date | null | undefined)
     return new Date(str).getTime();
   }
   const normalized = str.replace(" ", "T");
-  return new Date(normalized.endsWith("Z") ? normalized : `${normalized}Z`).getTime();
+  return new Date(
+    normalized.endsWith("Z") ? normalized : `${normalized}Z`,
+  ).getTime();
 }
 
 export function formatDueDate(date: Date | string | null | undefined): string {
@@ -67,7 +76,7 @@ export function formatDueDate(date: Date | string | null | undefined): string {
 
 export function getDeadlineStatus(
   date: Date | string | null | undefined,
-  isCompleted: boolean = false
+  isCompleted: boolean = false,
 ): {
   label: string;
   variant: "default" | "warning" | "destructive" | "muted";
@@ -155,7 +164,10 @@ export function getPriorityBadge(priority: TaskPriority) {
   return PRIORITY_BADGES[priority] ?? PRIORITY_BADGES.low;
 }
 
-const STATUS_BADGES: Record<TaskStatus, { label: string; badgeClass: string; dotColor: string }> = {
+const STATUS_BADGES: Record<
+  TaskStatus,
+  { label: string; badgeClass: string; dotColor: string }
+> = {
   todo: {
     label: "To Do",
     dotColor: "bg-slate-400",
@@ -230,7 +242,7 @@ export function createDraftTask(
   teamId: string,
   creatorId: string,
   project: Project | null,
-  assignee?: TaskUser | null
+  assignee?: TaskUser | null,
 ): TaskItem {
   return {
     id: `draft-${Date.now()}`,
@@ -246,7 +258,8 @@ export function createDraftTask(
     position: 0,
     estimatedMinutes: 60,
     totalSpentSeconds: 0,
-    activeSessionStartedAt: status === "in_progress" ? new Date().toISOString() : null,
+    activeSessionStartedAt:
+      status === "in_progress" ? new Date().toISOString() : null,
     createdAt: new Date(),
     updatedAt: new Date(),
     assignee: assignee ?? null,
@@ -255,7 +268,10 @@ export function createDraftTask(
   };
 }
 
-export function filterTasks(tasks: TaskItem[], filters: TaskFilters): TaskItem[] {
+export function filterTasks(
+  tasks: TaskItem[],
+  filters: TaskFilters,
+): TaskItem[] {
   return tasks.filter((t) => {
     if (filters.searchQuery.trim()) {
       const q = filters.searchQuery.toLowerCase();
@@ -266,7 +282,8 @@ export function filterTasks(tasks: TaskItem[], filters: TaskFilters): TaskItem[]
     }
 
     if (filters.status !== "all" && t.status !== filters.status) return false;
-    if (filters.priority !== "all" && t.priority !== filters.priority) return false;
+    if (filters.priority !== "all" && t.priority !== filters.priority)
+      return false;
 
     if (filters.deadlineHorizon !== "all") {
       const d = t.dueDate ? new Date(t.dueDate) : null;
@@ -280,7 +297,11 @@ export function filterTasks(tasks: TaskItem[], filters: TaskFilters): TaskItem[]
         )
           return false;
         if (filters.deadlineHorizon === "today" && !isToday(d)) return false;
-        if (filters.deadlineHorizon === "upcoming" && (!isFuture(d) || isToday(d))) return false;
+        if (
+          filters.deadlineHorizon === "upcoming" &&
+          (!isFuture(d) || isToday(d))
+        )
+          return false;
       }
     }
     return true;

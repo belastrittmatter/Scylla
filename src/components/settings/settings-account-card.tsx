@@ -2,14 +2,23 @@
 
 import * as React from "react";
 import { Sparkles } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface SettingsAccountCardProps {
   userName?: string | null;
   userEmail?: string | null;
 }
 
-export function SettingsAccountCard({ userName, userEmail }: SettingsAccountCardProps) {
+export function SettingsAccountCard({
+  userName,
+  userEmail,
+}: SettingsAccountCardProps) {
   const initials = userName
     ? userName
         .split(" ")

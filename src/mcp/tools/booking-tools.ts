@@ -3,7 +3,11 @@ import { GoogleCalendarService } from "@/services/google-calendar";
 import { RoomService } from "@/services/rooms";
 import { db, booking } from "@/db";
 import { eq, or } from "drizzle-orm";
-import { bookMeetingSchema, rescheduleMeetingSchema, cancelMeetingSchema } from "../schemas";
+import {
+  bookMeetingSchema,
+  rescheduleMeetingSchema,
+  cancelMeetingSchema,
+} from "../schemas";
 import { resolveProject } from "./auth-helpers";
 import type { McpToolContext } from "../types";
 
@@ -19,7 +23,16 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         ui: { visibility: ["model", "app"] },
       },
     },
-    async ({ summary, description, start, end, attendees, roomEmail, roomId, projectId }) => {
+    async ({
+      summary,
+      description,
+      start,
+      end,
+      attendees,
+      roomEmail,
+      roomId,
+      projectId,
+    }) => {
       const token = await ctx.getAccessToken();
       if (!token) {
         return {
@@ -36,19 +49,28 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       // Resolve optional linked project and attendee nicknames in parallel
       const [linkedProject, resolvedAttendeeRaw] = await Promise.all([
         resolveProject(projectId, ctx.userId),
-        Promise.all(attendees.map((att) => ctx.resolveAttendeeEmail(att, token))),
+        Promise.all(
+          attendees.map((att) => ctx.resolveAttendeeEmail(att, token)),
+        ),
       ]);
       const finalProjectId = linkedProject ? linkedProject.id : null;
 
       // If a project is linked and summary does not already have its tag, prefix cleanly
       let meetingSummary = summary.trim();
-      if (linkedProject && !meetingSummary.startsWith(`[${linkedProject.name}]`)) {
+      if (
+        linkedProject &&
+        !meetingSummary.startsWith(`[${linkedProject.name}]`)
+      ) {
         meetingSummary = `[${linkedProject.name}] ${meetingSummary}`;
       }
 
       const resolvedAttendees: string[] = [];
       for (const email of resolvedAttendeeRaw) {
-        if (email && email.includes("@") && !resolvedAttendees.includes(email)) {
+        if (
+          email &&
+          email.includes("@") &&
+          !resolvedAttendees.includes(email)
+        ) {
           resolvedAttendees.push(email);
         }
       }
@@ -65,17 +87,21 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
             roomEmail: roomEmail || undefined,
             conference: true,
           },
-          token
+          token,
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error("[MCP book_meeting] Error creating calendar event:", msg, {
-          summary: meetingSummary,
-          start,
-          end,
-          attendees: resolvedAttendees,
-          roomEmail,
-        });
+        console.error(
+          "[MCP book_meeting] Error creating calendar event:",
+          msg,
+          {
+            summary: meetingSummary,
+            start,
+            end,
+            attendees: resolvedAttendees,
+            roomEmail,
+          },
+        );
         return {
           isError: true,
           content: [{ type: "text", text: msg }],
@@ -85,18 +111,23 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       // Record booking in database if user is authenticated
       try {
         if (ctx.userId) {
-          const emailTarget = roomEmail || (roomId?.includes("@") ? roomId : undefined);
+          const emailTarget =
+            roomEmail || (roomId?.includes("@") ? roomId : undefined);
           const [currentUser, byId, byEmail] = await Promise.all([
             ctx.getCurrentUser().catch(() => null),
-            roomId ? RoomService.getRoomById(roomId).catch(() => null) : Promise.resolve(null),
+            roomId
+              ? RoomService.getRoomById(roomId).catch(() => null)
+              : Promise.resolve(null),
             emailTarget
               ? RoomService.getRoomByEmail(emailTarget).catch(() => null)
               : Promise.resolve(null),
           ]);
           const allAttendeeEmails = Array.from(
             new Set(
-              [currentUser?.email, ...resolvedAttendees].filter((e): e is string => Boolean(e))
-            )
+              [currentUser?.email, ...resolvedAttendees].filter(
+                (e): e is string => Boolean(e),
+              ),
+            ),
           );
           const resolvedRoomId: string | null = byId?.id ?? byEmail?.id ?? null;
           await db.insert(booking).values({
@@ -140,12 +171,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
                 projectName: linkedProject ? linkedProject.name : undefined,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 2. Tool: reschedule_meeting
@@ -182,11 +213,15 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
             end: newEnd,
             roomEmail,
           },
-          token
+          token,
         ),
       ]);
       const finalProjectId =
-        projectId !== undefined ? (linkedProject ? linkedProject.id : null) : undefined;
+        projectId !== undefined
+          ? linkedProject
+            ? linkedProject.id
+            : null
+          : undefined;
 
       // Also update DB booking record if found
       try {
@@ -205,8 +240,8 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
             or(
               eq(booking.id, eventId),
               eq(booking.googleEventId, eventId),
-              eq(booking.gcalEventId, eventId)
-            )
+              eq(booking.gcalEventId, eventId),
+            ),
           );
       } catch (dbErr) {
         console.warn("Could not sync reschedule to DB:", dbErr);
@@ -227,12 +262,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
                 projectName: linkedProject ? linkedProject.name : undefined,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 3. Tool: cancel_meeting
@@ -257,7 +292,11 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
-      const result = await GoogleCalendarService.deleteEvent(eventId, calendarId, token);
+      const result = await GoogleCalendarService.deleteEvent(
+        eventId,
+        calendarId,
+        token,
+      );
 
       // Update DB record status if present
       try {
@@ -268,8 +307,8 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
             or(
               eq(booking.id, eventId),
               eq(booking.googleEventId, eventId),
-              eq(booking.gcalEventId, eventId)
-            )
+              eq(booking.gcalEventId, eventId),
+            ),
           );
       } catch (dbErr) {
         console.warn("Could not sync cancellation to DB:", dbErr);
@@ -285,11 +324,11 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
                 result,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 }

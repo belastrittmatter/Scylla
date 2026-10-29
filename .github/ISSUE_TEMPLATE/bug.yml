@@ -1,0 +1,49 @@
+name: Bug Report
+description: Report a broken MCP tool, crash, protocol error, or test failure.
+title: "[BUG] "
+labels: ["type:bug", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: What is failing or returning incorrect data?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal reproduction steps.
+      value: |
+        1. Start server with `pnpm dev`
+        2. Run client / Inspector
+        3. Call tool `...` with payload `{...}`
+        4. See error:
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What should happen vs what actually occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Stack Trace / JSON-RPC Trace
+      description: Paste any terminal logs or MCP JSON-RPC protocol traces.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What proves this bug is fixed?
+      value: |
+        - [ ] Root cause identified and resolved
+        - [ ] Regression test added to prevent recurrence
+    validations:
+      required: true

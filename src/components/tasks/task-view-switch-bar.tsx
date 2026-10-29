@@ -26,11 +26,17 @@ export function TaskViewSwitchBar({
         }}
       >
         <TabsList>
-          <TabsTrigger value="kanban" className="cursor-pointer px-3 py-1 text-sm font-medium">
+          <TabsTrigger
+            value="kanban"
+            className="cursor-pointer px-3 py-1 text-sm font-medium"
+          >
             <LayoutGrid className="mr-1.5 size-4" />
             Board
           </TabsTrigger>
-          <TabsTrigger value="table" className="cursor-pointer px-3 py-1 text-sm font-medium">
+          <TabsTrigger
+            value="table"
+            className="cursor-pointer px-3 py-1 text-sm font-medium"
+          >
             <TableIcon className="mr-1.5 size-4" />
             Table
           </TabsTrigger>
@@ -39,7 +45,9 @@ export function TaskViewSwitchBar({
 
       <div className="text-sm text-neutral-500 dark:text-neutral-400">
         Showing{" "}
-        <span className="font-semibold text-neutral-800 dark:text-neutral-200">{taskCount}</span>{" "}
+        <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+          {taskCount}
+        </span>{" "}
         {taskCount === 1 ? "task" : "tasks"}
       </div>
     </div>

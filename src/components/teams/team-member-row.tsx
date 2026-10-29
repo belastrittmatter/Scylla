@@ -21,9 +21,14 @@ interface TeamMemberRowProps {
   onRemoveMember: (userId: string) => void;
 }
 
-export function TeamMemberRow({ member, onUpdateRole, onRemoveMember }: TeamMemberRowProps) {
+export function TeamMemberRow({
+  member,
+  onUpdateRole,
+  onRemoveMember,
+}: TeamMemberRowProps) {
   const name = member.user?.name || member.user?.email || member.userId;
-  const email = member.user?.email || (member.userId.includes("@") ? member.userId : "");
+  const email =
+    member.user?.email || (member.userId.includes("@") ? member.userId : "");
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -50,7 +55,11 @@ export function TeamMemberRow({ member, onUpdateRole, onRemoveMember }: TeamMemb
               </Badge>
             )}
           </div>
-          {email && <p className="text-muted-foreground truncate text-[11px]">{email}</p>}
+          {email && (
+            <p className="text-muted-foreground truncate text-[11px]">
+              {email}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -61,7 +70,9 @@ export function TeamMemberRow({ member, onUpdateRole, onRemoveMember }: TeamMemb
         ) : (
           <Select
             value={member.role}
-            onValueChange={(val) => val && onUpdateRole(member.userId, val as TeamRole)}
+            onValueChange={(val) =>
+              val && onUpdateRole(member.userId, val as TeamRole)
+            }
           >
             <SelectTrigger className="h-7 w-24 text-[11px] capitalize">
               <SelectValue>

@@ -15,7 +15,11 @@ interface KanbanColumnProps {
   tasks: TaskItem[];
   onSelectTask?: (task: TaskItem) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
-  onMoveTask?: (taskId: string, targetStatus: TaskStatus, targetIndex?: number) => void;
+  onMoveTask?: (
+    taskId: string,
+    targetStatus: TaskStatus,
+    targetIndex?: number,
+  ) => void;
   onAddNewTask?: (status: TaskStatus) => void;
 }
 
@@ -69,13 +73,15 @@ export function KanbanColumn({
         "group flex min-w-[280px] flex-1 flex-col rounded-xl border p-3.5 transition-colors",
         isDragOver
           ? "border-primary/50 bg-primary/5 dark:bg-primary/10"
-          : "border-neutral-200/60 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/40"
+          : "border-neutral-200/60 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/40",
       )}
     >
       {/* Column Header */}
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">{title}</h3>
+          <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+            {title}
+          </h3>
           <Badge
             variant="secondary"
             className={cn("px-2 py-0.5 text-xs font-semibold", badgeClass)}
@@ -142,7 +148,11 @@ export function KanbanColumn({
                 }
               }}
             >
-              <KanbanCard task={task} onSelectTask={onSelectTask} onUpdateStatus={onUpdateStatus} />
+              <KanbanCard
+                task={task}
+                onSelectTask={onSelectTask}
+                onUpdateStatus={onUpdateStatus}
+              />
             </div>
           </React.Fragment>
         ))}
@@ -208,11 +218,16 @@ export function KanbanColumn({
               "flex w-full cursor-pointer items-center justify-center rounded-xl border border-dashed font-medium transition-all duration-300 ease-in-out",
               tasks.length >= 3
                 ? "h-8 border-neutral-200/90 bg-white/60 text-xs text-neutral-500 hover:border-neutral-300 hover:bg-white hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900/50 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-                : "hover:border-primary/50 hover:bg-primary/5 hover:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/10 h-14 border-2 border-neutral-200/90 bg-white/70 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-400"
+                : "hover:border-primary/50 hover:bg-primary/5 hover:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/10 h-14 border-2 border-neutral-200/90 bg-white/70 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-400",
             )}
           >
             <div className="flex items-center gap-1.5 transition-all">
-              <Plus className={cn("transition-all", tasks.length >= 3 ? "size-3.5" : "size-4")} />
+              <Plus
+                className={cn(
+                  "transition-all",
+                  tasks.length >= 3 ? "size-3.5" : "size-4",
+                )}
+              />
               <span>Add task</span>
             </div>
           </button>

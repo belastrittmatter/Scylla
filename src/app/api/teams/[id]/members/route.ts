@@ -17,7 +17,7 @@ export async function GET(_req: Request, context: RouteParams) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to list members" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -33,14 +33,17 @@ export async function POST(req: Request, context: RouteParams) {
     try {
       body = await req.json();
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     const parseResult = AddTeamMemberSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -54,7 +57,7 @@ export async function POST(req: Request, context: RouteParams) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to add member" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

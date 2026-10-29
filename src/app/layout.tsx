@@ -23,7 +23,11 @@ export const metadata: Metadata = {
     "AI-powered multi-person availability coordinator and physical room scheduling with Model Context Protocol.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
@@ -34,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         geistSans.variable,
         geistMono.variable,
         "font-sans",
-        inter.variable
+        inter.variable,
       )}
     >
       <body className="flex min-h-full flex-col">

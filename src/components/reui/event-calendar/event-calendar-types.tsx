@@ -25,7 +25,9 @@ interface EventCalendarRecurrenceRule {
   count?: number;
   /** Inclusive instant. */
   until?: Date;
-  byWeekday?: Array<EventCalendarWeekday | { day: EventCalendarWeekday; ordinal: number }>;
+  byWeekday?: Array<
+    EventCalendarWeekday | { day: EventCalendarWeekday; ordinal: number }
+  >;
   byMonthDay?: number[];
   byMonth?: number[];
   weekStart?: EventCalendarWeekday;
@@ -180,7 +182,8 @@ interface EventCalendarProposedUpdate<TData = unknown> {
 }
 
 /** false = reject/revert; void or true = accept; object = accept with adjustment. */
-type EventCalendarUpdateResult = boolean | void | { start?: Date; end?: Date; allDay?: boolean };
+type EventCalendarUpdateResult =
+  boolean | void | { start?: Date; end?: Date; allDay?: boolean };
 
 /** A click is a point, not a range; `end` is present for timed slots. */
 interface EventCalendarSlotInfo {
@@ -204,7 +207,10 @@ interface EventCalendarOffDaysConfig {
 }
 
 interface EventCalendarDataAdapter<TData = unknown> {
-  getEvents(range: EventCalendarDateRange, signal?: AbortSignal): Promise<CalendarEvent<TData>[]>;
+  getEvents(
+    range: EventCalendarDateRange,
+    signal?: AbortSignal,
+  ): Promise<CalendarEvent<TData>[]>;
 }
 
 export type {

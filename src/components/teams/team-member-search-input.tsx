@@ -30,21 +30,21 @@ export function TeamMemberSearchInput({
   placeholder = "Search teammate by name or email...",
   disabled = false,
 }: TeamMemberSearchInputProps) {
-  const userSearch = useUserSearch({ limit: 8 });
+  const { setQuery, results, isLoading } = useUserSearch({ limit: 8 });
 
   React.useEffect(() => {
-    userSearch.setQuery(value);
-  }, [value, userSearch.setQuery]);
-
-  const results = userSearch.results;
-  const isLoading = userSearch.isLoading;
+    setQuery(value);
+  }, [value, setQuery]);
 
   const items = React.useMemo(() => {
     const trimmed = value.trim();
     if (!trimmed) return [];
     const list = [...results];
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-    if (isValidEmail && !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())) {
+    if (
+      isValidEmail &&
+      !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())
+    ) {
       list.unshift({ email: trimmed, name: trimmed, id: "invite-" + trimmed });
     }
     return list;
@@ -111,11 +111,13 @@ export function TeamMemberSearchInput({
                     <p className="text-foreground truncate text-xs font-medium leading-tight">
                       {u.name || u.email}
                     </p>
-                    {u.name && u.email && u.name.toLowerCase() !== u.email.toLowerCase() && (
-                      <p className="text-muted-foreground truncate text-[10px] leading-tight">
-                        {u.email}
-                      </p>
-                    )}
+                    {u.name &&
+                      u.email &&
+                      u.name.toLowerCase() !== u.email.toLowerCase() && (
+                        <p className="text-muted-foreground truncate text-[10px] leading-tight">
+                          {u.email}
+                        </p>
+                      )}
                   </div>
                 </ComboboxItem>
               );

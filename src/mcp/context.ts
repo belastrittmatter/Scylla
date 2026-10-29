@@ -17,13 +17,19 @@ export function createMcpToolContext(userId?: string): McpToolContext {
             const userAccounts = await db
               .select()
               .from(account)
-              .where(and(eq(account.userId, userId), eq(account.providerId, "google")))
+              .where(
+                and(
+                  eq(account.userId, userId),
+                  eq(account.providerId, "google"),
+                ),
+              )
               .limit(1);
 
             if (userAccounts.length > 0) {
-              const refreshedToken = await GoogleCalendarService.refreshAccountToken(
-                userAccounts[0]
-              );
+              const refreshedToken =
+                await GoogleCalendarService.refreshAccountToken(
+                  userAccounts[0],
+                );
               if (refreshedToken) return refreshedToken;
             }
           } catch (err) {
@@ -41,7 +47,11 @@ export function createMcpToolContext(userId?: string): McpToolContext {
       currentUserPromise = (async () => {
         if (userId) {
           try {
-            const users = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+            const users = await db
+              .select()
+              .from(user)
+              .where(eq(user.id, userId))
+              .limit(1);
             if (users.length > 0) return users[0];
           } catch (err) {
             console.warn("Could not query user by id:", err);
@@ -66,7 +76,7 @@ export function createMcpToolContext(userId?: string): McpToolContext {
 
   const resolveAttendeeEmail = async (
     attendeeOrQuery: string,
-    token?: string | null
+    token?: string | null,
   ): Promise<string> => {
     const trimmed = attendeeOrQuery.trim();
     if (!trimmed) return "";
@@ -78,7 +88,11 @@ export function createMcpToolContext(userId?: string): McpToolContext {
     if (trimmed.includes("@")) return lower;
     try {
       const current = await getCurrentUser();
-      if (current.name && current.name.toLowerCase() === lower && current.email) {
+      if (
+        current.name &&
+        current.name.toLowerCase() === lower &&
+        current.email
+      ) {
         return current.email.toLowerCase();
       }
       const teammates = await UserService.searchTeammates(trimmed, 1, {

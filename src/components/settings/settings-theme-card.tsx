@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { Sun, Moon, Laptop, Check } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface SettingsThemeCardProps {
   theme: string | undefined;
@@ -10,7 +16,11 @@ interface SettingsThemeCardProps {
   onThemeChange: (theme: "light" | "dark" | "system") => void;
 }
 
-export function SettingsThemeCard({ theme, mounted, onThemeChange }: SettingsThemeCardProps) {
+export function SettingsThemeCard({
+  theme,
+  mounted,
+  onThemeChange,
+}: SettingsThemeCardProps) {
   return (
     <Card className="shadow-xs border-neutral-200/80 dark:border-neutral-800 dark:bg-neutral-900">
       <CardHeader className="pb-4">
@@ -23,8 +33,8 @@ export function SettingsThemeCard({ theme, mounted, onThemeChange }: SettingsThe
               Appearance & Theme
             </CardTitle>
             <CardDescription className="text-xs text-neutral-500 dark:text-neutral-400">
-              Choose how Scylla looks on your screen. Supports automatic synchronization with your
-              system settings.
+              Choose how Scylla looks on your screen. Supports automatic
+              synchronization with your system settings.
             </CardDescription>
           </div>
         </div>

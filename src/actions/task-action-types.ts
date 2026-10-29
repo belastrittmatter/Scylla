@@ -1,4 +1,8 @@
-import type { TaskUser, TaskWithDetails, WorkspaceData } from "@/services/task/task-types";
+import type {
+  TaskUser,
+  TaskWithDetails,
+  WorkspaceData,
+} from "@/services/task/task-types";
 
 export type { TaskUser, TaskWithDetails, WorkspaceData };
 

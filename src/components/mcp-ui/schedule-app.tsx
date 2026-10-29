@@ -47,10 +47,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 180] as const;
-const fmtDur = (d: number) => (d >= 60 && d % 60 === 0 ? `${d / 60}h (${d}m)` : `${d} min`);
+const fmtDur = (d: number) =>
+  d >= 60 && d % 60 === 0 ? `${d / 60}h (${d}m)` : `${d} min`;
 
-export function ScheduleApp({ initialData = null }: { initialData?: unknown }): React.JSX.Element {
-  const { data, setData, callTool, askAi } = useMcpBridge<ScheduleData>(initialData);
+export function ScheduleApp({
+  initialData = null,
+}: {
+  initialData?: unknown;
+}): React.JSX.Element {
+  const { data, setData, callTool, askAi } =
+    useMcpBridge<ScheduleData>(initialData);
   const [todFilter, setTodFilter] = useState<"all" | "am" | "pm">("all");
   const [customDuration, setCustomDuration] = useState<number | null>(null);
   const [roomId, setRoomId] = useState("");
@@ -58,12 +64,15 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
   const [roomFreeMsSet, setRoomFreeMsSet] = useState<Set<number> | null>(null);
   const [roomsList, setRoomsList] = useState<readonly ScheduleRoom[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<ScheduleSlot | null>(null);
-  const [bookedIntervals, setBookedIntervals] = useState<readonly BusyInterval[]>([]);
+  const [bookedIntervals, setBookedIntervals] = useState<
+    readonly BusyInterval[]
+  >([]);
   const [titleInput, setTitleInput] = useState("");
   const [agendaInput, setAgendaInput] = useState("");
-  const [status, setStatus] = useState<{ text: string; tone: "green" | "amber" | "red" } | null>(
-    null
-  );
+  const [status, setStatus] = useState<{
+    text: string;
+    tone: "green" | "amber" | "red";
+  } | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -73,23 +82,40 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
   const names = getAttendeeNames(data);
   const durationMin = customDuration ?? data?.durationMinutes ?? 30;
   const durationChoices = DURATION_OPTIONS.includes(
-    durationMin as (typeof DURATION_OPTIONS)[number]
+    durationMin as (typeof DURATION_OPTIONS)[number],
   )
     ? DURATION_OPTIONS
     : [...DURATION_OPTIONS, durationMin].sort((a, b) => a - b);
   const defaultTitle =
-    data?.suggestedTitle || (names.length > 0 ? `Sync: ${formatNames(names)}` : "Meeting");
+    data?.suggestedTitle ||
+    (names.length > 0 ? `Sync: ${formatNames(names)}` : "Meeting");
   const allPeopleBusy = participants.flatMap((p) => p.busy ?? []);
-  const allSlots = expandTo15MinSlots(data?.mutualSlots || [], durationMin, allPeopleBusy);
-  const recommendedRoom = pickRecommendedRoom(rooms, participants.length, allSlots);
+  const allSlots = expandTo15MinSlots(
+    data?.mutualSlots || [],
+    durationMin,
+    allPeopleBusy,
+  );
+  const recommendedRoom = pickRecommendedRoom(
+    rooms,
+    participants.length,
+    allSlots,
+  );
   const effectiveRoomId = hasUserChangedRoom
     ? roomId
     : roomId || data?.selectedRoomId || recommendedRoom?.id || "";
   const selectedRoom =
-    rooms.find((r) => String(r.id) === String(effectiveRoomId) || r.email === effectiveRoomId) ||
-    null;
-  const roomBusyList = getRoomBusyIntervals(selectedRoom, roomFreeMsSet, allSlots);
-  const attendeeEmails = participants.map((p) => p.email).filter((e): e is string => Boolean(e));
+    rooms.find(
+      (r) =>
+        String(r.id) === String(effectiveRoomId) || r.email === effectiveRoomId,
+    ) || null;
+  const roomBusyList = getRoomBusyIntervals(
+    selectedRoom,
+    roomFreeMsSet,
+    allSlots,
+  );
+  const attendeeEmails = participants
+    .map((p) => p.email)
+    .filter((e): e is string => Boolean(e));
 
   useEffect(() => {
     if (!data || (data.rooms && data.rooms.length > 0)) return;
@@ -101,7 +127,10 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
       .catch(() => {});
   }, [data, callTool]);
 
-  async function refreshSlots(nextDuration: number, prevStart?: string): Promise<void> {
+  async function refreshSlots(
+    nextDuration: number,
+    prevStart?: string,
+  ): Promise<void> {
     if (!data) return;
     setIsSyncing(true);
     try {
@@ -113,12 +142,16 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
       });
       const updated = extractData<ScheduleData>(res);
       if (updated) {
-        setData((prev) => ({ ...prev, ...updated, durationMinutes: nextDuration }));
+        setData((prev) => ({
+          ...prev,
+          ...updated,
+          durationMinutes: nextDuration,
+        }));
         if (updated.rooms) setRoomsList(updated.rooms);
       }
       if (prevStart) {
         const nextEnd = new Date(
-          new Date(prevStart).getTime() + nextDuration * 60_000
+          new Date(prevStart).getTime() + nextDuration * 60_000,
         ).toISOString();
         if (
           !isIntervalBusy(allPeopleBusy, prevStart, nextEnd) &&
@@ -142,7 +175,10 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
     setRoomId(roomVal);
     setRoomFreeMsSet(null);
     setBookingError(null);
-    const room = rooms.find((r) => String(r.id) === String(roomVal) || r.email === roomVal) || null;
+    const room =
+      rooms.find(
+        (r) => String(r.id) === String(roomVal) || r.email === roomVal,
+      ) || null;
     let nextFreeSet: Set<number> | null = null;
     if (room && !Array.isArray(room.busy) && data?.currentUser) {
       setStatus({ text: `Checking ${room.name}...`, tone: "amber" });
@@ -156,8 +192,14 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
         const sc = extractData<ScheduleData>(res);
         if (sc?.rooms) setRoomsList(sc.rooms);
         if (sc?.mutualSlots) {
-          const expanded = expandTo15MinSlots(sc.mutualSlots, durationMin, allPeopleBusy);
-          nextFreeSet = new Set(expanded.map((s) => new Date(s.start).getTime()));
+          const expanded = expandTo15MinSlots(
+            sc.mutualSlots,
+            durationMin,
+            allPeopleBusy,
+          );
+          nextFreeSet = new Set(
+            expanded.map((s) => new Date(s.start).getTime()),
+          );
           setRoomFreeMsSet(nextFreeSet);
         }
       } catch {
@@ -173,7 +215,7 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
     }
     if (room) {
       const freeCount = allSlots.filter(
-        (s) => !isRoomBusyAt(room, nextFreeSet, s.start, s.end)
+        (s) => !isRoomBusyAt(room, nextFreeSet, s.start, s.end),
       ).length;
       setStatus({
         text: `${room.name}: ${freeCount}/${allSlots.length} slots free`,
@@ -205,8 +247,10 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
       if (selectedRoom) {
         setRoomsList((prev) =>
           (prev.length > 0 ? prev : rooms).map((r) =>
-            r.id === selectedRoom.id ? { ...r, busy: [...(r.busy ?? []), booked] } : r
-          )
+            r.id === selectedRoom.id
+              ? { ...r, busy: [...(r.busy ?? []), booked] }
+              : r,
+          ),
         );
       }
       setStatus({
@@ -216,7 +260,9 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
       setSelectedSlot(null);
     } catch (err) {
       setStatus({ text: "Direct booking failed — click Ask AI", tone: "red" });
-      setBookingError(`Booking error: ${err instanceof Error ? err.message : String(err)}`);
+      setBookingError(
+        `Booking error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setIsBooking(false);
     }
@@ -227,8 +273,10 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
     const summary = (titleInput || defaultTitle).trim();
     const otherNames = names.filter((n) => n !== data?.currentUser?.name);
     let prompt = `Please book "${summary}" with ${otherNames.length ? formatNames(otherNames) : "attendees"} from ${selectedSlot.start} to ${selectedSlot.end}`;
-    if (selectedRoom) prompt += ` in room "${selectedRoom.name}" (${selectedRoom.email})`;
-    if (agendaInput.trim()) prompt += `. Agenda / additional instructions: ${agendaInput.trim()}`;
+    if (selectedRoom)
+      prompt += ` in room "${selectedRoom.name}" (${selectedRoom.email})`;
+    if (agendaInput.trim())
+      prompt += `. Agenda / additional instructions: ${agendaInput.trim()}`;
     askAi(prompt);
     setStatus({ text: "Sent to AI (copied)", tone: "green" });
   }
@@ -248,14 +296,14 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
       ? true
       : todFilter === "am"
         ? Math.floor(getIctMinutes(s.start) / 60) < 12
-        : Math.floor(getIctMinutes(s.start) / 60) >= 12
+        : Math.floor(getIctMinutes(s.start) / 60) >= 12,
   );
   const openSlots = filteredSlots.filter(
     (s) =>
       !s.booked &&
       !isIntervalBusy(allPeopleBusy, s.start, s.end) &&
       !isIntervalBusy(bookedIntervals, s.start, s.end) &&
-      !isRoomBusyAt(selectedRoom, roomFreeMsSet, s.start, s.end)
+      !isRoomBusyAt(selectedRoom, roomFreeMsSet, s.start, s.end),
   );
   const dotClass =
     status?.tone === "amber"
@@ -271,7 +319,9 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
       <CardHeader className="border-border/60 border-b">
         <CardTitle>{formatNames(names)}</CardTitle>
         <CardDescription>
-          {data.dateStr ? `${data.dateStr} · ${durationMin} min slots · ICT (UTC+7)` : ""}
+          {data.dateStr
+            ? `${data.dateStr} · ${durationMin} min slots · ICT (UTC+7)`
+            : ""}
         </CardDescription>
         <CardAction>
           <div className="flex items-center gap-1.5">
@@ -298,7 +348,11 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
                 variant={todFilter === k ? "default" : "outline"}
                 onClick={() => setTodFilter(k)}
               >
-                {k === "all" ? `All (${allSlots.length})` : k === "am" ? "Morning" : "Afternoon"}
+                {k === "all"
+                  ? `All (${allSlots.length})`
+                  : k === "am"
+                    ? "Morning"
+                    : "Afternoon"}
               </Button>
             ))}
           </div>
@@ -312,7 +366,10 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
                 setSelectedSlot(null);
                 setCustomDuration(nextDur);
                 setRoomFreeMsSet(null);
-                setStatus({ text: `Loading ${nextDur} min slots...`, tone: "amber" });
+                setStatus({
+                  text: `Loading ${nextDur} min slots...`,
+                  tone: "amber",
+                });
                 void refreshSlots(nextDur, prevStart);
               }}
             >
@@ -343,7 +400,9 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
               >
                 <DoorOpen className="text-muted-foreground size-3.5" />
                 <SelectValue>
-                  {selectedRoom ? fmtRoom(selectedRoom) : "No room (Google Meet)"}
+                  {selectedRoom
+                    ? fmtRoom(selectedRoom)
+                    : "No room (Google Meet)"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -371,7 +430,8 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
           onSelectSlot={(slot) => {
             setSelectedSlot(slot);
             if (!titleInput) setTitleInput(defaultTitle);
-            if (!agendaInput && data?.suggestedAgenda) setAgendaInput(data.suggestedAgenda);
+            if (!agendaInput && data?.suggestedAgenda)
+              setAgendaInput(data.suggestedAgenda);
             setBookingError(null);
           }}
         />
@@ -380,7 +440,8 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
           <div className="border-border bg-muted/30 space-y-2.5 rounded-xl border p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-semibold">
-                Slot: {fmtTime(selectedSlot.start)} – {fmtTime(selectedSlot.end)}
+                Slot: {fmtTime(selectedSlot.start)} –{" "}
+                {fmtTime(selectedSlot.end)}
               </span>
               <Badge variant="secondary">
                 {selectedRoom
@@ -413,12 +474,18 @@ export function ScheduleApp({ initialData = null }: { initialData?: unknown }): 
                 />
               </div>
             </div>
-            {bookingError && <div className="text-destructive text-xs">{bookingError}</div>}
+            {bookingError && (
+              <div className="text-destructive text-xs">{bookingError}</div>
+            )}
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="outline" onClick={handleAskAi}>
                 Ask AI with Prompt
               </Button>
-              <Button size="sm" disabled={isBooking} onClick={() => void handleBookNow()}>
+              <Button
+                size="sm"
+                disabled={isBooking}
+                onClick={() => void handleBookNow()}
+              >
                 {isBooking ? "Booking..." : "Book Now"}
               </Button>
             </div>

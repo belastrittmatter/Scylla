@@ -11,25 +11,29 @@ export const CALENDAR_VIEWS: {
   {
     id: "week",
     title: "Week View",
-    description: "7-day or 5-day dense multi-column grid with hourly time tracks",
+    description:
+      "7-day or 5-day dense multi-column grid with hourly time tracks",
     icon: Columns3,
   },
   {
     id: "month",
     title: "Month View",
-    description: "Full monthly 35/42-cell matrix displaying all recurring & single events",
+    description:
+      "Full monthly 35/42-cell matrix displaying all recurring & single events",
     icon: LayoutGrid,
   },
   {
     id: "day",
     title: "Day View",
-    description: "Detailed single-day focus view with precise minutes and mutual slot finder",
+    description:
+      "Detailed single-day focus view with precise minutes and mutual slot finder",
     icon: CalendarCheck,
   },
   {
     id: "agenda",
     title: "Agenda View",
-    description: "Linear chronological stream of upcoming meetings & booked physical rooms",
+    description:
+      "Linear chronological stream of upcoming meetings & booked physical rooms",
     icon: ListTodo,
   },
 ];

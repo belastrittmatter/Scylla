@@ -8,7 +8,11 @@ import {
 } from "@better-auth-ui/core";
 import { oneTapMutationKeys } from "@better-auth-ui/core/plugins/one-tap";
 import { useAuth } from "@better-auth-ui/react";
-import { matchMutation, matchQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  matchMutation,
+  matchQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -37,8 +41,20 @@ export function ErrorToaster() {
     const mutationCache = queryClient.getMutationCache();
     const previousMutationOnError = mutationCache.config.onError;
 
-    mutationCache.config.onError = (error, variables, onMutateResult, mutation, context) => {
-      previousMutationOnError?.(error, variables, onMutateResult, mutation, context);
+    mutationCache.config.onError = (
+      error,
+      variables,
+      onMutateResult,
+      mutation,
+      context,
+    ) => {
+      previousMutationOnError?.(
+        error,
+        variables,
+        onMutateResult,
+        mutation,
+        context,
+      );
 
       if (!matchMutation({ mutationKey: authMutationKeys.all }, mutation)) {
         return;
@@ -54,7 +70,11 @@ export function ErrorToaster() {
       ) {
         return;
       }
-      const message = getAuthErrorMessage(error, localization, mutation.options.mutationKey);
+      const message = getAuthErrorMessage(
+        error,
+        localization,
+        mutation.options.mutationKey,
+      );
       if (message) {
         console.error("[Better Auth UI]", error);
         toast.error(message);

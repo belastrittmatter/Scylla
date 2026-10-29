@@ -1,5 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { parseDbTimestampToIso, parseTimestampMs } from "@/components/tasks/task-utils";
+import {
+  parseDbTimestampToIso,
+  parseTimestampMs,
+} from "@/components/tasks/task-utils";
 import { TeamService } from "@/services/team/team-service";
 import { ProjectService } from "@/services/project/project-service";
 import { TaskService } from "@/services/task/task-service";
@@ -25,14 +28,14 @@ import { resolveProject, resolveUserId } from "./auth-helpers";
 
 function parseAndValidateDate(
   dateStr: string | undefined | null,
-  fieldName: string
+  fieldName: string,
 ): Date | undefined | null {
   if (dateStr === undefined) return undefined;
   if (dateStr === null || dateStr.trim() === "") return null;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) {
     throw new Error(
-      `Invalid date format for ${fieldName}: '${dateStr}'. Expected ISO timestamp or YYYY-MM-DD.`
+      `Invalid date format for ${fieldName}: '${dateStr}'. Expected ISO timestamp or YYYY-MM-DD.`,
     );
   }
   return d;
@@ -40,7 +43,9 @@ function parseAndValidateDate(
 
 async function resolveAndVerifyTeam(teamIdOrSlug: string, userId: string) {
   const userTeams = await TeamService.listUserTeams(userId);
-  let matched = userTeams.find((t) => t.id === teamIdOrSlug || t.slug === teamIdOrSlug);
+  let matched = userTeams.find(
+    (t) => t.id === teamIdOrSlug || t.slug === teamIdOrSlug,
+  );
 
   if (!matched) {
     const [byId, bySlug] = await Promise.all([
@@ -50,7 +55,8 @@ async function resolveAndVerifyTeam(teamIdOrSlug: string, userId: string) {
     const directTeam = byId || bySlug;
     if (directTeam) {
       const isMember =
-        directTeam.ownerId === userId || directTeam.members?.some((m) => m.userId === userId);
+        directTeam.ownerId === userId ||
+        directTeam.members?.some((m) => m.userId === userId);
       if (isMember) {
         matched = directTeam;
       }
@@ -66,7 +72,10 @@ async function resolveAndVerifyTeam(teamIdOrSlug: string, userId: string) {
 
 async function getTaskSessionStatsMap(taskIds: string[]) {
   if (taskIds.length === 0) {
-    return new Map<string, { totalSpentSeconds: number; activeSessionStartedAt: string | null }>();
+    return new Map<
+      string,
+      { totalSpentSeconds: number; activeSessionStartedAt: string | null }
+    >();
   }
   const stats = await db
     .select({
@@ -80,14 +89,17 @@ async function getTaskSessionStatsMap(taskIds: string[]) {
     .where(inArray(taskTimeSession.taskId, taskIds))
     .groupBy(taskTimeSession.taskId);
 
-  return new Map<string, { totalSpentSeconds: number; activeSessionStartedAt: string | null }>(
+  return new Map<
+    string,
+    { totalSpentSeconds: number; activeSessionStartedAt: string | null }
+  >(
     stats.map((s) => [
       s.taskId,
       {
         totalSpentSeconds: Number(s.totalSpentSeconds) || 0,
         activeSessionStartedAt: parseDbTimestampToIso(s.activeSessionStartedAt),
       },
-    ])
+    ]),
   );
 }
 
@@ -109,7 +121,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
           text: getTaskBoardUiHtml(),
         },
       ],
-    })
+    }),
   );
   // 1. list_teams
   server.registerTool(
@@ -139,12 +151,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 count: teams.length,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 2. list_projects
@@ -181,12 +193,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 count: projects.length,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 3. create_project
@@ -227,12 +239,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 },
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 4. list_tasks
@@ -260,8 +272,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
 
       const [targetTeamIds, resolvedAssignee] = await Promise.all([
         teamId
-          ? resolveAndVerifyTeam(teamId, currentUser.id).then((team) => [team.id])
-          : TeamService.listUserTeams(currentUser.id).then((teams) => teams.map((t) => t.id)),
+          ? resolveAndVerifyTeam(teamId, currentUser.id).then((team) => [
+              team.id,
+            ])
+          : TeamService.listUserTeams(currentUser.id).then((teams) =>
+              teams.map((t) => t.id),
+            ),
         targetUserQuery
           ? resolveUserId(targetUserQuery, currentUser.id, ctx)
           : Promise.resolve(undefined),
@@ -301,7 +317,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                     count: 0,
                   },
                   null,
-                  2
+                  2,
                 ),
               },
             ],
@@ -354,7 +370,8 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                   resolvedAssigneeId: resolvedAssigneeId || null,
                   status: status || null,
                   priority: priority || null,
-                  hasActiveSession: hasActiveSession !== undefined ? hasActiveSession : null,
+                  hasActiveSession:
+                    hasActiveSession !== undefined ? hasActiveSession : null,
                 },
                 tasks: filteredTasks.map((t) => {
                   const s = statsMap.get(t.id);
@@ -379,12 +396,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 count: filteredTasks.length,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 5. create_task
@@ -434,7 +451,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                   count: teamProjects.length,
                 },
                 null,
-                2
+                2,
               ),
             },
           ],
@@ -443,10 +460,14 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
 
       const [resolvedProject, resolvedAssigneeId] = await Promise.all([
         resolveProject(projectId, currentUser.id, team.id),
-        assigneeId ? resolveUserId(assigneeId, currentUser.id, ctx) : Promise.resolve(null),
+        assigneeId
+          ? resolveUserId(assigneeId, currentUser.id, ctx)
+          : Promise.resolve(null),
       ]);
       if (!resolvedProject || resolvedProject.teamId !== team.id) {
-        throw new Error(`Project '${projectId}' not found in team '${team.name}'.`);
+        throw new Error(
+          `Project '${projectId}' not found in team '${team.name}'.`,
+        );
       }
 
       if (assigneeId && !resolvedAssigneeId) {
@@ -492,19 +513,20 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 },
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 6. update_task
   server.registerTool(
     "update_task",
     {
-      description: "Update task properties, project assignment, and progress statuses.",
+      description:
+        "Update task properties, project assignment, and progress statuses.",
       inputSchema: updateTaskSchema,
       _meta: {
         ui: { visibility: ["model", "app"] },
@@ -552,7 +574,11 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       let resolvedProjectName: string | undefined = undefined;
       if (projectId !== undefined) {
         const trimmedProj = projectId ? projectId.trim() : "";
-        if (!trimmedProj || trimmedProj === "select" || trimmedProj === "options") {
+        if (
+          !trimmedProj ||
+          trimmedProj === "select" ||
+          trimmedProj === "options"
+        ) {
           const teamProjects = await ProjectService.listProjectsByTeam(team.id);
           return {
             content: [
@@ -561,7 +587,8 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 text: JSON.stringify(
                   {
                     requiresProjectSelection: true,
-                    error: "Project ID is required when updating or assigning a project.",
+                    error:
+                      "Project ID is required when updating or assigning a project.",
                     message:
                       teamProjects.length > 0
                         ? `Please select one of the following available projects in team '${team.name}' to assign to this task:`
@@ -576,14 +603,18 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                     count: teamProjects.length,
                   },
                   null,
-                  2
+                  2,
                 ),
               },
             ],
           };
         }
 
-        const projectObj = await resolveProject(trimmedProj, currentUser.id, existingTask.teamId);
+        const projectObj = await resolveProject(
+          trimmedProj,
+          currentUser.id,
+          existingTask.teamId,
+        );
         if (!projectObj || projectObj.teamId !== existingTask.teamId) {
           throw new Error(`Project '${projectId}' not found in task's team.`);
         }
@@ -605,7 +636,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
           dueDate: parsedDueDate,
           estimatedMinutes,
         },
-        currentUser.id
+        currentUser.id,
       );
 
       return {
@@ -630,12 +661,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 },
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 7. get_task_board
@@ -657,11 +688,15 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       const currentUser = await ctx.getCurrentUser();
       const [team, projectObj] = await Promise.all([
         resolveAndVerifyTeam(teamId, currentUser.id),
-        projectId ? ProjectService.getProjectById(projectId) : Promise.resolve(null),
+        projectId
+          ? ProjectService.getProjectById(projectId)
+          : Promise.resolve(null),
       ]);
 
       if (projectId && (!projectObj || projectObj.teamId !== team.id)) {
-        throw new Error(`Project '${projectId}' not found in team '${team.name}'.`);
+        throw new Error(
+          `Project '${projectId}' not found in team '${team.name}'.`,
+        );
       }
 
       const tasks = await TaskService.listTasks({
@@ -670,10 +705,17 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       });
 
       const assigneeIds = Array.from(
-        new Set(tasks.map((t) => t.assigneeId).filter((id): id is string => Boolean(id)))
+        new Set(
+          tasks
+            .map((t) => t.assigneeId)
+            .filter((id): id is string => Boolean(id)),
+        ),
       );
 
-      const assigneeMap = new Map<string, { name: string | null; email: string | null }>();
+      const assigneeMap = new Map<
+        string,
+        { name: string | null; email: string | null }
+      >();
       if (assigneeIds.length > 0) {
         const users = await db.query.user.findMany({
           where: inArray(user.id, assigneeIds),
@@ -737,7 +779,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
         ],
         structuredContent,
       };
-    }
+    },
   );
 
   // 8. get_active_tasks
@@ -752,9 +794,15 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       const currentUser = await ctx.getCurrentUser();
       const [targetTeamIds, resolvedAssignee] = await Promise.all([
         teamId
-          ? resolveAndVerifyTeam(teamId, currentUser.id).then((team) => [team.id])
-          : TeamService.listUserTeams(currentUser.id).then((teams) => teams.map((t) => t.id)),
-        userQuery ? resolveUserId(userQuery, currentUser.id, ctx) : Promise.resolve(undefined),
+          ? resolveAndVerifyTeam(teamId, currentUser.id).then((team) => [
+              team.id,
+            ])
+          : TeamService.listUserTeams(currentUser.id).then((teams) =>
+              teams.map((t) => t.id),
+            ),
+        userQuery
+          ? resolveUserId(userQuery, currentUser.id, ctx)
+          : Promise.resolve(undefined),
       ]);
 
       if (!teamId && targetTeamIds.length === 0) {
@@ -805,8 +853,12 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
         .map((t) => {
           const stats = statsMap.get(t.id)!;
           const startedTime = parseTimestampMs(stats.activeSessionStartedAt);
-          const elapsedSessionSeconds = Math.max(0, Math.floor((now - startedTime) / 1000));
-          const totalSpentSeconds = (stats.totalSpentSeconds || 0) + elapsedSessionSeconds;
+          const elapsedSessionSeconds = Math.max(
+            0,
+            Math.floor((now - startedTime) / 1000),
+          );
+          const totalSpentSeconds =
+            (stats.totalSpentSeconds || 0) + elapsedSessionSeconds;
           const estMinutes = t.estimatedMinutes ?? 60;
           const estSeconds = estMinutes * 60;
           const isOverBudget = totalSpentSeconds > estSeconds;
@@ -846,19 +898,20 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 count: activeTasks.length,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 
   // 9. get_task_timeline
   server.registerTool(
     "get_task_timeline",
     {
-      description: "Retrieve the chronological work session history for a given task.",
+      description:
+        "Retrieve the chronological work session history for a given task.",
       inputSchema: getTaskTimelineSchema,
     },
     async ({ taskId }) => {
@@ -873,10 +926,17 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       const rawSessions = await TaskService.getTaskTimeSessions(taskId);
 
       const userIds = Array.from(
-        new Set(rawSessions.map((s) => s.userId).filter((id): id is string => Boolean(id)))
+        new Set(
+          rawSessions
+            .map((s) => s.userId)
+            .filter((id): id is string => Boolean(id)),
+        ),
       );
 
-      const userMap = new Map<string, { name: string | null; email: string | null }>();
+      const userMap = new Map<
+        string,
+        { name: string | null; email: string | null }
+      >();
       if (userIds.length > 0) {
         const users = await db.query.user.findMany({
           where: inArray(user.id, userIds),
@@ -896,7 +956,10 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
         const isActive = !s.endedAt;
 
         if (isActive) {
-          durationSeconds = Math.max(0, Math.floor((now - new Date(s.startedAt).getTime()) / 1000));
+          durationSeconds = Math.max(
+            0,
+            Math.floor((now - new Date(s.startedAt).getTime()) / 1000),
+          );
         }
 
         cumulativeSpentSeconds += durationSeconds;
@@ -938,11 +1001,11 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                 isOverBudget,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 }

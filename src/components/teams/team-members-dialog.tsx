@@ -22,7 +22,11 @@ interface TeamMembersDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function TeamMembersDialog({ team, open, onOpenChange }: TeamMembersDialogProps) {
+export function TeamMembersDialog({
+  team,
+  open,
+  onOpenChange,
+}: TeamMembersDialogProps) {
   const {
     members,
     emailInput,
@@ -69,14 +73,20 @@ export function TeamMembersDialog({ team, open, onOpenChange }: TeamMembersDialo
         </div>
 
         {error && (
-          <p className="bg-destructive/10 text-destructive rounded-md p-2 text-xs">{error}</p>
+          <p className="bg-destructive/10 text-destructive rounded-md p-2 text-xs">
+            {error}
+          </p>
         )}
 
         <div className="max-h-64 space-y-1.5 overflow-y-auto pt-2">
           {isLoading ? (
-            <p className="text-muted-foreground py-4 text-center text-xs">Loading members...</p>
+            <p className="text-muted-foreground py-4 text-center text-xs">
+              Loading members...
+            </p>
           ) : members.length === 0 ? (
-            <p className="text-muted-foreground py-4 text-center text-xs">No members yet.</p>
+            <p className="text-muted-foreground py-4 text-center text-xs">
+              No members yet.
+            </p>
           ) : (
             members.map((m) => (
               <TeamMemberRow
@@ -99,7 +109,12 @@ export function TeamMembersDialog({ team, open, onOpenChange }: TeamMembersDialo
           >
             Cancel
           </Button>
-          <Button type="button" size="sm" onClick={handleSave} disabled={isSaving || !hasChanges}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving || !hasChanges}
+          >
             {isSaving && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
             Save
           </Button>

@@ -43,20 +43,26 @@ export function ProviderButton({
   className,
   ...props
 }: ProviderButtonProps) {
-  const { authClient, baseURL, localization, navigate, redirectTo, socialSignInMode } = useAuth();
+  const {
+    authClient,
+    baseURL,
+    localization,
+    navigate,
+    redirectTo,
+    socialSignInMode,
+  } = useAuth();
 
   const callbackURL = `${baseURL}${redirectTo}`;
   const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
-  const { mutate: signInSocial, isPending: signInSocialPending } = useSignInSocial(authClient, {
-    onError: resetFetchOptions,
-  });
-  const { mutate: signInPopup, isPending: signInPopupPending } = useSignInOAuthPopup(
-    authClient as OAuthPopupAuthClient,
-    {
+  const { mutate: signInSocial, isPending: signInSocialPending } =
+    useSignInSocial(authClient, {
       onError: resetFetchOptions,
-    }
-  );
+    });
+  const { mutate: signInPopup, isPending: signInPopupPending } =
+    useSignInOAuthPopup(authClient as OAuthPopupAuthClient, {
+      onError: resetFetchOptions,
+    });
 
   const providerId = getProviderId(provider);
   const providerIcon = renderProviderIcon(provider);
@@ -77,7 +83,7 @@ export function ProviderButton({
           callbackURL,
           requestSignUp: view === "signUp",
         },
-        { onSuccess: () => navigate({ to: redirectTo }) }
+        { onSuccess: () => navigate({ to: redirectTo }) },
       );
       return;
     }
@@ -97,12 +103,17 @@ export function ProviderButton({
       {signInSocialPending || signInPopupPending ? <Spinner /> : providerIcon}
 
       {display === "full"
-        ? localization.auth.continueWith.replace("{{provider}}", getProviderName(provider))
+        ? localization.auth.continueWith.replace(
+            "{{provider}}",
+            getProviderName(provider),
+          )
         : display === "name"
           ? getProviderName(provider)
           : null}
 
-      {display === "icon" && <span className="sr-only">{getProviderName(provider)}</span>}
+      {display === "icon" && (
+        <span className="sr-only">{getProviderName(provider)}</span>
+      )}
 
       {view !== "signUp" && <LastUsedBadge method={providerId} floating />}
     </Button>

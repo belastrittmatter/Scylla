@@ -75,7 +75,10 @@ describe("Task Server Actions with Core Domain Services", () => {
     testTaskId = createdTask.id;
 
     // 2. Update status
-    const statusRes = await updateTaskStatusAction(createdTask.id, "in_progress");
+    const statusRes = await updateTaskStatusAction(
+      createdTask.id,
+      "in_progress",
+    );
     expect(statusRes.success).toBe(true);
     expect(statusRes.data!.status).toBe("in_progress");
 
@@ -99,6 +102,8 @@ describe("Task Server Actions with Core Domain Services", () => {
 
     const listRes = await getTaskCommentsAction(testTaskId);
     expect(listRes.success).toBe(true);
-    expect(listRes.data!.some((c) => c.content === "Automated test comment content")).toBe(true);
+    expect(
+      listRes.data!.some((c) => c.content === "Automated test comment content"),
+    ).toBe(true);
   });
 });

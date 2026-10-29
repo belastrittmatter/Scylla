@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,7 +18,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { FolderKanban, MoreVertical, Edit2, UserCog, Trash2 } from "lucide-react";
+import {
+  FolderKanban,
+  MoreVertical,
+  Edit2,
+  UserCog,
+  Trash2,
+} from "lucide-react";
 import type { TeamItem } from "@/hooks/use-teams";
 
 interface TeamCardProps {
@@ -22,16 +34,26 @@ interface TeamCardProps {
   onDelete: (id: string) => void;
 }
 
-export function TeamCard({ team, onEdit, onManageMembers, onDelete }: TeamCardProps) {
+export function TeamCard({
+  team,
+  onEdit,
+  onManageMembers,
+  onDelete,
+}: TeamCardProps) {
   return (
     <Card className="hover:shadow-xs flex flex-col justify-between transition-all hover:border-neutral-300 dark:hover:border-neutral-700">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-semibold leading-none">{team.name}</CardTitle>
+              <CardTitle className="text-base font-semibold leading-none">
+                {team.name}
+              </CardTitle>
               {team.role && (
-                <Badge variant="outline" className="text-[10px] font-normal capitalize">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-normal capitalize"
+                >
                   {team.role}
                 </Badge>
               )}
@@ -41,12 +63,21 @@ export function TeamCard({ team, onEdit, onManageMembers, onDelete }: TeamCardPr
 
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon" className="size-8 text-neutral-400" />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-neutral-400"
+                />
+              }
             >
               <MoreVertical className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => onEdit(team)} className="cursor-pointer gap-2">
+              <DropdownMenuItem
+                onClick={() => onEdit(team)}
+                className="cursor-pointer gap-2"
+              >
                 <Edit2 className="size-3.5" />
                 <span>Edit Team</span>
               </DropdownMenuItem>

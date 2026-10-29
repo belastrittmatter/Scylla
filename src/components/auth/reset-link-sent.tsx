@@ -35,7 +35,7 @@ export function ResetLinkSent({ className }: ResetLinkSentProps) {
   const email = useSyncExternalStore(
     emptySubscribe,
     () => sessionStorage.getItem(RESET_LINK_SENT_STORAGE_KEY) ?? "",
-    () => ""
+    () => "",
   );
 
   return (
@@ -61,7 +61,10 @@ export function ResetLinkSent({ className }: ResetLinkSentProps) {
           <FieldDescription className="text-center">
             {localization.auth.rememberYourPassword}{" "}
             <Link
-              href={getAuthLinkURL(`${basePaths.auth}/${viewPaths.auth.signIn}`, redirectTo)}
+              href={getAuthLinkURL(
+                `${basePaths.auth}/${viewPaths.auth.signIn}`,
+                redirectTo,
+              )}
               className="underline underline-offset-4"
             >
               {localization.auth.signIn}

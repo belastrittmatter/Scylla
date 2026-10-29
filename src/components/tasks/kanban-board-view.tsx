@@ -9,7 +9,11 @@ interface KanbanBoardViewProps {
   tasks: TaskItem[];
   onSelectTask?: (task: TaskItem) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
-  onMoveTask?: (taskId: string, targetStatus: TaskStatus, targetIndex?: number) => void;
+  onMoveTask?: (
+    taskId: string,
+    targetStatus: TaskStatus,
+    targetIndex?: number,
+  ) => void;
   onAddNewTask?: (status: TaskStatus) => void;
 }
 

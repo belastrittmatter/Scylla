@@ -12,14 +12,17 @@ interface BookingPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata(props: BookingPageProps): Promise<Metadata> {
+export async function generateMetadata(
+  props: BookingPageProps,
+): Promise<Metadata> {
   const { slug } = await props.params;
   const details = await MeetingInviteService.getInviteBySlug(slug);
 
   if (!details || !details.invite.isActive) {
     return {
       title: "Meeting Not Found | Scylla",
-      description: "The requested meeting invite is unavailable or has expired.",
+      description:
+        "The requested meeting invite is unavailable or has expired.",
     };
   }
 
@@ -50,13 +53,16 @@ async function BookingContent(props: BookingPageProps) {
             Meeting Link Unavailable
           </h1>
           <p className="text-muted-foreground text-sm">
-            This invitation link does not exist, has expired, or is no longer accepting new
-            bookings.
+            This invitation link does not exist, has expired, or is no longer
+            accepting new bookings.
           </p>
           <div className="pt-2">
             <Link
               href="/"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs")}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "text-xs",
+              )}
             >
               Return to Home
             </Link>

@@ -2,14 +2,23 @@
 
 import * as React from "react";
 import { CalendarDays, CalendarRange, Clock, Check } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import type { CalendarSettings } from "@/hooks/use-calendar-settings";
 import { CALENDAR_VIEWS } from "@/components/settings/settings-constants";
 
 interface SettingsCalendarViewsCardProps {
   settings: CalendarSettings;
-  updateSetting: <K extends keyof CalendarSettings>(key: K, value: CalendarSettings[K]) => void;
+  updateSetting: <K extends keyof CalendarSettings>(
+    key: K,
+    value: CalendarSettings[K],
+  ) => void;
 }
 
 export function SettingsCalendarViewsCard({

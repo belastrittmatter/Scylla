@@ -32,7 +32,7 @@ export function AuthRedirect({ className }: AuthRedirectProps) {
     const action = getAuthRedirectAction(
       new URL(window.location.href),
       Boolean(session),
-      `${basePaths.auth}/${viewPaths.auth.signIn}`
+      `${basePaths.auth}/${viewPaths.auth.signIn}`,
     );
 
     window.location.replace(action.to);

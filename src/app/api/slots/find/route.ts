@@ -7,14 +7,17 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     const parseResult = FindSlotsParamsSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +26,7 @@ export async function POST(req: Request) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to find slots" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

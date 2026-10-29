@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { CreateBookingPayloadSchema, ReschedulePayloadSchema } from "../actions/schemas";
+import {
+  CreateBookingPayloadSchema,
+  ReschedulePayloadSchema,
+} from "../actions/schemas";
 import {
   TeamRoleSchema,
   CreateTeamSchema as DomainCreateTeamSchema,
@@ -19,7 +22,9 @@ import {
 
 export const TeamRoleApiSchema = TeamRoleSchema;
 
-export const CreateTeamApiSchema = DomainCreateTeamSchema.omit({ ownerId: true }).extend({
+export const CreateTeamApiSchema = DomainCreateTeamSchema.omit({
+  ownerId: true,
+}).extend({
   ownerId: z.string().min(1).optional(),
 });
 
@@ -43,7 +48,9 @@ export const TaskStatusApiEnum = TaskStatusSchema;
 
 export const TaskPriorityApiEnum = TaskPrioritySchema;
 
-export const CreateTaskApiSchema = DomainCreateTaskSchema.omit({ creatorId: true }).extend({
+export const CreateTaskApiSchema = DomainCreateTaskSchema.omit({
+  creatorId: true,
+}).extend({
   creatorId: z.string().optional(),
   dueDate: TaskDueDateSchema.optional(),
 });

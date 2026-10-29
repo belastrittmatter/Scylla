@@ -56,17 +56,28 @@ describe("TeamService Domain Logic", () => {
     expect(userTeams.some((t) => t.id === newTeam.id)).toBe(true);
 
     // Update role
-    const updated = await TeamService.updateMemberRole(newTeam.id, testMember.id, "admin");
+    const updated = await TeamService.updateMemberRole(
+      newTeam.id,
+      testMember.id,
+      "admin",
+    );
     expect(updated.role).toBe("admin");
 
     // Remove member
-    const removed = await TeamService.removeTeamMember(newTeam.id, testMember.id);
+    const removed = await TeamService.removeTeamMember(
+      newTeam.id,
+      testMember.id,
+    );
     expect(removed).toBe(true);
 
     // Prevent removing owner
-    expect(TeamService.removeTeamMember(newTeam.id, testOwner.id)).rejects.toThrow();
+    expect(
+      TeamService.removeTeamMember(newTeam.id, testOwner.id),
+    ).rejects.toThrow();
 
     // Clean up
-    await db.delete(user).where(inArray(user.id, [testOwner.id, testMember.id]));
+    await db
+      .delete(user)
+      .where(inArray(user.id, [testOwner.id, testMember.id]));
   });
 });

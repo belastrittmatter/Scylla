@@ -3,7 +3,11 @@
 import { z } from "zod";
 import { UserService, type Teammate } from "@/services/user";
 import { RoomService, type RoomFilter } from "@/services/rooms";
-import { SchedulerService, type FindSlotsParams, type TimeSlot } from "@/services/scheduler";
+import {
+  SchedulerService,
+  type FindSlotsParams,
+  type TimeSlot,
+} from "@/services/scheduler";
 import {
   BookingService,
   type CreateBookingPayload,
@@ -19,7 +23,9 @@ import {
 } from "./schemas";
 import { getSessionUserId, type ActionResult } from "./auth-helper";
 
-export async function searchTeammatesAction(query: string = ""): Promise<ActionResult<Teammate[]>> {
+export async function searchTeammatesAction(
+  query: string = "",
+): Promise<ActionResult<Teammate[]>> {
   try {
     const parseResult = z.string().safeParse(query);
     if (!parseResult.success) {
@@ -38,7 +44,9 @@ export async function searchTeammatesAction(query: string = ""): Promise<ActionR
   }
 }
 
-export async function getRoomsAction(filter?: RoomFilter): Promise<ActionResult<MeetingRoom[]>> {
+export async function getRoomsAction(
+  filter?: RoomFilter,
+): Promise<ActionResult<MeetingRoom[]>> {
   try {
     const parseResult = RoomFilterSchema.safeParse(filter);
     if (!parseResult.success) {
@@ -52,12 +60,15 @@ export async function getRoomsAction(filter?: RoomFilter): Promise<ActionResult<
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to fetch meeting rooms",
+      error:
+        err instanceof Error ? err.message : "Failed to fetch meeting rooms",
     };
   }
 }
 
-export async function findSlotsAction(params: FindSlotsParams): Promise<ActionResult<TimeSlot[]>> {
+export async function findSlotsAction(
+  params: FindSlotsParams,
+): Promise<ActionResult<TimeSlot[]>> {
   try {
     const parseResult = FindSlotsParamsSchema.safeParse(params);
     if (!parseResult.success) {
@@ -71,14 +82,15 @@ export async function findSlotsAction(params: FindSlotsParams): Promise<ActionRe
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to find available slots",
+      error:
+        err instanceof Error ? err.message : "Failed to find available slots",
     };
   }
 }
 
 export async function getAgendaAction(
   dateIso: string,
-  userId?: string
+  userId?: string,
 ): Promise<ActionResult<Booking[]>> {
   try {
     const parseResult = GetAgendaParamsSchema.safeParse({ dateIso, userId });
@@ -101,7 +113,10 @@ export async function getAgendaAction(
       };
     }
 
-    const agenda = await BookingService.getAgenda(targetUserId, parseResult.data.dateIso);
+    const agenda = await BookingService.getAgenda(
+      targetUserId,
+      parseResult.data.dateIso,
+    );
     return { success: true, data: agenda };
   } catch (err) {
     return {
@@ -112,7 +127,7 @@ export async function getAgendaAction(
 }
 
 export async function createBookingAction(
-  payload: CreateBookingPayload
+  payload: CreateBookingPayload,
 ): Promise<ActionResult<Booking>> {
   try {
     const parseResult = CreateBookingPayloadSchema.safeParse(payload);
@@ -151,7 +166,7 @@ export async function createBookingAction(
 
 export async function rescheduleBookingAction(
   id: string,
-  payload: ReschedulePayload
+  payload: ReschedulePayload,
 ): Promise<ActionResult<Booking>> {
   try {
     const idParse = z.string().min(1, "Booking ID is required").safeParse(id);
@@ -170,21 +185,30 @@ export async function rescheduleBookingAction(
       };
     }
 
-    const booking = await BookingService.reschedule(idParse.data, parseResult.data);
+    const booking = await BookingService.reschedule(
+      idParse.data,
+      parseResult.data,
+    );
     return { success: true, data: booking };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to reschedule booking",
+      error:
+        err instanceof Error ? err.message : "Failed to reschedule booking",
     };
   }
 }
 
-export async function cancelBookingAction(id: string): Promise<ActionResult<Booking>> {
+export async function cancelBookingAction(
+  id: string,
+): Promise<ActionResult<Booking>> {
   try {
     const idParse = z.string().min(1, "Booking ID is required").safeParse(id);
     if (!idParse.success) {
-      return { success: false, error: idParse.error.issues.map((i) => i.message).join(", ") };
+      return {
+        success: false,
+        error: idParse.error.issues.map((i) => i.message).join(", "),
+      };
     }
     const booking = await BookingService.cancel(idParse.data);
     return { success: true, data: booking };

@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { db } from "../../src/db";
-import { eventType, schedule, meetingRoom, booking, user } from "../../src/db/schema";
+import {
+  eventType,
+  schedule,
+  meetingRoom,
+  booking,
+  user,
+} from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
 
 describe("Database Seed Script", () => {
@@ -84,7 +90,10 @@ describe("Database Seed Script", () => {
     expect(newBooking.title).toBe("Test Sync");
     expect(newBooking.status).toBe("confirmed");
 
-    const fetched = await db.select().from(booking).where(eq(booking.id, newBooking.id));
+    const fetched = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, newBooking.id));
     expect(fetched.length).toBe(1);
     expect(fetched[0].roomId).toBe(room.id);
     expect(fetched[0].eventTypeId).toBe(type.id);

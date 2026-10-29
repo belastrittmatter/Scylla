@@ -1,7 +1,10 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test";
 import { GoogleCalendarService } from "../../src/services/google-calendar";
 import { CalendarEventTracker } from "../../src/utils/calendar-event-tracker";
-import { handleMockGoogleRequest, resetMockEvents } from "../../src/utils/mock-google-calendar";
+import {
+  handleMockGoogleRequest,
+  resetMockEvents,
+} from "../../src/utils/mock-google-calendar";
 
 describe("Google Calendar Isolation & Auto-cleanup", () => {
   const origNodeEnv = process.env.NODE_ENV;
@@ -48,52 +51,65 @@ describe("Google Calendar Isolation & Auto-cleanup", () => {
           start: { dateTime: "2026-10-22T10:00:00Z" },
           end: { dateTime: "2026-10-22T10:30:00Z" },
         }),
-      }
+      },
     );
     expect(createRes).toBeDefined();
     expect(createRes.status).toBe(200);
 
-    const createdData = (await createRes.json()) as { id: string; summary: string };
+    const createdData = (await createRes.json()) as {
+      id: string;
+      summary: string;
+    };
     expect(createdData.id).toMatch(/^gcal_mock_/);
     expect(createdData.summary).toBe("[TEST] Standup Sync");
 
     const listRes = handleMockGoogleRequest(
       "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-      { method: "GET" }
+      { method: "GET" },
     );
     expect(listRes).toBeDefined();
     expect(listRes.status).toBe(200);
 
     const listData = (await listRes.json()) as { items: Array<{ id: string }> };
     expect(Array.isArray(listData.items)).toBe(true);
-    expect(listData.items.some((item) => item.id === createdData.id)).toBe(true);
+    expect(listData.items.some((item) => item.id === createdData.id)).toBe(
+      true,
+    );
 
     // Verify single event GET /events/{eventId} returns the single object, not a list
     const singleRes = handleMockGoogleRequest(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${createdData.id}`,
-      { method: "GET" }
+      { method: "GET" },
     );
     expect(singleRes.status).toBe(200);
-    const singleData = (await singleRes.json()) as { id: string; summary: string };
+    const singleData = (await singleRes.json()) as {
+      id: string;
+      summary: string;
+    };
     expect(singleData.id).toBe(createdData.id);
     expect(singleData.summary).toBe("[TEST] Standup Sync");
   });
 
   test("handleMockGoogleRequest intercepts freeBusy queries", async () => {
-    const res = handleMockGoogleRequest("https://www.googleapis.com/calendar/v3/freeBusy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        timeMin: "2026-10-22T08:00:00Z",
-        timeMax: "2026-10-22T18:00:00Z",
-        items: [{ id: "primary" }],
-      }),
-    });
+    const res = handleMockGoogleRequest(
+      "https://www.googleapis.com/calendar/v3/freeBusy",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          timeMin: "2026-10-22T08:00:00Z",
+          timeMax: "2026-10-22T18:00:00Z",
+          items: [{ id: "primary" }],
+        }),
+      },
+    );
 
     expect(res).toBeDefined();
     expect(res.status).toBe(200);
 
-    const data = (await res.json()) as { calendars: Record<string, { busy: unknown[] }> };
+    const data = (await res.json()) as {
+      calendars: Record<string, { busy: unknown[] }>;
+    };
     expect(data.calendars.primary).toBeDefined();
     expect(Array.isArray(data.calendars.primary.busy)).toBe(true);
   });
@@ -102,7 +118,10 @@ describe("Google Calendar Isolation & Auto-cleanup", () => {
     CalendarEventTracker.track("mock-evt-1");
     CalendarEventTracker.track("mock-evt-2");
 
-    expect(CalendarEventTracker.getTrackedIds()).toEqual(["mock-evt-1", "mock-evt-2"]);
+    expect(CalendarEventTracker.getTrackedIds()).toEqual([
+      "mock-evt-1",
+      "mock-evt-2",
+    ]);
 
     CalendarEventTracker.untrack("mock-evt-1");
     expect(CalendarEventTracker.getTrackedIds()).toEqual(["mock-evt-2"]);

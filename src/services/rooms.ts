@@ -18,7 +18,8 @@ export class RoomService {
       googleResourceEmail: r.email,
       officeLocation: r.officeLocation || "hcm",
       capacity: r.capacity || 10,
-      features: r.features && r.features.length > 0 ? r.features : ["video-conference"],
+      features:
+        r.features && r.features.length > 0 ? r.features : ["video-conference"],
       building: r.building || "Google Workspace",
       floor: r.floor || null,
       description: r.description || null,
@@ -55,7 +56,8 @@ export class RoomService {
    * into the local database `meeting_room` table via upsert.
    */
   public static async syncRoomsFromGoogle(): Promise<MeetingRoom[]> {
-    const resourceRooms: ResourceRoom[] = await GoogleCalendarService.listResourceRooms();
+    const resourceRooms: ResourceRoom[] =
+      await GoogleCalendarService.listResourceRooms();
     await Promise.all(resourceRooms.map((room) => this.upsertGoogleRoom(room)));
     return this.listRooms();
   }
@@ -66,7 +68,7 @@ export class RoomService {
    */
   public static async listRooms(
     filter?: RoomFilter,
-    options?: { accountRecord?: unknown; accessToken?: string }
+    options?: { accountRecord?: unknown; accessToken?: string },
   ): Promise<MeetingRoom[]> {
     const roomMap = new Map<string, MeetingRoom>();
 
@@ -91,11 +93,14 @@ export class RoomService {
     // 2. Fetch/merge meeting rooms from Google Workspace when DB catalog is empty
     if (roomMap.size === 0) {
       try {
-        const resourceRooms = await GoogleCalendarService.listResourceRooms(options);
+        const resourceRooms =
+          await GoogleCalendarService.listResourceRooms(options);
         const missingRooms = resourceRooms.filter(
-          (r) => !roomMap.has(r.email.trim().toLowerCase())
+          (r) => !roomMap.has(r.email.trim().toLowerCase()),
         );
-        const upsertedRooms = await Promise.all(missingRooms.map((r) => this.upsertGoogleRoom(r)));
+        const upsertedRooms = await Promise.all(
+          missingRooms.map((r) => this.upsertGoogleRoom(r)),
+        );
         for (const upserted of upsertedRooms) {
           roomMap.set(upserted.email.trim().toLowerCase(), upserted);
         }
@@ -135,14 +140,20 @@ export class RoomService {
    * Lookup a room by its database ID.
    */
   public static async getRoomById(id: string): Promise<MeetingRoom | null> {
-    const results = await db.select().from(meetingRoom).where(eq(meetingRoom.id, id)).limit(1);
+    const results = await db
+      .select()
+      .from(meetingRoom)
+      .where(eq(meetingRoom.id, id))
+      .limit(1);
     return results[0] || null;
   }
 
   /**
    * Lookup a room by its calendar resource email address.
    */
-  public static async getRoomByEmail(email: string): Promise<MeetingRoom | null> {
+  public static async getRoomByEmail(
+    email: string,
+  ): Promise<MeetingRoom | null> {
     const results = await db
       .select()
       .from(meetingRoom)

@@ -23,13 +23,18 @@ interface BookingHostCardProps {
 
 export function BookingHostCard({ host, eventType }: BookingHostCardProps) {
   const durationText = `${eventType.duration} mins`;
-  const locationLabel = eventType.requiresRoom ? "Physical Meeting Room" : "Google Meet Video Call";
+  const locationLabel = eventType.requiresRoom
+    ? "Physical Meeting Room"
+    : "Google Meet Video Call";
 
   return (
     <div className="flex flex-col gap-5 border-b border-neutral-200/80 bg-neutral-50/50 p-6 lg:border-b-0 lg:border-r dark:border-neutral-800 dark:bg-neutral-900/50">
       {/* Host Avatar & Name */}
       <div className="flex items-center gap-3">
-        <Avatar size="lg" className="size-11 ring-2 ring-white dark:ring-neutral-800">
+        <Avatar
+          size="lg"
+          className="size-11 ring-2 ring-white dark:ring-neutral-800"
+        >
           {host.image && <AvatarImage src={host.image} alt={host.name} />}
           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-500 text-sm font-semibold text-white">
             {host.name
@@ -40,8 +45,12 @@ export function BookingHostCard({ host, eventType }: BookingHostCardProps) {
           </AvatarFallback>
         </Avatar>
         <div>
-          <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Host</span>
-          <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{host.name}</h3>
+          <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            Host
+          </span>
+          <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+            {host.name}
+          </h3>
           <p className="text-[11px] text-neutral-400">{host.email}</p>
         </div>
       </div>

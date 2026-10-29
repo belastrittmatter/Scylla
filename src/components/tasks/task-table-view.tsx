@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { ArrowUpDown } from "lucide-react";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { TaskTableRow } from "./task-table-row";
 import type { TaskItem, TaskStatus } from "./task-types";
 
@@ -15,9 +21,14 @@ interface TaskTableViewProps {
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
 }
 
-export function TaskTableView({ tasks, onSelectTask, onUpdateStatus }: TaskTableViewProps) {
+export function TaskTableView({
+  tasks,
+  onSelectTask,
+  onUpdateStatus,
+}: TaskTableViewProps) {
   const [sortField, setSortField] = React.useState<SortField>("dueDate");
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>("asc");
+  const [sortDirection, setSortDirection] =
+    React.useState<SortDirection>("asc");
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -46,7 +57,9 @@ export function TaskTableView({ tasks, onSelectTask, onUpdateStatus }: TaskTable
           break;
         }
         case "assignee":
-          comparison = (a.assignee?.name || "").localeCompare(b.assignee?.name || "");
+          comparison = (a.assignee?.name || "").localeCompare(
+            b.assignee?.name || "",
+          );
           break;
         case "dueDate": {
           const timeA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
@@ -129,7 +142,10 @@ export function TaskTableView({ tasks, onSelectTask, onUpdateStatus }: TaskTable
 
             {sortedTasks.length === 0 && (
               <TableRow>
-                <td colSpan={5} className="h-32 text-center text-sm text-neutral-400">
+                <td
+                  colSpan={5}
+                  className="h-32 text-center text-sm text-neutral-400"
+                >
                   No tasks matching the selected filters.
                 </td>
               </TableRow>

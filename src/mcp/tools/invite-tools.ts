@@ -29,7 +29,7 @@ export function registerInviteTools(server: McpServer, ctx: McpToolContext) {
 
       // Resolve memberEmails in case nicknames are passed
       const resolvedRaw = await Promise.all(
-        memberEmails.map((m) => ctx.resolveAttendeeEmail(m, token))
+        memberEmails.map((m) => ctx.resolveAttendeeEmail(m, token)),
       );
       const resolvedMembers: string[] = [];
       for (const resolved of resolvedRaw) {
@@ -71,11 +71,11 @@ export function registerInviteTools(server: McpServer, ctx: McpToolContext) {
                 allowedEmails: invite.allowedEmails,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 }

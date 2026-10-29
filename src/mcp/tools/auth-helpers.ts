@@ -1,15 +1,15 @@
 import { TeamService } from "@/services/team/team-service";
 import { ProjectService } from "@/services/project/project-service";
-import type { TeamWithMembers, TeamRole } from "@/services/team/team-types";
+import type { TeamWithMembers } from "@/services/team/team-types";
 import type { Project } from "@/db/schema";
 import { db, user, project } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { McpToolContext } from "../types";
 
 export async function resolveTeamAndVerifyAccess(
   teamIdOrSlug: string,
   userId: string,
-  requiredRole?: "owner" | "admin" | "member"
+  requiredRole?: "owner" | "admin" | "member",
 ): Promise<TeamWithMembers> {
   const [byId, bySlug] = await Promise.all([
     TeamService.getTeamById(teamIdOrSlug),
@@ -25,11 +25,15 @@ export async function resolveTeamAndVerifyAccess(
   const member = matched.members?.find((m) => m.userId === userId);
 
   if (!isOwner && !member) {
-    throw new Error(`Access denied to team '${teamIdOrSlug}'. Caller is not a member.`);
+    throw new Error(
+      `Access denied to team '${teamIdOrSlug}'. Caller is not a member.`,
+    );
   }
 
   if (requiredRole === "owner" && !isOwner) {
-    throw new Error(`Permission denied: Only the team owner can perform this operation.`);
+    throw new Error(
+      `Permission denied: Only the team owner can perform this operation.`,
+    );
   }
 
   if (
@@ -47,7 +51,7 @@ export async function resolveTeamAndVerifyAccess(
 export async function resolveUserId(
   input: string | undefined | null,
   currentUserId: string,
-  ctx: McpToolContext
+  ctx: McpToolContext,
 ): Promise<string | null> {
   if (!input) return null;
   const trimmed = input.trim();
@@ -80,7 +84,7 @@ export async function resolveUserId(
 export async function resolveProject(
   projectIdOrSlug: string | undefined | null,
   userId?: string,
-  teamId?: string
+  teamId?: string,
 ): Promise<Project | null> {
   if (!projectIdOrSlug) return null;
   const trimmed = projectIdOrSlug.trim();
@@ -89,7 +93,9 @@ export async function resolveProject(
   // 1. Try direct ID lookup (and slug within teamId if provided, in parallel)
   const [byId, byTeamSlug] = await Promise.all([
     ProjectService.getProjectById(trimmed),
-    teamId ? ProjectService.getProjectBySlug(teamId, trimmed) : Promise.resolve(null),
+    teamId
+      ? ProjectService.getProjectBySlug(teamId, trimmed)
+      : Promise.resolve(null),
   ]);
   if (byId) return byId;
   if (byTeamSlug) return byTeamSlug;
@@ -98,7 +104,7 @@ export async function resolveProject(
   if (userId) {
     const userTeams = await TeamService.listUserTeams(userId);
     const teamProjects = await Promise.all(
-      userTeams.map((t) => ProjectService.getProjectBySlug(t.id, trimmed))
+      userTeams.map((t) => ProjectService.getProjectBySlug(t.id, trimmed)),
     );
     const matched = teamProjects.find(Boolean);
     if (matched) return matched;

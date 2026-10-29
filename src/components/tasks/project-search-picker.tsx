@@ -1,9 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, Check, ChevronDown, FolderKanban } from "lucide-react";
+import { Search, X, Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Project } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +29,7 @@ export function ProjectSearchPicker({
 
   const activeProject = React.useMemo(
     () => projects.find((p) => p.id === selectedProjectId) || null,
-    [projects, selectedProjectId]
+    [projects, selectedProjectId],
   );
 
   const filteredProjects = React.useMemo(() => {
@@ -35,7 +39,7 @@ export function ProjectSearchPicker({
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.slug.toLowerCase().includes(q) ||
-        (p.description && p.description.toLowerCase().includes(q))
+        (p.description && p.description.toLowerCase().includes(q)),
     );
   }, [projects, searchQuery]);
 
@@ -58,12 +62,14 @@ export function ProjectSearchPicker({
         className={cn(
           "flex h-9 min-w-[230px] items-center justify-between gap-2 rounded-lg border border-neutral-200/90 bg-neutral-50/90 px-3 text-sm font-semibold text-neutral-900 outline-none transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-          "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
         )}
       >
         <div className="flex items-center gap-2 truncate">
           {projects.length === 0 ? (
-            <span className="text-muted-foreground truncate">No projects yet</span>
+            <span className="text-muted-foreground truncate">
+              No projects yet
+            </span>
           ) : activeProject ? (
             <>
               <span
@@ -73,7 +79,9 @@ export function ProjectSearchPicker({
               <span className="truncate">{activeProject.name}</span>
             </>
           ) : (
-            <span className="text-muted-foreground truncate">Select Project</span>
+            <span className="text-muted-foreground truncate">
+              Select Project
+            </span>
           )}
         </div>
         <ChevronDown className="text-muted-foreground pointer-events-none size-4 shrink-0" />
@@ -110,7 +118,7 @@ export function ProjectSearchPicker({
                 onClick={() => selectProject(p.id)}
                 className={cn(
                   "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                  isSelected && "bg-accent/60 font-medium"
+                  isSelected && "bg-accent/60 font-medium",
                 )}
               >
                 <div className="flex items-center gap-2.5 truncate pr-2">
@@ -129,7 +137,9 @@ export function ProjectSearchPicker({
                     )}
                   </div>
                 </div>
-                {isSelected && <Check className="text-primary size-3.5 shrink-0" />}
+                {isSelected && (
+                  <Check className="text-primary size-3.5 shrink-0" />
+                )}
               </button>
             );
           })}

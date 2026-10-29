@@ -11,7 +11,10 @@ interface TimelineRoomSectionProps {
   onSelectRoom: (roomId: string) => void;
   selectedStartMin: number;
   selectedEndMin: number;
-  onTimelineClick: (e: React.MouseEvent<HTMLDivElement>, roomId?: string) => void;
+  onTimelineClick: (
+    e: React.MouseEvent<HTMLDivElement>,
+    roomId?: string,
+  ) => void;
   isSyncingRooms: boolean;
   handleSyncRooms: () => void;
 }
@@ -40,8 +43,14 @@ export function TimelineRoomSection({
           onClick={handleSyncRooms}
           className="inline-flex items-center gap-1 rounded-md border border-neutral-200/90 bg-neutral-50 px-2 py-1 text-[11px] font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-300"
         >
-          <RefreshCw className={`size-3 ${isSyncingRooms ? "animate-spin text-blue-600" : ""}`} />
-          <span>{isSyncingRooms ? "Syncing Rooms..." : "Sync Rooms (/api/rooms/sync)"}</span>
+          <RefreshCw
+            className={`size-3 ${isSyncingRooms ? "animate-spin text-blue-600" : ""}`}
+          />
+          <span>
+            {isSyncingRooms
+              ? "Syncing Rooms..."
+              : "Sync Rooms (/api/rooms/sync)"}
+          </span>
         </button>
       </div>
 

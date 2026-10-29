@@ -55,7 +55,9 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
       <div className="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
         <MessageSquare className="size-4 text-neutral-500" />
         <span>Activity & Discussion</span>
-        <span className="text-xs font-normal text-neutral-400">({comments.length})</span>
+        <span className="text-xs font-normal text-neutral-400">
+          ({comments.length})
+        </span>
       </div>
 
       {isLoading ? (
@@ -75,7 +77,9 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
               <div key={c.id} className="flex items-start gap-2.5 text-xs">
                 <Avatar className="mt-0.5 size-6 border border-neutral-200 text-[10px] dark:border-neutral-700">
                   <AvatarImage src={c.user?.avatarUrl || ""} alt={author} />
-                  <AvatarFallback className={avatarColor}>{c.user?.initials || "U"}</AvatarFallback>
+                  <AvatarFallback className={avatarColor}>
+                    {c.user?.initials || "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 rounded-lg bg-neutral-50 p-2.5 dark:bg-neutral-800/60">
                   <div className="mb-1 flex items-center justify-between gap-2">
@@ -83,7 +87,9 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
                       {author}
                     </span>
                     <span className="text-[10px] text-neutral-400">
-                      {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(c.createdAt), {
+                        addSuffix: true,
+                      })}
                     </span>
                   </div>
                   <p className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300">
@@ -112,7 +118,9 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
           }}
         />
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-neutral-400">Press ⌘+Enter to comment</span>
+          <span className="text-[10px] text-neutral-400">
+            Press ⌘+Enter to comment
+          </span>
           <Button
             type="submit"
             size="sm"

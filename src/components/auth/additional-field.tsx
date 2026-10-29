@@ -23,7 +23,12 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   InputGroup,
@@ -31,7 +36,11 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -109,10 +118,14 @@ function CopyButton({
   return (
     <InputGroupButton
       aria-label={
-        copied ? localization.settings.copiedToClipboard : localization.settings.copyToClipboard
+        copied
+          ? localization.settings.copiedToClipboard
+          : localization.settings.copyToClipboard
       }
       title={
-        copied ? localization.settings.copiedToClipboard : localization.settings.copyToClipboard
+        copied
+          ? localization.settings.copiedToClipboard
+          : localization.settings.copyToClipboard
       }
       onClick={handleCopy}
       disabled={isDisabled}
@@ -167,7 +180,9 @@ export function AdditionalField({
   }
 
   if (inputType === "hidden") {
-    return <input type="hidden" name={name} value={valueToString(value)} readOnly />;
+    return (
+      <input type="hidden" name={name} value={valueToString(value)} readOnly />
+    );
   }
 
   if (inputType === "textarea") {
@@ -207,11 +222,16 @@ export function AdditionalField({
           inputMode={maxFractionDigits ? "decimal" : "numeric"}
           min={field.min}
           max={field.max}
-          step={field.step ?? (maxFractionDigits ? 1 / 10 ** maxFractionDigits : undefined)}
+          step={
+            field.step ??
+            (maxFractionDigits ? 1 / 10 ** maxFractionDigits : undefined)
+          }
           value={typeof value === "number" ? value : ""}
           onBlur={onBlur}
           onChange={(event) =>
-            onChange(event.target.value === "" ? null : event.target.valueAsNumber)
+            onChange(
+              event.target.value === "" ? null : event.target.valueAsNumber,
+            )
           }
           placeholder={field.placeholder}
           required={field.required}
@@ -296,7 +316,12 @@ export function AdditionalField({
           required={field.required}
           disabled={isPending || field.readOnly}
         >
-          <SelectTrigger id={name} className="w-full" onBlur={onBlur} aria-invalid={isInvalid}>
+          <SelectTrigger
+            id={name}
+            className="w-full"
+            onBlur={onBlur}
+            aria-invalid={isInvalid}
+          >
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
 
@@ -317,7 +342,9 @@ export function AdditionalField({
   }
 
   if (inputType === "combobox") {
-    const selectedOption = field.options?.find((option) => option.value === valueToString(value));
+    const selectedOption = field.options?.find(
+      (option) => option.value === valueToString(value),
+    );
 
     return (
       <Field data-invalid={isInvalid}>
@@ -404,8 +431,14 @@ function InputField({
   const isNumeric = field.type === "number";
   const maxFractionDigits = field.formatOptions?.maximumFractionDigits;
   const nativeInputType = isNumeric ? "number" : undefined;
-  const nativeInputMode = isNumeric ? (maxFractionDigits ? "decimal" : "numeric") : undefined;
-  const nativeStep = maxFractionDigits ? 1 / 10 ** maxFractionDigits : undefined;
+  const nativeInputMode = isNumeric
+    ? maxFractionDigits
+      ? "decimal"
+      : "numeric"
+    : undefined;
+  const nativeStep = maxFractionDigits
+    ? 1 / 10 ** maxFractionDigits
+    : undefined;
 
   if (hasPrefix || hasSuffix) {
     return (
@@ -413,7 +446,11 @@ function InputField({
         <FieldLabel htmlFor={name}>{field.label}</FieldLabel>
 
         <InputGroup>
-          {hasPrefix && <InputGroupAddon align="inline-start">{field.prefix}</InputGroupAddon>}
+          {hasPrefix && (
+            <InputGroupAddon align="inline-start">
+              {field.prefix}
+            </InputGroupAddon>
+          )}
 
           <InputGroupInput
             ref={inputRef}
@@ -434,11 +471,16 @@ function InputField({
 
           {field.copyable ? (
             <InputGroupAddon align="inline-end">
-              <CopyButton getValue={() => inputRef.current?.value} isDisabled={isPending} />
+              <CopyButton
+                getValue={() => inputRef.current?.value}
+                isDisabled={isPending}
+              />
             </InputGroupAddon>
           ) : (
             field.suffix != null && (
-              <InputGroupAddon align="inline-end">{field.suffix}</InputGroupAddon>
+              <InputGroupAddon align="inline-end">
+                {field.suffix}
+              </InputGroupAddon>
             )
           )}
         </InputGroup>
@@ -491,7 +533,8 @@ function SliderField({
   const maxFractionDigits = field.formatOptions?.maximumFractionDigits;
   const min = field.min ?? 0;
   const max = field.max ?? 100;
-  const step = field.step ?? (maxFractionDigits ? 1 / 10 ** maxFractionDigits : 1);
+  const step =
+    field.step ?? (maxFractionDigits ? 1 / 10 ** maxFractionDigits : 1);
   const numericValue = typeof value === "number" ? value : min;
   const fieldErrors = getFormFieldErrors(errors ?? []);
 
@@ -547,7 +590,9 @@ function DateInput({
   const fieldErrors = getFormFieldErrors(errors ?? []);
 
   const date = toDate(value);
-  const [time, setTime] = useState<string>(isDateTime && date ? formatTime(date) : "");
+  const [time, setTime] = useState<string>(
+    isDateTime && date ? formatTime(date) : "",
+  );
   const [open, setOpen] = useState(false);
 
   // Compose the hidden form value: ISO date for "date", ISO datetime for
@@ -569,7 +614,7 @@ function DateInput({
             className={cn(
               buttonVariants({ variant: "outline" }),
               "flex-1 justify-between font-normal",
-              "data-[empty=true]:text-muted-foreground"
+              "data-[empty=true]:text-muted-foreground",
             )}
           >
             {date ? format(date, "PPP") : <span>{field.placeholder}</span>}
@@ -589,8 +634,14 @@ function DateInput({
                 } else {
                   const nextValue = new Date(value);
                   if (isDateTime && time.trim()) {
-                    const [hours = "0", minutes = "0", seconds = "0"] = time.split(":");
-                    nextValue.setHours(Number(hours), Number(minutes), Number(seconds), 0);
+                    const [hours = "0", minutes = "0", seconds = "0"] =
+                      time.split(":");
+                    nextValue.setHours(
+                      Number(hours),
+                      Number(minutes),
+                      Number(seconds),
+                      0,
+                    );
                   } else {
                     nextValue.setHours(0, 0, 0, 0);
                   }
@@ -618,8 +669,14 @@ function DateInput({
                 setTime(nextTime);
                 if (!date) return;
                 const nextValue = new Date(date);
-                const [hours = "0", minutes = "0", seconds = "0"] = nextTime.split(":");
-                nextValue.setHours(Number(hours), Number(minutes), Number(seconds), 0);
+                const [hours = "0", minutes = "0", seconds = "0"] =
+                  nextTime.split(":");
+                nextValue.setHours(
+                  Number(hours),
+                  Number(minutes),
+                  Number(seconds),
+                  0,
+                );
                 onChange(nextValue);
               }}
               disabled={isPending || field.readOnly}

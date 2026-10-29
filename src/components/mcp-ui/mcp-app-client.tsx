@@ -22,8 +22,10 @@ declare global {
 function renderView(): React.JSX.Element {
   const view = window.__MCP_VIEW__;
   const initialData = window.__MCP_DATA__;
-  if (view === "agenda") return <AgendaApp initialData={initialData as AgendaData | null} />;
-  if (view === "schedule") return <ScheduleApp initialData={initialData as ScheduleData | null} />;
+  if (view === "agenda")
+    return <AgendaApp initialData={initialData as AgendaData | null} />;
+  if (view === "schedule")
+    return <ScheduleApp initialData={initialData as ScheduleData | null} />;
   return <TaskBoardApp initialData={initialData as TaskBoardData | null} />;
 }
 

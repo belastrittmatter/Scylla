@@ -5,9 +5,15 @@ import { GoogleCalendarService } from "@/services/google-calendar";
 import { RoomService } from "@/services/rooms";
 import { SchedulerService } from "@/services/scheduler";
 import { UserService } from "@/services/user";
-import { buildScheduleComparisonMarkdown, formatEmailToName } from "@/utils/mcp-markdown-builder";
+import {
+  buildScheduleComparisonMarkdown,
+  formatEmailToName,
+} from "@/utils/mcp-markdown-builder";
 import { getScheduleUiHtml } from "@/utils/mcp-ui-builder";
-import { compareSchedulesSchema, findCommonMeetingSlotsSchema } from "../schemas";
+import {
+  compareSchedulesSchema,
+  findCommonMeetingSlotsSchema,
+} from "../schemas";
 import type { McpToolContext } from "../types";
 
 const ictDateFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -19,7 +25,7 @@ const ictDateFormatter = new Intl.DateTimeFormat("en-CA", {
 
 function filterIntervalsForDate(
   intervals: readonly { start: string; end: string }[],
-  dateStr: string
+  dateStr: string,
 ): { start: string; end: string }[] {
   const dayStart = new Date(`${dateStr}T00:00:00+07:00`).getTime();
   const dayEnd = new Date(`${dateStr}T23:59:59.999+07:00`).getTime();
@@ -45,20 +51,24 @@ async function loadRoomsAndBusy(
   start: Date,
   end: Date,
   attendeeEmails: string[],
-  accessToken?: string | null
+  accessToken?: string | null,
 ) {
   const busyByEmail = new Map<string, { start: string; end: string }[]>();
   const dbNameByEmail = new Map<string, string>();
   const addBusy = (email: string, s: string, e: string) => {
     const key = email.toLowerCase();
     const arr = busyByEmail.get(key) || [];
-    if (!arr.some((b) => b.start === s && b.end === e)) arr.push({ start: s, end: e });
+    if (!arr.some((b) => b.start === s && b.end === e))
+      arr.push({ start: s, end: e });
     busyByEmail.set(key, arr);
   };
   try {
     const lowerEmails = attendeeEmails.map((e) => e.toLowerCase());
     const [allRooms, bookings, dbUsers] = await Promise.all([
-      RoomService.listRooms(undefined, accessToken ? { accessToken } : undefined),
+      RoomService.listRooms(
+        undefined,
+        accessToken ? { accessToken } : undefined,
+      ),
       db
         .select()
         .from(booking)
@@ -66,8 +76,8 @@ async function loadRoomsAndBusy(
           and(
             eq(booking.status, "confirmed"),
             gte(booking.endTime, start),
-            lte(booking.startTime, end)
-          )
+            lte(booking.startTime, end),
+          ),
         ),
       lowerEmails.length > 0
         ? db
@@ -81,8 +91,10 @@ async function loadRoomsAndBusy(
     const freeBusyEmails = Array.from(
       new Set([
         ...attendeeEmails,
-        ...allRooms.flatMap((r) => [r.email, r.googleResourceEmail]).filter(Boolean),
-      ])
+        ...allRooms
+          .flatMap((r) => [r.email, r.googleResourceEmail])
+          .filter(Boolean),
+      ]),
     ) as string[];
     const gcalFreeBusy =
       freeBusyEmails.length > 0
@@ -90,7 +102,7 @@ async function loadRoomsAndBusy(
             freeBusyEmails,
             start,
             end,
-            accessToken ? { accessToken } : undefined
+            accessToken ? { accessToken } : undefined,
           ).catch(() => ({}))
         : {};
 
@@ -120,8 +132,9 @@ async function loadRoomsAndBusy(
     for (const [email, intervals] of Object.entries(
       gcalFreeBusy as Record<
         string,
-        { start: string; end: string }[] | { busy?: { start: string; end: string }[] }
-      >
+        | { start: string; end: string }[]
+        | { busy?: { start: string; end: string }[] }
+      >,
     )) {
       const list = Array.isArray(intervals) ? intervals : intervals?.busy || [];
       for (const b of list) {
@@ -130,9 +143,12 @@ async function loadRoomsAndBusy(
     }
 
     const rooms = allRooms.map((r) => {
-      const primaryBusy = r.email ? busyByEmail.get(r.email.toLowerCase()) || [] : [];
+      const primaryBusy = r.email
+        ? busyByEmail.get(r.email.toLowerCase()) || []
+        : [];
       const resourceBusy =
-        r.googleResourceEmail && r.googleResourceEmail.toLowerCase() !== r.email?.toLowerCase()
+        r.googleResourceEmail &&
+        r.googleResourceEmail.toLowerCase() !== r.email?.toLowerCase()
           ? busyByEmail.get(r.googleResourceEmail.toLowerCase()) || []
           : [];
       return {
@@ -168,7 +184,7 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
           text: getScheduleUiHtml(),
         },
       ],
-    })
+    }),
   );
 
   // 1. Tool: find_common_meeting_slots
@@ -199,11 +215,14 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         ctx.getAccessToken(),
         ctx.getCurrentUser(),
       ]);
-      const currentEmail = (currentUserProfile.email || "me@example.com").toLowerCase();
+      const currentEmail = (
+        currentUserProfile.email || "me@example.com"
+      ).toLowerCase();
 
       const resolvedAttendees: string[] = [currentEmail];
       const nameByEmail = new Map<string, string>();
-      if (currentUserProfile.name) nameByEmail.set(currentEmail, currentUserProfile.name);
+      if (currentUserProfile.name)
+        nameByEmail.set(currentEmail, currentUserProfile.name);
 
       const candidateInputs = attendees
         .map((att) => att.trim())
@@ -215,14 +234,18 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
             lower === "self" ||
             lower === "myself" ||
             lower === currentEmail ||
-            (currentUserProfile.name && lower === currentUserProfile.name.toLowerCase())
+            (currentUserProfile.name &&
+              lower === currentUserProfile.name.toLowerCase())
           );
         });
 
       const resolvedCandidates = await Promise.all(
         candidateInputs.map(async (trimmed) => {
           if (trimmed.includes("@")) {
-            return { email: trimmed.toLowerCase(), name: undefined as string | undefined };
+            return {
+              email: trimmed.toLowerCase(),
+              name: undefined as string | undefined,
+            };
           }
           try {
             const matches = await UserService.searchTeammates(trimmed, 1, {
@@ -239,7 +262,7 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
           }
           const email = await ctx.resolveAttendeeEmail(trimmed, token);
           return { email, name: undefined as string | undefined };
-        })
+        }),
       );
 
       for (const { email, name } of resolvedCandidates) {
@@ -264,7 +287,9 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
 
       if (endDate) {
         const dateOnly = endDate.split("T")[0];
-        end = endDate.includes("T") ? new Date(endDate) : new Date(`${dateOnly}T23:59:59+07:00`);
+        end = endDate.includes("T")
+          ? new Date(endDate)
+          : new Date(`${dateOnly}T23:59:59+07:00`);
       } else {
         end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
       }
@@ -273,9 +298,11 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         start,
         end,
         resolvedAttendees,
-        token
+        token,
       );
-      const selectedRoom = roomId ? rooms.find((r) => String(r.id) === String(roomId)) : null;
+      const selectedRoom = roomId
+        ? rooms.find((r) => String(r.id) === String(roomId))
+        : null;
 
       const prefetchedBusy: { start: string; end: string }[] = [];
       for (const em of resolvedAttendees) {
@@ -300,33 +327,44 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
       });
 
       const getName = (em: string) =>
-        nameByEmail.get(em) || dbNameByEmail.get(em.toLowerCase()) || formatEmailToName(em);
+        nameByEmail.get(em) ||
+        dbNameByEmail.get(em.toLowerCase()) ||
+        formatEmailToName(em);
 
       const otherPeopleEmails = resolvedAttendees.filter(
         (e) =>
           e.toLowerCase() !== currentEmail &&
           e.includes("@") &&
-          !e.toLowerCase().includes("resource.calendar.google.com")
+          !e.toLowerCase().includes("resource.calendar.google.com"),
       );
       const primaryTargetEmail = otherPeopleEmails[0] || currentEmail;
 
-      const rawDateStr = startDate ? startDate.split("T")[0] : ictDateFormatter.format(new Date());
+      const rawDateStr = startDate
+        ? startDate.split("T")[0]
+        : ictDateFormatter.format(new Date());
       const allMutualSlots = slots.map((s) => ({ start: s.start, end: s.end }));
-      const slotsOnStartDay = filterIntervalsForDate(allMutualSlots, rawDateStr);
+      const slotsOnStartDay = filterIntervalsForDate(
+        allMutualSlots,
+        rawDateStr,
+      );
       const dateStr =
         slotsOnStartDay.length === 0 && allMutualSlots.length > 0
           ? allMutualSlots[0].start.split("T")[0]
           : rawDateStr;
       const mutualSlotsArr = filterIntervalsForDate(allMutualSlots, dateStr);
       const getBusyForDate = (em: string) =>
-        filterIntervalsForDate(busyByEmail.get(em.toLowerCase()) || [], dateStr);
+        filterIntervalsForDate(
+          busyByEmail.get(em.toLowerCase()) || [],
+          dateStr,
+        );
       const dayRooms = rooms.map((r) => ({
         ...r,
         busy: filterIntervalsForDate(r.busy, dateStr),
       }));
 
       const currentUserObj = {
-        name: currentUserProfile.name || dbNameByEmail.get(currentEmail) || "You",
+        name:
+          currentUserProfile.name || dbNameByEmail.get(currentEmail) || "You",
         email: currentEmail,
         busy: getBusyForDate(currentEmail),
       };
@@ -349,7 +387,11 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         mutualSlots: mutualSlotsArr,
         durationMinutes,
         room: selectedRoom
-          ? { name: selectedRoom.name, capacity: selectedRoom.capacity, email: selectedRoom.email }
+          ? {
+              name: selectedRoom.name,
+              capacity: selectedRoom.capacity,
+              email: selectedRoom.email,
+            }
           : null,
         suggestedTitle: suggestedTitle || undefined,
       });
@@ -385,7 +427,7 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         ],
         structuredContent,
       };
-    }
+    },
   );
 
   // 2. Tool: compare_schedules
@@ -454,7 +496,9 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
-      const dateStr = date ? date.split("T")[0] : ictDateFormatter.format(new Date());
+      const dateStr = date
+        ? date.split("T")[0]
+        : ictDateFormatter.format(new Date());
       const startOfDay = new Date(`${dateStr}T00:00:00+07:00`);
       const endOfDay = new Date(`${dateStr}T23:59:59.999+07:00`);
 
@@ -464,18 +508,20 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         startOfDay,
         endOfDay,
         [currentEmail, targetEmail],
-        token
+        token,
       );
       const selectedRoom = rooms.find(
         (r) =>
           (roomId && String(r.id) === String(roomId)) ||
-          (roomEmail && r.email.toLowerCase() === roomEmail.toLowerCase())
+          (roomEmail && r.email.toLowerCase() === roomEmail.toLowerCase()),
       );
 
       const prefetchedBusy: { start: string; end: string }[] = [
         ...(busyByEmail.get(currentEmail.toLowerCase()) || []),
         ...(busyByEmail.get(targetEmail.toLowerCase()) || []),
-        ...(selectedRoom?.email ? busyByEmail.get(selectedRoom.email.toLowerCase()) || [] : []),
+        ...(selectedRoom?.email
+          ? busyByEmail.get(selectedRoom.email.toLowerCase()) || []
+          : []),
       ];
 
       const slots = await SchedulerService.findSlots({
@@ -502,7 +548,8 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
       const mutualSlotsArr = slots.map((s) => ({ start: s.start, end: s.end }));
 
       const effectiveTitle =
-        suggestedTitle || `1:1 Sync: ${currentUserObj.name} & ${targetProfile.name}`;
+        suggestedTitle ||
+        `1:1 Sync: ${currentUserObj.name} & ${targetProfile.name}`;
 
       const markdown = buildScheduleComparisonMarkdown({
         currentUser: currentUserObj,
@@ -511,7 +558,11 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         mutualSlots: mutualSlotsArr,
         durationMinutes,
         room: selectedRoom
-          ? { name: selectedRoom.name, capacity: selectedRoom.capacity, email: selectedRoom.email }
+          ? {
+              name: selectedRoom.name,
+              capacity: selectedRoom.capacity,
+              email: selectedRoom.email,
+            }
           : null,
         suggestedTitle: effectiveTitle,
       });
@@ -547,6 +598,6 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         ],
         structuredContent,
       };
-    }
+    },
   );
 }

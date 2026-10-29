@@ -3,7 +3,11 @@
 import * as React from "react";
 import { Search, X, Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Team } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +29,7 @@ export function TeamSearchPicker({
 
   const selectedTeam = React.useMemo(
     () => teams.find((t) => t.id === selectedTeamId) || null,
-    [teams, selectedTeamId]
+    [teams, selectedTeamId],
   );
 
   const filteredTeams = React.useMemo(() => {
@@ -35,7 +39,7 @@ export function TeamSearchPicker({
       (t) =>
         t.name.toLowerCase().includes(q) ||
         t.slug.toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q))
+        (t.description && t.description.toLowerCase().includes(q)),
     );
   }, [teams, searchQuery]);
 
@@ -58,10 +62,12 @@ export function TeamSearchPicker({
         className={cn(
           "flex h-9 min-w-[210px] items-center justify-between gap-2 rounded-lg border border-neutral-200/90 bg-neutral-50/90 px-3 text-sm font-semibold text-neutral-900 outline-none transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-          "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
         )}
       >
-        <span className="truncate">{selectedTeam ? selectedTeam.name : "Select Team"}</span>
+        <span className="truncate">
+          {selectedTeam ? selectedTeam.name : "Select Team"}
+        </span>
         <ChevronDown className="text-muted-foreground pointer-events-none size-4 shrink-0" />
       </PopoverTrigger>
 
@@ -96,7 +102,7 @@ export function TeamSearchPicker({
                 onClick={() => selectTeam(t.id)}
                 className={cn(
                   "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                  isSelected && "bg-accent/60 font-medium"
+                  isSelected && "bg-accent/60 font-medium",
                 )}
               >
                 <div className="flex flex-col truncate pr-2">
@@ -109,7 +115,9 @@ export function TeamSearchPicker({
                     </span>
                   )}
                 </div>
-                {isSelected && <Check className="text-primary size-3.5 shrink-0" />}
+                {isSelected && (
+                  <Check className="text-primary size-3.5 shrink-0" />
+                )}
               </button>
             );
           })}

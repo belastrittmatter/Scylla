@@ -1,14 +1,18 @@
 import { TeamService } from "@/services/team/team-service";
 
 interface RouteParams {
-  params: Promise<{ id: string; userId: string }> | { id: string; userId: string };
+  params:
+    Promise<{ id: string; userId: string }> | { id: string; userId: string };
 }
 
 export async function DELETE(_req: Request, context: RouteParams) {
   try {
     const { id: teamId, userId } = await context.params;
     if (!teamId || !userId) {
-      return Response.json({ error: "teamId and userId are required" }, { status: 400 });
+      return Response.json(
+        { error: "teamId and userId are required" },
+        { status: 400 },
+      );
     }
 
     await TeamService.removeTeamMember(teamId, userId);
@@ -16,7 +20,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to remove member" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -25,7 +29,10 @@ export async function PATCH(req: Request, context: RouteParams) {
   try {
     const { id: teamId, userId } = await context.params;
     if (!teamId || !userId) {
-      return Response.json({ error: "teamId and userId are required" }, { status: 400 });
+      return Response.json(
+        { error: "teamId and userId are required" },
+        { status: 400 },
+      );
     }
 
     const body = await req.json();
@@ -33,12 +40,19 @@ export async function PATCH(req: Request, context: RouteParams) {
       return Response.json({ error: "role is required" }, { status: 400 });
     }
 
-    const updated = await TeamService.updateMemberRole(teamId, userId, body.role);
+    const updated = await TeamService.updateMemberRole(
+      teamId,
+      userId,
+      body.role,
+    );
     return Response.json(updated, { status: 200 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to update member role" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to update member role",
+      },
+      { status: 500 },
     );
   }
 }

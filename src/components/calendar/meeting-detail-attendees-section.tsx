@@ -60,7 +60,9 @@ export function MeetingDetailAttendeesSection({
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <Avatar className="size-6 shrink-0">
-                    {att.avatar && <AvatarImage src={att.avatar} alt={att.name} />}
+                    {att.avatar && (
+                      <AvatarImage src={att.avatar} alt={att.name} />
+                    )}
                     <AvatarFallback className="text-[10px]">
                       {att.name ? att.name.slice(0, 2).toUpperCase() : "U"}
                     </AvatarFallback>
@@ -69,11 +71,12 @@ export function MeetingDetailAttendeesSection({
                     <p className="truncate text-xs font-medium leading-tight text-neutral-900 dark:text-neutral-100">
                       {att.name}
                     </p>
-                    {att.email && att.email.toLowerCase() !== att.name.toLowerCase() && (
-                      <p className="mt-0.5 truncate text-[10px] leading-tight text-neutral-400 dark:text-neutral-500">
-                        {att.email}
-                      </p>
-                    )}
+                    {att.email &&
+                      att.email.toLowerCase() !== att.name.toLowerCase() && (
+                        <p className="mt-0.5 truncate text-[10px] leading-tight text-neutral-400 dark:text-neutral-500">
+                          {att.email}
+                        </p>
+                      )}
                   </div>
                 </div>
                 {att.role && (

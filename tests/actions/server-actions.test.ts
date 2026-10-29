@@ -160,7 +160,10 @@ describe("Server Actions Layer", () => {
     });
 
     test("returns error when date format is invalid", async () => {
-      const result = await getAgendaAction("not-a-valid-date", "usr_alex_rivera");
+      const result = await getAgendaAction(
+        "not-a-valid-date",
+        "usr_alex_rivera",
+      );
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
@@ -220,13 +223,23 @@ describe("Server Actions Layer", () => {
     });
 
     test("getAgendaAction includes newly created booking for organizer and attendee", async () => {
-      const agendaOrganizer = await getAgendaAction("2026-10-20", "usr_alex_rivera");
+      const agendaOrganizer = await getAgendaAction(
+        "2026-10-20",
+        "usr_alex_rivera",
+      );
       expect(agendaOrganizer.success).toBe(true);
-      expect(agendaOrganizer.data!.some((b) => b.id === createdBookingId)).toBe(true);
+      expect(agendaOrganizer.data!.some((b) => b.id === createdBookingId)).toBe(
+        true,
+      );
 
-      const agendaAttendee = await getAgendaAction("2026-10-20", "usr_test_user");
+      const agendaAttendee = await getAgendaAction(
+        "2026-10-20",
+        "usr_test_user",
+      );
       expect(agendaAttendee.success).toBe(true);
-      expect(agendaAttendee.data!.some((b) => b.id === createdBookingId)).toBe(true);
+      expect(agendaAttendee.data!.some((b) => b.id === createdBookingId)).toBe(
+        true,
+      );
     });
 
     test("rescheduleBookingAction updates booking time", async () => {

@@ -22,7 +22,7 @@ interface EditTeamDialogProps {
   onOpenChange: (open: boolean) => void;
   onUpdateTeam: (
     id: string,
-    data: { name?: string; slug?: string; description?: string }
+    data: { name?: string; slug?: string; description?: string },
   ) => Promise<TeamItem>;
 }
 
@@ -31,7 +31,7 @@ interface EditTeamFormProps {
   onOpenChange: (open: boolean) => void;
   onUpdateTeam: (
     id: string,
-    data: { name?: string; slug?: string; description?: string }
+    data: { name?: string; slug?: string; description?: string },
   ) => Promise<TeamItem>;
 }
 
@@ -85,7 +85,11 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="edit-team-slug">Team Slug</Label>
-          <Input id="edit-team-slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Input
+            id="edit-team-slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+          />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="edit-team-desc">Description</Label>
@@ -99,7 +103,11 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
       </div>
 
       <DialogFooter className="gap-2 sm:gap-0">
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting || !name.trim()}>
@@ -110,7 +118,12 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
   );
 }
 
-export function EditTeamDialog({ team, open, onOpenChange, onUpdateTeam }: EditTeamDialogProps) {
+export function EditTeamDialog({
+  team,
+  open,
+  onOpenChange,
+  onUpdateTeam,
+}: EditTeamDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">

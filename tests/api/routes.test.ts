@@ -47,7 +47,9 @@ describe("REST API Route Handlers", () => {
     });
 
     test("returns 400 for invalid limit parameter", async () => {
-      const req = new Request("http://localhost:3000/api/users/search?limit=abc");
+      const req = new Request(
+        "http://localhost:3000/api/users/search?limit=abc",
+      );
       const res = await searchUsersHandler(req);
       expect(res.status).toBe(400);
       const data = await res.json();
@@ -72,18 +74,24 @@ describe("REST API Route Handlers", () => {
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
       expect(data.length).toBeGreaterThanOrEqual(2);
-      expect(data.every((r: { capacity: number }) => r.capacity >= 6)).toBe(true);
+      expect(data.every((r: { capacity: number }) => r.capacity >= 6)).toBe(
+        true,
+      );
     });
 
     test("filters rooms by feature", async () => {
-      const req = new Request("http://localhost:3000/api/rooms?features=whiteboard");
+      const req = new Request(
+        "http://localhost:3000/api/rooms?features=whiteboard",
+      );
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
-      expect(data.every((r: { features: string[] }) => r.features.includes("whiteboard"))).toBe(
-        true
-      );
+      expect(
+        data.every((r: { features: string[] }) =>
+          r.features.includes("whiteboard"),
+        ),
+      ).toBe(true);
     });
 
     test("filters rooms by building", async () => {
@@ -92,11 +100,15 @@ describe("REST API Route Handlers", () => {
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
-      expect(data.every((r: { building: string | null }) => r.building === "HQ")).toBe(true);
+      expect(
+        data.every((r: { building: string | null }) => r.building === "HQ"),
+      ).toBe(true);
     });
 
     test("returns 400 for invalid minCapacity query parameter", async () => {
-      const req = new Request("http://localhost:3000/api/rooms?minCapacity=invalid");
+      const req = new Request(
+        "http://localhost:3000/api/rooms?minCapacity=invalid",
+      );
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(400);
       const data = await res.json();
@@ -106,7 +118,9 @@ describe("REST API Route Handlers", () => {
 
   describe("POST /api/rooms/sync", () => {
     test("triggers room sync and returns success or error response", async () => {
-      const req = new Request("http://localhost:3000/api/rooms/sync", { method: "POST" });
+      const req = new Request("http://localhost:3000/api/rooms/sync", {
+        method: "POST",
+      });
       const res = await syncRoomsHandler(req);
       expect([200, 401, 403]).toContain(res.status);
       const data = await res.json();
@@ -194,7 +208,7 @@ describe("REST API Route Handlers", () => {
   describe("GET /api/bookings/agenda", () => {
     test("returns bookings for user on valid date", async () => {
       const req = new Request(
-        "http://localhost:3000/api/bookings/agenda?date=2026-10-19T00:00:00.000Z&userId=usr_alex_rivera"
+        "http://localhost:3000/api/bookings/agenda?date=2026-10-19T00:00:00.000Z&userId=usr_alex_rivera",
       );
       const res = await getAgendaHandler(req);
       expect(res.status).toBe(200);
@@ -204,7 +218,7 @@ describe("REST API Route Handlers", () => {
 
     test("supports dateIso query parameter", async () => {
       const req = new Request(
-        "http://localhost:3000/api/bookings/agenda?dateIso=2026-10-19T00:00:00.000Z&userId=usr_alex_rivera"
+        "http://localhost:3000/api/bookings/agenda?dateIso=2026-10-19T00:00:00.000Z&userId=usr_alex_rivera",
       );
       const res = await getAgendaHandler(req);
       expect(res.status).toBe(200);
@@ -213,7 +227,9 @@ describe("REST API Route Handlers", () => {
     });
 
     test("returns 400 when date is missing", async () => {
-      const req = new Request("http://localhost:3000/api/bookings/agenda?userId=usr_alex_rivera");
+      const req = new Request(
+        "http://localhost:3000/api/bookings/agenda?userId=usr_alex_rivera",
+      );
       const res = await getAgendaHandler(req);
       expect(res.status).toBe(400);
       const data = await res.json();
@@ -222,7 +238,7 @@ describe("REST API Route Handlers", () => {
 
     test("returns 400 when date format is invalid", async () => {
       const req = new Request(
-        "http://localhost:3000/api/bookings/agenda?date=not-a-date&userId=usr_alex_rivera"
+        "http://localhost:3000/api/bookings/agenda?date=not-a-date&userId=usr_alex_rivera",
       );
       const res = await getAgendaHandler(req);
       expect(res.status).toBe(400);
@@ -232,7 +248,7 @@ describe("REST API Route Handlers", () => {
 
     test("returns 400 when userId is missing and unauthenticated", async () => {
       const req = new Request(
-        "http://localhost:3000/api/bookings/agenda?date=2026-10-19T00:00:00.000Z"
+        "http://localhost:3000/api/bookings/agenda?date=2026-10-19T00:00:00.000Z",
       );
       const res = await getAgendaHandler(req);
       expect(res.status).toBe(400);
@@ -254,7 +270,10 @@ describe("REST API Route Handlers", () => {
           organizerUserId: "usr_alex_rivera",
           startTime: "2026-10-20T10:00:00.000Z",
           endTime: "2026-10-20T11:00:00.000Z",
-          attendees: ["alex@example.com", { email: "sarah@company.com", name: "Sarah Connor" }],
+          attendees: [
+            "alex@example.com",
+            { email: "sarah@company.com", name: "Sarah Connor" },
+          ],
         }),
       });
 
@@ -315,14 +334,17 @@ describe("REST API Route Handlers", () => {
     });
 
     test("PATCH /api/bookings/[id] updates booking time", async () => {
-      const req = new Request(`http://localhost:3000/api/bookings/${createdBookingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startTime: "2026-10-20T14:00:00.000Z",
-          endTime: "2026-10-20T15:00:00.000Z",
-        }),
-      });
+      const req = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startTime: "2026-10-20T14:00:00.000Z",
+            endTime: "2026-10-20T15:00:00.000Z",
+          }),
+        },
+      );
 
       const res = await rescheduleBookingHandler(req, {
         params: Promise.resolve({ id: createdBookingId }),
@@ -330,19 +352,26 @@ describe("REST API Route Handlers", () => {
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.id).toBe(createdBookingId);
-      expect(new Date(data.startTime).toISOString()).toBe("2026-10-20T14:00:00.000Z");
-      expect(new Date(data.endTime).toISOString()).toBe("2026-10-20T15:00:00.000Z");
+      expect(new Date(data.startTime).toISOString()).toBe(
+        "2026-10-20T14:00:00.000Z",
+      );
+      expect(new Date(data.endTime).toISOString()).toBe(
+        "2026-10-20T15:00:00.000Z",
+      );
     });
 
     test("PATCH /api/bookings/[id] returns 404 for non-existent booking", async () => {
-      const req = new Request("http://localhost:3000/api/bookings/non-existent-id", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startTime: "2026-10-20T14:00:00.000Z",
-          endTime: "2026-10-20T15:00:00.000Z",
-        }),
-      });
+      const req = new Request(
+        "http://localhost:3000/api/bookings/non-existent-id",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startTime: "2026-10-20T14:00:00.000Z",
+            endTime: "2026-10-20T15:00:00.000Z",
+          }),
+        },
+      );
 
       const res = await rescheduleBookingHandler(req, {
         params: { id: "non-existent-id" },
@@ -353,14 +382,17 @@ describe("REST API Route Handlers", () => {
     });
 
     test("PATCH /api/bookings/[id] returns 400 for invalid time window", async () => {
-      const req = new Request(`http://localhost:3000/api/bookings/${createdBookingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startTime: "2026-10-20T16:00:00.000Z",
-          endTime: "2026-10-20T15:00:00.000Z",
-        }),
-      });
+      const req = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startTime: "2026-10-20T16:00:00.000Z",
+            endTime: "2026-10-20T15:00:00.000Z",
+          }),
+        },
+      );
 
       const res = await rescheduleBookingHandler(req, {
         params: Promise.resolve({ id: createdBookingId }),
@@ -371,9 +403,12 @@ describe("REST API Route Handlers", () => {
     });
 
     test("DELETE /api/bookings/[id] cancels booking and marks status cancelled", async () => {
-      const req = new Request(`http://localhost:3000/api/bookings/${createdBookingId}`, {
-        method: "DELETE",
-      });
+      const req = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       const res = await cancelBookingHandler(req, {
         params: Promise.resolve({ id: createdBookingId }),
@@ -385,9 +420,12 @@ describe("REST API Route Handlers", () => {
     });
 
     test("DELETE /api/bookings/[id] returns 404 for non-existent booking", async () => {
-      const req = new Request("http://localhost:3000/api/bookings/non-existent-id", {
-        method: "DELETE",
-      });
+      const req = new Request(
+        "http://localhost:3000/api/bookings/non-existent-id",
+        {
+          method: "DELETE",
+        },
+      );
 
       const res = await cancelBookingHandler(req, {
         params: { id: "non-existent-id" },
@@ -398,14 +436,17 @@ describe("REST API Route Handlers", () => {
     });
 
     test("PATCH /api/bookings/[id] returns 400 when attempting to reschedule cancelled booking", async () => {
-      const req = new Request(`http://localhost:3000/api/bookings/${createdBookingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startTime: "2026-10-20T16:00:00.000Z",
-          endTime: "2026-10-20T17:00:00.000Z",
-        }),
-      });
+      const req = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startTime: "2026-10-20T16:00:00.000Z",
+            endTime: "2026-10-20T17:00:00.000Z",
+          }),
+        },
+      );
 
       const res = await rescheduleBookingHandler(req, {
         params: Promise.resolve({ id: createdBookingId }),

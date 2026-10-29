@@ -16,7 +16,15 @@ import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { createProjectAction } from "@/actions";
 import type { Project } from "@/db/schema";
 
-const COLOR_PRESETS = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#6366f1"];
+const COLOR_PRESETS = [
+  "#3b82f6",
+  "#10b981",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#6366f1",
+];
 
 interface ProjectCreateDialogProps {
   isOpen: boolean;
@@ -74,7 +82,9 @@ export function ProjectCreateDialog({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <DialogHeader>
             <DialogTitle>New Project</DialogTitle>
-            <DialogDescription>Create a project to organize tasks for this team.</DialogDescription>
+            <DialogDescription>
+              Create a project to organize tasks for this team.
+            </DialogDescription>
           </DialogHeader>
 
           {error && (
@@ -98,7 +108,9 @@ export function ProjectCreateDialog({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="proj-desc">Description (optional)</FieldLabel>
+              <FieldLabel htmlFor="proj-desc">
+                Description (optional)
+              </FieldLabel>
               <Input
                 id="proj-desc"
                 placeholder="Brief summary of project scope..."
@@ -139,7 +151,11 @@ export function ProjectCreateDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={isSubmitting || !name.trim()}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting || !name.trim()}
+            >
               {isSubmitting ? "Creating..." : "Create Project"}
             </Button>
           </DialogFooter>

@@ -29,7 +29,7 @@ export const FindSlotsParamsSchema = z
     {
       message: "startDate must be before endDate and valid dates",
       path: ["startDate"],
-    }
+    },
   );
 
 export const GetAgendaParamsSchema = z.object({
@@ -58,7 +58,7 @@ export const CreateBookingPayloadSchema = z
             name: z.string().optional(),
             status: z.string().optional(),
           }),
-        ])
+        ]),
       )
       .optional(),
   })
@@ -71,7 +71,7 @@ export const CreateBookingPayloadSchema = z
     {
       message: "startTime must be before endTime and valid dates",
       path: ["startTime"],
-    }
+    },
   );
 
 export const ReschedulePayloadSchema = z
@@ -95,7 +95,7 @@ export const ReschedulePayloadSchema = z
     {
       message: "startTime must be before endTime and valid dates",
       path: ["startTime"],
-    }
+    },
   );
 
 export const UpdateTaskStatusSchema = z.object({
@@ -105,7 +105,9 @@ export const UpdateTaskStatusSchema = z.object({
 export const UpdateTaskPayloadSchema = z.object({
   title: z.string().min(1, "Title cannot be empty").optional(),
   description: z.string().nullable().optional(),
-  status: z.enum(["todo", "in_progress", "in_review", "done", "cancelled"]).optional(),
+  status: z
+    .enum(["todo", "in_progress", "in_review", "done", "cancelled"])
+    .optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: z.union([z.string(), z.date()]).nullable().optional(),
@@ -123,7 +125,9 @@ export const CreateProjectPayloadSchema = z.object({
 export const CreateTaskPayloadSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().nullable().optional(),
-  status: z.enum(["todo", "in_progress", "in_review", "done", "cancelled"]).optional(),
+  status: z
+    .enum(["todo", "in_progress", "in_review", "done", "cancelled"])
+    .optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   teamId: z.string().min(1, "Team ID is required"),
   projectId: z.string().nullable().optional(),

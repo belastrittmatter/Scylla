@@ -17,7 +17,11 @@ export type LastUsedBadgeProps = {
  * Displays an indicator when one of the supplied method IDs matches Better
  * Auth's stored last login method.
  */
-export function LastUsedBadge({ method, compact, floating }: LastUsedBadgeProps) {
+export function LastUsedBadge({
+  method,
+  compact,
+  floating,
+}: LastUsedBadgeProps) {
   const { method: lastLoginMethod, localization } = useLastLoginMethod();
   const methods = Array.isArray(method) ? method : [method];
 

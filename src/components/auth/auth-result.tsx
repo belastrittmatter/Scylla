@@ -6,7 +6,13 @@ import { CircleCheckIcon, CircleXIcon, TriangleAlertIcon } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { cn } from "cn";
 
 type AuthResultProps = {
@@ -21,7 +27,7 @@ function AuthResultView({ className, fallbackIntent }: AuthResultProps) {
   const search = useSyncExternalStore(
     emptySubscribe,
     () => window.location.search,
-    () => ""
+    () => "",
   );
   const result = parseAuthResult(search, fallbackIntent);
 
@@ -78,7 +84,7 @@ function AuthResultView({ className, fallbackIntent }: AuthResultProps) {
               ? "text-primary"
               : result.intent === "warning"
                 ? "text-amber-600 dark:text-amber-400"
-                : "text-destructive"
+                : "text-destructive",
           )}
         />
         <CardTitle className="text-xl">{message.title}</CardTitle>

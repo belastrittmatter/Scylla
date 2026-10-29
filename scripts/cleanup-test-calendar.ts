@@ -34,13 +34,24 @@ function parseArgs(): CleanupOptions {
   return options;
 }
 
-const TEST_PATTERNS = [/\[test\]/i, /\[e2e\]/i, /^test:/i, /mock_event/i, /automated test/i];
+const TEST_PATTERNS = [
+  /\[test\]/i,
+  /\[e2e\]/i,
+  /^test:/i,
+  /mock_event/i,
+  /automated test/i,
+];
 
-function isTestEvent(summary: string, description?: string, customQuery?: string): boolean {
+function isTestEvent(
+  summary: string,
+  description?: string,
+  customQuery?: string,
+): boolean {
   if (customQuery) {
     const qLower = customQuery.toLowerCase();
     return (
-      summary.toLowerCase().includes(qLower) || (description || "").toLowerCase().includes(qLower)
+      summary.toLowerCase().includes(qLower) ||
+      (description || "").toLowerCase().includes(qLower)
     );
   }
   return (
@@ -49,20 +60,22 @@ function isTestEvent(summary: string, description?: string, customQuery?: string
   );
 }
 
-export async function runCalendarCleanup(options: CleanupOptions = { dryRun: false }): Promise<{
+export async function runCalendarCleanup(
+  options: CleanupOptions = { dryRun: false },
+): Promise<{
   totalFound: number;
   deletedCount: number;
   skippedCount: number;
   errors: string[];
 }> {
   console.log(
-    `[Calendar Cleanup] Mode: ${options.dryRun ? "DRY RUN (preview only)" : "LIVE PURGE"}`
+    `[Calendar Cleanup] Mode: ${options.dryRun ? "DRY RUN (preview only)" : "LIVE PURGE"}`,
   );
 
   const token = options.token || (await GoogleCalendarService.getAccessToken());
   if (!token) {
     console.warn(
-      "[Calendar Cleanup] No Google Calendar access token found. Using mock mode if active."
+      "[Calendar Cleanup] No Google Calendar access token found. Using mock mode if active.",
     );
   }
 
@@ -84,14 +97,21 @@ export async function runCalendarCleanup(options: CleanupOptions = { dryRun: fal
     });
   } catch (err) {
     console.error("[Calendar Cleanup] Failed to list events:", err);
-    return { totalFound: 0, deletedCount: 0, skippedCount: 0, errors: [String(err)] };
+    return {
+      totalFound: 0,
+      deletedCount: 0,
+      skippedCount: 0,
+      errors: [String(err)],
+    };
   }
 
   const testEvents = events.filter(
-    (e) => e.id && isTestEvent(e.summary || "", e.description, options.query)
+    (e) => e.id && isTestEvent(e.summary || "", e.description, options.query),
   );
 
-  console.log(`[Calendar Cleanup] Found ${testEvents.length} test event(s) matching filter.`);
+  console.log(
+    `[Calendar Cleanup] Found ${testEvents.length} test event(s) matching filter.`,
+  );
 
   let deletedCount = 0;
   let skippedCount = 0;
@@ -109,7 +129,11 @@ export async function runCalendarCleanup(options: CleanupOptions = { dryRun: fal
     }
 
     try {
-      await GoogleCalendarService.deleteEvent(eventId, "primary", token || undefined);
+      await GoogleCalendarService.deleteEvent(
+        eventId,
+        "primary",
+        token || undefined,
+      );
       console.log(`  [DELETED] id: ${eventId} | "${title}" | ${startStr}`);
       deletedCount++;
     } catch (delErr) {
@@ -120,7 +144,7 @@ export async function runCalendarCleanup(options: CleanupOptions = { dryRun: fal
   }
 
   console.log(
-    `[Calendar Cleanup] Finished. Purged: ${deletedCount}, Skipped: ${skippedCount}, Errors: ${errors.length}`
+    `[Calendar Cleanup] Finished. Purged: ${deletedCount}, Skipped: ${skippedCount}, Errors: ${errors.length}`,
   );
   return {
     totalFound: testEvents.length,

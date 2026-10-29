@@ -7,13 +7,21 @@ import {
   updateProjectSchema,
   deleteProjectSchema,
 } from "../schemas/crud-schemas";
-import { resolveTeamAndVerifyAccess, formatToolSuccess, formatToolError } from "./auth-helpers";
+import {
+  resolveTeamAndVerifyAccess,
+  formatToolSuccess,
+  formatToolError,
+} from "./auth-helpers";
 
-export function registerProjectCrudTools(server: McpServer, ctx: McpToolContext) {
+export function registerProjectCrudTools(
+  server: McpServer,
+  ctx: McpToolContext,
+) {
   server.registerTool(
     "get_project",
     {
-      description: "Retrieve project metadata by project ID (or slug) including task metrics.",
+      description:
+        "Retrieve project metadata by project ID (or slug) including task metrics.",
       inputSchema: getProjectSchema,
     },
     async ({ projectId, teamId }) => {
@@ -36,7 +44,8 @@ export function registerProjectCrudTools(server: McpServer, ctx: McpToolContext)
         const metrics = {
           totalTasks: tasks.length,
           todoTasks: tasks.filter((t) => t.status === "todo").length,
-          inProgressTasks: tasks.filter((t) => t.status === "in_progress").length,
+          inProgressTasks: tasks.filter((t) => t.status === "in_progress")
+            .length,
           inReviewTasks: tasks.filter((t) => t.status === "in_review").length,
           doneTasks: tasks.filter((t) => t.status === "done").length,
           cancelledTasks: tasks.filter((t) => t.status === "cancelled").length,
@@ -46,7 +55,7 @@ export function registerProjectCrudTools(server: McpServer, ctx: McpToolContext)
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
@@ -71,11 +80,14 @@ export function registerProjectCrudTools(server: McpServer, ctx: McpToolContext)
           status,
           color,
         });
-        return formatToolSuccess({ message: "Project updated successfully", project: updated });
+        return formatToolSuccess({
+          message: "Project updated successfully",
+          project: updated,
+        });
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
@@ -101,6 +113,6 @@ export function registerProjectCrudTools(server: McpServer, ctx: McpToolContext)
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 }

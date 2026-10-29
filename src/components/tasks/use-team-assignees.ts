@@ -22,7 +22,9 @@ export function useTeamAssignees({
   initialTeamMembers = [],
 }: UseTeamAssigneesProps) {
   const activeTeamId = taskTeamId || selectedTeamId;
-  const [fetchedTeamMembers, setFetchedTeamMembers] = React.useState<WorkspaceTeamMember[]>([]);
+  const [fetchedTeamMembers, setFetchedTeamMembers] = React.useState<
+    WorkspaceTeamMember[]
+  >([]);
   const [fetchedUsers, setFetchedUsers] = React.useState<TaskUser[]>([]);
 
   React.useEffect(() => {

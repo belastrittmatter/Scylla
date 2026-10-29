@@ -3,7 +3,11 @@
 import * as React from "react";
 import { Search, Plus, Check, Building2, Users } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@daveyplate/better-auth-ui";
 import { useUserSearch } from "@/hooks/use-user-search";
@@ -39,10 +43,14 @@ export function CalendarAttendeeStack({
   isCalculatingSlots = false,
 }: CalendarAttendeeStackProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [activeFilter, setActiveFilter] = React.useState<"all" | "users" | "rooms">("all");
+  const [activeFilter, setActiveFilter] = React.useState<
+    "all" | "users" | "rooms"
+  >("all");
 
   const userSearch = useUserSearch({ enabled: isOpen, limit: 20 });
-  const [availableRooms, setAvailableRooms] = React.useState<CalendarAttendeeItem[]>([]);
+  const [availableRooms, setAvailableRooms] = React.useState<
+    CalendarAttendeeItem[]
+  >([]);
   const [isLoadingRooms, setIsLoadingRooms] = React.useState(false);
 
   // Load available rooms ONCE when popover opens
@@ -50,7 +58,9 @@ export function CalendarAttendeeStack({
     if (!isOpen) return;
 
     let isMounted = true;
-    setIsLoadingRooms(true);
+    queueMicrotask(() => {
+      if (isMounted) setIsLoadingRooms(true);
+    });
 
     apiClient.rooms
       .list()
@@ -113,13 +123,14 @@ export function CalendarAttendeeStack({
         (item) =>
           item.name.toLowerCase().includes(q) ||
           item.email.toLowerCase().includes(q) ||
-          (item.details && item.details.toLowerCase().includes(q))
+          (item.details && item.details.toLowerCase().includes(q)),
       );
     }
 
     // If query is an email address and not yet in the list, allow direct selection
     if (q.includes("@") && !result.some((it) => it.email.toLowerCase() === q)) {
-      const isRoom = q.includes("resource.calendar.google.com") || q.includes("room");
+      const isRoom =
+        q.includes("resource.calendar.google.com") || q.includes("room");
       result = [
         {
           id: q,
@@ -138,7 +149,7 @@ export function CalendarAttendeeStack({
 
   const selectedIds = React.useMemo(
     () => new Set(selectedAttendees.map((a) => a.id)),
-    [selectedAttendees]
+    [selectedAttendees],
   );
 
   return (
@@ -163,7 +174,11 @@ export function CalendarAttendeeStack({
           const zIndex = 25 - idx;
 
           return (
-            <div key={att.id} className="group relative" style={{ zIndex: Math.max(1, zIndex) }}>
+            <div
+              key={att.id}
+              className="group relative"
+              style={{ zIndex: Math.max(1, zIndex) }}
+            >
               <button
                 type="button"
                 onClick={() => onRemoveAttendee(att.id)}
@@ -319,7 +334,9 @@ export function CalendarAttendeeStack({
 
                       {/* Info */}
                       <div className="flex min-w-0 flex-col">
-                        <span className="truncate font-medium">{item.name}</span>
+                        <span className="truncate font-medium">
+                          {item.name}
+                        </span>
                         <span className="truncate text-[11px] text-neutral-500 dark:text-neutral-400">
                           {item.type === "room" ? item.details : item.email}
                         </span>

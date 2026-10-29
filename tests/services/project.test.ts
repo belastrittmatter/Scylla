@@ -38,11 +38,17 @@ describe("ProjectService Domain Logic", () => {
     const byId = await ProjectService.getProjectById(newProject.id);
     expect(byId?.id).toBe(newProject.id);
 
-    const bySlug = await ProjectService.getProjectBySlug(newTeam.id, "api-gateway-protocol");
+    const bySlug = await ProjectService.getProjectBySlug(
+      newTeam.id,
+      "api-gateway-protocol",
+    );
     expect(bySlug?.id).toBe(newProject.id);
 
     // Update status
-    const updated = await ProjectService.updateProjectStatus(newProject.id, "completed");
+    const updated = await ProjectService.updateProjectStatus(
+      newProject.id,
+      "completed",
+    );
     expect(updated.status).toBe("completed");
 
     // Filter by status
@@ -51,9 +57,12 @@ describe("ProjectService Domain Logic", () => {
     });
     expect(activeProjects.length).toBe(0);
 
-    const completedProjects = await ProjectService.listProjectsByTeam(newTeam.id, {
-      status: "completed",
-    });
+    const completedProjects = await ProjectService.listProjectsByTeam(
+      newTeam.id,
+      {
+        status: "completed",
+      },
+    );
     expect(completedProjects.length).toBe(1);
 
     // Delete project
@@ -69,7 +78,7 @@ describe("ProjectService Domain Logic", () => {
       ProjectService.createProject({
         name: "Orphan Project",
         teamId: "non-existent-team-id",
-      })
+      }),
     ).rejects.toThrow('Team with id "non-existent-team-id" not found');
   });
 });

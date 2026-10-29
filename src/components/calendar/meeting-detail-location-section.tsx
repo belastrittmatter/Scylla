@@ -37,7 +37,8 @@ export function MeetingDetailLocationSection({
               </span>
               {meeting.roomDetails?.floor && (
                 <p className="truncate text-[11px] text-neutral-400">
-                  {meeting.roomDetails.floor} (Capacity: {meeting.roomDetails.capacity} people)
+                  {meeting.roomDetails.floor} (Capacity:{" "}
+                  {meeting.roomDetails.capacity} people)
                 </p>
               )}
             </div>

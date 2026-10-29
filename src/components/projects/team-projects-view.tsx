@@ -19,9 +19,14 @@ interface TeamProjectsViewProps {
 
 export function TeamProjectsView({ team }: TeamProjectsViewProps) {
   const { setLabel } = useBreadcrumb();
-  const { projects, isLoading, error, createProject, updateProject, deleteProject } = useProjects(
-    team.id
-  );
+  const {
+    projects,
+    isLoading,
+    error,
+    createProject,
+    updateProject,
+    deleteProject,
+  } = useProjects(team.id);
 
   React.useEffect(() => {
     setLabel(team.slug, team.name);
@@ -42,7 +47,8 @@ export function TeamProjectsView({ team }: TeamProjectsViewProps) {
               </h1>
             </div>
             <p className="max-w-2xl text-xs text-neutral-500 dark:text-neutral-400">
-              {team.description || `Manage and track projects for team /${team.slug}`}
+              {team.description ||
+                `Manage and track projects for team /${team.slug}`}
             </p>
           </div>
 

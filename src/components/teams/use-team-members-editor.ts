@@ -12,7 +12,11 @@ interface UseTeamMembersEditorProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMembersEditorProps) {
+export function useTeamMembersEditor({
+  team,
+  open,
+  onOpenChange,
+}: UseTeamMembersEditorProps) {
   const [members, setMembers] = useState<TeamMemberItem[]>([]);
   const [initialMembers, setInitialMembers] = useState<TeamMemberItem[]>([]);
   const [deletedUserIds, setDeletedUserIds] = useState<string[]>([]);
@@ -31,9 +35,12 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
         const json = await res.json();
         if (ignore) return;
         if (res.ok) {
-          const data: TeamMemberItem[] = Array.isArray(json) ? json : json.data || [];
+          const data: TeamMemberItem[] = Array.isArray(json)
+            ? json
+            : json.data || [];
           const sorted = [...data].sort(
-            (a, b) => (ROLE_PRIORITY[a.role] ?? 99) - (ROLE_PRIORITY[b.role] ?? 99)
+            (a, b) =>
+              (ROLE_PRIORITY[a.role] ?? 99) - (ROLE_PRIORITY[b.role] ?? 99),
           );
           setMembers(sorted);
           setInitialMembers(sorted);
@@ -65,7 +72,7 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
       (m) =>
         m.user?.email?.toLowerCase() === targetEmail.toLowerCase() ||
         m.userId?.toLowerCase() === targetEmail.toLowerCase() ||
-        (userToAdd?.id && m.userId === userToAdd.id)
+        (userToAdd?.id && m.userId === userToAdd.id),
     );
     if (existing) {
       setError("This user is already in the team list");
@@ -75,7 +82,10 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
     const newMember: TeamMemberItem = {
       id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       teamId: team.id,
-      userId: userToAdd?.id && !userToAdd.id.startsWith("invite-") ? userToAdd.id : targetEmail,
+      userId:
+        userToAdd?.id && !userToAdd.id.startsWith("invite-")
+          ? userToAdd.id
+          : targetEmail,
       role: "member",
       joinedAt: new Date().toISOString(),
       isNew: true,
@@ -93,7 +103,9 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
   };
 
   const handleUpdateRole = (userId: string, role: TeamRole) => {
-    setMembers((prev) => prev.map((m) => (m.userId === userId ? { ...m, role } : m)));
+    setMembers((prev) =>
+      prev.map((m) => (m.userId === userId ? { ...m, role } : m)),
+    );
   };
 
   const handleRemoveMember = (userId: string) => {
@@ -116,7 +128,7 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
 
   const sortedMembers = useMemo(() => {
     return [...members].sort(
-      (a, b) => (ROLE_PRIORITY[a.role] ?? 99) - (ROLE_PRIORITY[b.role] ?? 99)
+      (a, b) => (ROLE_PRIORITY[a.role] ?? 99) - (ROLE_PRIORITY[b.role] ?? 99),
     );
   }, [members]);
 
@@ -127,8 +139,13 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
 
     try {
       for (const userId of deletedUserIds) {
-        const res = await fetch(`/api/teams/${team.id}/members/${userId}`, { method: "DELETE" });
-        if (!res.ok) throw new Error((await res.json()).error || "Failed to remove member");
+        const res = await fetch(`/api/teams/${team.id}/members/${userId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok)
+          throw new Error(
+            (await res.json()).error || "Failed to remove member",
+          );
       }
 
       for (const member of members.filter((m) => m.isNew)) {
@@ -141,25 +158,36 @@ export function useTeamMembersEditor({ team, open, onOpenChange }: UseTeamMember
           headers: { "Content-Type": "application/json" },
           body,
         });
-        if (!res.ok) throw new Error((await res.json()).error || `Failed to add member`);
+        if (!res.ok)
+          throw new Error((await res.json()).error || `Failed to add member`);
       }
 
       for (const member of members.filter((m) => !m.isNew)) {
-        const initial = initialMembers.find((im) => im.userId === member.userId);
+        const initial = initialMembers.find(
+          (im) => im.userId === member.userId,
+        );
         if (initial && initial.role !== member.role) {
-          const res = await fetch(`/api/teams/${team.id}/members/${member.userId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: member.role }),
-          });
-          if (!res.ok) throw new Error((await res.json()).error || `Failed to update role`);
+          const res = await fetch(
+            `/api/teams/${team.id}/members/${member.userId}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ role: member.role }),
+            },
+          );
+          if (!res.ok)
+            throw new Error(
+              (await res.json()).error || `Failed to update role`,
+            );
         }
       }
 
       toast.success("Team members saved successfully");
       onOpenChange(false);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save team members");
+      setError(
+        err instanceof Error ? err.message : "Failed to save team members",
+      );
     } finally {
       setIsSaving(false);
     }

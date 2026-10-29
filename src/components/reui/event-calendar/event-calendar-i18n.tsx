@@ -2,7 +2,13 @@ import type {
   CalendarView,
   EventCalendarDateRange,
 } from "@/components/reui/event-calendar/event-calendar-types";
-import { format, isSameMonth, isSameYear, subMilliseconds, type Locale } from "date-fns";
+import {
+  format,
+  isSameMonth,
+  isSameYear,
+  subMilliseconds,
+  type Locale,
+} from "date-fns";
 
 interface EventCalendarI18nConfig {
   labels: {
@@ -86,20 +92,27 @@ interface EventCalendarI18nConfig {
         activeRange: EventCalendarDateRange;
         visibleRange: EventCalendarDateRange;
         locale?: Locale;
-      }
+      },
     ) => string;
     formatEventTime: (
       start: Date,
       end: Date,
       allDay: boolean,
       /** date-fns options (the calendar `locale`); trailing so a 3-arg override still fits. */
-      opts?: { locale?: Locale }
+      opts?: { locale?: Locale },
     ) => string;
-    formatDayRange: (range: EventCalendarDateRange, opts?: { locale?: Locale }) => string;
+    formatDayRange: (
+      range: EventCalendarDateRange,
+      opts?: { locale?: Locale },
+    ) => string;
     /** Chip native tooltip text; return undefined to drop the attribute. */
     formatEventLabel?: (title: string, timeLabel: string) => string | undefined;
     /** Chip aria-label composition. */
-    formatEventAriaLabel?: (title: string, timeLabel: string, continues: boolean) => string;
+    formatEventAriaLabel?: (
+      title: string,
+      timeLabel: string,
+      continues: boolean,
+    ) => string;
   };
 }
 
@@ -172,7 +185,7 @@ const DEFAULT_FORMATS: EventCalendarI18nConfig["formats"] = {
  * formats.monthTitle without replacing formatTitle still sees it applied).
  */
 function makeDefaultFunctions(
-  cfg: Pick<EventCalendarI18nConfig, "labels" | "formats">
+  cfg: Pick<EventCalendarI18nConfig, "labels" | "formats">,
 ): EventCalendarI18nConfig["functions"] {
   return {
     formatTitle: (view, { date, activeRange, locale }) => {
@@ -181,7 +194,11 @@ function makeDefaultFunctions(
         return format(date, cfg.formats.monthTitle, opts);
       }
       if (view === "resource") {
-        return format(date, cfg.formats.resourceTitle ?? cfg.formats.dayTitle, opts);
+        return format(
+          date,
+          cfg.formats.resourceTitle ?? cfg.formats.dayTitle,
+          opts,
+        );
       }
       if (view === "day") {
         return format(date, cfg.formats.dayTitle, opts);
@@ -212,7 +229,8 @@ function makeDefaultFunctions(
       // days off the last rendered instant (end is exclusive, so a 14:00 to
       // midnight event still ends on the start day). Elapsed ms would miss an
       // exactly-24h event and a DST day that only runs 23 hours.
-      const lastInstant = end.getTime() - 1 >= start.getTime() ? subMilliseconds(end, 1) : start;
+      const lastInstant =
+        end.getTime() - 1 >= start.getTime() ? subMilliseconds(end, 1) : start;
       if (format(start, "yyyy-MM-dd") !== format(lastInstant, "yyyy-MM-dd")) {
         return `${format(start, `MMM d, ${fmt}`, opts)} - ${format(end, `MMM d, ${fmt}`, opts)}`;
       }
@@ -251,7 +269,9 @@ type EventCalendarI18nOverrides = {
  * functions are re-bound to the MERGED labels/formats; explicit `functions`
  * overrides still win.
  */
-function mergeEventCalendarI18n(overrides?: EventCalendarI18nOverrides): EventCalendarI18nConfig {
+function mergeEventCalendarI18n(
+  overrides?: EventCalendarI18nOverrides,
+): EventCalendarI18nConfig {
   if (!overrides) return DEFAULT_EVENT_CALENDAR_I18N;
   const labels = { ...DEFAULT_LABELS, ...overrides.labels };
   const viewNames = { ...DEFAULT_VIEW_NAMES, ...overrides.viewNames };

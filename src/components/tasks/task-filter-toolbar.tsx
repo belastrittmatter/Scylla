@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,7 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { TaskFilters, TaskStatus, TaskPriority, DeadlineHorizon } from "./task-types";
+import type {
+  TaskFilters,
+  TaskStatus,
+  TaskPriority,
+  DeadlineHorizon,
+} from "./task-types";
 
 interface TaskFilterToolbarProps {
   filters: TaskFilters;
@@ -40,7 +49,9 @@ export function TaskFilterToolbar({
           </InputGroupAddon>
           <InputGroupInput
             value={filters.searchQuery}
-            onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+            onChange={(e) =>
+              onFiltersChange({ ...filters, searchQuery: e.target.value })
+            }
             placeholder="Search tasks..."
             className="text-sm"
           />
@@ -91,7 +102,10 @@ export function TaskFilterToolbar({
         <Select
           value={filters.priority}
           onValueChange={(val) =>
-            onFiltersChange({ ...filters, priority: val as TaskPriority | "all" })
+            onFiltersChange({
+              ...filters,
+              priority: val as TaskPriority | "all",
+            })
           }
         >
           <SelectTrigger className="h-9 min-w-[125px] rounded-lg border-neutral-200/80 bg-white text-sm shadow-none dark:border-neutral-800 dark:bg-neutral-900">
@@ -136,7 +150,10 @@ export function TaskFilterToolbar({
         <Select
           value={filters.deadlineHorizon}
           onValueChange={(val) =>
-            onFiltersChange({ ...filters, deadlineHorizon: val as DeadlineHorizon })
+            onFiltersChange({
+              ...filters,
+              deadlineHorizon: val as DeadlineHorizon,
+            })
           }
         >
           <SelectTrigger className="h-9 min-w-[135px] rounded-lg border-neutral-200/80 bg-white text-sm shadow-none dark:border-neutral-800 dark:bg-neutral-900">
@@ -156,10 +173,16 @@ export function TaskFilterToolbar({
             <SelectItem value="all" className="text-sm">
               All Deadlines
             </SelectItem>
-            <SelectItem value="overdue" className="text-sm text-rose-600 dark:text-rose-400">
+            <SelectItem
+              value="overdue"
+              className="text-sm text-rose-600 dark:text-rose-400"
+            >
               Overdue
             </SelectItem>
-            <SelectItem value="today" className="text-sm text-amber-600 dark:text-amber-400">
+            <SelectItem
+              value="today"
+              className="text-sm text-amber-600 dark:text-amber-400"
+            >
               Due Today
             </SelectItem>
             <SelectItem value="upcoming" className="text-sm">

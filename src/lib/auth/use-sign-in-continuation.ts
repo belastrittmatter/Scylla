@@ -30,8 +30,9 @@ import {
 export function useSignInContinuation() {
   const { basePaths, navigate, plugins, redirectTo } = useAuth();
 
-  const twoFactorPath = plugins.find((plugin) => plugin.id === TWO_FACTOR_PLUGIN_ID)?.viewPaths
-    ?.auth?.twoFactor;
+  const twoFactorPath = plugins.find(
+    (plugin) => plugin.id === TWO_FACTOR_PLUGIN_ID,
+  )?.viewPaths?.auth?.twoFactor;
 
   return useCallback(
     (data: unknown) => {
@@ -46,6 +47,6 @@ export function useSignInContinuation() {
 
       navigate({ to: redirectTo });
     },
-    [basePaths.auth, navigate, redirectTo, twoFactorPath]
+    [basePaths.auth, navigate, redirectTo, twoFactorPath],
   );
 }

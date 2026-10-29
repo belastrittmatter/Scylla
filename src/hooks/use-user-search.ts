@@ -39,11 +39,13 @@ export function useUserSearch({
       if (!trimmed) return all.slice(0, limit);
       return all
         .filter(
-          (u) => u.name.toLowerCase().includes(trimmed) || u.email.toLowerCase().includes(trimmed)
+          (u) =>
+            u.name.toLowerCase().includes(trimmed) ||
+            u.email.toLowerCase().includes(trimmed),
         )
         .slice(0, limit);
     },
-    [limit]
+    [limit],
   );
 
   const setQuery = React.useCallback(
@@ -55,7 +57,7 @@ export function useUserSearch({
         setResults(filtered);
       }
     },
-    [filterKnown]
+    [filterKnown],
   );
 
   React.useEffect(() => {
@@ -85,7 +87,10 @@ export function useUserSearch({
             : [];
 
         const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-        if (isValidEmail && !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())) {
+        if (
+          isValidEmail &&
+          !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())
+        ) {
           list = [
             ...list,
             {
@@ -107,7 +112,9 @@ export function useUserSearch({
         setResults(list);
       } catch (err) {
         if (!active) return;
-        setError(err instanceof Error ? err : new Error("Failed to search users"));
+        setError(
+          err instanceof Error ? err : new Error("Failed to search users"),
+        );
       } finally {
         if (active) {
           setIsLoading(false);

@@ -10,18 +10,26 @@ const twReq = createRequire(twTurbopackEntry);
 const { compile, optimize } = twReq("@tailwindcss/node") as {
   compile: (
     css: string,
-    opts: { base: string; onDependency: (dep: string) => void }
+    opts: { base: string; onDependency: (dep: string) => void },
   ) => Promise<{ build: (candidates: string[]) => string }>;
   optimize: (css: string, opts: { minify: boolean }) => { code: string };
 };
 const { Scanner } = twReq("@tailwindcss/oxide") as {
-  Scanner: new (opts: { sources: { base: string; pattern: string; negated: boolean }[] }) => {
+  Scanner: new (opts: {
+    sources: { base: string; pattern: string; negated: boolean }[];
+  }) => {
     scan: () => string[];
   };
 };
 
-const clientEntryPath = path.join(serverDir, "src/components/mcp-ui/mcp-app-client.tsx");
-const virtualSsrEntryPath = path.join(serverDir, "src/components/mcp-ui/__ssr_virtual__.tsx");
+const clientEntryPath = path.join(
+  serverDir,
+  "src/components/mcp-ui/mcp-app-client.tsx",
+);
+const virtualSsrEntryPath = path.join(
+  serverDir,
+  "src/components/mcp-ui/__ssr_virtual__.tsx",
+);
 const globalsCssPath = path.join(serverDir, "src/app/globals.css");
 
 const [clientBuild, ssrBuild, rawCss] = await Promise.all([
@@ -56,13 +64,18 @@ const [clientBuild, ssrBuild, rawCss] = await Promise.all([
 ]);
 
 if (!clientBuild.success || clientBuild.outputs.length === 0) {
-  throw new Error(`Client Bun.build failed: ${JSON.stringify(clientBuild.logs)}`);
+  throw new Error(
+    `Client Bun.build failed: ${JSON.stringify(clientBuild.logs)}`,
+  );
 }
 if (!ssrBuild.success || ssrBuild.outputs.length === 0) {
   throw new Error(`SSR Bun.build failed: ${JSON.stringify(ssrBuild.logs)}`);
 }
 
-const [js, ssrJs] = await Promise.all([clientBuild.outputs[0].text(), ssrBuild.outputs[0].text()]);
+const [js, ssrJs] = await Promise.all([
+  clientBuild.outputs[0].text(),
+  ssrBuild.outputs[0].text(),
+]);
 
 const compiler = await compile(rawCss, {
   base: path.dirname(globalsCssPath),
@@ -75,7 +88,11 @@ const scanner = new Scanner({
       pattern: "**/*.{ts,tsx}",
       negated: false,
     },
-    { base: path.join(serverDir, "src/components/ui"), pattern: "**/*.{ts,tsx}", negated: false },
+    {
+      base: path.join(serverDir, "src/components/ui"),
+      pattern: "**/*.{ts,tsx}",
+      negated: false,
+    },
   ],
 });
 const compiledCss = compiler.build(scanner.scan());

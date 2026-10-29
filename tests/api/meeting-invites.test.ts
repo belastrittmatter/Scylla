@@ -70,7 +70,9 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
     expect(details).not.toBeNull();
     expect(details?.room?.id).toBe(testRoomId);
     expect(details?.invite.isRestricted).toBe(true);
-    expect(details?.invite.allowedEmails).toEqual(["invited.guest@example.com"]);
+    expect(details?.invite.allowedEmails).toEqual([
+      "invited.guest@example.com",
+    ]);
   });
 
   it("blocks booking from uninvited email when invite is restricted", async () => {
@@ -86,7 +88,9 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
 
     const now = new Date();
     const startTime = new Date(now.getTime() + 24 * 3600 * 1000).toISOString();
-    const endTime = new Date(now.getTime() + 24 * 3600 * 1000 + 45 * 60 * 1000).toISOString();
+    const endTime = new Date(
+      now.getTime() + 24 * 3600 * 1000 + 45 * 60 * 1000,
+    ).toISOString();
 
     expect(
       MeetingInviteService.bookSlot({
@@ -95,7 +99,7 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
         guestEmail: "uninvited@unknown.com",
         startTime,
         endTime,
-      })
+      }),
     ).rejects.toThrow("restricted to invited recipients only");
   });
 
@@ -113,7 +117,9 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
 
     const now = new Date();
     const startTime = new Date(now.getTime() + 48 * 3600 * 1000).toISOString();
-    const endTime = new Date(now.getTime() + 48 * 3600 * 1000 + 30 * 60 * 1000).toISOString();
+    const endTime = new Date(
+      now.getTime() + 48 * 3600 * 1000 + 30 * 60 * 1000,
+    ).toISOString();
 
     const result = await MeetingInviteService.bookSlot({
       slug: invite.slug,
@@ -143,7 +149,9 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
 
     const now = new Date();
     const startTime = new Date(now.getTime() + 72 * 3600 * 1000).toISOString();
-    const endTime = new Date(now.getTime() + 72 * 3600 * 1000 + 15 * 60 * 1000).toISOString();
+    const endTime = new Date(
+      now.getTime() + 72 * 3600 * 1000 + 15 * 60 * 1000,
+    ).toISOString();
 
     const result = await MeetingInviteService.bookSlot({
       slug: invite.slug,

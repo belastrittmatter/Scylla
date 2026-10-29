@@ -8,7 +8,11 @@ import {
   updateTeamSchema,
   deleteTeamSchema,
 } from "../schemas/crud-schemas";
-import { resolveTeamAndVerifyAccess, formatToolSuccess, formatToolError } from "./auth-helpers";
+import {
+  resolveTeamAndVerifyAccess,
+  formatToolSuccess,
+  formatToolError,
+} from "./auth-helpers";
 
 export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
   server.registerTool(
@@ -26,17 +30,21 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
           description,
           ownerId: currentUser.id,
         });
-        return formatToolSuccess({ message: "Team workspace created successfully", team });
+        return formatToolSuccess({
+          message: "Team workspace created successfully",
+          team,
+        });
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
     "get_team",
     {
-      description: "Retrieve detailed team workspace metadata, member list, and project count.",
+      description:
+        "Retrieve detailed team workspace metadata, member list, and project count.",
       inputSchema: getTeamSchema,
     },
     async ({ teamId }) => {
@@ -68,25 +76,37 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
     "update_team",
     {
-      description: "Update team name, slug, or description (requires team owner or admin role).",
+      description:
+        "Update team name, slug, or description (requires team owner or admin role).",
       inputSchema: updateTeamSchema,
     },
     async ({ teamId, name, slug, description }) => {
       try {
         const currentUser = await ctx.getCurrentUser();
-        const team = await resolveTeamAndVerifyAccess(teamId, currentUser.id, "admin");
-        const updated = await TeamService.updateTeam(team.id, { name, slug, description });
-        return formatToolSuccess({ message: "Team updated successfully", team: updated });
+        const team = await resolveTeamAndVerifyAccess(
+          teamId,
+          currentUser.id,
+          "admin",
+        );
+        const updated = await TeamService.updateTeam(team.id, {
+          name,
+          slug,
+          description,
+        });
+        return formatToolSuccess({
+          message: "Team updated successfully",
+          team: updated,
+        });
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 
   server.registerTool(
@@ -98,7 +118,11 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
     async ({ teamId }) => {
       try {
         const currentUser = await ctx.getCurrentUser();
-        const team = await resolveTeamAndVerifyAccess(teamId, currentUser.id, "owner");
+        const team = await resolveTeamAndVerifyAccess(
+          teamId,
+          currentUser.id,
+          "owner",
+        );
         await TeamService.deleteTeam(team.id);
         return formatToolSuccess({
           message: `Team '${team.name}' deleted successfully`,
@@ -107,6 +131,6 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
       } catch (err) {
         return formatToolError(err);
       }
-    }
+    },
   );
 }

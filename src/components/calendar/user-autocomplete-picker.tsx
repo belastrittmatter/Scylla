@@ -40,13 +40,18 @@ export function UserAutocompletePicker({
 
   // Reset selected index when results change
   React.useEffect(() => {
-    setSelectedIndex(0);
+    queueMicrotask(() => {
+      setSelectedIndex(0);
+    });
   }, [results]);
 
   // Close dropdown on click outside
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -93,7 +98,9 @@ export function UserAutocompletePicker({
   };
 
   const handleRemove = (email: string) => {
-    onChange(value.filter((a) => a.email.toLowerCase() !== email.toLowerCase()));
+    onChange(
+      value.filter((a) => a.email.toLowerCase() !== email.toLowerCase()),
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -137,9 +144,13 @@ export function UserAutocompletePicker({
               >
                 <Avatar className="size-4">
                   <AvatarImage src={att.avatarUrl} />
-                  <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+                  <AvatarFallback className="text-[9px]">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="max-w-[140px] truncate">{att.name || att.email}</span>
+                <span className="max-w-[140px] truncate">
+                  {att.name || att.email}
+                </span>
                 {!disabled && (
                   <button
                     type="button"
@@ -168,7 +179,9 @@ export function UserAutocompletePicker({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={value.length === 0 ? placeholder : "Add more attendees..."}
+          placeholder={
+            value.length === 0 ? placeholder : "Add more attendees..."
+          }
           className="h-9 pl-8 pr-8 text-xs"
         />
         {isLoading && (
@@ -181,7 +194,9 @@ export function UserAutocompletePicker({
         <div className="bg-popover text-popover-foreground border-border absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border p-1 text-xs shadow-md">
           {/* Custom guest email option */}
           {isValidEmail &&
-            !results.some((r) => r.email.toLowerCase() === query.trim().toLowerCase()) && (
+            !results.some(
+              (r) => r.email.toLowerCase() === query.trim().toLowerCase(),
+            ) && (
               <button
                 type="button"
                 onClick={handleAddCustomEmail}
@@ -189,7 +204,8 @@ export function UserAutocompletePicker({
               >
                 <Plus className="size-3.5 shrink-0" />
                 <span>
-                  Add external guest: <span className="underline">{query.trim()}</span>
+                  Add external guest:{" "}
+                  <span className="underline">{query.trim()}</span>
                 </span>
               </button>
             )}
@@ -219,23 +235,33 @@ export function UserAutocompletePicker({
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <Avatar className="size-5 shrink-0">
-                        <AvatarImage src={u.avatarUrl || u.image || undefined} />
-                        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                        <AvatarImage
+                          src={u.avatarUrl || u.image || undefined}
+                        />
+                        <AvatarFallback className="text-[10px]">
+                          {initials}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="truncate">
-                        <div className="text-foreground truncate font-medium">{u.name}</div>
+                        <div className="text-foreground truncate font-medium">
+                          {u.name}
+                        </div>
                         <div className="text-muted-foreground truncate text-[11px]">
                           {u.email} {u.department ? `• ${u.department}` : ""}
                         </div>
                       </div>
                     </div>
-                    {selected && <Check className="text-primary size-3.5 shrink-0" />}
+                    {selected && (
+                      <Check className="text-primary size-3.5 shrink-0" />
+                    )}
                   </button>
                 );
               })
             : !isLoading && (
                 <div className="text-muted-foreground px-3 py-2 text-center text-xs">
-                  {query.trim() ? "No colleagues found." : "Type to search colleagues"}
+                  {query.trim()
+                    ? "No colleagues found."
+                    : "Type to search colleagues"}
                 </div>
               )}
         </div>

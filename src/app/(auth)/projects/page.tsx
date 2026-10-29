@@ -55,7 +55,10 @@ export default function ProjectsPage() {
         {teams.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-neutral-500">Team:</span>
-            <Select value={activeTeamId} onValueChange={(val) => val && setSelectedTeamId(val)}>
+            <Select
+              value={activeTeamId}
+              onValueChange={(val) => val && setSelectedTeamId(val)}
+            >
               <SelectTrigger className="h-9 w-[180px] text-xs">
                 <SelectValue placeholder="Select team">
                   {activeTeam ? activeTeam.name : "Select team"}
@@ -97,9 +100,14 @@ export default function ProjectsPage() {
             No teams found
           </h3>
           <p className="mx-auto mt-1 max-w-sm text-xs text-neutral-500">
-            Projects must belong to a team. Create a team first to start adding projects.
+            Projects must belong to a team. Create a team first to start adding
+            projects.
           </p>
-          <Button size="sm" className="mt-4 gap-2" render={<Link href="/teams" />}>
+          <Button
+            size="sm"
+            className="mt-4 gap-2"
+            render={<Link href="/teams" />}
+          >
             <Plus className="size-3.5" />
             Go to Teams
           </Button>

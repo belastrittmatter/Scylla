@@ -82,13 +82,13 @@ export function useCalendarSettings() {
   const isLoaded = React.useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   const settings = React.useSyncExternalStore(
     subscribeCalendarSettings,
     readStoredSettings,
-    () => DEFAULT_CALENDAR_SETTINGS
+    () => DEFAULT_CALENDAR_SETTINGS,
   );
 
   const updateSetting = React.useCallback(
@@ -97,14 +97,17 @@ export function useCalendarSettings() {
       const next = { ...current, [key]: value };
       writeStoredSettings(next);
     },
-    []
+    [],
   );
 
-  const updateSettings = React.useCallback((patch: Partial<CalendarSettings>) => {
-    const current = readStoredSettings();
-    const next = { ...current, ...patch };
-    writeStoredSettings(next);
-  }, []);
+  const updateSettings = React.useCallback(
+    (patch: Partial<CalendarSettings>) => {
+      const current = readStoredSettings();
+      const next = { ...current, ...patch };
+      writeStoredSettings(next);
+    },
+    [],
+  );
 
   const resetToDefaults = React.useCallback(() => {
     writeStoredSettings(DEFAULT_CALENDAR_SETTINGS);

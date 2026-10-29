@@ -33,7 +33,12 @@ import { useRender } from "@base-ui/react/use-render";
 import { addDays, format } from "date-fns";
 
 import { cn } from "cn";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { RepeatIcon } from "lucide-react";
 
 /** Event color presets; each stays legible on light and dark surfaces. */
@@ -59,7 +64,8 @@ const EVENT_CALENDAR_COLORS: Array<{ name: string; value: string }> = [
  */
 const EVENT_CALENDAR_GHOST = {
   move: "rounded-sm border border-dashed border-(--ec-event-color)/50 bg-(--ec-event-color)/8",
-  resize: "rounded-sm border border-dashed border-(--ec-event-color)/70 overflow-hidden",
+  resize:
+    "rounded-sm border border-dashed border-(--ec-event-color)/70 overflow-hidden",
   invalid: "border-destructive/70 bg-destructive/10",
   invalidResize: "border-destructive/70",
   /** Applied to the clone inside an invalid resize ghost. */
@@ -100,7 +106,8 @@ const EVENT_CALENDAR_SLOT_DRAFT = {
    * 4rem hour height), and looser leading renders ~18px, clipped by the
    * draft's own overflow-hidden.
    */
-  label: "text-primary truncate px-1 py-0.5 text-[0.6875rem] leading-none font-medium",
+  label:
+    "text-primary truncate px-1 py-0.5 text-[0.6875rem] leading-none font-medium",
 } as const;
 
 interface EventCalendarChipContextValue<TData = unknown> {
@@ -110,13 +117,18 @@ interface EventCalendarChipContextValue<TData = unknown> {
   isSelected: boolean;
 }
 
-const EventCalendarChipContext = createContext<EventCalendarChipContextValue<unknown> | null>(null);
+const EventCalendarChipContext =
+  createContext<EventCalendarChipContextValue<unknown> | null>(null);
 
 /** The chip's subject; usable inside renderEvent content and chip children. */
-function useEventCalendarEventChip<TData = unknown>(): EventCalendarChipContextValue<TData> {
+function useEventCalendarEventChip<
+  TData = unknown,
+>(): EventCalendarChipContextValue<TData> {
   const ctx = useContext(EventCalendarChipContext);
   if (!ctx) {
-    throw new Error("useEventCalendarEventChip must be used within <EventCalendarEvent>");
+    throw new Error(
+      "useEventCalendarEventChip must be used within <EventCalendarEvent>",
+    );
   }
   return ctx as EventCalendarChipContextValue<TData>;
 }
@@ -159,31 +171,38 @@ function EventCalendarEvent<TData = unknown>({
 
   const isSelectedRaw = useEventCalendarSelector<TData, boolean>(
     (state) => state.selection.eventKeys.includes(occurrence.key),
-    { calendar: instance }
+    { calendar: instance },
   );
   const isDraggingRaw = useEventCalendarSelector<TData, boolean>(
     (state) => state.drag?.occurrence.key === occurrence.key,
-    { calendar: instance }
+    { calendar: instance },
   );
   // reactive, unlike gestures.canResize: api.setInteractions({ resize })
   // must add/remove the handles without waiting for an unrelated re-render
-  const resizeOn = useEventCalendarSelector<TData, boolean>((state) => state.interactions.resize, {
-    calendar: instance,
-  });
+  const resizeOn = useEventCalendarSelector<TData, boolean>(
+    (state) => state.interactions.resize,
+    {
+      calendar: instance,
+    },
+  );
   // A preview clone must never inherit the source's selected/dragging state
   // (the drag key matches, which would dim the clone itself).
   const isSelected = preview ? false : isSelectedRaw;
   const isDragging = preview ? false : isDraggingRaw;
 
-  const isBar = occurrence.allDay || spansMultipleDays(occurrence, settings.timeZone);
-  const inTimeGrid = view === "week" || view === "day" || view === "days" || view === "resource";
+  const isBar =
+    occurrence.allDay || spansMultipleDays(occurrence, settings.timeZone);
+  const inTimeGrid =
+    view === "week" || view === "day" || view === "days" || view === "resource";
   const interactive = view !== "agenda" && !preview;
   const timedBlock = inTimeGrid && !isBar;
   const horizontalBar = isBar && !inTimeGrid;
   // >= compactEventMinutes renders the stacked (title over time) layout, where
   // squeezed cascade columns fade-truncate instead of clipping into neighbors
   const stackedBlock =
-    timedBlock && (segment.endMin ?? 0) - (segment.startMin ?? 0) >= viewConfig.compactEventMinutes;
+    timedBlock &&
+    (segment.endMin ?? 0) - (segment.startMin ?? 0) >=
+      viewConfig.compactEventMinutes;
 
   const defaultContent = (
     <>
@@ -199,29 +218,42 @@ function EventCalendarEvent<TData = unknown>({
         />
       )}
       {occurrence.isRecurring && (
-        <RepeatIcon className="size-2.5 shrink-0 opacity-70" aria-hidden="true" />
+        <RepeatIcon
+          className="size-2.5 shrink-0 opacity-70"
+          aria-hidden="true"
+        />
       )}
-      <span className={cn("font-medium", stackedBlock ? EVENT_CALENDAR_FADE_TRUNCATE : "truncate")}>
+      <span
+        className={cn(
+          "font-medium",
+          stackedBlock ? EVENT_CALENDAR_FADE_TRUNCATE : "truncate",
+        )}
+      >
         {event.title}
       </span>
-      {(event.data as { project?: { name?: string; color?: string | null } } | undefined)?.project
-        ?.name && (
+      {(
+        event.data as
+          { project?: { name?: string; color?: string | null } } | undefined
+      )?.project?.name && (
         <span
           className="border-border/40 inline-flex shrink-0 items-center gap-1 rounded border px-1 py-0.5 text-[10px] font-medium opacity-90"
           style={{
-            backgroundColor: (event.data as { project?: { color?: string | null } }).project?.color
+            backgroundColor: (
+              event.data as { project?: { color?: string | null } }
+            ).project?.color
               ? `${(event.data as { project?: { color?: string | null } }).project?.color}20`
               : undefined,
             color:
-              (event.data as { project?: { color?: string | null } }).project?.color || undefined,
+              (event.data as { project?: { color?: string | null } }).project
+                ?.color || undefined,
           }}
         >
           <span
             className="size-1 shrink-0 rounded-full"
             style={{
               backgroundColor:
-                (event.data as { project?: { color?: string | null } }).project?.color ||
-                "currentColor",
+                (event.data as { project?: { color?: string | null } }).project
+                  ?.color || "currentColor",
             }}
           />
           <span className="max-w-[4.5rem] truncate">
@@ -235,22 +267,26 @@ function EventCalendarEvent<TData = unknown>({
         segment.isStart &&
         (view === "month" ? (
           <span className="text-muted-foreground shrink-0">
-            {format(toZoned(occurrence.start, settings.timeZone), settings.i18n.formats.eventTime, {
-              locale: settings.locale,
-            })}
+            {format(
+              toZoned(occurrence.start, settings.timeZone),
+              settings.i18n.formats.eventTime,
+              {
+                locale: settings.locale,
+              },
+            )}
           </span>
         ) : (
           <span
             className={cn(
               "text-muted-foreground @[8rem]:inline hidden",
-              stackedBlock ? EVENT_CALENDAR_FADE_TRUNCATE : "truncate"
+              stackedBlock ? EVENT_CALENDAR_FADE_TRUNCATE : "truncate",
             )}
           >
             {settings.i18n.functions.formatEventTime(
               toZoned(occurrence.start, settings.timeZone),
               toZoned(occurrence.end, settings.timeZone),
               occurrence.allDay,
-              { locale: settings.locale }
+              { locale: settings.locale },
             )}
           </span>
         ))}
@@ -270,23 +306,31 @@ function EventCalendarEvent<TData = unknown>({
     if (startsBefore && endsAfter) return settings.i18n.labels.allDay;
     if (endsAfter) {
       return settings.i18n.labels.timeFrom(
-        format(toZoned(occurrence.start, settings.timeZone), settings.i18n.formats.eventTime, {
-          locale: settings.locale,
-        })
+        format(
+          toZoned(occurrence.start, settings.timeZone),
+          settings.i18n.formats.eventTime,
+          {
+            locale: settings.locale,
+          },
+        ),
       );
     }
     if (startsBefore) {
       return settings.i18n.labels.timeUntil(
-        format(toZoned(occurrence.end, settings.timeZone), settings.i18n.formats.eventTime, {
-          locale: settings.locale,
-        })
+        format(
+          toZoned(occurrence.end, settings.timeZone),
+          settings.i18n.formats.eventTime,
+          {
+            locale: settings.locale,
+          },
+        ),
       );
     }
     return settings.i18n.functions.formatEventTime(
       toZoned(occurrence.start, settings.timeZone),
       toZoned(occurrence.end, settings.timeZone),
       false,
-      { locale: settings.locale }
+      { locale: settings.locale },
     );
   })();
 
@@ -302,31 +346,39 @@ function EventCalendarEvent<TData = unknown>({
         className="bg-(--ec-event-color) size-2 shrink-0 rounded-full"
       />
       <span className="truncate text-sm">{event.title}</span>
-      {(event.data as { project?: { name?: string; color?: string | null } } | undefined)?.project
-        ?.name && (
+      {(
+        event.data as
+          { project?: { name?: string; color?: string | null } } | undefined
+      )?.project?.name && (
         <span
           className="border-border/40 inline-flex shrink-0 items-center gap-1.5 rounded border px-1.5 py-0.5 text-[10px] font-medium"
           style={{
-            backgroundColor: (event.data as { project?: { color?: string | null } }).project?.color
+            backgroundColor: (
+              event.data as { project?: { color?: string | null } }
+            ).project?.color
               ? `${(event.data as { project?: { color?: string | null } }).project?.color}15`
               : undefined,
             color:
-              (event.data as { project?: { color?: string | null } }).project?.color || undefined,
+              (event.data as { project?: { color?: string | null } }).project
+                ?.color || undefined,
           }}
         >
           <span
             className="size-1.5 shrink-0 rounded-full"
             style={{
               backgroundColor:
-                (event.data as { project?: { color?: string | null } }).project?.color ||
-                "currentColor",
+                (event.data as { project?: { color?: string | null } }).project
+                  ?.color || "currentColor",
             }}
           />
           {(event.data as { project?: { name: string } }).project?.name}
         </span>
       )}
       {occurrence.isRecurring && (
-        <RepeatIcon className="text-muted-foreground size-2.5 shrink-0" aria-hidden="true" />
+        <RepeatIcon
+          className="text-muted-foreground size-2.5 shrink-0"
+          aria-hidden="true"
+        />
       )}
     </>
   );
@@ -338,16 +390,28 @@ function EventCalendarEvent<TData = unknown>({
   const { renderAgendaEvent, renderEvent } = viewConfig;
   const customContent = useMemo(() => {
     const renderProps = { occurrence, segment, view, isDragging, isSelected };
-    return view === "agenda" ? renderAgendaEvent?.(renderProps) : renderEvent?.(renderProps);
-  }, [occurrence, segment, view, isDragging, isSelected, renderAgendaEvent, renderEvent]);
+    return view === "agenda"
+      ? renderAgendaEvent?.(renderProps)
+      : renderEvent?.(renderProps);
+  }, [
+    occurrence,
+    segment,
+    view,
+    isDragging,
+    isSelected,
+    renderAgendaEvent,
+    renderEvent,
+  ]);
   const content =
-    children ?? customContent ?? (view === "agenda" ? agendaDefaultContent : defaultContent);
+    children ??
+    customContent ??
+    (view === "agenda" ? agendaDefaultContent : defaultContent);
 
   const timeLabel = settings.i18n.functions.formatEventTime(
     toZoned(occurrence.start, settings.timeZone),
     toZoned(occurrence.end, settings.timeZone),
     occurrence.allDay,
-    { locale: settings.locale }
+    { locale: settings.locale },
   );
   // native hover tooltip text; a formatter returning undefined drops the title
   const label = settings.i18n.functions.formatEventLabel
@@ -358,7 +422,10 @@ function EventCalendarEvent<TData = unknown>({
   // the native title so the two never stack, and a preview never gets one. A
   // falsy renderEventTooltip result (including the false/"" of `cond && <node>`)
   // falls back to the label; an empty label leaves no content and skips it.
-  const tooltipOpts = typeof viewConfig.eventTooltip === "object" ? viewConfig.eventTooltip : null;
+  const tooltipOpts =
+    typeof viewConfig.eventTooltip === "object"
+      ? viewConfig.eventTooltip
+      : null;
   const tooltipContent =
     !preview && viewConfig.eventTooltip
       ? viewConfig.renderEventTooltip?.({
@@ -370,7 +437,8 @@ function EventCalendarEvent<TData = unknown>({
       : null;
   const tooltipOn = Boolean(tooltipContent);
 
-  const showResize = interactive && resizeOn && !event.readOnly && event.resizable !== false;
+  const showResize =
+    interactive && resizeOn && !event.readOnly && event.resizable !== false;
   // Hover grip pill (mirrors the gantt bars) marking the resize direction.
   // Shown on compact sub-compactEventMinutes blocks too: the 1.5rem chip
   // min-height leaves edge room without colliding with the centered title.
@@ -381,7 +449,7 @@ function EventCalendarEvent<TData = unknown>({
       className={cn(
         "bg-foreground/40 rounded-full",
         timedBlock ? "h-0.5 w-2.5" : "h-2.5 w-0.5",
-        viewConfig.classNames?.resizeGrip
+        viewConfig.classNames?.resizeGrip,
       )}
     />
   );
@@ -393,7 +461,7 @@ function EventCalendarEvent<TData = unknown>({
           data-edge="start"
           className={cn(
             "absolute inset-x-1 top-0 flex h-1.5 cursor-ns-resize items-center justify-center opacity-0 transition-opacity duration-150 group-hover/ec-event:opacity-100",
-            viewConfig.classNames?.resizeHandle
+            viewConfig.classNames?.resizeHandle,
           )}
           onPointerDown={(e) => gestures.beginResize(e, segment, "start")}
         >
@@ -406,7 +474,7 @@ function EventCalendarEvent<TData = unknown>({
           data-edge="end"
           className={cn(
             "absolute inset-x-1 bottom-0 flex h-1.5 cursor-ns-resize items-center justify-center opacity-0 transition-opacity duration-150 group-hover/ec-event:opacity-100",
-            viewConfig.classNames?.resizeHandle
+            viewConfig.classNames?.resizeHandle,
           )}
           onPointerDown={(e) => gestures.beginResize(e, segment, "end")}
         >
@@ -419,7 +487,7 @@ function EventCalendarEvent<TData = unknown>({
           data-edge="start"
           className={cn(
             "absolute inset-y-0 start-0 flex w-2 cursor-ew-resize items-center justify-center opacity-0 transition-opacity duration-150 group-hover/ec-event:opacity-100",
-            viewConfig.classNames?.resizeHandle
+            viewConfig.classNames?.resizeHandle,
           )}
           onPointerDown={(e) => gestures.beginResize(e, segment, "start")}
         >
@@ -432,7 +500,7 @@ function EventCalendarEvent<TData = unknown>({
           data-edge="end"
           className={cn(
             "absolute inset-y-0 end-0 flex w-2 cursor-ew-resize items-center justify-center opacity-0 transition-opacity duration-150 group-hover/ec-event:opacity-100",
-            viewConfig.classNames?.resizeHandle
+            viewConfig.classNames?.resizeHandle,
           )}
           onPointerDown={(e) => gestures.beginResize(e, segment, "end")}
         >
@@ -457,7 +525,7 @@ function EventCalendarEvent<TData = unknown>({
       settings.i18n.functions.formatEventAriaLabel?.(
         event.title,
         timeLabel,
-        segment.continuesBefore || segment.continuesAfter
+        segment.continuesBefore || segment.continuesAfter,
       ) ??
       `${event.title}, ${timeLabel}${
         segment.continuesBefore || segment.continuesAfter
@@ -512,10 +580,10 @@ function EventCalendarEvent<TData = unknown>({
             "data-dragging:opacity-40",
             "data-selected:bg-(--ec-event-color)/30 data-selected:inset-ring-(--ec-event-color)/40",
             segment.continuesBefore && "rounded-s-none",
-            segment.continuesAfter && "rounded-e-none"
+            segment.continuesAfter && "rounded-e-none",
           ),
       viewConfig.classNames?.event,
-      className
+      className,
     ),
     children: (
       <>
@@ -532,7 +600,9 @@ function EventCalendarEvent<TData = unknown>({
   });
 
   return (
-    <EventCalendarChipContext.Provider value={{ occurrence, segment, isDragging, isSelected }}>
+    <EventCalendarChipContext.Provider
+      value={{ occurrence, segment, isDragging, isSelected }}
+    >
       {tooltipOn ? (
         <TooltipProvider delay={tooltipOpts?.delay ?? 600}>
           <Tooltip>

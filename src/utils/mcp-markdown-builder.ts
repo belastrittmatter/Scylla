@@ -1,5 +1,12 @@
-import { fmtTime, formatEmailToName, formatNames } from "@/components/mcp-ui/mcp-ui-types";
-import { formatDurationSeconds, formatEstimatedMinutes } from "@/components/tasks/task-utils";
+import {
+  fmtTime,
+  formatEmailToName,
+  formatNames,
+} from "@/components/mcp-ui/mcp-ui-types";
+import {
+  formatDurationSeconds,
+  formatEstimatedMinutes,
+} from "@/components/tasks/task-utils";
 
 export { formatEmailToName };
 export const formatNamesList = formatNames;
@@ -36,7 +43,9 @@ export interface PersonalCalendarInput {
   }>;
 }
 
-export function buildPersonalCalendarMarkdown(input: PersonalCalendarInput): string {
+export function buildPersonalCalendarMarkdown(
+  input: PersonalCalendarInput,
+): string {
   const { user, baseDate, events = [] } = input;
   const formattedDate = formatDate(baseDate);
 
@@ -54,7 +63,9 @@ export function buildPersonalCalendarMarkdown(input: PersonalCalendarInput): str
     for (const e of events) {
       const timeStr = `${formatTime(e.start)} - ${formatTime(e.end)}`;
       const title = e.title || e.summary || "Untitled Meeting";
-      const linkStr = e.meetingUrl ? `[Join Meeting](${e.meetingUrl})` : e.location || "-";
+      const linkStr = e.meetingUrl
+        ? `[Join Meeting](${e.meetingUrl})`
+        : e.location || "-";
       lines.push(`| **${timeStr}** | ${title} | ${linkStr} |`);
     }
   }
@@ -75,7 +86,9 @@ export interface ScheduleComparisonInput {
   suggestedTitle?: string;
 }
 
-export function buildScheduleComparisonMarkdown(input: ScheduleComparisonInput): string {
+export function buildScheduleComparisonMarkdown(
+  input: ScheduleComparisonInput,
+): string {
   const {
     currentUser,
     targetUser,
@@ -97,7 +110,10 @@ export function buildScheduleComparisonMarkdown(input: ScheduleComparisonInput):
 
   if (allAttendees && allAttendees.length > 0) {
     for (const a of allAttendees) {
-      const n = typeof a === "string" ? formatEmailToName(a) : a.name || formatEmailToName(a.email);
+      const n =
+        typeof a === "string"
+          ? formatEmailToName(a)
+          : a.name || formatEmailToName(a.email);
       if (n && !names.includes(n)) names.push(n);
     }
   } else if (targetUser) {
@@ -114,7 +130,7 @@ export function buildScheduleComparisonMarkdown(input: ScheduleComparisonInput):
 
   if (room) {
     lines.push(
-      `**Location / Room**: ${room.name}${room.capacity ? ` (${room.capacity} seats)` : ""}`
+      `**Location / Room**: ${room.name}${room.capacity ? ` (${room.capacity} seats)` : ""}`,
     );
   }
   if (suggestedTitle) {
@@ -124,10 +140,14 @@ export function buildScheduleComparisonMarkdown(input: ScheduleComparisonInput):
   lines.push("", "### Recommended Mutual Free Slots");
 
   if (mutualSlots.length === 0) {
-    lines.push(`_No mutual free slots found on this day for a ${durationMinutes}-minute meeting._`);
+    lines.push(
+      `_No mutual free slots found on this day for a ${durationMinutes}-minute meeting._`,
+    );
   } else {
     for (const slot of mutualSlots) {
-      lines.push(`- **${formatTime(slot.start)} - ${formatTime(slot.end)}** (ICT)`);
+      lines.push(
+        `- **${formatTime(slot.start)} - ${formatTime(slot.end)}** (ICT)`,
+      );
     }
   }
 
@@ -191,7 +211,9 @@ export function buildTaskBoardMarkdown(input: TaskBoardInput): string {
           const activeNote = t.activeSessionStartedAt ? " (active timer)" : "";
           timeStr = ` | ⏱ ${spentFormatted} / ${estFormatted}${activeNote}`;
         }
-        lines.push(`- ${check} **${t.title}** \`[${prio}]\`${assignee}${due}${timeStr}`);
+        lines.push(
+          `- ${check} **${t.title}** \`[${prio}]\`${assignee}${due}${timeStr}`,
+        );
         if (t.description) {
           lines.push(`  > ${t.description.split("\n").join("\n  > ")}`);
         }

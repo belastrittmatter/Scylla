@@ -34,7 +34,8 @@ export function CalendarEventAttendeesList({
         </div>
         {organizer &&
           !attendees.some(
-            (a) => a.email.toLowerCase() === (organizer.email || "").toLowerCase()
+            (a) =>
+              a.email.toLowerCase() === (organizer.email || "").toLowerCase(),
           ) && (
             <span
               className="max-w-[200px] truncate text-[11px] text-neutral-400"
@@ -67,7 +68,11 @@ export function CalendarEventAttendeesList({
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <UserAvatar
-                    user={{ name: att.name, email: att.email, image: att.avatar }}
+                    user={{
+                      name: att.name,
+                      email: att.email,
+                      image: att.avatar,
+                    }}
                     className="size-6 shrink-0"
                   />
                   <div className="min-w-0 flex-1">

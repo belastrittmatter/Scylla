@@ -2,16 +2,29 @@
 
 import * as React from "react";
 import { Clock, Layers, Check } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { CalendarSettings } from "@/hooks/use-calendar-settings";
-import { START_HOURS, END_HOURS, SLOT_DURATIONS } from "@/components/settings/settings-constants";
+import {
+  START_HOURS,
+  END_HOURS,
+  SLOT_DURATIONS,
+} from "@/components/settings/settings-constants";
 
 interface SettingsCalendarOptionsCardProps {
   settings: CalendarSettings;
-  updateSetting: <K extends keyof CalendarSettings>(key: K, value: CalendarSettings[K]) => void;
+  updateSetting: <K extends keyof CalendarSettings>(
+    key: K,
+    value: CalendarSettings[K],
+  ) => void;
 }
 
 export function SettingsCalendarOptionsCard({
@@ -30,7 +43,8 @@ export function SettingsCalendarOptionsCard({
               Hours & Grid Density
             </CardTitle>
             <CardDescription className="text-xs text-neutral-500 dark:text-neutral-400">
-              Configure working hours, slot resolution, weekends, and real-time indicators.
+              Configure working hours, slot resolution, weekends, and real-time
+              indicators.
             </CardDescription>
           </div>
         </div>
@@ -46,7 +60,8 @@ export function SettingsCalendarOptionsCard({
                 Active Working Hours Range
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Controls the start and end hours rendered on the time-grid schedule view.
+                Controls the start and end hours rendered on the time-grid
+                schedule view.
               </p>
             </div>
             <Badge
@@ -122,7 +137,8 @@ export function SettingsCalendarOptionsCard({
               Time Slot Grid Density
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Snap precision when dragging across slots or creating new events on the grid.
+              Snap precision when dragging across slots or creating new events
+              on the grid.
             </p>
           </div>
 
@@ -177,7 +193,9 @@ export function SettingsCalendarOptionsCard({
               checked={settings.showWeekends}
               onCheckedChange={(checked) => {
                 updateSetting("showWeekends", checked);
-                toast.success(checked ? "Weekends displayed" : "Weekends hidden");
+                toast.success(
+                  checked ? "Weekends displayed" : "Weekends hidden",
+                );
               }}
             />
           </div>
@@ -188,8 +206,8 @@ export function SettingsCalendarOptionsCard({
                 Current Time Indicator
               </label>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Renders a dynamic orange timeline marker displaying current time on today&apos;s
-                grid.
+                Renders a dynamic orange timeline marker displaying current time
+                on today&apos;s grid.
               </p>
             </div>
             <Switch
@@ -197,7 +215,9 @@ export function SettingsCalendarOptionsCard({
               onCheckedChange={(checked) => {
                 updateSetting("showNowIndicator", checked);
                 toast.success(
-                  checked ? "Current time indicator enabled" : "Current time indicator disabled"
+                  checked
+                    ? "Current time indicator enabled"
+                    : "Current time indicator disabled",
                 );
               }}
             />

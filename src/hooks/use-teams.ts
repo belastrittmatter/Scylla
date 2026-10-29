@@ -45,7 +45,8 @@ export function useTeams() {
       }
       setTeams(Array.isArray(json) ? json : json.data || []);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred";
+      const msg =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -65,7 +66,9 @@ export function useTeams() {
         setTeams(Array.isArray(json) ? json : json.data || []);
       } catch (err: unknown) {
         if (!ignore) {
-          setError(err instanceof Error ? err.message : "An unexpected error occurred");
+          setError(
+            err instanceof Error ? err.message : "An unexpected error occurred",
+          );
         }
       } finally {
         if (!ignore) {
@@ -80,7 +83,11 @@ export function useTeams() {
     };
   }, []);
 
-  const createTeam = async (data: { name: string; slug?: string; description?: string }) => {
+  const createTeam = async (data: {
+    name: string;
+    slug?: string;
+    description?: string;
+  }) => {
     const res = await fetch("/api/teams", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -97,7 +104,7 @@ export function useTeams() {
 
   const updateTeam = async (
     id: string,
-    data: { name?: string; slug?: string; description?: string }
+    data: { name?: string; slug?: string; description?: string },
   ) => {
     const res = await fetch(`/api/teams/${id}`, {
       method: "PATCH",
@@ -109,7 +116,9 @@ export function useTeams() {
       throw new Error(json.error || "Failed to update team");
     }
     const updated = json.data ?? json;
-    setTeams((prev) => prev.map((t) => (t.id === id ? { ...t, ...updated } : t)));
+    setTeams((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updated } : t)),
+    );
     return updated as TeamItem;
   };
 

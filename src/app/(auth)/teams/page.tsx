@@ -6,7 +6,8 @@ import { TeamList } from "@/components/teams";
 import { Users } from "lucide-react";
 
 export default function TeamsPage() {
-  const { teams, isLoading, error, createTeam, updateTeam, deleteTeam } = useTeams();
+  const { teams, isLoading, error, createTeam, updateTeam, deleteTeam } =
+    useTeams();
 
   return (
     <div className="mx-auto min-h-screen max-w-7xl space-y-8 p-6 md:p-8">
@@ -21,8 +22,8 @@ export default function TeamsPage() {
           </h1>
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Manage your organization&apos;s workspaces, team memberships, and access team-scoped
-          projects.
+          Manage your organization&apos;s workspaces, team memberships, and
+          access team-scoped projects.
         </p>
       </div>
 

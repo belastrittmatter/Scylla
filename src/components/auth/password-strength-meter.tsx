@@ -1,6 +1,9 @@
 "use client";
 
-import { evaluatePasswordStrength, type PasswordStrengthLevel } from "@better-auth-ui/core";
+import {
+  evaluatePasswordStrength,
+  type PasswordStrengthLevel,
+} from "@better-auth-ui/core";
 import { useAuth } from "@better-auth-ui/react";
 
 import { cn } from "cn";
@@ -30,7 +33,10 @@ export type PasswordStrengthMeterProps = {
  * empty. The score never gates submission: your server rules stay the
  * authority on what is acceptable.
  */
-export function PasswordStrengthMeter({ password, className }: PasswordStrengthMeterProps) {
+export function PasswordStrengthMeter({
+  password,
+  className,
+}: PasswordStrengthMeterProps) {
   const { emailAndPassword, localization } = useAuth();
 
   if (!emailAndPassword?.strengthMeter) return null;
@@ -57,7 +63,7 @@ export function PasswordStrengthMeter({ password, className }: PasswordStrengthM
             key={segment}
             className={cn(
               "bg-muted h-1 flex-1 rounded-full transition-colors",
-              segment <= score && segmentColors[level]
+              segment <= score && segmentColors[level],
             )}
           />
         ))}
@@ -65,7 +71,9 @@ export function PasswordStrengthMeter({ password, className }: PasswordStrengthM
 
       <p aria-live="polite" className="text-muted-foreground text-xs">
         {localization.auth.passwordStrength}:{" "}
-        <span className="text-foreground font-medium">{levelLabels[level]}</span>
+        <span className="text-foreground font-medium">
+          {levelLabels[level]}
+        </span>
       </p>
     </div>
   );

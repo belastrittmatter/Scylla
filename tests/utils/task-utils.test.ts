@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { parseDbTimestampToIso, parseTimestampMs } from "../../src/components/tasks/task-utils";
+import {
+  parseDbTimestampToIso,
+  parseTimestampMs,
+} from "../../src/components/tasks/task-utils";
 
 describe("task-utils timestamp parsing", () => {
   test("parseDbTimestampToIso handles null, undefined, and empty", () => {
