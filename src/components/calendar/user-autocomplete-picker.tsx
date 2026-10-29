@@ -39,7 +39,9 @@ export function UserAutocompletePicker({
 
   // Reset selected index when results change
   React.useEffect(() => {
-    setSelectedIndex(0);
+    queueMicrotask(() => {
+      setSelectedIndex(0);
+    });
   }, [results]);
 
   // Close dropdown on click outside

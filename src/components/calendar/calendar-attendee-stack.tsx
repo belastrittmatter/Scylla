@@ -58,7 +58,9 @@ export function CalendarAttendeeStack({
     if (!isOpen) return;
 
     let isMounted = true;
-    setIsLoadingRooms(true);
+    queueMicrotask(() => {
+      if (isMounted) setIsLoadingRooms(true);
+    });
 
     apiClient.rooms
       .list()
