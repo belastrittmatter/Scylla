@@ -1,9 +1,9 @@
 import { TeamService } from "@/services/team/team-service";
 import { ProjectService } from "@/services/project/project-service";
-import type { TeamWithMembers, TeamRole } from "@/services/team/team-types";
+import type { TeamWithMembers } from "@/services/team/team-types";
 import type { Project } from "@/db/schema";
 import { db, user, project } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { McpToolContext } from "../types";
 
 export async function resolveTeamAndVerifyAccess(

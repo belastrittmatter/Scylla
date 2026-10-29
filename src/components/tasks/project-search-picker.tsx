@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, Check, ChevronDown, FolderKanban } from "lucide-react";
+import { Search, X, Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
