@@ -492,7 +492,7 @@ export function CalendarDashboard() {
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         onDeleteEvent={handleDeleteEvent}
-        onDeleteSeries={(seriesId, eventId, eventTitle) => {
+        onDeleteSeries={(seriesId, eventId, _eventTitle) => {
           setEvents((prev) =>
             prev.filter((e) => {
               if (e.id === eventId) return false;
@@ -506,12 +506,6 @@ export function CalendarDashboard() {
               if (
                 seriesId &&
                 e.data?.description?.includes(`<!--series:${seriesId}-->`)
-              ) {
-                return false;
-              }
-              if (
-                eventTitle &&
-                e.title.trim().toLowerCase() === eventTitle.trim().toLowerCase()
               ) {
                 return false;
               }

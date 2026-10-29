@@ -193,10 +193,17 @@ export const apiClient = {
      * Cancel an existing meeting.
      * Maps to: DELETE /api/bookings/[id]
      */
-    cancel: async (id: string): Promise<Booking> => {
-      return request<Booking>(`/api/bookings/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+    cancel: async (
+      id: string,
+      options?: { singleOnly?: boolean },
+    ): Promise<Booking> => {
+      const query = options?.singleOnly ? "?singleOnly=true" : "";
+      return request<Booking>(
+        `/api/bookings/${encodeURIComponent(id)}${query}`,
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**

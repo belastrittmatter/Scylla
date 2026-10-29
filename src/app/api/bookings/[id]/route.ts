@@ -64,12 +64,8 @@ export async function DELETE(req: Request, context: RouteParams) {
 
     const url = new URL(req.url);
     const allSeries = url.searchParams.get("allSeries") === "true";
-    const singleOnly = url.searchParams.get("singleOnly") === "true";
 
-    // If allSeries is specified OR singleOnly is not explicitly requested,
-    // cancelSeriesByBooking will cancel the entire recurring series if repeated,
-    // or just that single event if not recurring.
-    if (allSeries || !singleOnly) {
+    if (allSeries) {
       const cancelled = await BookingService.cancelSeriesByBooking(id);
       if (cancelled.length === 0) {
         return Response.json(
@@ -78,9 +74,7 @@ export async function DELETE(req: Request, context: RouteParams) {
         );
       }
       return Response.json(
-        cancelled.length === 1 && !allSeries
-          ? cancelled[0]
-          : { cancelled, count: cancelled.length },
+        { cancelled, count: cancelled.length },
         { status: 200 },
       );
     }

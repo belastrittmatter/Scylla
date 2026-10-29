@@ -346,56 +346,6 @@ export class BookingService {
       }
     }
 
-    // 2. Sibling matching fallback:
-    // Repeated events have the same organizerUserId, same title, and matching duration
-    const siblings = await db
-      .select()
-      .from(booking)
-      .where(
-        and(
-          ne(booking.status, "cancelled"),
-          eq(booking.title, targetBooking.title),
-          eq(booking.organizerUserId, targetBooking.organizerUserId),
-        ),
-      );
-
-    if (siblings.length > 1) {
-      const targetDurationMs =
-        targetBooking.endTime.getTime() - targetBooking.startTime.getTime();
-      const matchingSeries = siblings.filter(
-        (s) =>
-          Math.abs(
-            s.endTime.getTime() - s.startTime.getTime() - targetDurationMs,
-          ) < 120000,
-      );
-
-      if (matchingSeries.length > 1) {
-        // Delete Google Calendar events in parallel
-        await Promise.all(
-          matchingSeries.map((s) => {
-            if (s.gcalEventId) {
-              return GoogleCalendarService.deleteEvent(s.gcalEventId).catch(
-                () => {},
-              );
-            }
-            return Promise.resolve();
-          }),
-        );
-
-        const ids = matchingSeries.map((s) => s.id);
-        const cancelled = await db
-          .update(booking)
-          .set({
-            status: "cancelled",
-            updatedAt: new Date(),
-          })
-          .where(inArray(booking.id, ids))
-          .returning();
-
-        return cancelled;
-      }
-    }
-
     const cancelledSingle = await this.cancel(targetBooking.id);
     return [cancelledSingle];
   }

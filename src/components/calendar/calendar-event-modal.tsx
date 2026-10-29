@@ -35,6 +35,7 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { toast } from "sonner";
 import { CalendarEventLocationSection } from "./calendar-event-location-section";
 import { CalendarEventAttendeesList } from "./calendar-event-attendees-list";
+import { CalendarCancelPrompt } from "./calendar-cancel-prompt";
 
 interface CalendarEventModalProps {
   event: CalendarEvent<CustomEventData> | null;
@@ -60,9 +61,10 @@ export function CalendarEventModal({
   const router = useRouter();
   const [copied, setCopied] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
-  const [_cancelTarget, setCancelTarget] = React.useState<
+  const [cancelTarget, setCancelTarget] = React.useState<
     "single" | "series" | null
   >(null);
+  const [showCancelPrompt, setShowCancelPrompt] = React.useState(false);
   const [attendeeFilter, setAttendeeFilter] = React.useState("");
   const [prevOpen, setPrevOpen] = React.useState(open);
 
@@ -71,6 +73,7 @@ export function CalendarEventModal({
     if (!open) {
       setAttendeeFilter("");
       setCancelTarget(null);
+      setShowCancelPrompt(false);
     }
   }
 
@@ -175,7 +178,7 @@ export function CalendarEventModal({
     setIsDeleting(true);
     setCancelTarget("single");
     try {
-      await apiClient.bookings.cancel(event.id);
+      await apiClient.bookings.cancel(event.id, { singleOnly: true });
       toast.success("Meeting cancelled successfully");
       onDeleteEvent(event.id);
       onOpenChange(false);
@@ -482,55 +485,73 @@ export function CalendarEventModal({
           )}
         </div>
 
-        <DialogFooter className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3 sm:justify-between dark:border-neutral-800">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={isDeleting}
-            onClick={isRecurring ? handleDeleteSeries : handleDeleteSingle}
-            className="h-8 cursor-pointer gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
-          >
-            {isDeleting ? (
-              <>
-                <Loader2 className="size-3.5 animate-spin" />
-                {isRecurring ? "Cancelling all..." : "Cancelling..."}
-              </>
-            ) : (
-              <>
-                <Trash2 className="size-3.5" />
-                {isRecurring ? "Cancel Repeated Meetings" : "Cancel Meeting"}
-              </>
-            )}
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {meetingUrl && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopyLink}
-                className="h-8 cursor-pointer gap-1.5 text-xs"
-              >
-                {copied ? (
-                  <Check className="size-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="size-3.5" />
-                )}
-                Copy Link
-              </Button>
-            )}
+        {showCancelPrompt && isRecurring ? (
+          <div className="mt-4 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+            <CalendarCancelPrompt
+              isDeleting={isDeleting}
+              cancelTarget={cancelTarget}
+              onCancelSingle={handleDeleteSingle}
+              onCancelSeries={handleDeleteSeries}
+              onDismiss={() => setShowCancelPrompt(false)}
+            />
+          </div>
+        ) : (
+          <DialogFooter className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3 sm:justify-between dark:border-neutral-800">
             <Button
               type="button"
+              variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-8 cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900"
+              disabled={isDeleting}
+              onClick={() => {
+                if (isRecurring) {
+                  setShowCancelPrompt(true);
+                } else {
+                  handleDeleteSingle();
+                }
+              }}
+              className="h-8 cursor-pointer gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
             >
-              Close
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-3.5" />
+                  Cancel Meeting
+                </>
+              )}
             </Button>
-          </div>
-        </DialogFooter>
+
+            <div className="flex items-center gap-2">
+              {meetingUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="h-8 cursor-pointer gap-1.5 text-xs"
+                >
+                  {copied ? (
+                    <Check className="size-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="size-3.5" />
+                  )}
+                  Copy Link
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                className="h-8 cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

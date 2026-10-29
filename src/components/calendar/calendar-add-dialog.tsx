@@ -75,7 +75,10 @@ function getDefaultTimes(): { start: string; end: string } {
 }
 
 function generateSeriesId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return `series_${crypto.randomUUID()}`;
   }
   return `series_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
@@ -125,22 +128,24 @@ export function CalendarAddDialog({
 
   React.useEffect(() => {
     if (open) {
-      const formattedDate =
-        selectedDate && isValid(selectedDate)
-          ? format(selectedDate, "yyyy-MM-dd")
-          : format(new Date(), "yyyy-MM-dd");
-      setDateStr(formattedDate);
-      const defaults = getDefaultTimes();
-      setStartTime(initialStartTime || defaults.start);
-      setEndTime(initialEndTime || defaults.end);
-      setRepeatFrequency("none");
-      setSelectedProjectId(null);
-      setSelectedProject(null);
-      setSelectedAttendees([]);
-      setTitle("");
-      setDescription("");
-      setSelectedEventType(null);
-      setLocationType("virtual");
+      queueMicrotask(() => {
+        const formattedDate =
+          selectedDate && isValid(selectedDate)
+            ? format(selectedDate, "yyyy-MM-dd")
+            : format(new Date(), "yyyy-MM-dd");
+        setDateStr(formattedDate);
+        const defaults = getDefaultTimes();
+        setStartTime(initialStartTime || defaults.start);
+        setEndTime(initialEndTime || defaults.end);
+        setRepeatFrequency("none");
+        setSelectedProjectId(null);
+        setSelectedProject(null);
+        setSelectedAttendees([]);
+        setTitle("");
+        setDescription("");
+        setSelectedEventType(null);
+        setLocationType("virtual");
+      });
     }
   }, [open, selectedDate, initialStartTime, initialEndTime]);
 
@@ -358,29 +363,34 @@ export function CalendarAddDialog({
           ? selectedRoomId.trim()
           : undefined;
 
-      for (const slot of datesToSchedule) {
-        const seriesTag = seriesId ? `<!--series:${seriesId}-->` : "";
-        const descText = description.trim();
-        const finalDescription = seriesTag
-          ? descText
-            ? `${descText}\n\n${seriesTag}`
-            : seriesTag
-          : descText || undefined;
+      const createdBookings: { id: string }[] = [];
+      const createdEvents: CalendarEvent<CustomEventData>[] = [];
 
-        const booking = await apiClient.bookings.create({
-          title: finalTitle,
-          description: finalDescription,
-          eventTypeId: selectedEventType?.id,
-          roomId: roomToAssign,
-          projectId: selectedProjectId || undefined,
-          startTime: slot.start,
-          endTime: slot.end,
-          attendees: attendees.length > 0 ? attendees : undefined,
-          organizerUserId: session?.user?.id || "usr_alex_rivera",
-        });
+      try {
+        for (const slot of datesToSchedule) {
+          const seriesTag = seriesId ? `<!--series:${seriesId}-->` : "";
+          const descText = description.trim();
+          const finalDescription = seriesTag
+            ? descText
+              ? `${descText}\n\n${seriesTag}`
+              : seriesTag
+            : descText || undefined;
 
-        if (onAddEvent) {
-          onAddEvent({
+          const booking = await apiClient.bookings.create({
+            title: finalTitle,
+            description: finalDescription,
+            eventTypeId: selectedEventType?.id,
+            roomId: roomToAssign,
+            projectId: selectedProjectId || undefined,
+            startTime: slot.start,
+            endTime: slot.end,
+            attendees: attendees.length > 0 ? attendees : undefined,
+            organizerUserId: session?.user?.id || "usr_alex_rivera",
+          });
+
+          createdBookings.push(booking);
+
+          createdEvents.push({
             id: booking.id,
             title: booking.title,
             start: new Date(booking.startTime),
@@ -391,7 +401,8 @@ export function CalendarAddDialog({
               category: "shared",
               location:
                 locationType === "room" && roomToAssign
-                  ? rooms.find((r) => r.id === roomToAssign)?.name || "Meeting Room"
+                  ? rooms.find((r) => r.id === roomToAssign)?.name ||
+                    "Meeting Room"
                   : "Google Meet",
               description: booking.description ?? undefined,
               seriesId,
@@ -404,6 +415,22 @@ export function CalendarAddDialog({
               })),
             },
           });
+        }
+      } catch (loopErr) {
+        // Rollback already created bookings if any subsequent slot fails
+        if (createdBookings.length > 0) {
+          await Promise.allSettled(
+            createdBookings.map((b) =>
+              apiClient.bookings.cancel(b.id, { singleOnly: true }),
+            ),
+          );
+        }
+        throw loopErr;
+      }
+
+      if (onAddEvent) {
+        for (const ev of createdEvents) {
+          onAddEvent(ev);
         }
       }
 
