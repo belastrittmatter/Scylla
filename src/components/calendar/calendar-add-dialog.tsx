@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, addMinutes, parseISO, isValid } from "date-fns";
+import { format, addMinutes, addDays, parseISO, isValid } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +15,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -33,8 +41,18 @@ import { useSession } from "@/lib/auth-client";
 import type { EventType, MeetingRoom } from "@/db/schema";
 import type { CalendarEvent } from "@/components/reui/event-calendar/event-calendar-types";
 import type { CustomEventData } from "@/mock-data/calendar-events";
-import { UserAutocompletePicker, type SelectedAttendee } from "./user-autocomplete-picker";
-import { CalendarProjectPicker, type ProjectOption } from "./calendar-project-picker";
+import {
+  UserAutocompletePicker,
+  type SelectedAttendee,
+} from "./user-autocomplete-picker";
+import {
+  CalendarProjectPicker,
+  type ProjectOption,
+} from "./calendar-project-picker";
+import {
+  CalendarRepeatOptions,
+  type RepeatFrequency,
+} from "./calendar-repeat-options";
 import { cn } from "@/lib/utils";
 
 interface CalendarAddDialogProps {
@@ -76,19 +94,31 @@ export function CalendarAddDialog({
   const { data: session } = useSession();
   const [eventTypes, setEventTypes] = React.useState<EventType[]>([]);
   const [rooms, setRooms] = React.useState<MeetingRoom[]>([]);
-  const [selectedEventType, setSelectedEventType] = React.useState<EventType | null>(null);
+  const [selectedEventType, setSelectedEventType] =
+    React.useState<EventType | null>(null);
 
   const [title, setTitle] = React.useState("");
-  const [dateStr, setDateStr] = React.useState(format(selectedDate, "yyyy-MM-dd"));
+  const [dateStr, setDateStr] = React.useState(
+    format(selectedDate, "yyyy-MM-dd"),
+  );
   const [startTime, setStartTime] = React.useState("09:00");
   const [endTime, setEndTime] = React.useState("09:30");
   const [duration, setDuration] = React.useState(30);
 
-  const [locationType, setLocationType] = React.useState<"virtual" | "room">("virtual");
+  const [locationType, setLocationType] = React.useState<"virtual" | "room">(
+    "virtual",
+  );
   const [selectedRoomId, setSelectedRoomId] = React.useState<string>("");
-  const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
-  const [selectedProject, setSelectedProject] = React.useState<ProjectOption | null>(null);
-  const [selectedAttendees, setSelectedAttendees] = React.useState<SelectedAttendee[]>([]);
+  const [repeatFrequency, setRepeatFrequency] =
+    React.useState<RepeatFrequency>("none");
+  const [selectedProjectId, setSelectedProjectId] = React.useState<
+    string | null
+  >(null);
+  const [selectedProject, setSelectedProject] =
+    React.useState<ProjectOption | null>(null);
+  const [selectedAttendees, setSelectedAttendees] = React.useState<
+    SelectedAttendee[]
+  >([]);
   const [autoAddedEmails, setAutoAddedEmails] = React.useState<string[]>([]);
   const [description, setDescription] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -101,6 +131,7 @@ export function CalendarAddDialog({
     const defaults = getDefaultTimes();
     setStartTime(initialStartTime || defaults.start);
     setEndTime(initialEndTime || defaults.end);
+    setRepeatFrequency("none");
     setSelectedProjectId(null);
     setSelectedProject(null);
     setSelectedAttendees([]);
@@ -169,7 +200,7 @@ export function CalendarAddDialog({
 
   const durationMinutes = React.useMemo(
     () => computeDurationMinutes(startTime, endTime),
-    [startTime, endTime]
+    [startTime, endTime],
   );
 
   const dateObj = React.useMemo(() => {
@@ -195,7 +226,9 @@ export function CalendarAddDialog({
 
     const [h, m] = startTime.split(":").map(Number);
     if (!isNaN(h) && !isNaN(m)) {
-      setEndTime(format(addMinutes(new Date(2000, 0, 1, h, m), et.duration), "HH:mm"));
+      setEndTime(
+        format(addMinutes(new Date(2000, 0, 1, h, m), et.duration), "HH:mm"),
+      );
     }
   };
 
@@ -203,7 +236,9 @@ export function CalendarAddDialog({
     setStartTime(newStartTime);
     const [h, m] = newStartTime.split(":").map(Number);
     if (!isNaN(h) && !isNaN(m)) {
-      setEndTime(format(addMinutes(new Date(2000, 0, 1, h, m), duration), "HH:mm"));
+      setEndTime(
+        format(addMinutes(new Date(2000, 0, 1, h, m), duration), "HH:mm"),
+      );
     }
   };
 
@@ -215,16 +250,21 @@ export function CalendarAddDialog({
     }
   };
 
-  const handleProjectChange = async (projectId: string | null, project?: ProjectOption | null) => {
+  const handleProjectChange = async (
+    projectId: string | null,
+    project?: ProjectOption | null,
+  ) => {
     setSelectedProjectId(projectId);
     setSelectedProject(project || null);
 
-    const prevAutoAddedSet = new Set(autoAddedEmails.map((e) => e.toLowerCase()));
+    const prevAutoAddedSet = new Set(
+      autoAddedEmails.map((e) => e.toLowerCase()),
+    );
 
     if (!projectId || !project?.teamId) {
       if (prevAutoAddedSet.size > 0) {
         setSelectedAttendees((prev) =>
-          prev.filter((a) => !prevAutoAddedSet.has(a.email.toLowerCase()))
+          prev.filter((a) => !prevAutoAddedSet.has(a.email.toLowerCase())),
         );
         setAutoAddedEmails([]);
       }
@@ -236,7 +276,12 @@ export function CalendarAddDialog({
       if (!res.ok) return;
       const data = await res.json();
       const members: Array<{
-        user?: { id: string; name: string; email: string; image?: string | null } | null;
+        user?: {
+          id: string;
+          name: string;
+          email: string;
+          image?: string | null;
+        } | null;
         name?: string;
         email?: string;
       }> = Array.isArray(data) ? data : data.data || [];
@@ -250,7 +295,9 @@ export function CalendarAddDialog({
             ? prev.filter((a) => !prevAutoAddedSet.has(a.email.toLowerCase()))
             : prev;
 
-        const existingEmails = new Set(baseAttendees.map((a) => a.email.toLowerCase()));
+        const existingEmails = new Set(
+          baseAttendees.map((a) => a.email.toLowerCase()),
+        );
         const toAdd: SelectedAttendee[] = [];
 
         for (const m of members) {
@@ -272,7 +319,9 @@ export function CalendarAddDialog({
         }
 
         if (toAdd.length > 0) {
-          toast.info(`Added ${toAdd.length} team member${toAdd.length > 1 ? "s" : ""} as invitees`);
+          toast.info(
+            `Added ${toAdd.length} team member${toAdd.length > 1 ? "s" : ""} as invitees`,
+          );
         }
         return [...baseAttendees, ...toAdd];
       });
@@ -289,10 +338,10 @@ export function CalendarAddDialog({
 
     setIsSubmitting(true);
     try {
-      const startIso = new Date(`${dateStr}T${startTime}:00`).toISOString();
-      const endIso = new Date(`${dateStr}T${endTime}:00`).toISOString();
+      const baseStartDate = new Date(`${dateStr}T${startTime}:00`);
+      const baseEndDate = new Date(`${dateStr}T${endTime}:00`);
 
-      if (new Date(startIso) >= new Date(endIso)) {
+      if (baseStartDate >= baseEndDate) {
         toast.error("End time must be after start time");
         setIsSubmitting(false);
         return;
@@ -309,45 +358,99 @@ export function CalendarAddDialog({
       }
       const finalTitle = teamTag ? `[${teamTag}] ${cleanTitle}` : cleanTitle;
 
-      const booking = await apiClient.bookings.create({
-        title: finalTitle,
-        description: description.trim() || undefined,
-        eventTypeId: selectedEventType?.id,
-        roomId: locationType === "room" ? selectedRoomId : undefined,
-        projectId: selectedProjectId || undefined,
-        startTime: startIso,
-        endTime: endIso,
-        attendees: attendees.length > 0 ? attendees : undefined,
-        organizerUserId: session?.user?.id || "usr_alex_rivera",
-      });
-
-      toast.success("Event scheduled successfully!");
-      onCreated?.();
-
-      if (onAddEvent) {
-        onAddEvent({
-          id: booking.id,
-          title: booking.title,
-          start: new Date(booking.startTime),
-          end: new Date(booking.endTime),
-          color: "#0284c7",
-          data: {
-            category: "shared",
-            location:
-              locationType === "room"
-                ? rooms.find((r) => r.id === selectedRoomId)?.name
-                : "Google Meet",
-            description: booking.description ?? undefined,
-            meetingUrl: booking.meetingUrl ?? undefined,
-            projectId: booking.projectId || undefined,
-            attendees: selectedAttendees.map((a) => ({
-              name: a.name,
-              email: a.email,
-              avatar: a.avatarUrl,
-            })),
-          },
+      // Determine series dates based on repeatFrequency
+      const datesToSchedule: { start: string; end: string }[] = [];
+      if (repeatFrequency === "none") {
+        datesToSchedule.push({
+          start: baseStartDate.toISOString(),
+          end: baseEndDate.toISOString(),
         });
+      } else if (repeatFrequency === "daily_workdays") {
+        // Schedule next 5 working days (Monday-Friday)
+        let curr = new Date(baseStartDate);
+        let currEnd = new Date(baseEndDate);
+        let count = 0;
+        while (count < 5) {
+          const day = curr.getDay(); // 0 is Sun, 6 is Sat
+          if (day !== 0 && day !== 6) {
+            datesToSchedule.push({
+              start: curr.toISOString(),
+              end: currEnd.toISOString(),
+            });
+            count++;
+          }
+          curr = addDays(curr, 1);
+          currEnd = addDays(currEnd, 1);
+        }
+      } else if (repeatFrequency === "daily_all") {
+        // Schedule 7 consecutive days
+        for (let i = 0; i < 7; i++) {
+          datesToSchedule.push({
+            start: addDays(baseStartDate, i).toISOString(),
+            end: addDays(baseEndDate, i).toISOString(),
+          });
+        }
+      } else if (repeatFrequency === "weekly") {
+        // Schedule 4 weeks on same day
+        for (let i = 0; i < 4; i++) {
+          datesToSchedule.push({
+            start: addDays(baseStartDate, i * 7).toISOString(),
+            end: addDays(baseEndDate, i * 7).toISOString(),
+          });
+        }
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let firstBooking: any = null;
+      for (const slot of datesToSchedule) {
+        const createdBooking = await apiClient.bookings.create({
+          title: finalTitle,
+          description: description.trim() || undefined,
+          eventTypeId: selectedEventType?.id,
+          roomId: locationType === "room" ? selectedRoomId : undefined,
+          projectId: selectedProjectId || undefined,
+          startTime: slot.start,
+          endTime: slot.end,
+          attendees: attendees.length > 0 ? attendees : undefined,
+          organizerUserId: session?.user?.id || "usr_alex_rivera",
+        });
+
+        if (!firstBooking) firstBooking = createdBooking;
+
+        if (onAddEvent) {
+          onAddEvent({
+            id: createdBooking.id,
+            title: createdBooking.title,
+            start: new Date(createdBooking.startTime),
+            end: new Date(createdBooking.endTime),
+            color: "#0284c7",
+            data: {
+              category: "shared",
+              location:
+                locationType === "room"
+                  ? rooms.find((r) => r.id === selectedRoomId)?.name
+                  : "Google Meet",
+              description: createdBooking.description ?? undefined,
+              meetingUrl: createdBooking.meetingUrl ?? undefined,
+              projectId: createdBooking.projectId || undefined,
+              attendees: selectedAttendees.map((a) => ({
+                name: a.name,
+                email: a.email,
+                avatar: a.avatarUrl,
+              })),
+            },
+          });
+        }
+      }
+
+      if (datesToSchedule.length > 1) {
+        toast.success(
+          `Scheduled ${datesToSchedule.length} recurring sessions!`,
+        );
+      } else {
+        toast.success("Event scheduled successfully!");
+      }
+      onCreated?.();
 
       setTitle("");
       setDescription("");
@@ -358,7 +461,9 @@ export function CalendarAddDialog({
       setAutoAddedEmails([]);
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create event");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create event",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -371,7 +476,9 @@ export function CalendarAddDialog({
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Schedule New Event</DialogTitle>
-          <DialogDescription>Book a room or create a virtual meeting conference.</DialogDescription>
+          <DialogDescription>
+            Book a room or create a virtual meeting conference.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
@@ -447,7 +554,7 @@ export function CalendarAddDialog({
                       variant="outline"
                       className={cn(
                         "h-9 w-full justify-start px-3 text-left text-xs font-normal",
-                        !dateStr && "text-muted-foreground"
+                        !dateStr && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 size-3.5 shrink-0" />
@@ -526,6 +633,13 @@ export function CalendarAddDialog({
             </div>
           </div>
 
+          {/* Repeat Meeting Options */}
+          <CalendarRepeatOptions
+            frequency={repeatFrequency}
+            onChange={setRepeatFrequency}
+            disabled={isSubmitting}
+          />
+
           {/* Location Selection */}
           <div className="space-y-2">
             <Label className="text-xs font-medium">Location</Label>
@@ -569,29 +683,31 @@ export function CalendarAddDialog({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from(groupedRooms.entries()).map(([loc, roomList]) => (
-                      <SelectGroup key={loc}>
-                        <SelectLabel className="text-muted-foreground px-2 py-1 text-[11px] font-semibold uppercase tracking-wider">
-                          {loc === "DN"
-                            ? "Da Nang Office (DN)"
-                            : loc === "HCM"
-                              ? "Ho Chi Minh Office (HCM)"
-                              : `${loc} Office`}
-                        </SelectLabel>
-                        {roomList.map((r) => (
-                          <SelectItem key={r.id} value={r.id}>
-                            <div className="flex w-full items-center justify-between gap-2 text-xs">
-                              <span className="font-medium">
-                                [{loc}] {r.name}
-                              </span>
-                              <span className="text-muted-foreground shrink-0 text-[11px]">
-                                {r.capacity} seats
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
+                    {Array.from(groupedRooms.entries()).map(
+                      ([loc, roomList]) => (
+                        <SelectGroup key={loc}>
+                          <SelectLabel className="text-muted-foreground px-2 py-1 text-[11px] font-semibold uppercase tracking-wider">
+                            {loc === "DN"
+                              ? "Da Nang Office (DN)"
+                              : loc === "HCM"
+                                ? "Ho Chi Minh Office (HCM)"
+                                : `${loc} Office`}
+                          </SelectLabel>
+                          {roomList.map((r) => (
+                            <SelectItem key={r.id} value={r.id}>
+                              <div className="flex w-full items-center justify-between gap-2 text-xs">
+                                <span className="font-medium">
+                                  [{loc}] {r.name}
+                                </span>
+                                <span className="text-muted-foreground shrink-0 text-[11px]">
+                                  {r.capacity} seats
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -628,7 +744,12 @@ export function CalendarAddDialog({
           </div>
 
           <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={isSubmitting}>

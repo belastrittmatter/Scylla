@@ -10,7 +10,9 @@ export function registerAllMcpPrompts(server: McpServer) {
       argsSchema: z.object({
         targetUser: z
           .string()
-          .describe("Target colleague name, nickname, or email (e.g. 'alex')"),
+          .describe(
+            "Target colleague name, nickname, or email (e.g. 'anh pham')",
+          ),
         date: z
           .string()
           .optional()

@@ -11,18 +11,8 @@ describe("MCP Prompts Suite", () => {
 
     registerAllMcpPrompts(server);
 
-    const registeredPrompts = (
-      server as unknown as {
-        _registeredPrompts: Record<
-          string,
-          {
-            handler: (
-              args: Record<string, unknown>,
-            ) => Promise<{ messages: { content: { text: string } }[] }>;
-          }
-        >;
-      }
-    )._registeredPrompts;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const registeredPrompts = (server as any)._registeredPrompts;
     expect(registeredPrompts).toBeDefined();
     expect(registeredPrompts.daily_meeting_flow).toBeDefined();
     expect(registeredPrompts.book_meeting_flow).toBeDefined();
