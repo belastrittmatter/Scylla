@@ -25,12 +25,14 @@ export interface CalendarProjectPickerProps {
   value?: string | null;
   onChange: (projectId: string | null, project?: ProjectOption | null) => void;
   disabled?: boolean;
+  hideLabel?: boolean;
 }
 
 export function CalendarProjectPicker({
   value,
   onChange,
   disabled = false,
+  hideLabel = false,
 }: CalendarProjectPickerProps) {
   const [projects, setProjects] = React.useState<ProjectOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -79,7 +81,7 @@ export function CalendarProjectPicker({
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium">Link to Project (Optional)</Label>
+      {!hideLabel && <Label className="text-xs font-medium">Project</Label>}
       <Popover
         open={isOpen}
         onOpenChange={(open) => {
@@ -115,11 +117,7 @@ export function CalendarProjectPicker({
           ) : (
             <div className="text-muted-foreground flex items-center gap-2 truncate">
               <FolderGit2 className="size-3.5 shrink-0" />
-              <span>
-                {isLoading
-                  ? "Loading projects..."
-                  : "Personal Event (No project)"}
-              </span>
+              <span>{isLoading ? "Loading..." : "None"}</span>
             </div>
           )}
           <ChevronDown className="text-muted-foreground pointer-events-none size-4 shrink-0" />
@@ -133,7 +131,7 @@ export function CalendarProjectPicker({
           <div className="relative mb-1 px-1">
             <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2" />
             <Input
-              placeholder="Search projects..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-8 w-full pl-8 pr-7 text-xs"
@@ -152,7 +150,7 @@ export function CalendarProjectPicker({
 
           <div className="max-h-56 space-y-0.5 overflow-y-auto px-1 py-0.5">
             {(!searchQuery ||
-              "personal event no project".includes(
+              "none personal no project".includes(
                 searchQuery.toLowerCase(),
               )) && (
               <button
@@ -165,7 +163,7 @@ export function CalendarProjectPicker({
               >
                 <div className="flex items-center gap-2 truncate">
                   <FolderGit2 className="text-muted-foreground size-3.5 shrink-0" />
-                  <span>Personal Event (No project)</span>
+                  <span>None</span>
                 </div>
                 {!value && <Check className="text-primary size-3.5 shrink-0" />}
               </button>

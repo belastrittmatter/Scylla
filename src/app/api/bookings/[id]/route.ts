@@ -52,13 +52,30 @@ export async function PATCH(req: Request, context: RouteParams) {
   }
 }
 
-export async function DELETE(_req: Request, context: RouteParams) {
+export async function DELETE(req: Request, context: RouteParams) {
   try {
     const { id } = await context.params;
     if (!id) {
       return Response.json(
         { error: "Booking ID is required" },
         { status: 400 },
+      );
+    }
+
+    const url = new URL(req.url);
+    const allSeries = url.searchParams.get("allSeries") === "true";
+
+    if (allSeries) {
+      const cancelled = await BookingService.cancelSeriesByBooking(id);
+      if (cancelled.length === 0) {
+        return Response.json(
+          { error: `Booking with ID ${id} not found` },
+          { status: 404 },
+        );
+      }
+      return Response.json(
+        { cancelled, count: cancelled.length },
+        { status: 200 },
       );
     }
 

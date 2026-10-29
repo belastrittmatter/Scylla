@@ -172,27 +172,39 @@ export function CalendarDashboard() {
 
         const calendarEvents: CalendarEvent<CustomEventData>[] = (
           calendarData.events || []
-        ).map((ev) => ({
-          id: ev.id,
-          title: ev.title,
-          start: new Date(ev.start),
-          end: new Date(ev.end),
-          color: ev.color || (ev.source === "google" ? "#0284c7" : "#ea580c"),
-          data: {
-            category: ev.category || "shared",
-            location:
-              ev.location || (ev.meetingUrl ? "Google Meet" : undefined),
-            description: ev.description || undefined,
-            meetingUrl: ev.meetingUrl || undefined,
-            attendees: ev.attendees || [],
-            status: ev.status,
-            source: ev.source,
-            organizer: ev.organizer,
-            roomDetails: ev.roomDetails,
-            projectId: ev.projectId,
-            project: ev.project,
-          },
-        }));
+        ).map((ev) => {
+          const seriesMatch = ev.description?.match(
+            /<!--series:([a-zA-Z0-9_-]+)-->/,
+          );
+          const seriesId =
+            ev.recurringEventId ||
+            ev.seriesId ||
+            (seriesMatch ? seriesMatch[1] : undefined);
+
+          return {
+            id: ev.id,
+            title: ev.title,
+            start: new Date(ev.start),
+            end: new Date(ev.end),
+            recurringEventId: seriesId,
+            color: ev.color || (ev.source === "google" ? "#0284c7" : "#ea580c"),
+            data: {
+              category: ev.category || "shared",
+              location:
+                ev.location || (ev.meetingUrl ? "Google Meet" : undefined),
+              description: ev.description || undefined,
+              seriesId,
+              meetingUrl: ev.meetingUrl || undefined,
+              attendees: ev.attendees || [],
+              status: ev.status,
+              source: ev.source,
+              organizer: ev.organizer,
+              roomDetails: ev.roomDetails,
+              projectId: ev.projectId,
+              project: ev.project,
+            },
+          };
+        });
         setEvents(calendarEvents);
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
@@ -476,9 +488,32 @@ export function CalendarDashboard() {
       {/* Event Details Modal */}
       <CalendarEventModal
         event={selectedEvent}
+        allEvents={events}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         onDeleteEvent={handleDeleteEvent}
+        onDeleteSeries={(seriesId, eventId, _eventTitle) => {
+          setEvents((prev) =>
+            prev.filter((e) => {
+              if (e.id === eventId) return false;
+              if (
+                seriesId &&
+                (e.recurringEventId === seriesId ||
+                  e.data?.seriesId === seriesId)
+              ) {
+                return false;
+              }
+              if (
+                seriesId &&
+                e.data?.description?.includes(`<!--series:${seriesId}-->`)
+              ) {
+                return false;
+              }
+              return true;
+            }),
+          );
+          void syncCalendar(false);
+        }}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { booking, account, type Booking } from "@/db/schema";
-import { eq, and, ne, gte, lte, asc } from "drizzle-orm";
+import { eq, and, or, ne, gte, lte, asc, like, inArray } from "drizzle-orm";
 import { GoogleCalendarService } from "./google-calendar";
 import { RoomService } from "./rooms";
 import { UserService } from "./user";
@@ -238,8 +238,13 @@ export class BookingService {
    * Cancels a booking, updates its status to 'cancelled', and deletes the Google Calendar event.
    */
   public static async cancel(id: string): Promise<Booking> {
+    const cleanId = id.replace(/^gcal-/, "");
     const existing = await this.getBookingById(id);
     if (!existing) {
+      // Check if pure Google Calendar event
+      try {
+        await GoogleCalendarService.deleteEvent(cleanId);
+      } catch {}
       throw new Error(`Booking with ID ${id} not found`);
     }
 
@@ -255,10 +260,94 @@ export class BookingService {
         status: "cancelled",
         updatedAt: new Date(),
       })
-      .where(eq(booking.id, id))
+      .where(eq(booking.id, existing.id))
       .returning();
 
     return cancelled;
+  }
+
+  /**
+   * Cancels all bookings in a recurring series identified by seriesId,
+   * updates their status to 'cancelled', and deletes their Google Calendar events.
+   */
+  public static async cancelSeries(seriesId: string): Promise<Booking[]> {
+    if (!seriesId || !seriesId.trim()) {
+      throw new Error("Series ID is required");
+    }
+
+    const matchingBookings = await db
+      .select()
+      .from(booking)
+      .where(
+        and(
+          ne(booking.status, "cancelled"),
+          like(booking.description, `%<!--series:${seriesId}-->%`),
+        ),
+      );
+
+    if (matchingBookings.length === 0) {
+      return [];
+    }
+
+    // Delete Google Calendar events in parallel
+    await Promise.all(
+      matchingBookings.map((b) => {
+        if (b.gcalEventId) {
+          return GoogleCalendarService.deleteEvent(b.gcalEventId).catch(
+            () => {},
+          );
+        }
+        return Promise.resolve();
+      }),
+    );
+
+    const ids = matchingBookings.map((b) => b.id);
+    const cancelled = await db
+      .update(booking)
+      .set({
+        status: "cancelled",
+        updatedAt: new Date(),
+      })
+      .where(inArray(booking.id, ids))
+      .returning();
+
+    return cancelled;
+  }
+
+  /**
+   * Cancels all bookings belonging to the series of a given booking ID.
+   * If the booking is not part of a series, cancels just that booking.
+   */
+  public static async cancelSeriesByBooking(id: string): Promise<Booking[]> {
+    if (id.startsWith("series_")) {
+      return this.cancelSeries(id);
+    }
+
+    const cleanId = id.replace(/^gcal-/, "");
+    const targetBooking = await this.getBookingById(id);
+    if (!targetBooking) {
+      // Check if pure Google Calendar event without DB row
+      try {
+        await GoogleCalendarService.deleteEvent(cleanId);
+      } catch (gcalErr) {
+        console.warn("Could not delete gcal event:", gcalErr);
+      }
+      return [];
+    }
+
+    // 1. Check if description has explicit seriesId tag
+    const seriesMatch = targetBooking.description?.match(
+      /<!--series:([a-zA-Z0-9_-]+)-->/,
+    );
+    if (seriesMatch && seriesMatch[1]) {
+      const seriesCancelled = await this.cancelSeries(seriesMatch[1]);
+      if (seriesCancelled.length > 0) {
+        return seriesCancelled;
+      }
+    }
+
+    const cancelledSingle = await this.cancel(targetBooking.id);
+    return [cancelledSingle];
   }
 
   /**
@@ -323,10 +412,23 @@ export class BookingService {
    * Lookup a booking by ID.
    */
   public static async getBookingById(id: string): Promise<Booking | null> {
+    const cleanId = id
+      .replace(/^gcal-/, "")
+      .replace(/^attendee-.*?-/, "")
+      .replace(/^busy-.*?-/, "");
     const results = await db
       .select()
       .from(booking)
-      .where(eq(booking.id, id))
+      .where(
+        or(
+          eq(booking.id, id),
+          eq(booking.id, cleanId),
+          eq(booking.gcalEventId, id),
+          eq(booking.gcalEventId, cleanId),
+          eq(booking.googleEventId, id),
+          eq(booking.googleEventId, cleanId),
+        ),
+      )
       .limit(1);
     return results[0] || null;
   }

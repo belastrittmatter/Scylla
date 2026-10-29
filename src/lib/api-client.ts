@@ -193,10 +193,32 @@ export const apiClient = {
      * Cancel an existing meeting.
      * Maps to: DELETE /api/bookings/[id]
      */
-    cancel: async (id: string): Promise<Booking> => {
-      return request<Booking>(`/api/bookings/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+    cancel: async (
+      id: string,
+      options?: { singleOnly?: boolean },
+    ): Promise<Booking> => {
+      const query = options?.singleOnly ? "?singleOnly=true" : "";
+      return request<Booking>(
+        `/api/bookings/${encodeURIComponent(id)}${query}`,
+        {
+          method: "DELETE",
+        },
+      );
+    },
+
+    /**
+     * Cancel all meetings in a recurring series by booking ID or series ID.
+     * Maps to: DELETE /api/bookings/[id]?allSeries=true
+     */
+    cancelSeries: async (
+      id: string,
+    ): Promise<{ cancelled: Booking[]; count: number }> => {
+      return request<{ cancelled: Booking[]; count: number }>(
+        `/api/bookings/${encodeURIComponent(id)}?allSeries=true`,
+        {
+          method: "DELETE",
+        },
+      );
     },
   },
 
@@ -292,12 +314,40 @@ export const apiClient = {
       return request(`/api/projects${qs}`);
     },
   },
+
+  teams: {
+    /**
+     * List members of a team.
+     * Maps to: GET /api/teams/{id}/members
+     */
+    members: async (
+      teamId: string,
+    ): Promise<
+      Array<{
+        id: string;
+        teamId: string;
+        userId: string;
+        role: string;
+        joinedAt?: string;
+        user: {
+          id: string;
+          name: string | null;
+          email: string;
+          image?: string | null;
+        };
+      }>
+    > => {
+      return request(`/api/teams/${encodeURIComponent(teamId)}/members`);
+    },
+  },
 };
 
 export interface CalendarEventItem {
   id: string;
   title: string;
   description?: string;
+  seriesId?: string;
+  recurringEventId?: string;
   location?: string;
   meetingUrl?: string;
   start: string;

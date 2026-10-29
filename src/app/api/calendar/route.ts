@@ -17,6 +17,8 @@ export interface UnifiedCalendarEvent {
   id: string;
   title: string;
   description?: string;
+  seriesId?: string;
+  recurringEventId?: string;
   location?: string;
   meetingUrl?: string;
   start: string;
@@ -671,6 +673,11 @@ export async function GET(req: Request) {
               continue;
             }
 
+            const seriesMatch = b.description?.match(
+              /<!--series:([a-zA-Z0-9_-]+)-->/,
+            );
+            const seriesId = seriesMatch ? seriesMatch[1] : undefined;
+
             // MERGE: Keep only ONE unified event, using the DB booking ID and enriched fields
             const existing = unifiedEvents[existingIdx];
             unifiedEvents[existingIdx] = {
@@ -678,6 +685,8 @@ export async function GET(req: Request) {
               id: b.id, // CRITICAL: Use DB booking ID so user can edit/cancel via DB
               title: b.title || existing.title,
               description: b.description || existing.description,
+              seriesId: seriesId || existing.seriesId,
+              recurringEventId: seriesId || existing.recurringEventId,
               location: locationName || existing.location,
               meetingUrl:
                 b.meetingUrl || b.googleMeetUrl || existing.meetingUrl,
@@ -702,10 +711,17 @@ export async function GET(req: Request) {
             // If not existing yet and not cancelled, add DB booking
             if (b.status === "cancelled") continue;
 
+            const seriesMatch = b.description?.match(
+              /<!--series:([a-zA-Z0-9_-]+)-->/,
+            );
+            const seriesId = seriesMatch ? seriesMatch[1] : undefined;
+
             unifiedEvents.push({
               id: b.id,
               title: b.title,
               description: b.description || undefined,
+              seriesId,
+              recurringEventId: seriesId,
               location: locationName,
               meetingUrl: b.meetingUrl || b.googleMeetUrl || undefined,
               start: new Date(b.startTime).toISOString(),

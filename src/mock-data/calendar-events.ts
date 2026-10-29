@@ -6,6 +6,7 @@ export interface CustomEventData {
   dotColor?: string;
   location?: string;
   description?: string;
+  seriesId?: string;
   meetingUrl?: string;
   attendees?: Array<{
     name?: string;

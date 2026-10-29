@@ -311,5 +311,65 @@ describe("Domain Services", () => {
       await BookingService.cancel(booking.id);
       await TeamService.deleteTeam(team.id);
     });
+
+    test("cancelSeries cancels all bookings belonging to a recurring series", async () => {
+      const seriesId = `series_test_${Date.now()}`;
+      const now = new Date();
+
+      const booking1 = await BookingService.createBooking({
+        title: "Daily Standup Day 1",
+        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 70 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 70 * 3600 * 1000 + 15 * 60 * 1000),
+      });
+
+      const booking2 = await BookingService.createBooking({
+        title: "Daily Standup Day 2",
+        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 94 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 94 * 3600 * 1000 + 15 * 60 * 1000),
+      });
+
+      const cancelled = await BookingService.cancelSeries(seriesId);
+      expect(cancelled.length).toBe(2);
+      expect(cancelled.every((b) => b.status === "cancelled")).toBe(true);
+
+      const refreshed1 = await BookingService.getBookingById(booking1.id);
+      const refreshed2 = await BookingService.getBookingById(booking2.id);
+      expect(refreshed1?.status).toBe("cancelled");
+      expect(refreshed2?.status).toBe("cancelled");
+    });
+
+    test("cancelSeriesByBooking cancels entire series given any booking in the series", async () => {
+      const seriesId = `series_by_booking_${Date.now()}`;
+      const now = new Date();
+
+      const bookingA = await BookingService.createBooking({
+        title: "Weekly Review Week 1",
+        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 100 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 100 * 3600 * 1000 + 30 * 60 * 1000),
+      });
+
+      const bookingB = await BookingService.createBooking({
+        title: "Weekly Review Week 2",
+        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 168 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 168 * 3600 * 1000 + 30 * 60 * 1000),
+      });
+
+      // Cancel the entire series by passing bookingA's ID
+      const result = await BookingService.cancelSeriesByBooking(bookingA.id);
+      expect(result.length).toBe(2);
+
+      const checkA = await BookingService.getBookingById(bookingA.id);
+      const checkB = await BookingService.getBookingById(bookingB.id);
+      expect(checkA?.status).toBe("cancelled");
+      expect(checkB?.status).toBe("cancelled");
+    });
   });
 });

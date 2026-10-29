@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   FolderGit2,
   ArrowRight,
+  Repeat,
 } from "lucide-react";
 import type { CalendarEvent } from "@/components/reui/event-calendar/event-calendar-types";
 import type { CustomEventData } from "@/mock-data/calendar-events";
@@ -34,23 +35,36 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { toast } from "sonner";
 import { CalendarEventLocationSection } from "./calendar-event-location-section";
 import { CalendarEventAttendeesList } from "./calendar-event-attendees-list";
+import { CalendarCancelPrompt } from "./calendar-cancel-prompt";
 
 interface CalendarEventModalProps {
   event: CalendarEvent<CustomEventData> | null;
+  allEvents?: CalendarEvent<CustomEventData>[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleteEvent: (id: string) => void;
+  onDeleteSeries?: (
+    seriesId: string,
+    eventId: string,
+    eventTitle?: string,
+  ) => void;
 }
 
 export function CalendarEventModal({
   event,
+  allEvents,
   open,
   onOpenChange,
   onDeleteEvent,
+  onDeleteSeries,
 }: CalendarEventModalProps) {
   const router = useRouter();
   const [copied, setCopied] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [cancelTarget, setCancelTarget] = React.useState<
+    "single" | "series" | null
+  >(null);
+  const [showCancelPrompt, setShowCancelPrompt] = React.useState(false);
   const [attendeeFilter, setAttendeeFilter] = React.useState("");
   const [prevOpen, setPrevOpen] = React.useState(open);
 
@@ -58,6 +72,8 @@ export function CalendarEventModal({
     setPrevOpen(open);
     if (!open) {
       setAttendeeFilter("");
+      setCancelTarget(null);
+      setShowCancelPrompt(false);
     }
   }
 
@@ -76,15 +92,54 @@ export function CalendarEventModal({
     );
   }, [attendees, attendeeFilter]);
 
+  const rawDescription = event?.data?.description || "";
+  const seriesId =
+    event?.recurringEventId ||
+    event?.data?.seriesId ||
+    rawDescription.match(/<!--series:([a-zA-Z0-9_-]+)-->/)?.[1] ||
+    null;
+
+  const siblingCount = React.useMemo(() => {
+    if (!allEvents || !event) return 0;
+    const eventStart = new Date(event.start).getTime();
+    const eventEnd = new Date(event.end).getTime();
+    const eventDuration = eventEnd - eventStart;
+    return allEvents.filter((e) => {
+      if (e.id === event.id) return false;
+      if (
+        seriesId &&
+        (e.recurringEventId === seriesId || e.data?.seriesId === seriesId)
+      ) {
+        return true;
+      }
+      if (
+        seriesId &&
+        e.data?.description?.includes(`<!--series:${seriesId}-->`)
+      ) {
+        return true;
+      }
+      const eStart = new Date(e.start).getTime();
+      const eEnd = new Date(e.end).getTime();
+      const d = eEnd - eStart;
+      const sameDuration = Math.abs(d - eventDuration) < 60000;
+      const sameTitle =
+        (e.title || "").trim().toLowerCase() ===
+        (event.title || "").trim().toLowerCase();
+      return sameTitle && sameDuration;
+    }).length;
+  }, [allEvents, event, seriesId]);
+
   if (!event) return null;
 
+  const startDate = new Date(event.start);
+  const endDate = new Date(event.end);
   const now = new Date();
-  const isLive = now >= event.start && now <= event.end;
-  const isPast = now > event.end;
+  const isLive = now >= startDate && now <= endDate;
+  const isPast = now > endDate;
 
   const durationMinutes = Math.max(
     1,
-    Math.round((event.end.getTime() - event.start.getTime()) / 60000),
+    Math.round((endDate.getTime() - startDate.getTime()) / 60000),
   );
   const durationLabel =
     durationMinutes >= 60
@@ -95,7 +150,10 @@ export function CalendarEventModal({
   const meetingUrl = event.data?.meetingUrl;
   const roomDetails = event.data?.roomDetails;
   const location = event.data?.location;
-  const description = event.data?.description;
+  const isRecurring = Boolean(seriesId) || siblingCount > 0;
+  const description = rawDescription
+    .replace(/<!--series:[a-zA-Z0-9_-]+-->/g, "")
+    .trim();
   const organizer = event.data?.organizer;
 
   const handleCopyLink = async () => {
@@ -116,10 +174,11 @@ export function CalendarEventModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteSingle = async () => {
     setIsDeleting(true);
+    setCancelTarget("single");
     try {
-      await apiClient.bookings.cancel(event.id);
+      await apiClient.bookings.cancel(event.id, { singleOnly: true });
       toast.success("Meeting cancelled successfully");
       onDeleteEvent(event.id);
       onOpenChange(false);
@@ -130,6 +189,33 @@ export function CalendarEventModal({
       onOpenChange(false);
     } finally {
       setIsDeleting(false);
+      setCancelTarget(null);
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    setIsDeleting(true);
+    setCancelTarget("series");
+    try {
+      await apiClient.bookings.cancelSeries(event.id);
+      toast.success("All recurring meetings cancelled");
+      if (onDeleteSeries) {
+        onDeleteSeries(seriesId || "", event.id, event.title);
+      } else {
+        onDeleteEvent(event.id);
+      }
+      onOpenChange(false);
+    } catch {
+      if (onDeleteSeries) {
+        onDeleteSeries(seriesId || "", event.id, event.title);
+      } else {
+        onDeleteEvent(event.id);
+      }
+      toast.info("Recurring events removed from calendar view");
+      onOpenChange(false);
+    } finally {
+      setIsDeleting(false);
+      setCancelTarget(null);
     }
   };
 
@@ -194,6 +280,13 @@ export function CalendarEventModal({
             {event.data?.source === "google" && (
               <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-400">
                 Google Calendar
+              </span>
+            )}
+
+            {isRecurring && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:border-purple-900/60 dark:bg-purple-950/60 dark:text-purple-300">
+                <Repeat className="size-3" />
+                Recurring
               </span>
             )}
           </div>
@@ -392,55 +485,73 @@ export function CalendarEventModal({
           )}
         </div>
 
-        <DialogFooter className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3 sm:justify-between dark:border-neutral-800">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={isDeleting}
-            onClick={handleDelete}
-            className="h-8 cursor-pointer gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
-          >
-            {isDeleting ? (
-              <>
-                <Loader2 className="size-3.5 animate-spin" />
-                Cancelling...
-              </>
-            ) : (
-              <>
-                <Trash2 className="size-3.5" />
-                Cancel Meeting
-              </>
-            )}
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {meetingUrl && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopyLink}
-                className="h-8 cursor-pointer gap-1.5 text-xs"
-              >
-                {copied ? (
-                  <Check className="size-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="size-3.5" />
-                )}
-                Copy Link
-              </Button>
-            )}
+        {showCancelPrompt && isRecurring ? (
+          <div className="mt-4 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+            <CalendarCancelPrompt
+              isDeleting={isDeleting}
+              cancelTarget={cancelTarget}
+              onCancelSingle={handleDeleteSingle}
+              onCancelSeries={handleDeleteSeries}
+              onDismiss={() => setShowCancelPrompt(false)}
+            />
+          </div>
+        ) : (
+          <DialogFooter className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3 sm:justify-between dark:border-neutral-800">
             <Button
               type="button"
+              variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-8 cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900"
+              disabled={isDeleting}
+              onClick={() => {
+                if (isRecurring) {
+                  setShowCancelPrompt(true);
+                } else {
+                  handleDeleteSingle();
+                }
+              }}
+              className="h-8 cursor-pointer gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
             >
-              Close
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-3.5" />
+                  Cancel Meeting
+                </>
+              )}
             </Button>
-          </div>
-        </DialogFooter>
+
+            <div className="flex items-center gap-2">
+              {meetingUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="h-8 cursor-pointer gap-1.5 text-xs"
+                >
+                  {copied ? (
+                    <Check className="size-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="size-3.5" />
+                  )}
+                  Copy Link
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                className="h-8 cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

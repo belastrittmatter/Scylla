@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, addMinutes, parseISO, isValid } from "date-fns";
+import { format, addMinutes, addDays, isValid } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +11,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   InputGroup,
   InputGroupAddon,
@@ -28,13 +21,11 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Clock, Video, Building2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
@@ -49,7 +40,12 @@ import {
   CalendarProjectPicker,
   type ProjectOption,
 } from "./calendar-project-picker";
-import { cn } from "@/lib/utils";
+import { CalendarDateTimeSection } from "./calendar-datetime-section";
+import { CalendarLocationSection } from "./calendar-location-section";
+import {
+  CalendarRepeatOptions,
+  type RepeatFrequency,
+} from "./calendar-repeat-options";
 
 interface CalendarAddDialogProps {
   open: boolean;
@@ -78,6 +74,16 @@ function getDefaultTimes(): { start: string; end: string } {
   };
 }
 
+function generateSeriesId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return `series_${crypto.randomUUID()}`;
+  }
+  return `series_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`;
+}
+
 export function CalendarAddDialog({
   open,
   onOpenChange,
@@ -95,16 +101,20 @@ export function CalendarAddDialog({
 
   const [title, setTitle] = React.useState("");
   const [dateStr, setDateStr] = React.useState(
-    format(selectedDate, "yyyy-MM-dd"),
+    selectedDate && isValid(selectedDate)
+      ? format(selectedDate, "yyyy-MM-dd")
+      : format(new Date(), "yyyy-MM-dd"),
   );
   const [startTime, setStartTime] = React.useState("09:00");
   const [endTime, setEndTime] = React.useState("09:30");
-  const [duration, setDuration] = React.useState(30);
+  const durationMinutes = computeDurationMinutes(startTime, endTime);
 
   const [locationType, setLocationType] = React.useState<"virtual" | "room">(
     "virtual",
   );
   const [selectedRoomId, setSelectedRoomId] = React.useState<string>("");
+  const [repeatFrequency, setRepeatFrequency] =
+    React.useState<RepeatFrequency>("none");
   const [selectedProjectId, setSelectedProjectId] = React.useState<
     string | null
   >(null);
@@ -113,25 +123,31 @@ export function CalendarAddDialog({
   const [selectedAttendees, setSelectedAttendees] = React.useState<
     SelectedAttendee[]
   >([]);
-  const [autoAddedEmails, setAutoAddedEmails] = React.useState<string[]>([]);
   const [description, setDescription] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
-  const [prevOpen, setPrevOpen] = React.useState(open);
-  if (!prevOpen && open) {
-    setPrevOpen(true);
-    setDateStr(format(selectedDate, "yyyy-MM-dd"));
-    const defaults = getDefaultTimes();
-    setStartTime(initialStartTime || defaults.start);
-    setEndTime(initialEndTime || defaults.end);
-    setSelectedProjectId(null);
-    setSelectedProject(null);
-    setSelectedAttendees([]);
-    setAutoAddedEmails([]);
-  } else if (prevOpen && !open) {
-    setPrevOpen(false);
-  }
+  React.useEffect(() => {
+    if (open) {
+      queueMicrotask(() => {
+        const formattedDate =
+          selectedDate && isValid(selectedDate)
+            ? format(selectedDate, "yyyy-MM-dd")
+            : format(new Date(), "yyyy-MM-dd");
+        setDateStr(formattedDate);
+        const defaults = getDefaultTimes();
+        setStartTime(initialStartTime || defaults.start);
+        setEndTime(initialEndTime || defaults.end);
+        setRepeatFrequency("none");
+        setSelectedProjectId(null);
+        setSelectedProject(null);
+        setSelectedAttendees([]);
+        setTitle("");
+        setDescription("");
+        setSelectedEventType(null);
+        setLocationType("virtual");
+      });
+    }
+  }, [open, selectedDate, initialStartTime, initialEndTime]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -140,25 +156,17 @@ export function CalendarAddDialog({
     apiClient.eventTypes
       .list()
       .then((data) => {
-        if (active) setEventTypes(data);
+        if (active && Array.isArray(data)) setEventTypes(data);
       })
       .catch(() => {});
 
     apiClient.rooms
       .list()
       .then((res) => {
-        if (active) {
+        if (active && Array.isArray(res)) {
           setRooms(res);
           if (res.length > 0) {
-            const sorted = [...res].sort((a, b) => {
-              const locA = (a.officeLocation || "hcm").toUpperCase();
-              const locB = (b.officeLocation || "hcm").toUpperCase();
-              if (locA !== locB) return locA.localeCompare(locB);
-              return a.name.localeCompare(b.name);
-            });
-            if (!selectedRoomId || !res.some((r) => r.id === selectedRoomId)) {
-              setSelectedRoomId(sorted[0].id);
-            }
+            setSelectedRoomId((prev) => (prev ? prev : res[0].id));
           }
         }
       })
@@ -167,162 +175,151 @@ export function CalendarAddDialog({
     return () => {
       active = false;
     };
-  }, [open, selectedRoomId]);
+  }, [open]);
 
-  const groupedRooms = React.useMemo(() => {
-    const map = new Map<string, MeetingRoom[]>();
-    const sorted = [...rooms].sort((a, b) => {
-      const locA = (a.officeLocation || "hcm").toUpperCase();
-      const locB = (b.officeLocation || "hcm").toUpperCase();
-      if (locA !== locB) {
-        return locA.localeCompare(locB);
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-    for (const room of sorted) {
-      const loc = (room.officeLocation || "hcm").toUpperCase();
-      if (!map.has(loc)) {
-        map.set(loc, []);
-      }
-      map.get(loc)!.push(room);
-    }
-
-    return map;
-  }, [rooms]);
-
-  const durationMinutes = React.useMemo(
-    () => computeDurationMinutes(startTime, endTime),
-    [startTime, endTime],
-  );
-
-  const dateObj = React.useMemo(() => {
-    if (!dateStr) return new Date();
-    const parsed = parseISO(dateStr);
-    return isValid(parsed) ? parsed : new Date();
-  }, [dateStr]);
-
-  const handleSelectTemplate = (et: EventType | null) => {
-    setSelectedEventType(et);
-    if (!et) return;
-
-    setDuration(et.duration);
-    if (!title || eventTypes.some((t) => t.name === title)) {
-      setTitle(et.name);
-    }
-    if (et.description && !description) {
-      setDescription(et.description);
-    }
-    if (et.requiresRoom && rooms.length > 0) {
-      setLocationType("room");
-    }
-
-    const [h, m] = startTime.split(":").map(Number);
+  const handleStartTimeChange = (val: string) => {
+    setStartTime(val);
+    const [h, m] = val.split(":").map(Number);
     if (!isNaN(h) && !isNaN(m)) {
-      setEndTime(
-        format(addMinutes(new Date(2000, 0, 1, h, m), et.duration), "HH:mm"),
-      );
-    }
-  };
-
-  const handleStartTimeChange = (newStartTime: string) => {
-    setStartTime(newStartTime);
-    const [h, m] = newStartTime.split(":").map(Number);
-    if (!isNaN(h) && !isNaN(m)) {
-      setEndTime(
-        format(addMinutes(new Date(2000, 0, 1, h, m), duration), "HH:mm"),
-      );
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      setEndTime(format(addMinutes(d, durationMinutes), "HH:mm"));
     }
   };
 
   const handleSetDuration = (mins: number) => {
-    setDuration(mins);
     const [h, m] = startTime.split(":").map(Number);
     if (!isNaN(h) && !isNaN(m)) {
-      setEndTime(format(addMinutes(new Date(2000, 0, 1, h, m), mins), "HH:mm"));
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      setEndTime(format(addMinutes(d, mins), "HH:mm"));
+    }
+  };
+
+  const handleSelectTemplate = (et: EventType | null) => {
+    setSelectedEventType(et);
+    if (et) {
+      if (!title.trim() || title === "New Meeting") {
+        setTitle(et.name);
+      }
+      handleSetDuration(et.duration);
     }
   };
 
   const handleProjectChange = async (
-    projectId: string | null,
-    project?: ProjectOption | null,
+    projId: string | null,
+    option?: ProjectOption | null,
   ) => {
-    setSelectedProjectId(projectId);
-    setSelectedProject(project || null);
-
-    const prevAutoAddedSet = new Set(
-      autoAddedEmails.map((e) => e.toLowerCase()),
-    );
-
-    if (!projectId || !project?.teamId) {
-      if (prevAutoAddedSet.size > 0) {
-        setSelectedAttendees((prev) =>
-          prev.filter((a) => !prevAutoAddedSet.has(a.email.toLowerCase())),
-        );
-        setAutoAddedEmails([]);
-      }
-      return;
-    }
+    setSelectedProjectId(projId);
+    setSelectedProject(option || null);
+    if (!projId) return;
 
     try {
-      const res = await fetch(`/api/teams/${project.teamId}/members`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const members: Array<{
-        user?: {
-          id: string;
-          name: string;
-          email: string;
-          image?: string | null;
-        } | null;
-        name?: string;
-        email?: string;
-      }> = Array.isArray(data) ? data : data.data || [];
-
-      const newlyAdded: string[] = [];
-      const userEmail = session?.user?.email?.toLowerCase();
-
-      setSelectedAttendees((prev) => {
-        const baseAttendees =
-          prevAutoAddedSet.size > 0
-            ? prev.filter((a) => !prevAutoAddedSet.has(a.email.toLowerCase()))
-            : prev;
-
-        const existingEmails = new Set(
-          baseAttendees.map((a) => a.email.toLowerCase()),
-        );
-        const toAdd: SelectedAttendee[] = [];
-
-        for (const m of members) {
-          const email = m.user?.email || m.email;
-          if (!email) continue;
-          const lower = email.toLowerCase();
-          // Exclude the current organizer from being auto-added as an invitee
-          if (userEmail && lower === userEmail) continue;
-
-          if (!existingEmails.has(lower)) {
-            toAdd.push({
-              name: m.user?.name || m.name || email.split("@")[0],
-              email,
-              avatarUrl: m.user?.image || undefined,
-            });
-            existingEmails.add(lower);
-            newlyAdded.push(lower);
-          }
+      let teamId = option?.teamId;
+      if (!teamId) {
+        const projectList = await apiClient.projects.list();
+        const found = projectList.find((p) => p.id === projId);
+        teamId = found?.teamId;
+        if (found && !option) {
+          setSelectedProject({
+            id: found.id,
+            name: found.name,
+            slug: found.slug,
+            color: found.color,
+            teamId: found.teamId,
+            teamName: found.teamName,
+          });
         }
+      }
 
-        if (toAdd.length > 0) {
-          toast.info(
-            `Added ${toAdd.length} team member${toAdd.length > 1 ? "s" : ""} as invitees`,
+      if (!teamId) return;
+
+      const members = await apiClient.teams.members(teamId);
+      if (Array.isArray(members)) {
+        const currentUserId = session?.user?.id;
+        const currentUserEmail = session?.user?.email?.toLowerCase();
+
+        const teamAttendees: SelectedAttendee[] = members
+          .filter((m) => {
+            if (!m || !m.user || !m.user.email) return false;
+            const mEmail = m.user.email.toLowerCase();
+            // Exclude host / organizer from attendees list
+            if (currentUserEmail && mEmail === currentUserEmail) return false;
+            if (
+              currentUserId &&
+              (m.userId === currentUserId || m.user.id === currentUserId)
+            )
+              return false;
+            return true;
+          })
+          .map((m) => ({
+            id: m.userId,
+            name: m.user.name || m.user.email.split("@")[0],
+            email: m.user.email,
+            avatarUrl: m.user.image || undefined,
+          }));
+
+        setSelectedAttendees((prev) => {
+          // Exclude host if previously present
+          const filteredPrev = prev.filter((a) => {
+            const aEmail = a.email.toLowerCase();
+            if (currentUserEmail && aEmail === currentUserEmail) return false;
+            if (currentUserId && a.id === currentUserId) return false;
+            return true;
+          });
+          const existingEmails = new Set(
+            filteredPrev.map((a) => a.email.toLowerCase()),
           );
-        }
-        return [...baseAttendees, ...toAdd];
-      });
-
-      setAutoAddedEmails(newlyAdded);
+          const toAdd = teamAttendees.filter(
+            (a) => !existingEmails.has(a.email.toLowerCase()),
+          );
+          return [...filteredPrev, ...toAdd];
+        });
+      }
     } catch (err) {
       console.warn("Failed to fetch team members for project:", err);
     }
+  };
+
+  const calculateDatesToSchedule = (
+    baseStart: Date,
+    baseEnd: Date,
+  ): { start: string; end: string }[] => {
+    const dates: { start: string; end: string }[] = [];
+    if (repeatFrequency === "none") {
+      dates.push({
+        start: baseStart.toISOString(),
+        end: baseEnd.toISOString(),
+      });
+    } else if (repeatFrequency === "daily_workdays") {
+      let curr = new Date(baseStart);
+      let currEnd = new Date(baseEnd);
+      let count = 0;
+      while (count < 5) {
+        const day = curr.getDay();
+        if (day !== 0 && day !== 6) {
+          dates.push({ start: curr.toISOString(), end: currEnd.toISOString() });
+          count++;
+        }
+        curr = addDays(curr, 1);
+        currEnd = addDays(currEnd, 1);
+      }
+    } else if (repeatFrequency === "daily_all") {
+      for (let i = 0; i < 7; i++) {
+        dates.push({
+          start: addDays(baseStart, i).toISOString(),
+          end: addDays(baseEnd, i).toISOString(),
+        });
+      }
+    } else if (repeatFrequency === "weekly") {
+      for (let i = 0; i < 4; i++) {
+        dates.push({
+          start: addDays(baseStart, i * 7).toISOString(),
+          end: addDays(baseEnd, i * 7).toISOString(),
+        });
+      }
+    }
+    return dates;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -331,73 +328,127 @@ export function CalendarAddDialog({
 
     setIsSubmitting(true);
     try {
-      const startIso = new Date(`${dateStr}T${startTime}:00`).toISOString();
-      const endIso = new Date(`${dateStr}T${endTime}:00`).toISOString();
+      const baseStartDate = new Date(`${dateStr}T${startTime}:00`);
+      const baseEndDate = new Date(`${dateStr}T${endTime}:00`);
 
-      if (new Date(startIso) >= new Date(endIso)) {
+      if (isNaN(baseStartDate.getTime()) || isNaN(baseEndDate.getTime())) {
+        toast.error("Please enter a valid date and time");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (baseStartDate >= baseEndDate) {
         toast.error("End time must be after start time");
         setIsSubmitting(false);
         return;
       }
 
       const attendees = selectedAttendees.map((a) => a.email);
-
       const teamTag = selectedProject?.teamName?.trim();
       let cleanTitle = title.trim();
-      if (teamTag) {
-        if (cleanTitle.startsWith(`[${teamTag}]`)) {
-          cleanTitle = cleanTitle.slice(`[${teamTag}]`.length).trimStart();
-        }
+      if (teamTag && cleanTitle.startsWith(`[${teamTag}]`)) {
+        cleanTitle = cleanTitle.slice(`[${teamTag}]`.length).trimStart();
       }
       const finalTitle = teamTag ? `[${teamTag}] ${cleanTitle}` : cleanTitle;
 
-      const booking = await apiClient.bookings.create({
-        title: finalTitle,
-        description: description.trim() || undefined,
-        eventTypeId: selectedEventType?.id,
-        roomId: locationType === "room" ? selectedRoomId : undefined,
-        projectId: selectedProjectId || undefined,
-        startTime: startIso,
-        endTime: endIso,
-        attendees: attendees.length > 0 ? attendees : undefined,
-        organizerUserId: session?.user?.id || "usr_alex_rivera",
-      });
+      const datesToSchedule = calculateDatesToSchedule(
+        baseStartDate,
+        baseEndDate,
+      );
+      const isRecurring = datesToSchedule.length > 1;
+      const seriesId = isRecurring ? generateSeriesId() : undefined;
 
-      toast.success("Event scheduled successfully!");
-      onCreated?.();
+      const roomToAssign =
+        locationType === "room" && selectedRoomId.trim()
+          ? selectedRoomId.trim()
+          : undefined;
 
-      if (onAddEvent) {
-        onAddEvent({
-          id: booking.id,
-          title: booking.title,
-          start: new Date(booking.startTime),
-          end: new Date(booking.endTime),
-          color: "#0284c7",
-          data: {
-            category: "shared",
-            location:
-              locationType === "room"
-                ? rooms.find((r) => r.id === selectedRoomId)?.name
-                : "Google Meet",
-            description: booking.description ?? undefined,
-            meetingUrl: booking.meetingUrl ?? undefined,
-            projectId: booking.projectId || undefined,
-            attendees: selectedAttendees.map((a) => ({
-              name: a.name,
-              email: a.email,
-              avatar: a.avatarUrl,
-            })),
-          },
-        });
+      const createdBookings: { id: string }[] = [];
+      const createdEvents: CalendarEvent<CustomEventData>[] = [];
+
+      try {
+        for (const slot of datesToSchedule) {
+          const seriesTag = seriesId ? `<!--series:${seriesId}-->` : "";
+          const descText = description.trim();
+          const finalDescription = seriesTag
+            ? descText
+              ? `${descText}\n\n${seriesTag}`
+              : seriesTag
+            : descText || undefined;
+
+          const booking = await apiClient.bookings.create({
+            title: finalTitle,
+            description: finalDescription,
+            eventTypeId: selectedEventType?.id,
+            roomId: roomToAssign,
+            projectId: selectedProjectId || undefined,
+            startTime: slot.start,
+            endTime: slot.end,
+            attendees: attendees.length > 0 ? attendees : undefined,
+            organizerUserId: session?.user?.id || "usr_alex_rivera",
+          });
+
+          createdBookings.push(booking);
+
+          createdEvents.push({
+            id: booking.id,
+            title: booking.title,
+            start: new Date(booking.startTime),
+            end: new Date(booking.endTime),
+            color: "#0284c7",
+            recurringEventId: seriesId,
+            data: {
+              category: "shared",
+              location:
+                locationType === "room" && roomToAssign
+                  ? rooms.find((r) => r.id === roomToAssign)?.name ||
+                    "Meeting Room"
+                  : "Google Meet",
+              description: booking.description ?? undefined,
+              seriesId,
+              meetingUrl: booking.meetingUrl ?? undefined,
+              projectId: booking.projectId || undefined,
+              attendees: selectedAttendees.map((a) => ({
+                name: a.name,
+                email: a.email,
+                avatar: a.avatarUrl,
+              })),
+            },
+          });
+        }
+      } catch (loopErr) {
+        // Rollback already created bookings if any subsequent slot fails
+        if (createdBookings.length > 0) {
+          await Promise.allSettled(
+            createdBookings.map((b) =>
+              apiClient.bookings.cancel(b.id, { singleOnly: true }),
+            ),
+          );
+        }
+        throw loopErr;
       }
 
+      if (onAddEvent) {
+        for (const ev of createdEvents) {
+          onAddEvent(ev);
+        }
+      }
+
+      if (datesToSchedule.length > 1) {
+        toast.success(
+          `Scheduled ${datesToSchedule.length} recurring sessions!`,
+        );
+      } else {
+        toast.success("Event scheduled successfully!");
+      }
+
+      onCreated?.();
       setTitle("");
       setDescription("");
       setSelectedAttendees([]);
       setSelectedProjectId(null);
       setSelectedProject(null);
       setSelectedEventType(null);
-      setAutoAddedEmails([]);
       onOpenChange(false);
     } catch (err) {
       toast.error(
@@ -408,54 +459,24 @@ export function CalendarAddDialog({
     }
   };
 
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Schedule New Event</DialogTitle>
-          <DialogDescription>
-            Book a room or create a virtual meeting conference.
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-md">
+        <DialogHeader className="pb-0.5">
+          <DialogTitle className="text-base font-semibold">
+            New Event
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Create a calendar event
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          {/* Event Template Dropdown */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Event Template</Label>
-            <Select
-              value={selectedEventType?.id ?? "custom"}
-              onValueChange={(val) => {
-                if (!val || val === "custom") {
-                  handleSelectTemplate(null);
-                } else {
-                  const found = eventTypes.find((et) => et.id === val);
-                  handleSelectTemplate(found || null);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a template...">
-                  {selectedEventType
-                    ? `${selectedEventType.name} (${selectedEventType.duration}m)`
-                    : "Custom Event"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="custom">Custom Event</SelectItem>
-                {eventTypes.map((et) => (
-                  <SelectItem key={et.id} value={et.id}>
-                    {et.name} ({et.duration}m)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Title */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Title</Label>
+        <form onSubmit={handleSubmit} className="space-y-3 pt-1">
+          {/* Title with Team Prefix */}
+          <div className="space-y-1">
+            <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+              Title
+            </Label>
             <InputGroup className="h-9">
               {selectedProject?.teamName && (
                 <InputGroupAddon
@@ -466,11 +487,7 @@ export function CalendarAddDialog({
                 </InputGroupAddon>
               )}
               <InputGroupInput
-                placeholder={
-                  selectedProject?.teamName
-                    ? "Meeting topic (e.g. Sprint Planning)"
-                    : "e.g. Architecture Review"
-                }
+                placeholder="Event title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -480,195 +497,102 @@ export function CalendarAddDialog({
             </InputGroup>
           </div>
 
-          {/* Date & Time Fields */}
-          <div className="space-y-3">
-            {/* Date Field with Shadcn Calendar Popover */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Date</Label>
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "h-9 w-full justify-start px-3 text-left text-xs font-normal",
-                        !dateStr && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 size-3.5 shrink-0" />
-                      {dateObj ? format(dateObj, "PPP") : "Pick a date"}
-                    </Button>
-                  }
-                />
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateObj}
-                    onSelect={(date) => {
-                      if (date) {
-                        setDateStr(format(date, "yyyy-MM-dd"));
-                        setIsCalendarOpen(false);
-                      }
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Template & Project Picker Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+                Template
+              </Label>
+              <Select
+                value={selectedEventType?.id ?? "custom"}
+                onValueChange={(val) => {
+                  if (!val || val === "custom") handleSelectTemplate(null);
+                  else
+                    handleSelectTemplate(
+                      eventTypes.find((et) => et.id === val) || null,
+                    );
+                }}
+              >
+                <SelectTrigger className="h-8.5 w-full text-xs">
+                  <SelectValue placeholder="Custom">
+                    {selectedEventType
+                      ? `${selectedEventType.name} (${selectedEventType.duration}m)`
+                      : "Custom"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom</SelectItem>
+                  {eventTypes.map((et) => (
+                    <SelectItem key={et.id} value={et.id}>
+                      {et.name} ({et.duration}m)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Start Time & End Time */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Start Time */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Start Time</Label>
-                <Input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => handleStartTimeChange(e.target.value)}
-                  required
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              {/* End Time */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">End Time</Label>
-                <Input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  required
-                  className="h-9 text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Duration Shortcuts */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-              <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-normal">
-                <Clock className="size-3.5" />
-                <span>Duration:</span>
-                <strong className="text-foreground font-semibold">
-                  {durationMinutes >= 60
-                    ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60 ? `${durationMinutes % 60}m` : ""}`
-                    : `${durationMinutes} mins`}
-                </strong>
-              </span>
-
-              <div className="flex items-center gap-1">
-                {[15, 30, 45, 60, 90].map((mins) => (
-                  <Button
-                    key={mins}
-                    type="button"
-                    variant={durationMinutes === mins ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleSetDuration(mins)}
-                    className="h-7 px-2 text-[11px]"
-                  >
-                    {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                  </Button>
-                ))}
-              </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+                Project
+              </Label>
+              <CalendarProjectPicker
+                value={selectedProjectId}
+                onChange={handleProjectChange}
+                disabled={isSubmitting}
+                hideLabel
+              />
             </div>
           </div>
 
-          {/* Location Selection */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Location</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant={locationType === "virtual" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setLocationType("virtual")}
-                className="h-9 gap-2 text-xs"
-              >
-                <Video className="size-3.5" />
-                <span>Google Meet</span>
-              </Button>
+          {/* Date & Time Clean Card */}
+          <CalendarDateTimeSection
+            dateStr={dateStr}
+            onDateChange={setDateStr}
+            startTime={startTime}
+            onStartTimeChange={handleStartTimeChange}
+            endTime={endTime}
+            onEndTimeChange={setEndTime}
+            durationMinutes={durationMinutes}
+            onSetDuration={handleSetDuration}
+          />
 
-              <Button
-                type="button"
-                variant={locationType === "room" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setLocationType("room")}
-                className="h-9 gap-2 text-xs"
-              >
-                <Building2 className="size-3.5" />
-                <span>Physical Room</span>
-              </Button>
-            </div>
-
-            {locationType === "room" && (
-              <div className="pt-1">
-                <Select
-                  value={selectedRoomId}
-                  onValueChange={(val) => {
-                    if (val) setSelectedRoomId(val);
-                  }}
-                >
-                  <SelectTrigger className="w-full text-xs">
-                    <SelectValue placeholder="Select a room...">
-                      {selectedRoom
-                        ? `[${(selectedRoom.officeLocation || "hcm").toUpperCase()}] ${selectedRoom.name} (${selectedRoom.capacity} seats)`
-                        : "Select a room..."}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from(groupedRooms.entries()).map(
-                      ([loc, roomList]) => (
-                        <SelectGroup key={loc}>
-                          <SelectLabel className="text-muted-foreground px-2 py-1 text-[11px] font-semibold uppercase tracking-wider">
-                            {loc === "DN"
-                              ? "Da Nang Office (DN)"
-                              : loc === "HCM"
-                                ? "Ho Chi Minh Office (HCM)"
-                                : `${loc} Office`}
-                          </SelectLabel>
-                          {roomList.map((r) => (
-                            <SelectItem key={r.id} value={r.id}>
-                              <div className="flex w-full items-center justify-between gap-2 text-xs">
-                                <span className="font-medium">
-                                  [{loc}] {r.name}
-                                </span>
-                                <span className="text-muted-foreground shrink-0 text-[11px]">
-                                  {r.capacity} seats
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
-          {/* Project Selection */}
-          <CalendarProjectPicker
-            value={selectedProjectId}
-            onChange={handleProjectChange}
+          {/* Repeat Options */}
+          <CalendarRepeatOptions
+            frequency={repeatFrequency}
+            onChange={setRepeatFrequency}
             disabled={isSubmitting}
           />
 
-          {/* Invite Attendees */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Invite Attendees</Label>
+          {/* Location & Room */}
+          <CalendarLocationSection
+            locationType={locationType}
+            onLocationTypeChange={setLocationType}
+            selectedRoomId={selectedRoomId}
+            onRoomChange={setSelectedRoomId}
+            rooms={rooms}
+            disabled={isSubmitting}
+          />
+
+          {/* Invite Colleagues */}
+          <div className="space-y-1">
+            <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+              Attendees
+            </Label>
             <UserAutocompletePicker
               value={selectedAttendees}
               onChange={setSelectedAttendees}
-              placeholder="Search colleagues or enter email..."
+              placeholder="Add attendees..."
             />
           </div>
 
-          {/* Agenda & Notes */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Agenda & Notes</Label>
+          {/* Agenda / Notes */}
+          <div className="space-y-1">
+            <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+              Notes
+            </Label>
             <Textarea
-              rows={3}
-              placeholder="Add meeting agenda, context, or discussion topics..."
+              rows={2}
+              placeholder="Add notes..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="resize-none text-xs"
@@ -688,10 +612,10 @@ export function CalendarAddDialog({
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 size-3.5 animate-spin" />
-                  Scheduling...
+                  Saving...
                 </>
               ) : (
-                "Schedule Event"
+                "Save"
               )}
             </Button>
           </DialogFooter>
