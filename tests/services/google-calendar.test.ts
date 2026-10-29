@@ -8,7 +8,10 @@ describe("GoogleCalendarService", () => {
   beforeEach(() => {
     process.env.GOOGLE_ACCESS_TOKEN = "test-token";
 
-    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    globalThis.fetch = (async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
       const url = String(input);
 
       if (url.includes("/resources/calendars")) {
@@ -26,7 +29,7 @@ describe("GoogleCalendarService", () => {
               },
             ],
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
 
@@ -62,7 +65,7 @@ describe("GoogleCalendarService", () => {
               },
             ],
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
 
@@ -75,7 +78,10 @@ describe("GoogleCalendarService", () => {
             // ignore
           }
         }
-        const calendars: Record<string, { busy: Array<{ start: string; end: string }> }> = {};
+        const calendars: Record<
+          string,
+          { busy: Array<{ start: string; end: string }> }
+        > = {};
         for (const item of bodyObj.items || []) {
           calendars[item.id] = {
             busy: [
@@ -105,7 +111,7 @@ describe("GoogleCalendarService", () => {
             end: bodyObj.end,
             attendees: bodyObj.attendees,
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
 
@@ -121,7 +127,7 @@ describe("GoogleCalendarService", () => {
             end: bodyObj.end || { dateTime: "2026-10-16T11:00:00.000Z" },
             attendees: bodyObj.attendees || [],
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
 
@@ -144,11 +150,13 @@ describe("GoogleCalendarService", () => {
               },
             ],
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
 
-      return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+      });
     }) as unknown as typeof fetch;
   });
 
@@ -180,7 +188,9 @@ describe("GoogleCalendarService", () => {
   });
 
   test("searchDirectoryUsers returns empty array for non-matching query", async () => {
-    const users = await GoogleCalendarService.searchDirectoryUsers("nonexistent-user-xyz-999");
+    const users = await GoogleCalendarService.searchDirectoryUsers(
+      "nonexistent-user-xyz-999",
+    );
     expect(Array.isArray(users)).toBe(true);
     expect(users.length).toBe(0);
   });
@@ -188,13 +198,18 @@ describe("GoogleCalendarService", () => {
   test("getFreeBusy returns busy intervals per email", async () => {
     const now = new Date();
     const later = new Date(now.getTime() + 24 * 3600 * 1000);
-    const emails = ["test@example.com", "room-alpha@resource.calendar.google.com"];
+    const emails = [
+      "test@example.com",
+      "room-alpha@resource.calendar.google.com",
+    ];
     const result = await GoogleCalendarService.getFreeBusy(emails, now, later);
 
     expect(result).toHaveProperty(["test@example.com"]);
     expect(result).toHaveProperty(["room-alpha@resource.calendar.google.com"]);
     expect(Array.isArray(result["test@example.com"])).toBe(true);
-    expect(Array.isArray(result["room-alpha@resource.calendar.google.com"])).toBe(true);
+    expect(
+      Array.isArray(result["room-alpha@resource.calendar.google.com"]),
+    ).toBe(true);
   });
 
   test("getFreeBusy handles emails with dots in usernames and returns strictly arrays", async () => {
@@ -238,7 +253,7 @@ describe("GoogleCalendarService", () => {
     expect(typeof event.meetingUrl).toBe("string");
     expect(event.attendees.map((a) => a.email)).toContain("alex@example.com");
     expect(event.attendees.map((a) => a.email)).toContain(
-      "room-alpha@resource.calendar.google.com"
+      "room-alpha@resource.calendar.google.com",
     );
   });
 
@@ -281,7 +296,7 @@ describe("GoogleCalendarService", () => {
     const result = await GoogleCalendarService.getFreeBusy(
       ["alex@example.com", "user1@example.com", "other@example.com"],
       now,
-      later
+      later,
     );
 
     expect(Array.isArray(result["alex@example.com"])).toBe(true);
@@ -295,24 +310,35 @@ describe("GoogleCalendarService", () => {
       title: "Virtual Only Meeting",
       start: now,
       end: new Date(now.getTime() + 45 * 60 * 1000),
-      attendees: [{ email: "user1@example.com", name: "User One" }, "alex@example.com"],
+      attendees: [
+        { email: "user1@example.com", name: "User One" },
+        "alex@example.com",
+      ],
     });
 
     expect(event.attendees.length).toBeGreaterThanOrEqual(1);
-    expect(event.attendees.some((a) => a.email === "user1@example.com")).toBe(true);
+    expect(event.attendees.some((a) => a.email === "user1@example.com")).toBe(
+      true,
+    );
     expect(event.roomEmail).toBeUndefined();
   });
 
   test("getFreeBusy handles empty emails array", async () => {
-    const result = await GoogleCalendarService.getFreeBusy([], new Date(), new Date());
+    const result = await GoogleCalendarService.getFreeBusy(
+      [],
+      new Date(),
+      new Date(),
+    );
     expect(Object.keys(result).length).toBe(0);
   });
 
   test("listEvents returns array of calendar events", async () => {
     const events = await GoogleCalendarService.listEvents();
     expect(Array.isArray(events)).toBe(true);
-    expect(events.some((e) => e.id === "gcal_event_123" || e.summary === "Sync Team Standup")).toBe(
-      true
-    );
+    expect(
+      events.some(
+        (e) => e.id === "gcal_event_123" || e.summary === "Sync Team Standup",
+      ),
+    ).toBe(true);
   });
 });

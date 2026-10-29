@@ -4,7 +4,7 @@ interface RegisteredToolDef {
   description?: string;
   parameters?: { shape?: Record<string, unknown> };
   handler: (
-    args: Record<string, unknown>
+    args: Record<string, unknown>,
   ) => Promise<{ content: Array<{ type: string; text: string }> }>;
 }
 
@@ -28,7 +28,9 @@ async function main() {
     console.log(`   Description : ${def.description}`);
     const schema = def.parameters;
     const props = schema?.shape ? Object.keys(schema.shape) : [];
-    console.log(`   Parameters  : ${props.length > 0 ? props.join(", ") : "(None)"}`);
+    console.log(
+      `   Parameters  : ${props.length > 0 ? props.join(", ") : "(None)"}`,
+    );
     console.log("");
   }
 
@@ -38,9 +40,13 @@ async function main() {
   const roomResult = await tools.list_meeting_rooms.handler({});
   const rooms = JSON.parse(roomResult.content[0].text);
   console.log(`✅ Success! Found ${rooms.length} active meeting rooms.`);
-  rooms.slice(0, 3).forEach((r: { name: string; capacity: number; building?: string }) => {
-    console.log(`   - ${r.name} (${r.capacity} seats, Building: ${r.building || "N/A"})`);
-  });
+  rooms
+    .slice(0, 3)
+    .forEach((r: { name: string; capacity: number; building?: string }) => {
+      console.log(
+        `   - ${r.name} (${r.capacity} seats, Building: ${r.building || "N/A"})`,
+      );
+    });
 
   console.log("\n--------------------------------------------------");
   console.log("🔬 Executing test tool: `resolve_user` with query 'alex'...");

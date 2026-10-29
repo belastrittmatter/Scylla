@@ -12,12 +12,18 @@ interface CompiledUiBundle {
   readonly mtimeKey: number;
 }
 
-const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const serverRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const mcpUiDir = path.join(serverRoot, "src/components/mcp-ui");
 const sharedUiDir = path.join(serverRoot, "src/components/ui");
 const globalsCssPath = path.join(serverRoot, "src/app/globals.css");
 const bundleScriptPath = path.join(serverRoot, "scripts/bundle-mcp-ui.ts");
-const prebuiltBundlePath = path.join(serverRoot, ".mcp-cache/mcp-ui-bundle.json");
+const prebuiltBundlePath = path.join(
+  serverRoot,
+  ".mcp-cache/mcp-ui-bundle.json",
+);
 const nodeRequire = createRequire(path.join(serverRoot, "package.json"));
 
 let cachedBundle: CompiledUiBundle | null = null;
@@ -56,14 +62,31 @@ function getCompiledBundle(): CompiledUiBundle {
   const rawJson =
     isProd && fs.existsSync(prebuiltBundlePath)
       ? fs.readFileSync(prebuiltBundlePath, "utf-8")
-      : execFileSync(process.versions.bun ? process.execPath : "bun", ["run", bundleScriptPath], {
-          cwd: serverRoot,
-          encoding: "utf-8",
-          maxBuffer: 32 * 1024 * 1024,
-        });
-  const parsed = JSON.parse(rawJson) as { css: string; js: string; ssrJs: string };
-  const cjsMod = { exports: {} as { renderMcpView: (view: McpViewType, data: unknown) => string } };
-  const evaluateSsr = new Function("exports", "module", "require", parsed.ssrJs);
+      : execFileSync(
+          process.versions.bun ? process.execPath : "bun",
+          ["run", bundleScriptPath],
+          {
+            cwd: serverRoot,
+            encoding: "utf-8",
+            maxBuffer: 32 * 1024 * 1024,
+          },
+        );
+  const parsed = JSON.parse(rawJson) as {
+    css: string;
+    js: string;
+    ssrJs: string;
+  };
+  const cjsMod = {
+    exports: {} as {
+      renderMcpView: (view: McpViewType, data: unknown) => string;
+    },
+  };
+  const evaluateSsr = new Function(
+    "exports",
+    "module",
+    "require",
+    parsed.ssrJs,
+  );
   evaluateSsr(cjsMod.exports, cjsMod, nodeRequire);
 
   cachedBundle = {
@@ -79,7 +102,11 @@ function safeJsonSerialize(data: unknown): string {
   return JSON.stringify(data ?? null).replace(/</g, "\\u003c");
 }
 
-function buildMcpAppHtml(title: string, view: McpViewType, initialData?: unknown): string {
+function buildMcpAppHtml(
+  title: string,
+  view: McpViewType,
+  initialData?: unknown,
+): string {
   const { css, js, renderMcpView } = getCompiledBundle();
   const ssrHtml = renderMcpView(view, initialData);
   const safeDataJson = safeJsonSerialize(initialData);
@@ -106,7 +133,11 @@ export function getAgendaUiHtml(initialData?: unknown): string {
 }
 
 export function getScheduleUiHtml(initialData?: unknown): string {
-  return buildMcpAppHtml("calendar_schedule_comparison_app", "schedule", initialData);
+  return buildMcpAppHtml(
+    "calendar_schedule_comparison_app",
+    "schedule",
+    initialData,
+  );
 }
 
 export function getTaskBoardUiHtml(initialData?: unknown): string {

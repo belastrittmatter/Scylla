@@ -30,7 +30,11 @@ interface TaskTableRowProps {
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
 }
 
-export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRowProps) {
+export function TaskTableRow({
+  task,
+  onSelectTask,
+  onUpdateStatus,
+}: TaskTableRowProps) {
   const isDone = task.status === "done";
   const deadline = getDeadlineStatus(task.dueDate, isDone);
   const priorityInfo = getPriorityBadge(task.priority as TaskPriority);
@@ -42,7 +46,7 @@ export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRo
       onClick={() => onSelectTask?.(task)}
       className={cn(
         "cursor-pointer transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50",
-        isDone && "bg-neutral-50/30 opacity-80 dark:bg-neutral-900/30"
+        isDone && "bg-neutral-50/30 opacity-80 dark:bg-neutral-900/30",
       )}
     >
       <TableCell className="max-w-[340px] py-3">
@@ -56,14 +60,16 @@ export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRo
                 "truncate text-sm font-semibold",
                 isDone
                   ? "font-medium text-neutral-600 dark:text-neutral-400"
-                  : "text-neutral-900 dark:text-neutral-100"
+                  : "text-neutral-900 dark:text-neutral-100",
               )}
             >
               {task.title}
             </span>
           </div>
           {task.description && (
-            <span className="truncate text-xs text-neutral-500">{task.description}</span>
+            <span className="truncate text-xs text-neutral-500">
+              {task.description}
+            </span>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {task.project && (
@@ -72,7 +78,9 @@ export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRo
                   className="size-1.5 rounded-full"
                   style={{ backgroundColor: task.project.color || "#6366f1" }}
                 />
-                <span className="truncate text-[11px] text-neutral-400">{task.project.name}</span>
+                <span className="truncate text-[11px] text-neutral-400">
+                  {task.project.name}
+                </span>
               </div>
             )}
             {task.status === "in_progress" ? (
@@ -81,7 +89,10 @@ export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRo
                 className="gap-1.5 border-neutral-200/80 bg-neutral-50/70 px-2 py-0 text-[10px] font-medium text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-300"
               >
                 <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                <span>Tracking • Est: {formatEstimatedMinutes(task.estimatedMinutes)}</span>
+                <span>
+                  Tracking • Est:{" "}
+                  {formatEstimatedMinutes(task.estimatedMinutes)}
+                </span>
               </Badge>
             ) : (
               <span className="text-muted-foreground text-[11px]">
@@ -98,19 +109,27 @@ export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRo
         <div onClick={(e) => e.stopPropagation()}>
           <Select
             value={task.status}
-            onValueChange={(val) => val && onUpdateStatus(task.id, val as TaskStatus)}
+            onValueChange={(val) =>
+              val && onUpdateStatus(task.id, val as TaskStatus)
+            }
           >
             <SelectTrigger className="h-8 w-full border border-neutral-200/80 bg-neutral-50/70 text-xs font-medium hover:bg-neutral-100/70 dark:border-neutral-700 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/70">
               <SelectValue>
                 <span className="flex items-center gap-1.5 truncate">
-                  <span className={`size-2 shrink-0 rounded-full ${statusInfo.dotColor}`} />
+                  <span
+                    className={`size-2 shrink-0 rounded-full ${statusInfo.dotColor}`}
+                  />
                   <span>{statusInfo.label}</span>
                 </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {TASK_FORM_STATUSES.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="text-xs"
+                >
                   <div className="flex items-center gap-2">
                     <span className={`size-2 rounded-full ${opt.dot}`} />
                     <span>{opt.label}</span>
@@ -135,7 +154,10 @@ export function TaskTableRow({ task, onSelectTask, onUpdateStatus }: TaskTableRo
         {task.assignee ? (
           <div className="flex items-center gap-2">
             <Avatar className="size-6 text-[10px]">
-              <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
+              <AvatarImage
+                src={task.assignee.avatarUrl}
+                alt={task.assignee.name}
+              />
               <AvatarFallback className={avatarColor}>
                 {task.assignee.initials || "U"}
               </AvatarFallback>

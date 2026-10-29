@@ -1,0 +1,38 @@
+name: Proof of Work (PoW) Deliverable
+description: One of the 7 core proof-of-work checklist milestones.
+title: "[POW] Item #: "
+labels: ["type:pow", "ready"]
+body:
+  - type: dropdown
+    id: pow-item
+    attributes:
+      label: Proof-of-work Item
+      options:
+        - "Item 1: Own local MCP server with full JSON-RPC trace"
+        - "Item 2: Same server connected on two clients"
+        - "Item 3: OAuth flow (401, discovery, token, authenticated request)"
+        - "Item 4: Live two-client demo (Milestone Fri 16 Oct)"
+        - "Item 5: Tool-definition token cost reduction measurement"
+        - "Item 6: MCP Tasks with a long-running tool"
+        - "Item 7: Small product bridged to an AI client (4+ tools + auth)"
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts-location
+    attributes:
+      label: Target Capture / Artifact Directory
+      description: Target directory under `captures/` or `docs/`.
+      placeholder: "captures/1-tool-call-trace/"
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification & Evidence Required
+      value: |
+        - [ ] Working implementation committed
+        - [ ] Protocol traces / screenshots captured under `captures/`
+        - [ ] Explanation and spec citation documented in `docs/`
+        - [ ] Verified by peer review
+    validations:
+      required: true

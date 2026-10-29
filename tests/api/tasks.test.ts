@@ -1,5 +1,8 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
-import { GET as getTasksHandler, POST as createTaskHandler } from "../../src/app/api/tasks/route";
+import {
+  GET as getTasksHandler,
+  POST as createTaskHandler,
+} from "../../src/app/api/tasks/route";
 import {
   GET as getTaskHandler,
   PATCH as updateTaskHandler,
@@ -102,7 +105,9 @@ describe("Tasks REST API Endpoints", () => {
     const res = await createTaskHandler(req);
     expect(res.status).toBe(404);
     const data = await res.json();
-    expect(data.error).toContain('Team with id "non-existent-team-id" not found');
+    expect(data.error).toContain(
+      'Team with id "non-existent-team-id" not found',
+    );
   });
 
   test("POST /api/tasks - returns 404 when projectId does not belong to team", async () => {
@@ -120,11 +125,15 @@ describe("Tasks REST API Endpoints", () => {
     const res = await createTaskHandler(req);
     expect(res.status).toBe(404);
     const data = await res.json();
-    expect(data.error).toContain('Project with id "non-existent-project-id" not found');
+    expect(data.error).toContain(
+      'Project with id "non-existent-project-id" not found',
+    );
   });
 
   test("GET /api/tasks?teamId=... - lists tasks with filters", async () => {
-    const req = new Request(`http://localhost:3000/api/tasks?teamId=${teamId}&priority=high`);
+    const req = new Request(
+      `http://localhost:3000/api/tasks?teamId=${teamId}&priority=high`,
+    );
     const res = await getTasksHandler(req);
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -171,7 +180,9 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("DELETE /api/tasks/[id] - deletes task", async () => {
-    const req = new Request("http://localhost:3000/api/tasks", { method: "DELETE" });
+    const req = new Request("http://localhost:3000/api/tasks", {
+      method: "DELETE",
+    });
     const res = await deleteTaskHandler(req, { params: { id: createdTaskId } });
     expect(res.status).toBe(200);
 

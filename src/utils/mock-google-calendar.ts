@@ -26,7 +26,11 @@ export function isGoogleApiUrl(url: string): boolean {
   );
 }
 
-function handleEventMutation(url: string, method: string, body: Record<string, unknown>): Response {
+function handleEventMutation(
+  url: string,
+  method: string,
+  body: Record<string, unknown>,
+): Response {
   if (method === "POST") {
     const eventId = `gcal_mock_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     CalendarEventTracker.track(eventId);
@@ -38,10 +42,17 @@ function handleEventMutation(url: string, method: string, body: Record<string, u
       hangoutLink: "https://meet.google.com/abc-defg-hij",
       htmlLink: `https://calendar.google.com/calendar/event?eid=${eventId}`,
       conferenceData: {
-        entryPoints: [{ entryPointType: "video", uri: "https://meet.google.com/abc-defg-hij" }],
+        entryPoints: [
+          {
+            entryPointType: "video",
+            uri: "https://meet.google.com/abc-defg-hij",
+          },
+        ],
       },
       start: body.start || { dateTime: new Date().toISOString() },
-      end: body.end || { dateTime: new Date(Date.now() + 3600000).toISOString() },
+      end: body.end || {
+        dateTime: new Date(Date.now() + 3600000).toISOString(),
+      },
       attendees: body.attendees || [],
     };
     inMemoryEvents.set(eventId, event);
@@ -59,8 +70,12 @@ function handleEventMutation(url: string, method: string, body: Record<string, u
       summary: body.summary || existing.summary || "Updated Meeting",
       description: body.description ?? existing.description,
       hangoutLink: "https://meet.google.com/abc-defg-hij",
-      start: body.start || existing.start || { dateTime: new Date().toISOString() },
-      end: body.end || existing.end || { dateTime: new Date(Date.now() + 3600000).toISOString() },
+      start: body.start ||
+        existing.start || { dateTime: new Date().toISOString() },
+      end: body.end ||
+        existing.end || {
+          dateTime: new Date(Date.now() + 3600000).toISOString(),
+        },
       attendees: body.attendees || existing.attendees || [],
     };
     inMemoryEvents.set(eventId, updated);
@@ -121,7 +136,7 @@ function handleEventMutation(url: string, method: string, body: Record<string, u
 
 export function handleMockGoogleRequest(
   input: string | URL | Request,
-  init?: RequestInit
+  init?: RequestInit,
 ): Response {
   let url = "";
   let method = init?.method?.toUpperCase() || "GET";
@@ -133,7 +148,8 @@ export function handleMockGoogleRequest(
     url = input.toString();
   } else if (typeof (input as Request)?.url === "string") {
     url = (input as Request).url;
-    method = init?.method?.toUpperCase() || (input as Request).method.toUpperCase();
+    method =
+      init?.method?.toUpperCase() || (input as Request).method.toUpperCase();
   }
 
   let bodyObj: Record<string, unknown> = {};
@@ -161,7 +177,8 @@ export function handleMockGoogleRequest(
       users: q
         ? MOCK_DIRECTORY_USERS.filter(
             (u) =>
-              u.name.fullName.toLowerCase().includes(q) || u.primaryEmail.toLowerCase().includes(q)
+              u.name.fullName.toLowerCase().includes(q) ||
+              u.primaryEmail.toLowerCase().includes(q),
           )
         : MOCK_DIRECTORY_USERS,
     });
@@ -176,7 +193,10 @@ export function handleMockGoogleRequest(
   }
   if (url.includes("/freeBusy")) {
     const items = (bodyObj.items as Array<{ id: string }>) || [];
-    const calendars: Record<string, { busy: Array<{ start: string; end: string }> }> = {};
+    const calendars: Record<
+      string,
+      { busy: Array<{ start: string; end: string }> }
+    > = {};
     for (const item of items) calendars[item.id] = { busy: [] };
     return jsonRes({ calendars });
   }

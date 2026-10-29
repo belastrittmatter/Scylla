@@ -31,7 +31,10 @@ export function sanitizeHtml(html: string): string {
 
   // Remove dangerous tags and inline javascript event handlers
   let clean = html
-    .replace(/<(script|style|iframe|object|embed|form|input|button)[\s\S]*?<\/\1>/gi, "")
+    .replace(
+      /<(script|style|iframe|object|embed|form|input|button)[\s\S]*?<\/\1>/gi,
+      "",
+    )
     .replace(/<[^>]+>/g, (tag) => {
       // Remove any on* event handlers (e.g. onclick, onerror)
       return tag.replace(/\s+on\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
@@ -62,7 +65,9 @@ export function HtmlDescriptionViewer({
 }: HtmlDescriptionViewerProps) {
   if (!html || !html.trim()) {
     return (
-      <p className={`text-xs italic text-neutral-400 dark:text-neutral-500 ${className}`}>
+      <p
+        className={`text-xs italic text-neutral-400 dark:text-neutral-500 ${className}`}
+      >
         {emptyPlaceholder}
       </p>
     );

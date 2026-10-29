@@ -1,5 +1,11 @@
 import { db } from "@/db";
-import { eventType, schedule, user, booking, type EventType } from "@/db/schema";
+import {
+  eventType,
+  schedule,
+  user,
+  booking,
+  type EventType,
+} from "@/db/schema";
 import { asc, eq, and, gte, lte } from "drizzle-orm";
 import { GoogleCalendarService } from "./google-calendar";
 import { RoomService } from "./rooms";
@@ -38,7 +44,10 @@ const DEFAULT_WORKING_HOURS: WorkingHoursEntry[] = [
   { day: 5, start: "08:00", end: "18:00" }, // Fri
 ];
 
-function getZonedParts(date: Date, timeZone?: string): { day: number; minutes: number } {
+function getZonedParts(
+  date: Date,
+  timeZone?: string,
+): { day: number; minutes: number } {
   if (!timeZone) {
     return {
       day: date.getDay(),
@@ -116,13 +125,18 @@ export class SchedulerService {
         .where(eq(eventType.userId, userId))
         .orderBy(asc(eventType.duration), asc(eventType.name));
     }
-    return db.select().from(eventType).orderBy(asc(eventType.duration), asc(eventType.name));
+    return db
+      .select()
+      .from(eventType)
+      .orderBy(asc(eventType.duration), asc(eventType.name));
   }
 
   /**
    * Creates a new event type with a sanitized, unique slug.
    */
-  public static async createEventType(input: CreateEventTypeInput): Promise<EventType> {
+  public static async createEventType(
+    input: CreateEventTypeInput,
+  ): Promise<EventType> {
     const baseSlug = (input.slug || input.name || "meeting")
       .toLowerCase()
       .trim()
@@ -158,8 +172,14 @@ export class SchedulerService {
   /**
    * Lookup event type by slug.
    */
-  public static async getEventTypeBySlug(slug: string): Promise<EventType | null> {
-    const results = await db.select().from(eventType).where(eq(eventType.slug, slug)).limit(1);
+  public static async getEventTypeBySlug(
+    slug: string,
+  ): Promise<EventType | null> {
+    const results = await db
+      .select()
+      .from(eventType)
+      .where(eq(eventType.slug, slug))
+      .limit(1);
     return results[0] || null;
   }
 
@@ -167,7 +187,11 @@ export class SchedulerService {
    * Lookup event type by ID.
    */
   public static async getEventTypeById(id: string): Promise<EventType | null> {
-    const results = await db.select().from(eventType).where(eq(eventType.id, id)).limit(1);
+    const results = await db
+      .select()
+      .from(eventType)
+      .where(eq(eventType.id, id))
+      .limit(1);
     return results[0] || null;
   }
 
@@ -211,10 +235,18 @@ export class SchedulerService {
 
         if (att.includes("@")) {
           resolvedEmail = att.trim().toLowerCase();
-          const users = await db.select().from(user).where(eq(user.email, resolvedEmail)).limit(1);
+          const users = await db
+            .select()
+            .from(user)
+            .where(eq(user.email, resolvedEmail))
+            .limit(1);
           dbUser = users[0] || null;
         } else {
-          const users = await db.select().from(user).where(eq(user.id, att)).limit(1);
+          const users = await db
+            .select()
+            .from(user)
+            .where(eq(user.id, att))
+            .limit(1);
           if (users[0]) {
             dbUser = users[0];
             resolvedEmail = users[0].email;
@@ -234,7 +266,8 @@ export class SchedulerService {
               userId: dbUser.id,
               schedule: {
                 email: resolvedEmail,
-                timeZone: params.timeZone || scheds[0].timeZone || "Asia/Ho_Chi_Minh",
+                timeZone:
+                  params.timeZone || scheds[0].timeZone || "Asia/Ho_Chi_Minh",
                 workingHours: scheds[0].workingHours || DEFAULT_WORKING_HOURS,
               },
             };
@@ -250,7 +283,7 @@ export class SchedulerService {
             workingHours: DEFAULT_WORKING_HOURS,
           },
         };
-      })
+      }),
     );
 
     const attendeeEmails = resolvedAttendeeInfo.map((info) => info.email);
@@ -264,8 +297,12 @@ export class SchedulerService {
 
     if (params.prefetchedBusy) {
       for (const inv of params.prefetchedBusy) {
-        const bStart = typeof inv.start === "number" ? inv.start : new Date(inv.start).getTime();
-        const bEnd = typeof inv.end === "number" ? inv.end : new Date(inv.end).getTime();
+        const bStart =
+          typeof inv.start === "number"
+            ? inv.start
+            : new Date(inv.start).getTime();
+        const bEnd =
+          typeof inv.end === "number" ? inv.end : new Date(inv.end).getTime();
         if (bEnd > bStart) {
           busyIntervals.push({ start: bStart, end: bEnd });
         }
@@ -291,7 +328,7 @@ export class SchedulerService {
           calendarQueryEmails,
           startWindow,
           endWindow,
-          params.accessToken ? { accessToken: params.accessToken } : undefined
+          params.accessToken ? { accessToken: params.accessToken } : undefined,
         ),
         db
           .select()
@@ -300,8 +337,8 @@ export class SchedulerService {
             and(
               eq(booking.status, "confirmed"),
               gte(booking.endTime, startWindow),
-              lte(booking.startTime, endWindow)
-            )
+              lte(booking.startTime, endWindow),
+            ),
           ),
       ]);
 
@@ -317,10 +354,12 @@ export class SchedulerService {
       }
 
       for (const b of existingBookings) {
-        const isRoomConflict = Boolean(params.roomId && b.roomId === params.roomId);
+        const isRoomConflict = Boolean(
+          params.roomId && b.roomId === params.roomId,
+        );
         const isOrganizerConflict = attendeeUserIds.includes(b.organizerUserId);
         const isAttendeeConflict = (b.attendees || []).some((att) =>
-          attendeeEmails.includes(att.email.toLowerCase())
+          attendeeEmails.includes(att.email.toLowerCase()),
         );
 
         if (isRoomConflict || isOrganizerConflict || isAttendeeConflict) {
@@ -358,7 +397,9 @@ export class SchedulerService {
         const endZoned = getZonedParts(slotEnd, sched.timeZone);
 
         // Find working hours entry for this day
-        const dayWorkingHours = sched.workingHours.find((wh) => wh.day === startZoned.day);
+        const dayWorkingHours = sched.workingHours.find(
+          (wh) => wh.day === startZoned.day,
+        );
 
         if (!dayWorkingHours) {
           withinWorkingHours = false;
@@ -385,7 +426,7 @@ export class SchedulerService {
         const paddedEndMs = currentMs + durationMs + afterBufferMs;
 
         const hasCollision = busyIntervals.some(
-          (inv) => paddedStartMs < inv.end && paddedEndMs > inv.start
+          (inv) => paddedStartMs < inv.end && paddedEndMs > inv.start,
         );
 
         if (!hasCollision) {

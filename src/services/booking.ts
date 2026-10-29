@@ -32,7 +32,9 @@ export interface ReschedulePayload {
   description?: string;
 }
 
-function normalizeAttendees(attendees?: Array<string | BookingAttendee>): BookingAttendee[] {
+function normalizeAttendees(
+  attendees?: Array<string | BookingAttendee>,
+): BookingAttendee[] {
   if (!attendees) return [];
   return attendees.map((a) => {
     if (typeof a === "string") {
@@ -53,7 +55,9 @@ export class BookingService {
    * 2. Inserts the booking record into PostgreSQL.
    * 3. Rolls back Google Calendar event if the database transaction fails.
    */
-  public static async createBooking(payload: CreateBookingPayload): Promise<Booking> {
+  public static async createBooking(
+    payload: CreateBookingPayload,
+  ): Promise<Booking> {
     const start = new Date(payload.startTime);
     const end = new Date(payload.endTime);
 
@@ -68,7 +72,9 @@ export class BookingService {
 
     // Resolve room email and organizer's Google OAuth access token in parallel
     const [room, organizerToken] = await Promise.all([
-      payload.roomId ? RoomService.getRoomById(payload.roomId) : Promise.resolve(null),
+      payload.roomId
+        ? RoomService.getRoomById(payload.roomId)
+        : Promise.resolve(null),
       payload.organizerUserId
         ? (async () => {
             try {
@@ -76,19 +82,27 @@ export class BookingService {
                 .select()
                 .from(account)
                 .where(
-                  and(eq(account.userId, payload.organizerUserId), eq(account.providerId, "google"))
+                  and(
+                    eq(account.userId, payload.organizerUserId),
+                    eq(account.providerId, "google"),
+                  ),
                 )
                 .limit(1);
 
               if (userAccounts.length > 0) {
                 return (
-                  (await GoogleCalendarService.refreshAccountToken(userAccounts[0])) ||
+                  (await GoogleCalendarService.refreshAccountToken(
+                    userAccounts[0],
+                  )) ||
                   userAccounts[0].accessToken ||
                   undefined
                 );
               }
             } catch (tokenErr) {
-              console.warn("Could not retrieve organizer Google token:", tokenErr);
+              console.warn(
+                "Could not retrieve organizer Google token:",
+                tokenErr,
+              );
             }
             return undefined;
           })()
@@ -110,7 +124,7 @@ export class BookingService {
         roomEmail,
         conference: true,
       },
-      organizerToken
+      organizerToken,
     );
 
     try {
@@ -147,7 +161,10 @@ export class BookingService {
    * Reschedules an existing booking to new start and end times,
    * updating both the Google Calendar event and database record.
    */
-  public static async reschedule(id: string, payload: ReschedulePayload): Promise<Booking> {
+  public static async reschedule(
+    id: string,
+    payload: ReschedulePayload,
+  ): Promise<Booking> {
     const existing = await this.getBookingById(id);
     if (!existing) {
       throw new Error(`Booking with ID ${id} not found`);
@@ -157,7 +174,9 @@ export class BookingService {
       throw new Error("Cannot reschedule a cancelled booking");
     }
 
-    const start = payload.startTime ? new Date(payload.startTime) : existing.startTime;
+    const start = payload.startTime
+      ? new Date(payload.startTime)
+      : existing.startTime;
     const end = payload.endTime ? new Date(payload.endTime) : existing.endTime;
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
@@ -167,7 +186,8 @@ export class BookingService {
       throw new Error("startTime must be before endTime");
     }
 
-    const targetRoomId = payload.roomId !== undefined ? payload.roomId : existing.roomId;
+    const targetRoomId =
+      payload.roomId !== undefined ? payload.roomId : existing.roomId;
     let roomEmail: string | undefined;
     if (targetRoomId) {
       const room = await RoomService.getRoomById(targetRoomId);
@@ -178,9 +198,12 @@ export class BookingService {
 
     const targetProjectId =
       payload.projectId !== undefined ? payload.projectId : existing.projectId;
-    const targetTitle = payload.title !== undefined ? payload.title : existing.title;
+    const targetTitle =
+      payload.title !== undefined ? payload.title : existing.title;
     const targetDescription =
-      payload.description !== undefined ? payload.description : existing.description;
+      payload.description !== undefined
+        ? payload.description
+        : existing.description;
 
     // Sync changes to Google Calendar
     if (existing.gcalEventId) {
@@ -221,7 +244,9 @@ export class BookingService {
     }
 
     if (existing.gcalEventId) {
-      await GoogleCalendarService.deleteEvent(existing.gcalEventId).catch(() => {});
+      await GoogleCalendarService.deleteEvent(existing.gcalEventId).catch(
+        () => {},
+      );
     }
 
     const [cancelled] = await db
@@ -240,7 +265,10 @@ export class BookingService {
    * Retrieves user agenda for a specified date (all confirmed bookings
    * where user is organizer or attendee).
    */
-  public static async getAgenda(userId: string, date: Date | string): Promise<Booking[]> {
+  public static async getAgenda(
+    userId: string,
+    date: Date | string,
+  ): Promise<Booking[]> {
     const target = new Date(date);
     if (isNaN(target.getTime())) {
       throw new Error("Invalid date provided for agenda");
@@ -253,7 +281,7 @@ export class BookingService {
       0,
       0,
       0,
-      0
+      0,
     );
     const dayEnd = new Date(
       target.getFullYear(),
@@ -262,7 +290,7 @@ export class BookingService {
       23,
       59,
       59,
-      999
+      999,
     );
 
     const [userRecord, bookings] = await Promise.all([
@@ -274,8 +302,8 @@ export class BookingService {
           and(
             ne(booking.status, "cancelled"),
             gte(booking.startTime, dayStart),
-            lte(booking.startTime, dayEnd)
-          )
+            lte(booking.startTime, dayEnd),
+          ),
         )
         .orderBy(asc(booking.startTime)),
     ]);
@@ -295,7 +323,11 @@ export class BookingService {
    * Lookup a booking by ID.
    */
   public static async getBookingById(id: string): Promise<Booking | null> {
-    const results = await db.select().from(booking).where(eq(booking.id, id)).limit(1);
+    const results = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, id))
+      .limit(1);
     return results[0] || null;
   }
 }

@@ -83,7 +83,9 @@ describe("Frontend API Client Mapping", () => {
         endTime: "2026-10-22T11:00:00.000Z",
       });
       expect(updated.id).toBe(bookingId);
-      expect(new Date(updated.startTime).toISOString()).toBe("2026-10-22T10:00:00.000Z");
+      expect(new Date(updated.startTime).toISOString()).toBe(
+        "2026-10-22T10:00:00.000Z",
+      );
     });
 
     test("cancels booking via /api/bookings/[id]", async () => {
@@ -140,7 +142,8 @@ describe("Frontend API Client Mapping", () => {
       const matchingEvents = calendarRes.events.filter(
         (ev) =>
           ev.id === templateBooking.id ||
-          (templateBooking.gcalEventId && ev.id === `gcal-${templateBooking.gcalEventId}`)
+          (templateBooking.gcalEventId &&
+            ev.id === `gcal-${templateBooking.gcalEventId}`),
       );
       // Must appear exactly once, not twice
       expect(matchingEvents.length).toBe(1);
@@ -162,8 +165,8 @@ describe("Frontend API Client Mapping", () => {
           {
             userId: "usr_alex_rivera",
           },
-          { signal: controller.signal }
-        )
+          { signal: controller.signal },
+        ),
       ).rejects.toThrow();
     });
   });

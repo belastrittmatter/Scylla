@@ -55,7 +55,10 @@ export function HtmlDescriptionEditor({
     }
   }, [activeTab, content]);
 
-  const runCommand = (command: string, value: string | undefined = undefined) => {
+  const runCommand = (
+    command: string,
+    value: string | undefined = undefined,
+  ) => {
     if (activeTab !== "visual") return;
     visualEditorRef.current?.focus();
     document.execCommand(command, false, value);
@@ -84,7 +87,12 @@ export function HtmlDescriptionEditor({
         <div className="flex items-center gap-1">
           {TOOLBAR_ITEMS.map((item, idx) => {
             if ("divider" in item && item.divider) {
-              return <div key={idx} className="mx-1 h-4 w-px bg-neutral-200 dark:bg-neutral-700" />;
+              return (
+                <div
+                  key={idx}
+                  className="mx-1 h-4 w-px bg-neutral-200 dark:bg-neutral-700"
+                />
+              );
             }
             const Icon = item.icon!;
             return (
@@ -92,7 +100,9 @@ export function HtmlDescriptionEditor({
                 key={item.title}
                 type="button"
                 title={item.title}
-                onClick={() => (item.isLink ? handleInsertLink() : runCommand(item.cmd!))}
+                onClick={() =>
+                  item.isLink ? handleInsertLink() : runCommand(item.cmd!)
+                }
                 disabled={activeTab !== "visual"}
                 className="rounded-md p-1.5 text-neutral-700 transition-colors hover:bg-neutral-200 disabled:opacity-40 dark:text-neutral-300 dark:hover:bg-neutral-700"
               >

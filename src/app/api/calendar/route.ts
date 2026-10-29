@@ -2,7 +2,14 @@ import { GoogleCalendarService } from "@/services/google-calendar";
 import { SchedulerService } from "@/services/scheduler";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { account, booking, user, meetingRoom, project, team } from "@/db/schema";
+import {
+  account,
+  booking,
+  user,
+  meetingRoom,
+  project,
+  team,
+} from "@/db/schema";
 import { eq, or, inArray } from "drizzle-orm";
 import { reconcileDeletedGoogleEvents } from "@/utils/calendar-sync-reconciler";
 
@@ -17,7 +24,12 @@ export interface UnifiedCalendarEvent {
   color?: string;
   status?: string;
   category?: "all" | "shared" | "public" | "archived";
-  attendees?: Array<{ name?: string; email: string; avatar?: string; role?: string }>;
+  attendees?: Array<{
+    name?: string;
+    email: string;
+    avatar?: string;
+    role?: string;
+  }>;
   source?: "google" | "db";
   organizer?: { id?: string; name?: string; email?: string; avatar?: string };
   roomDetails?: {
@@ -79,7 +91,10 @@ export async function GET(req: Request) {
       (async () => {
         let acct = null;
         if (activeUserId) {
-          const accounts = await db.select().from(account).where(eq(account.userId, activeUserId));
+          const accounts = await db
+            .select()
+            .from(account)
+            .where(eq(account.userId, activeUserId));
           acct = accounts.find((a) => a.providerId === "google") || null;
         }
         if (!acct) {
@@ -102,7 +117,10 @@ export async function GET(req: Request) {
               .select()
               .from(booking)
               .where(
-                or(eq(booking.organizerUserId, activeUserId), eq(booking.userId, activeUserId))
+                or(
+                  eq(booking.organizerUserId, activeUserId),
+                  eq(booking.userId, activeUserId),
+                ),
               )
           : db.select().from(booking).limit(50),
       ]).catch((dbErr) => {
@@ -111,7 +129,10 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    const isOfficeOrWorkingLocation = (summary?: string, eventType?: string) => {
+    const isOfficeOrWorkingLocation = (
+      summary?: string,
+      eventType?: string,
+    ) => {
       if (eventType === "workingLocation") return true;
       if (!summary) return false;
       const s = summary.toLowerCase();
@@ -126,9 +147,19 @@ export async function GET(req: Request) {
 
     // Default time range: start of current month to 60 days ahead
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const startOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1,
+      0,
+      0,
+      0,
+      0,
+    );
     const defaultMin = startOfMonth.toISOString();
-    const defaultMax = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString();
+    const defaultMax = new Date(
+      now.getTime() + 60 * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     const timeMin = timeMinParam || defaultMin;
     const timeMax = timeMaxParam || defaultMax;
@@ -187,52 +218,56 @@ export async function GET(req: Request) {
             accessToken: googleAccount?.accessToken || undefined,
           });
           attendeeMetaMap.set(lowerEm, info);
-        })
+        }),
       );
     }
 
     // 1. Fetch live Google Calendar events (primary, attendee calendars, and free/busy) in parallel
     if (googleAccount) {
-      const [primaryResult, attendeeEventsResults, freeBusyResult] = await Promise.all([
-        GoogleCalendarService.listEvents("primary", {
-          accountRecord: googleAccount,
-          accessToken: googleAccount.accessToken || undefined,
-          timeMin,
-          timeMax,
-          maxResults: 100,
-          showDeleted: true,
-        })
-          .then((events) => ({ ok: true as const, events }))
-          .catch((gcalErr) => {
-            console.warn("Failed to fetch Google Calendar events:", gcalErr);
-            return { ok: false as const, events: [] };
-          }),
-        Promise.all(
-          attendeeEmails.map((attendeeEmail) =>
-            GoogleCalendarService.listEvents(attendeeEmail, {
-              accountRecord: googleAccount,
-              accessToken: googleAccount.accessToken || undefined,
-              timeMin,
-              timeMax,
-              maxResults: 100,
-            }).catch(() => null)
-          )
-        ),
-        attendeeEmails.length > 0
-          ? GoogleCalendarService.getFreeBusy(
-              attendeeEmails,
-              new Date(timeMin),
-              new Date(timeMax),
-              {
+      const [primaryResult, attendeeEventsResults, freeBusyResult] =
+        await Promise.all([
+          GoogleCalendarService.listEvents("primary", {
+            accountRecord: googleAccount,
+            accessToken: googleAccount.accessToken || undefined,
+            timeMin,
+            timeMax,
+            maxResults: 100,
+            showDeleted: true,
+          })
+            .then((events) => ({ ok: true as const, events }))
+            .catch((gcalErr) => {
+              console.warn("Failed to fetch Google Calendar events:", gcalErr);
+              return { ok: false as const, events: [] };
+            }),
+          Promise.all(
+            attendeeEmails.map((attendeeEmail) =>
+              GoogleCalendarService.listEvents(attendeeEmail, {
                 accountRecord: googleAccount,
                 accessToken: googleAccount.accessToken || undefined,
-              }
-            ).catch((fbErr) => {
-              console.warn("Failed to fetch Google Calendar free/busy for attendees:", fbErr);
-              return null;
-            })
-          : Promise.resolve(null),
-      ]);
+                timeMin,
+                timeMax,
+                maxResults: 100,
+              }).catch(() => null),
+            ),
+          ),
+          attendeeEmails.length > 0
+            ? GoogleCalendarService.getFreeBusy(
+                attendeeEmails,
+                new Date(timeMin),
+                new Date(timeMax),
+                {
+                  accountRecord: googleAccount,
+                  accessToken: googleAccount.accessToken || undefined,
+                },
+              ).catch((fbErr) => {
+                console.warn(
+                  "Failed to fetch Google Calendar free/busy for attendees:",
+                  fbErr,
+                );
+                return null;
+              })
+            : Promise.resolve(null),
+        ]);
 
       if (primaryResult.ok) {
         gcalFetchSucceeded = true;
@@ -257,7 +292,8 @@ export async function GET(req: Request) {
             id: `gcal-${ge.id}`,
             title: ge.summary || "Scheduled Event",
             description: ge.description,
-            location: ge.location || (ge.meetingUrl ? "Google Meet" : undefined),
+            location:
+              ge.location || (ge.meetingUrl ? "Google Meet" : undefined),
             meetingUrl: ge.meetingUrl || ge.hangoutsLink,
             start: ge.start.dateTime,
             end: ge.end.dateTime,
@@ -266,7 +302,9 @@ export async function GET(req: Request) {
             category: "shared",
             attendees: ge.attendees.map((a) => ({
               name:
-                a.name || attendeeMetaMap.get(a.email.toLowerCase())?.name || a.email.split("@")[0],
+                a.name ||
+                attendeeMetaMap.get(a.email.toLowerCase())?.name ||
+                a.email.split("@")[0],
               email: a.email,
             })),
             source: "google",
@@ -311,17 +349,22 @@ export async function GET(req: Request) {
             const exStartMs = new Date(existing.start).getTime();
             const exEndMs = new Date(existing.end).getTime();
             const timeMatches =
-              Math.abs(exStartMs - geStartMs) < 60000 && Math.abs(exEndMs - geEndMs) < 60000;
+              Math.abs(exStartMs - geStartMs) < 60000 &&
+              Math.abs(exEndMs - geEndMs) < 60000;
             if (!timeMatches) return false;
 
             const attendeeMatch = existing.attendees?.some(
-              (a) => a.email.toLowerCase() === attendeeEmail.toLowerCase()
+              (a) => a.email.toLowerCase() === attendeeEmail.toLowerCase(),
             );
             const titleMatch =
               ge.summary &&
               (existing.title === ge.summary ||
-                existing.title.toLowerCase().includes(ge.summary.toLowerCase()) ||
-                ge.summary.toLowerCase().includes(existing.title.toLowerCase()));
+                existing.title
+                  .toLowerCase()
+                  .includes(ge.summary.toLowerCase()) ||
+                ge.summary
+                  .toLowerCase()
+                  .includes(existing.title.toLowerCase()));
 
             return attendeeMatch || titleMatch;
           });
@@ -329,7 +372,7 @@ export async function GET(req: Request) {
           if (duplicateEvent) {
             if (
               !duplicateEvent.attendees?.some(
-                (a) => a.email.toLowerCase() === attendeeEmail.toLowerCase()
+                (a) => a.email.toLowerCase() === attendeeEmail.toLowerCase(),
               )
             ) {
               duplicateEvent.attendees = [
@@ -391,7 +434,9 @@ export async function GET(req: Request) {
       // 1c. Process Free/Busy blocks for selected attendees / rooms across the organization
       if (freeBusyResult) {
         let emailIndex = 0;
-        for (const [attendeeEmail, intervals] of Object.entries(freeBusyResult)) {
+        for (const [attendeeEmail, intervals] of Object.entries(
+          freeBusyResult,
+        )) {
           if (!Array.isArray(intervals)) continue;
           const color = ATTENDEE_COLORS[emailIndex % ATTENDEE_COLORS.length];
           const lowerEmail = attendeeEmail.toLowerCase();
@@ -406,7 +451,8 @@ export async function GET(req: Request) {
             const intStartMs = new Date(interval.start).getTime();
             const intEndMs = new Date(interval.end).getTime();
 
-            if (isNaN(intStartMs) || isNaN(intEndMs) || intStartMs >= intEndMs) continue;
+            if (isNaN(intStartMs) || isNaN(intEndMs) || intStartMs >= intEndMs)
+              continue;
 
             // Ignore 24h+ intervals (all-day status blocks that might leak from free/busy)
             if (intEndMs - intStartMs >= 24 * 60 * 60 * 1000) continue;
@@ -417,7 +463,7 @@ export async function GET(req: Request) {
             // Check if we already have an event covering this interval for this attendee (using timestamp millisecond comparison)
             const alreadyCovered = unifiedEvents.some((ev) => {
               const matchesAttendee = ev.attendees?.some(
-                (a) => a.email.toLowerCase() === lowerEmail
+                (a) => a.email.toLowerCase() === lowerEmail,
               );
               if (!matchesAttendee) return false;
 
@@ -425,14 +471,17 @@ export async function GET(req: Request) {
               const evEndMs = new Date(ev.end).getTime();
 
               return (
-                Math.abs(evStartMs - intStartMs) < 60000 && Math.abs(evEndMs - intEndMs) < 60000
+                Math.abs(evStartMs - intStartMs) < 60000 &&
+                Math.abs(evEndMs - intEndMs) < 60000
               );
             });
 
             if (alreadyCovered) continue;
             seenEventIds.add(eventId);
 
-            const title = meta.isResource ? `${meta.name} (Occupied)` : `Busy: ${meta.name}`;
+            const title = meta.isResource
+              ? `${meta.name} (Occupied)`
+              : `Busy: ${meta.name}`;
 
             const description = meta.isResource
               ? `Reserved meeting room: ${meta.name}${
@@ -473,7 +522,11 @@ export async function GET(req: Request) {
 
         // Extract referenced project IDs and fetch only necessary project & team info
         const projectIds = Array.from(
-          new Set(dbBookings.map((b) => b.projectId).filter((id): id is string => Boolean(id)))
+          new Set(
+            dbBookings
+              .map((b) => b.projectId)
+              .filter((id): id is string => Boolean(id)),
+          ),
         );
 
         const dbProjects =
@@ -498,7 +551,8 @@ export async function GET(req: Request) {
         let newlyCancelledBookingIds = new Set<string>();
         if (googleAccount && gcalFetchSucceeded) {
           const eligibleBookings = dbBookings.filter(
-            (b) => !b.organizerUserId || b.organizerUserId === googleAccount.userId
+            (b) =>
+              !b.organizerUserId || b.organizerUserId === googleAccount.userId,
           );
           newlyCancelledBookingIds = await reconcileDeletedGoogleEvents({
             bookings: eligibleBookings,
@@ -519,8 +573,11 @@ export async function GET(req: Request) {
           const bEndMs = new Date(b.endTime).getTime();
 
           const room = b.roomId ? roomMap.get(b.roomId) : undefined;
-          const orgUser = b.organizerUserId ? userMap.get(b.organizerUserId) : undefined;
-          const locationName = room?.name || (b.meetingUrl ? "Google Meet" : undefined);
+          const orgUser = b.organizerUserId
+            ? userMap.get(b.organizerUserId)
+            : undefined;
+          const locationName =
+            room?.name || (b.meetingUrl ? "Google Meet" : undefined);
           const roomDetails = room
             ? {
                 id: room.id,
@@ -544,19 +601,19 @@ export async function GET(req: Request) {
             : undefined;
 
           const attendeesRaw = Array.isArray(b.attendees) ? b.attendees : [];
-          const enrichedAttendees = (attendeesRaw as Array<{ name?: string; email: string }>).map(
-            (a) => {
-              const matchedUser = dbUsers.find(
-                (u) => u.email.toLowerCase() === a.email.toLowerCase()
-              );
-              return {
-                name: a.name || matchedUser?.name || a.email.split("@")[0],
-                email: a.email,
-                avatar: matchedUser?.image || undefined,
-                role: matchedUser ? "Member" : "Guest",
-              };
-            }
-          );
+          const enrichedAttendees = (
+            attendeesRaw as Array<{ name?: string; email: string }>
+          ).map((a) => {
+            const matchedUser = dbUsers.find(
+              (u) => u.email.toLowerCase() === a.email.toLowerCase(),
+            );
+            return {
+              name: a.name || matchedUser?.name || a.email.split("@")[0],
+              email: a.email,
+              avatar: matchedUser?.image || undefined,
+              role: matchedUser ? "Member" : "Guest",
+            };
+          });
 
           const proj = b.projectId ? projectMap.get(b.projectId) : undefined;
           const projectDetails = proj
@@ -582,15 +639,24 @@ export async function GET(req: Request) {
             const evStartMs = new Date(ev.start).getTime();
             const evEndMs = new Date(ev.end).getTime();
             const isTimeMatch =
-              Math.abs(evStartMs - bStartMs) < 60000 && Math.abs(evEndMs - bEndMs) < 60000;
+              Math.abs(evStartMs - bStartMs) < 60000 &&
+              Math.abs(evEndMs - bEndMs) < 60000;
 
             if (isTimeMatch) {
               const evTitle = (ev.title || "").trim().toLowerCase();
               const bTitle = (b.title || "").trim().toLowerCase();
-              if (evTitle === bTitle || evTitle.includes(bTitle) || bTitle.includes(evTitle)) {
+              if (
+                evTitle === bTitle ||
+                evTitle.includes(bTitle) ||
+                bTitle.includes(evTitle)
+              ) {
                 return true;
               }
-              if (b.meetingUrl && ev.meetingUrl && b.meetingUrl === ev.meetingUrl) {
+              if (
+                b.meetingUrl &&
+                ev.meetingUrl &&
+                b.meetingUrl === ev.meetingUrl
+              ) {
                 return true;
               }
             }
@@ -613,11 +679,15 @@ export async function GET(req: Request) {
               title: b.title || existing.title,
               description: b.description || existing.description,
               location: locationName || existing.location,
-              meetingUrl: b.meetingUrl || b.googleMeetUrl || existing.meetingUrl,
+              meetingUrl:
+                b.meetingUrl || b.googleMeetUrl || existing.meetingUrl,
               status: b.status || existing.status,
               roomDetails: roomDetails || existing.roomDetails,
               organizer: organizer || existing.organizer,
-              attendees: enrichedAttendees.length > 0 ? enrichedAttendees : existing.attendees,
+              attendees:
+                enrichedAttendees.length > 0
+                  ? enrichedAttendees
+                  : existing.attendees,
               projectId: b.projectId || undefined,
               project: projectDetails,
               color: projectDetails?.color || "#2563eb",
@@ -667,23 +737,29 @@ export async function GET(req: Request) {
         events: unifiedEvents,
         workingHours: scheduleInfo.workingHours,
         timeZone: scheduleInfo.timeZone,
-        googleConnected: Boolean(googleAccount?.accessToken || googleAccount?.refreshToken),
+        googleConnected: Boolean(
+          googleAccount?.accessToken || googleAccount?.refreshToken,
+        ),
       },
       {
         status: 200,
         headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
           Pragma: "no-cache",
           Expires: "0",
         },
-      }
+      },
     );
   } catch (err) {
     return Response.json(
       {
-        error: err instanceof Error ? err.message : "Failed to fetch calendar events",
+        error:
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch calendar events",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

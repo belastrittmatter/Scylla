@@ -51,7 +51,10 @@ interface ProjectStatusBadgeProps {
   onStatusChange?: (newStatus: ProjectStatus) => void;
 }
 
-export function ProjectStatusBadge({ status, onStatusChange }: ProjectStatusBadgeProps) {
+export function ProjectStatusBadge({
+  status,
+  onStatusChange,
+}: ProjectStatusBadgeProps) {
   const config = PROJECT_STATUS_CONFIG[status] || PROJECT_STATUS_CONFIG.active;
 
   if (!onStatusChange) {

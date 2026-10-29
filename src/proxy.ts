@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
   const isProtectedPage =
     pathname === "/" ||
     PROTECTED_PAGE_PREFIXES.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
     );
 
   if (isProtectedPage && !sessionCookie) {
@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
 
   // 2. Chặn các API yêu cầu đăng nhập nếu không có session
   const isProtectedApi = PROTECTED_API_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
   const isBypassAllowed =
@@ -53,7 +53,10 @@ export async function proxy(request: NextRequest) {
   }
 
   // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào homepage /
-  if (sessionCookie && (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")) {
+  if (
+    sessionCookie &&
+    (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")
+  ) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

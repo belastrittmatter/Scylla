@@ -49,7 +49,10 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
   const segments = rawSegments.length > 0 ? rawSegments : ["calendar"];
 
   const items = segments.map((seg, index) => {
-    const path = rawSegments.length === 0 ? "/" : "/" + segments.slice(0, index + 1).join("/");
+    const path =
+      rawSegments.length === 0
+        ? "/"
+        : "/" + segments.slice(0, index + 1).join("/");
     const isLast = index === segments.length - 1;
     const custom = customLabels[seg] || customLabels[decodeURIComponent(seg)];
     const label = isLast && title ? title : custom || formatSegment(seg);
@@ -85,7 +88,10 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
   );
 }
 
-export function ViewHeader({ title, parent = WORKSPACE_INFO.brand }: ViewHeaderProps) {
+export function ViewHeader({
+  title,
+  parent = WORKSPACE_INFO.brand,
+}: ViewHeaderProps) {
   return (
     <div className="sticky top-0 z-20 flex items-center justify-between border-b border-black/[0.06] bg-white/80 px-5 py-3 backdrop-blur-md transition-colors dark:border-white/[0.08] dark:bg-neutral-900/80">
       <div className="flex items-center gap-1.5">

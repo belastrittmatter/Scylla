@@ -1,12 +1,20 @@
 "use client";
 
-import { createQrCodeSvgData, getEmailProviderLink } from "@better-auth-ui/core";
+import {
+  createQrCodeSvgData,
+  getEmailProviderLink,
+} from "@better-auth-ui/core";
 import { useAuth } from "@better-auth-ui/react";
 import type { VariantProps } from "class-variance-authority";
 import { QrCode } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "cn";
 
 export type OpenEmailButtonProps = {
@@ -35,7 +43,11 @@ export type OpenEmailButtonProps = {
  * @param variant - Button variant. Defaults to the primary style.
  * @returns The open-email button, or `null` when no provider matches.
  */
-export function OpenEmailButton({ email, className, variant }: OpenEmailButtonProps) {
+export function OpenEmailButton({
+  email,
+  className,
+  variant,
+}: OpenEmailButtonProps) {
   const { localization } = useAuth();
 
   const provider = getEmailProviderLink(email);
@@ -46,7 +58,7 @@ export function OpenEmailButton({ email, className, variant }: OpenEmailButtonPr
 
   const scanLabel = localization.auth.scanToOpenEmailProvider.replace(
     "{{provider}}",
-    provider.companyProvider
+    provider.companyProvider,
   );
 
   return (
@@ -55,12 +67,20 @@ export function OpenEmailButton({ email, className, variant }: OpenEmailButtonPr
         <TooltipTrigger
           type="button"
           className={cn(buttonVariants({ variant }), "w-full", className)}
-          onClick={() => window.open(provider.loginUrl, "_blank", "noopener,noreferrer")}
+          onClick={() =>
+            window.open(provider.loginUrl, "_blank", "noopener,noreferrer")
+          }
         >
-          {localization.auth.openEmailProvider.replace("{{provider}}", provider.companyProvider)}
+          {localization.auth.openEmailProvider.replace(
+            "{{provider}}",
+            provider.companyProvider,
+          )}
           <QrCode data-icon="inline-end" />
         </TooltipTrigger>
-        <TooltipContent sideOffset={8} className="flex-col items-center gap-2 p-3">
+        <TooltipContent
+          sideOffset={8}
+          className="flex-col items-center gap-2 p-3"
+        >
           <svg
             viewBox={`0 0 ${qrCode.size} ${qrCode.size}`}
             aria-hidden="true"

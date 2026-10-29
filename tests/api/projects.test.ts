@@ -86,12 +86,14 @@ describe("Projects REST API Endpoints", () => {
     const res = await createProjectHandler(req);
     expect(res.status).toBe(404);
     const data = await res.json();
-    expect(data.error).toContain('Team with id "non-existent-team-id" not found');
+    expect(data.error).toContain(
+      'Team with id "non-existent-team-id" not found',
+    );
   });
 
   test("GET /api/projects?teamId=...&status=invalid - returns 400 for invalid status parameter", async () => {
     const req = new Request(
-      `http://localhost:3000/api/projects?teamId=${teamId}&status=not_a_valid_status`
+      `http://localhost:3000/api/projects?teamId=${teamId}&status=not_a_valid_status`,
     );
     const res = await getProjectsHandler(req);
     expect(res.status).toBe(400);
@@ -100,12 +102,16 @@ describe("Projects REST API Endpoints", () => {
   });
 
   test("GET /api/projects?teamId=... - lists projects by team", async () => {
-    const req = new Request(`http://localhost:3000/api/projects?teamId=${teamId}`);
+    const req = new Request(
+      `http://localhost:3000/api/projects?teamId=${teamId}`,
+    );
     const res = await getProjectsHandler(req);
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(Array.isArray(data)).toBe(true);
-    expect(data.some((p: { id: string }) => p.id === createdProjectId)).toBe(true);
+    expect(data.some((p: { id: string }) => p.id === createdProjectId)).toBe(
+      true,
+    );
   });
 
   test("GET /api/projects (no teamId) - returns 401 when unauthenticated", async () => {
@@ -116,7 +122,7 @@ describe("Projects REST API Endpoints", () => {
 
   test("GET /api/projects?teamId=...&slug=... - retrieves project by slug", async () => {
     const req = new Request(
-      `http://localhost:3000/api/projects?teamId=${teamId}&slug=${projectSlug}`
+      `http://localhost:3000/api/projects?teamId=${teamId}&slug=${projectSlug}`,
     );
     const res = await getProjectsHandler(req);
     expect(res.status).toBe(200);
@@ -126,7 +132,9 @@ describe("Projects REST API Endpoints", () => {
 
   test("GET /api/projects/[id] - retrieves project by id", async () => {
     const req = new Request("http://localhost:3000/api/projects");
-    const res = await getProjectHandler(req, { params: { id: createdProjectId } });
+    const res = await getProjectHandler(req, {
+      params: { id: createdProjectId },
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.id).toBe(createdProjectId);
@@ -136,10 +144,15 @@ describe("Projects REST API Endpoints", () => {
     const req = new Request("http://localhost:3000/api/projects", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Updated Infrastructure", description: "Updated desc" }),
+      body: JSON.stringify({
+        name: "Updated Infrastructure",
+        description: "Updated desc",
+      }),
     });
 
-    const res = await updateProjectHandler(req, { params: { id: createdProjectId } });
+    const res = await updateProjectHandler(req, {
+      params: { id: createdProjectId },
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.name).toBe("Updated Infrastructure");
@@ -147,11 +160,17 @@ describe("Projects REST API Endpoints", () => {
   });
 
   test("DELETE /api/projects/[id] - deletes project", async () => {
-    const req = new Request("http://localhost:3000/api/projects", { method: "DELETE" });
-    const res = await deleteProjectHandler(req, { params: { id: createdProjectId } });
+    const req = new Request("http://localhost:3000/api/projects", {
+      method: "DELETE",
+    });
+    const res = await deleteProjectHandler(req, {
+      params: { id: createdProjectId },
+    });
     expect(res.status).toBe(200);
 
-    const getRes = await getProjectHandler(req, { params: { id: createdProjectId } });
+    const getRes = await getProjectHandler(req, {
+      params: { id: createdProjectId },
+    });
     expect(getRes.status).toBe(404);
   });
 });

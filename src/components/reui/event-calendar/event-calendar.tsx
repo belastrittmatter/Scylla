@@ -74,7 +74,8 @@ const EMPTY_SELECTION: EventCalendarSelection = { eventKeys: [], slot: null };
 // starts whenever weekendDays changes identity). Shared, never mutated.
 const DEFAULT_WEEKEND_DAYS: number[] = [0, 6];
 const EMPTY_RESOURCES: EventCalendarResource[] = [];
-const DEFAULT_EVENT_PRIORITY = (event: CalendarEvent<never>) => event.priority ?? 0;
+const DEFAULT_EVENT_PRIORITY = (event: CalendarEvent<never>) =>
+  event.priority ?? 0;
 
 // Priority-aware default order, cached on the resolver identity: eventOrder is
 // part of the index cache key, so a fresh closure per render would rebuild the
@@ -82,25 +83,34 @@ const DEFAULT_EVENT_PRIORITY = (event: CalendarEvent<never>) => event.priority ?
 const priorityOrderCache = new WeakMap<object, unknown>();
 type EventOrder<TData> = (
   a: EventCalendarOccurrence<TData>,
-  b: EventCalendarOccurrence<TData>
+  b: EventCalendarOccurrence<TData>,
 ) => number;
 function priorityEventOrder<TData>(
-  getEventPriority: (event: CalendarEvent<TData>) => number
+  getEventPriority: (event: CalendarEvent<TData>) => number,
 ): EventOrder<TData> {
   const cached = priorityOrderCache.get(getEventPriority);
   if (cached) return cached as EventOrder<TData>;
   // higher priority packs and orders first; ties fall through to the
   // start/duration/key default
   const order: EventOrder<TData> = (a, b) =>
-    getEventPriority(b.event) - getEventPriority(a.event) || defaultEventOrder(a, b);
+    getEventPriority(b.event) - getEventPriority(a.event) ||
+    defaultEventOrder(a, b);
   priorityOrderCache.set(getEventPriority, order);
   return order;
 }
 
 interface EventCalendarCallbacks<TData = unknown> {
-  onEventClick?: (occurrence: EventCalendarOccurrence<TData>, e: React.MouseEvent) => void;
-  onEventDoubleClick?: (occurrence: EventCalendarOccurrence<TData>, e: React.MouseEvent) => void;
-  onEventUpdate?: (update: EventCalendarProposedUpdate<TData>) => EventCalendarUpdateResult;
+  onEventClick?: (
+    occurrence: EventCalendarOccurrence<TData>,
+    e: React.MouseEvent,
+  ) => void;
+  onEventDoubleClick?: (
+    occurrence: EventCalendarOccurrence<TData>,
+    e: React.MouseEvent,
+  ) => void;
+  onEventUpdate?: (
+    update: EventCalendarProposedUpdate<TData>,
+  ) => EventCalendarUpdateResult;
   canDropEvent?: (update: EventCalendarProposedUpdate<TData>) => boolean;
   /**
    * A move/resize was attempted on an event that cannot be dragged (readOnly,
@@ -114,7 +124,7 @@ interface EventCalendarCallbacks<TData = unknown> {
     info: {
       gesture: "move" | "resize";
       reason: "readOnly" | "disabled" | "interactions-off";
-    }
+    },
   ) => void;
   onSlotClick?: (slot: EventCalendarSlotInfo, e: React.MouseEvent) => void;
   onSelectSlot?: (slot: EventCalendarSlotDraft) => void;
@@ -130,11 +140,13 @@ interface EventCalendarCallbacks<TData = unknown> {
   onMoreClick?: (
     day: Date,
     segments: EventCalendarOccurrence<TData>[],
-    e: React.MouseEvent
+    e: React.MouseEvent,
   ) => void | false;
 }
 
-interface UseEventCalendarStateOptions<TData = unknown> extends EventCalendarCallbacks<TData> {
+interface UseEventCalendarStateOptions<
+  TData = unknown,
+> extends EventCalendarCallbacks<TData> {
   events?: CalendarEvent<TData>[];
   defaultEvents?: CalendarEvent<TData>[];
   view?: CalendarView;
@@ -165,11 +177,14 @@ interface UseEventCalendarStateOptions<TData = unknown> extends EventCalendarCal
   /** Bookable resources for the resource view. */
   resources?: EventCalendarResource[];
   getEventPriority?: (event: CalendarEvent<TData>) => number;
-  eventOrder?: (a: EventCalendarOccurrence<TData>, b: EventCalendarOccurrence<TData>) => number;
+  eventOrder?: (
+    a: EventCalendarOccurrence<TData>,
+    b: EventCalendarOccurrence<TData>,
+  ) => number;
   getOccurrences?: (
     event: CalendarEvent<TData>,
     range: EventCalendarDateRange,
-    ctx: { timeZone: string }
+    ctx: { timeZone: string },
   ) => Array<{ start: Date; end: Date }> | null;
   /**
    * Weekday numbers (0 = Sunday) treated as the weekend by the "weekends"
@@ -194,7 +209,9 @@ interface EventCalendarActivationConfig {
  * controlled/uncontrolled state pairs, with defaults applied and i18n merged.
  * Read via ref semantics - callback identity changes never re-render the grid.
  */
-interface EventCalendarSettings<TData = unknown> extends EventCalendarCallbacks<TData> {
+interface EventCalendarSettings<
+  TData = unknown,
+> extends EventCalendarCallbacks<TData> {
   timeZone: string;
   locale?: Locale;
   weekStartsOn: WeekStartsOn;
@@ -211,11 +228,14 @@ interface EventCalendarSettings<TData = unknown> extends EventCalendarCallbacks<
   weekendDays: number[];
   activation?: Partial<EventCalendarActivationConfig>;
   getEventPriority: (event: CalendarEvent<TData>) => number;
-  eventOrder: (a: EventCalendarOccurrence<TData>, b: EventCalendarOccurrence<TData>) => number;
+  eventOrder: (
+    a: EventCalendarOccurrence<TData>,
+    b: EventCalendarOccurrence<TData>,
+  ) => number;
   getOccurrences?: (
     event: CalendarEvent<TData>,
     range: EventCalendarDateRange,
-    ctx: { timeZone: string }
+    ctx: { timeZone: string },
   ) => Array<{ start: Date; end: Date }> | null;
 }
 
@@ -230,9 +250,14 @@ interface EventCalendarApi<TData = unknown> {
   getEvent(id: EventCalendarEventId): CalendarEvent<TData> | undefined;
   setEvents(events: CalendarEvent<TData>[]): void;
   addEvent(event: CalendarEvent<TData>): void;
-  updateEvent(id: EventCalendarEventId, patch: Partial<CalendarEvent<TData>>): void;
+  updateEvent(
+    id: EventCalendarEventId,
+    patch: Partial<CalendarEvent<TData>>,
+  ): void;
   removeEvent(id: EventCalendarEventId): void;
-  getOccurrences(range?: EventCalendarDateRange): EventCalendarOccurrence<TData>[];
+  getOccurrences(
+    range?: EventCalendarDateRange,
+  ): EventCalendarOccurrence<TData>[];
   getOccurrencesForDay(day: Date): EventCalendarOccurrence<TData>[];
   findOverlapping(candidate: {
     start: Date;
@@ -260,7 +285,7 @@ interface EventCalendarInternals<TData = unknown> {
   registerScrollHandler(handler: ((time: Date | number) => void) | null): void;
   applyProposedUpdate(
     update: EventCalendarProposedUpdate<TData>,
-    extraPatch?: Partial<CalendarEvent<TData>>
+    extraPatch?: Partial<CalendarEvent<TData>>,
   ): boolean;
   getSettingsVersion(): number;
   /** The rendered calendar root element, or null before mount. */
@@ -277,7 +302,7 @@ interface EventCalendarInstance<TData = unknown> {
 }
 
 function resolveSettings<TData>(
-  options: UseEventCalendarStateOptions<TData>
+  options: UseEventCalendarStateOptions<TData>,
 ): EventCalendarSettings<TData> {
   const {
     // strip state pairs; the rest flows into settings
@@ -299,16 +324,20 @@ function resolveSettings<TData>(
     ...rest
   } = options;
   const getEventPriority =
-    options.getEventPriority ?? (DEFAULT_EVENT_PRIORITY as (event: CalendarEvent<TData>) => number);
+    options.getEventPriority ??
+    (DEFAULT_EVENT_PRIORITY as (event: CalendarEvent<TData>) => number);
   return {
     ...rest,
-    timeZone: options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeZone:
+      options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: options.locale,
     // locale-first default: a de/fr locale gets Monday weeks without also
     // having to set weekStartsOn; an explicit weekStartsOn always wins
-    weekStartsOn: options.weekStartsOn ?? options.locale?.options?.weekStartsOn ?? 0,
+    weekStartsOn:
+      options.weekStartsOn ?? options.locale?.options?.weekStartsOn ?? 0,
     // the resource view only makes sense with resources configured
-    views: options.views ?? (options.resources?.length ? ALL_VIEWS : BASE_VIEWS),
+    views:
+      options.views ?? (options.resources?.length ? ALL_VIEWS : BASE_VIEWS),
     dayStartHour: options.dayStartHour ?? 0,
     dayEndHour: options.dayEndHour ?? 24,
     slotDuration: options.slotDuration ?? 30,
@@ -343,7 +372,7 @@ interface EventCalendarStore<TData> {
 }
 
 function createEventCalendarStore<TData>(
-  initial: UseEventCalendarStateOptions<TData>
+  initial: UseEventCalendarStateOptions<TData>,
 ): EventCalendarStore<TData> {
   let options = initial;
   let settings = resolveSettings(initial);
@@ -356,7 +385,7 @@ function createEventCalendarStore<TData>(
     const fallback = settings.views[0] ?? "month";
     warnOnce(
       `view-${view}`,
-      `view "${view}" is not in views [${settings.views.join(", ")}]; falling back to "${fallback}".`
+      `view "${view}" is not in views [${settings.views.join(", ")}]; falling back to "${fallback}".`,
     );
     return fallback;
   };
@@ -413,7 +442,7 @@ function createEventCalendarStore<TData>(
     merged: EventCalendarInteractions;
   } | null = null;
   const mergedInteractions = (
-    input: Partial<EventCalendarInteractions>
+    input: Partial<EventCalendarInteractions>,
   ): EventCalendarInteractions => {
     if (interactionsCache?.input !== input) {
       interactionsCache = {
@@ -480,11 +509,17 @@ function createEventCalendarStore<TData>(
   };
 
   type ControlledKey =
-    "view" | "date" | "dayCount" | "events" | "selection" | "interactions" | "viewSettings";
+    | "view"
+    | "date"
+    | "dayCount"
+    | "events"
+    | "selection"
+    | "interactions"
+    | "viewSettings";
 
   const setField = <K extends ControlledKey>(
     key: K,
-    value: EventCalendarState<TData>[K extends "events" ? "events" : K]
+    value: EventCalendarState<TData>[K extends "events" ? "events" : K],
   ) => {
     const controlled = options[key] !== undefined;
     if (!controlled) {
@@ -508,14 +543,20 @@ function createEventCalendarStore<TData>(
   // move re-keys the occurrence and a selection holding the old key would point
   // at nothing. Remapped in the same commit and emitted BEFORE the events write
   // so a controlled consumer applies the two in a consistent order.
-  const remapSelectionKey = (id: EventCalendarEventId, oldKey: string, nextStart: Date) => {
+  const remapSelectionKey = (
+    id: EventCalendarEventId,
+    oldKey: string,
+    nextStart: Date,
+  ) => {
     const newKey = `${id}::${nextStart.toISOString()}`;
     if (newKey === oldKey) return;
     const selection = getState().selection;
     if (!selection.eventKeys.includes(oldKey)) return;
     setField("selection", {
       ...selection,
-      eventKeys: selection.eventKeys.map((key) => (key === oldKey ? newKey : key)),
+      eventKeys: selection.eventKeys.map((key) =>
+        key === oldKey ? newKey : key,
+      ),
     });
   };
 
@@ -525,7 +566,7 @@ function createEventCalendarStore<TData>(
   // reverts the timing change the first one emitted.
   const applyProposedUpdate = (
     update: EventCalendarProposedUpdate<TData>,
-    extraPatch?: Partial<CalendarEvent<TData>>
+    extraPatch?: Partial<CalendarEvent<TData>>,
   ): boolean => {
     const result = settings.onEventUpdate?.(update);
     if (result === false) return false;
@@ -537,19 +578,29 @@ function createEventCalendarStore<TData>(
             allDay: result.allDay ?? update.allDay,
           }
         : { start: update.start, end: update.end, allDay: update.allDay };
-    if (update.resourceId !== undefined) adjusted.resourceId = update.resourceId;
+    if (update.resourceId !== undefined)
+      adjusted.resourceId = update.resourceId;
     // the STORED event holds the pre-commit start, which is what the live
     // occurrence key was built from (update.event already carries the proposal
     // when the call comes from api.updateEvent)
-    const stored = getState().events.find((event) => event.id === update.event.id);
+    const stored = getState().events.find(
+      (event) => event.id === update.event.id,
+    );
     const oldKey =
-      update.occurrence?.key ?? (stored ? `${stored.id}::${stored.start.toISOString()}` : null);
+      update.occurrence?.key ??
+      (stored ? `${stored.id}::${stored.start.toISOString()}` : null);
     if (oldKey) {
-      remapSelectionKey(update.event.id, oldKey, adjusted.start ?? update.start);
+      remapSelectionKey(
+        update.event.id,
+        oldKey,
+        adjusted.start ?? update.start,
+      );
     }
     const events = getState().events;
     const next = events.map((event) =>
-      event.id === update.event.id ? { ...event, ...extraPatch, ...adjusted } : event
+      event.id === update.event.id
+        ? { ...event, ...extraPatch, ...adjusted }
+        : event,
     );
     setField("events", next);
     return true;
@@ -596,7 +647,7 @@ function createEventCalendarStore<TData>(
           timeZone: settings.timeZone,
           dayCount: state.dayCount,
           agendaDayCount: settings.agendaDayCount,
-        })
+        }),
       );
     },
     prev() {
@@ -607,7 +658,7 @@ function createEventCalendarStore<TData>(
           timeZone: settings.timeZone,
           dayCount: state.dayCount,
           agendaDayCount: settings.agendaDayCount,
-        })
+        }),
       );
     },
     today() {
@@ -642,7 +693,9 @@ function createEventCalendarStore<TData>(
       if (!event) return;
       const merged = { ...event, ...patch };
       const timingChanged =
-        patch.start !== undefined || patch.end !== undefined || patch.allDay !== undefined;
+        patch.start !== undefined ||
+        patch.end !== undefined ||
+        patch.allDay !== undefined;
       if (timingChanged && settings.onEventUpdate) {
         // single write: the non-timing rest rides along as extraPatch so
         // controlled mode sees one consistent onEventsChange payload
@@ -659,30 +712,38 @@ function createEventCalendarStore<TData>(
             allDay: merged.allDay ?? false,
             source: "api",
           },
-          rest
+          rest,
         );
         return;
       }
       if (timingChanged) {
-        remapSelectionKey(id, `${id}::${event.start.toISOString()}`, merged.start);
+        remapSelectionKey(
+          id,
+          `${id}::${event.start.toISOString()}`,
+          merged.start,
+        );
       }
       setField(
         "events",
-        getState().events.map((e) => (e.id === id ? merged : e))
+        getState().events.map((e) => (e.id === id ? merged : e)),
       );
     },
     removeEvent(id) {
       setField(
         "events",
-        getState().events.filter((event) => event.id !== id)
+        getState().events.filter((event) => event.id !== id),
       );
     },
     getOccurrences(range) {
       if (!range) return getIndex().occurrences;
       const state = getState();
-      const within = range.start >= state.visibleRange.start && range.end <= state.visibleRange.end;
+      const within =
+        range.start >= state.visibleRange.start &&
+        range.end <= state.visibleRange.end;
       if (within) {
-        return getIndex().occurrences.filter((occ) => eventsOverlap(occ, range));
+        return getIndex().occurrences.filter((occ) =>
+          eventsOverlap(occ, range),
+        );
       }
       const rangeKey = getRangeKey(range);
       if (
@@ -726,7 +787,9 @@ function createEventCalendarStore<TData>(
       return result;
     },
     findOverlapping({ start, end, excludeEventId }) {
-      return api.getOccurrences({ start, end }).filter((occ) => occ.eventId !== excludeEventId);
+      return api
+        .getOccurrences({ start, end })
+        .filter((occ) => occ.eventId !== excludeEventId);
     },
     select(partial) {
       const current = getState().selection;
@@ -887,7 +950,7 @@ function createEventCalendarStore<TData>(
  * fully custom UI from instance.getState()/subscribe/api.
  */
 function useEventCalendarState<TData = unknown>(
-  options: UseEventCalendarStateOptions<TData> = {}
+  options: UseEventCalendarStateOptions<TData> = {},
 ): EventCalendarInstance<TData> {
   const [store] = useState(() => createEventCalendarStore<TData>(options));
   store.setOptions(options);
@@ -902,7 +965,8 @@ function useEventCalendarState<TData = unknown>(
   return store.instance;
 }
 
-const EventCalendarContext = createContext<EventCalendarInstance<unknown> | null>(null);
+const EventCalendarContext =
+  createContext<EventCalendarInstance<unknown> | null>(null);
 
 /** The stable calendar instance; throws outside <EventCalendar>. */
 function useEventCalendar<TData = unknown>(): EventCalendarInstance<TData> {
@@ -921,13 +985,13 @@ interface UseEventCalendarSelectorOptions<TData, TSelected> {
 /** Fine-grained subscription with equality memoization (Object.is default). */
 function useEventCalendarSelector<TData = unknown, TSelected = unknown>(
   selector: (state: EventCalendarState<TData>) => TSelected,
-  options?: UseEventCalendarSelectorOptions<TData, TSelected>
+  options?: UseEventCalendarSelectorOptions<TData, TSelected>,
 ): TSelected {
   const contextInstance = useContext(EventCalendarContext);
   const instance = options?.calendar ?? contextInstance;
   if (!instance) {
     throw new Error(
-      "useEventCalendarSelector needs an <EventCalendar> ancestor or an explicit `calendar` option"
+      "useEventCalendarSelector needs an <EventCalendar> ancestor or an explicit `calendar` option",
     );
   }
   const isEqual = options?.isEqual ?? Object.is;
@@ -938,7 +1002,9 @@ function useEventCalendarSelector<TData = unknown, TSelected = unknown>(
   });
 
   const getSnapshot = () => {
-    const next = selectorRef.current(instance.getState() as EventCalendarState<TData>);
+    const next = selectorRef.current(
+      instance.getState() as EventCalendarState<TData>,
+    );
     if (lastRef.current && isEqual(lastRef.current.value, next)) {
       return lastRef.current.value;
     }
@@ -986,14 +1052,17 @@ const midnightTicker = (() => {
     const entry = zones.get(timeZone);
     if (!entry) return;
     const now = new Date();
-    const next = zonedStartOfDay(addDays(toZoned(now, timeZone), 1), timeZone).getTime();
+    const next = zonedStartOfDay(
+      addDays(toZoned(now, timeZone), 1),
+      timeZone,
+    ).getTime();
     entry.timer = setTimeout(
       () => {
         version++;
         entry.listeners.forEach((listener) => listener());
         arm(timeZone);
       },
-      Math.max(1000, next - now.getTime())
+      Math.max(1000, next - now.getTime()),
     );
   };
 
@@ -1024,9 +1093,13 @@ const midnightTicker = (() => {
 function useMidnightTick(timeZone: string): number {
   const subscribe = useCallback(
     (listener: () => void) => midnightTicker.subscribe(timeZone, listener),
-    [timeZone]
+    [timeZone],
   );
-  return useSyncExternalStore(subscribe, midnightTicker.getVersion, midnightTicker.getVersion);
+  return useSyncExternalStore(
+    subscribe,
+    midnightTicker.getVersion,
+    midnightTicker.getVersion,
+  );
 }
 
 function useEventCalendarNavigation(): {
@@ -1056,7 +1129,7 @@ function useEventCalendarNavigation(): {
         a.date.getTime() === b.date.getTime() &&
         a.view === b.view &&
         getRangeKey(a.visibleRange) === getRangeKey(b.visibleRange),
-    }
+    },
   );
   useEventCalendarSettingsVersion(instance);
   useMidnightTick(settings.timeZone);
@@ -1106,7 +1179,7 @@ function useEventCalendarInteractions(): {
 
 /** Expanded, sorted occurrences; defaults to the visible range. */
 function useEventCalendarOccurrences<TData = unknown>(
-  range?: EventCalendarDateRange
+  range?: EventCalendarDateRange,
 ): EventCalendarOccurrence<TData>[] {
   const instance = useEventCalendar<TData>();
   return useEventCalendarSelector<TData, EventCalendarOccurrence<TData>[]>(
@@ -1117,8 +1190,9 @@ function useEventCalendarOccurrences<TData = unknown>(
       // resize or a title/color/data edit would never invalidate a key-based
       // memo. The index rebuilds occurrence objects precisely when events
       // change, so identity is the correct (and cheapest) change signal.
-      isEqual: (a, b) => a === b || (a.length === b.length && a.every((occ, i) => occ === b[i])),
-    }
+      isEqual: (a, b) =>
+        a === b || (a.length === b.length && a.every((occ, i) => occ === b[i])),
+    },
   );
 }
 
@@ -1126,7 +1200,7 @@ const EMPTY_BUCKET: EventCalendarDayBucket = { allDay: [], timed: [] };
 
 /** Per-cell subscription: only cells whose segments changed re-render. */
 function useEventCalendarDay<TData = unknown>(
-  day: Date
+  day: Date,
 ): {
   segments: EventCalendarDayBucket<TData>;
   isToday: boolean;
@@ -1153,14 +1227,14 @@ function useEventCalendarDay<TData = unknown>(
           a.timed.length === b.timed.length &&
           a.allDay.every((segment, i) => segment === b.allDay[i]) &&
           a.timed.every((segment, i) => segment === b.timed[i])),
-    }
+    },
   );
   const activeRange = useEventCalendarSelector<TData, EventCalendarDateRange>(
     (state) => state.activeRange,
     {
       calendar: instance,
       isEqual: (a, b) => getRangeKey(a) === getRangeKey(b),
-    }
+    },
   );
   useMidnightTick(timeZone);
   const dayStart = zonedStartOfDay(day, timeZone);
@@ -1182,7 +1256,7 @@ const EMPTY_BARS: EventCalendarSegment[] = [];
  * `rowStart` returns the row's TRUE start for colStart/colSpan day math.
  */
 function useEventCalendarWeek<TData = unknown>(
-  day: Date
+  day: Date,
 ): {
   bars: EventCalendarSegment<TData>[];
   laneCount: number;
@@ -1204,7 +1278,7 @@ function useEventCalendarWeek<TData = unknown>(
         // day AFTER a spring-forward week (167h long) match the wrong row
         const endMs = zonedStartOfDay(
           addDays(toZoned(r.rowStart, timeZone), 7),
-          timeZone
+          timeZone,
         ).getTime();
         return dayStartMs >= startMs && dayStartMs < endMs;
       });
@@ -1221,10 +1295,14 @@ function useEventCalendarWeek<TData = unknown>(
       isEqual: (a, b) =>
         (a.rowStart?.getTime() ?? 0) === (b.rowStart?.getTime() ?? 0) &&
         (a.bars === b.bars ||
-          (a.bars.length === b.bars.length && a.bars.every((segment, i) => segment === b.bars[i]))),
-    }
+          (a.bars.length === b.bars.length &&
+            a.bars.every((segment, i) => segment === b.bars[i]))),
+    },
   );
-  const laneCount = row.bars.reduce((m, s) => Math.max(m, (s.lane ?? 0) + 1), 0);
+  const laneCount = row.bars.reduce(
+    (m, s) => Math.max(m, (s.lane ?? 0) + 1),
+    0,
+  );
   return { bars: row.bars, laneCount, rowStart: row.rowStart };
 }
 
@@ -1250,28 +1328,35 @@ function useEventCalendarViewSettings(): {
       weekNumbers: viewSettings.weekNumbers ?? viewConfig.showWeekNumbers,
       nowIndicator: viewSettings.nowIndicator ?? viewConfig.nowIndicator,
       offDays:
-        viewSettings.offDays ?? (viewConfig.offDays !== undefined && viewConfig.offDays !== false),
+        viewSettings.offDays ??
+        (viewConfig.offDays !== undefined && viewConfig.offDays !== false),
     },
   };
 }
 
 /** Subscribes to settings changes only (version counter, not state). */
-function useEventCalendarSettingsVersion<TData>(instance: EventCalendarInstance<TData>): number {
+function useEventCalendarSettingsVersion<TData>(
+  instance: EventCalendarInstance<TData>,
+): number {
   return useSyncExternalStore(
     instance.subscribe,
     instance.internals.getSettingsVersion,
-    instance.internals.getSettingsVersion
+    instance.internals.getSettingsVersion,
   );
 }
 
 /** Resolved settings incl. merged i18n; re-renders only when settings change. */
-function useEventCalendarSettings<TData = unknown>(): EventCalendarSettings<TData> {
+function useEventCalendarSettings<
+  TData = unknown,
+>(): EventCalendarSettings<TData> {
   const instance = useEventCalendar<TData>();
   useEventCalendarSettingsVersion(instance);
   return instance.settings;
 }
 
-const EventCalendarViewContext = createContext<{ view: CalendarView } | null>(null);
+const EventCalendarViewContext = createContext<{ view: CalendarView } | null>(
+  null,
+);
 
 /**
  * Per-element class hooks, cn()-merged AFTER the built-in classes (so tailwind
@@ -1421,7 +1506,9 @@ interface EventCalendarViewConfig<TData = unknown> {
   classNames?: EventCalendarClassNames;
   components?: Partial<Record<CalendarView, ComponentType>>;
   renderEvent?: (props: EventCalendarRenderEventProps<TData>) => ReactNode;
-  renderAgendaEvent?: (props: EventCalendarRenderEventProps<TData>) => ReactNode;
+  renderAgendaEvent?: (
+    props: EventCalendarRenderEventProps<TData>,
+  ) => ReactNode;
   /**
    * Content for the styled hover tooltip (viewConfig.eventTooltip). Return a
    * falsy value (null / undefined, or the `false` a `cond && <node>` yields)
@@ -1434,7 +1521,9 @@ interface EventCalendarViewConfig<TData = unknown> {
     view: CalendarView;
     label: string | undefined;
   }) => ReactNode;
-  renderDragPreview?: (props: { drag: EventCalendarDragState<TData> }) => ReactNode;
+  renderDragPreview?: (props: {
+    drag: EventCalendarDragState<TData>;
+  }) => ReactNode;
   renderMonthCell?: (props: {
     day: Date;
     segments: EventCalendarDayBucket<TData>;
@@ -1454,8 +1543,16 @@ interface EventCalendarViewConfig<TData = unknown> {
     boundsEndMin: number;
     totalMinutes: number;
   }) => ReactNode;
-  renderDayHeader?: (props: { day: Date; view: CalendarView; isToday: boolean }) => ReactNode;
-  renderTimeGutterSlot?: (props: { time: Date; hour: number; minute: number }) => ReactNode;
+  renderDayHeader?: (props: {
+    day: Date;
+    view: CalendarView;
+    isToday: boolean;
+  }) => ReactNode;
+  renderTimeGutterSlot?: (props: {
+    time: Date;
+    hour: number;
+    minute: number;
+  }) => ReactNode;
   renderAllDaySection?: (props: {
     days: Date[];
     segments: EventCalendarSegment<TData>[];
@@ -1481,11 +1578,15 @@ interface EventCalendarViewConfig<TData = unknown> {
    * the agenda row gains an expand/collapse toggle revealing the details
    * below the chip (the calendar itself never knows the consumer's fields).
    */
-  renderAgendaEventDetails?: (occurrence: EventCalendarOccurrence<TData>) => ReactNode;
+  renderAgendaEventDetails?: (
+    occurrence: EventCalendarOccurrence<TData>,
+  ) => ReactNode;
   renderNowIndicator?: (props: { time: Date }) => ReactNode;
   renderNoEvents?: () => ReactNode;
   /** Resource column header cell content; default is resource.title. */
-  renderResourceHeader?: (props: { resource: EventCalendarResource }) => ReactNode;
+  renderResourceHeader?: (props: {
+    resource: EventCalendarResource;
+  }) => ReactNode;
   /** Agenda date gutter (day badge + weekday + collapse toggle). */
   renderAgendaDayHeader?: (props: {
     day: Date;
@@ -1570,7 +1671,9 @@ const EventCalendarViewConfigContext =
   createContext<EventCalendarViewConfig<unknown>>(DEFAULT_VIEW_CONFIG);
 
 /** Root-level display props + render overrides, for view components. */
-function useEventCalendarViewConfig<TData = unknown>(): EventCalendarViewConfig<TData> {
+function useEventCalendarViewConfig<
+  TData = unknown,
+>(): EventCalendarViewConfig<TData> {
   return useContext(EventCalendarViewConfigContext);
 }
 
@@ -1623,7 +1726,9 @@ const VIEW_CONFIG_KEYS: Array<keyof EventCalendarViewConfig> = [
 function useEventCalendarViewContext(): { view: CalendarView } {
   const ctx = useContext(EventCalendarViewContext);
   if (!ctx) {
-    throw new Error("useEventCalendarViewContext must be used inside a calendar view");
+    throw new Error(
+      "useEventCalendarViewContext must be used inside a calendar view",
+    );
   }
   return ctx;
 }
@@ -1726,12 +1831,14 @@ function EventCalendar<TData = unknown>({
   children,
   ...props
 }: EventCalendarProps<TData>) {
-  const { options, viewConfig, rest } = splitOptions<TData>(props as Record<string, unknown>);
+  const { options, viewConfig, rest } = splitOptions<TData>(
+    props as Record<string, unknown>,
+  );
 
   if (calendar && Object.keys(options).length > 0) {
     warnOnce(
       "calendar-and-options",
-      "both `calendar` and option props were passed; option props are ignored when adopting an instance."
+      "both `calendar` and option props were passed; option props are ignored when adopting an instance.",
     );
   }
 
@@ -1746,7 +1853,7 @@ function EventCalendar<TData = unknown>({
   // gesture starts from a portaled surface (the "+N more" popover).
   const registerRoot = useCallback(
     (el: HTMLElement | null) => instance.internals.setRootEl(el),
-    [instance]
+    [instance],
   );
 
   const defaultProps = {
@@ -1762,13 +1869,19 @@ function EventCalendar<TData = unknown>({
     children: (
       <>
         {children}
-        <div data-slot="event-calendar-announcer" aria-live="polite" className="sr-only" />
+        <div
+          data-slot="event-calendar-announcer"
+          aria-live="polite"
+          className="sr-only"
+        />
       </>
     ),
   };
 
   return (
-    <EventCalendarContext.Provider value={instance as unknown as EventCalendarInstance<unknown>}>
+    <EventCalendarContext.Provider
+      value={instance as unknown as EventCalendarInstance<unknown>}
+    >
       <EventCalendarViewConfigContext.Provider
         value={viewConfig as unknown as EventCalendarViewConfig<unknown>}
       >

@@ -1,7 +1,10 @@
 import type { Teammate } from "@/services/user";
 import type { RoomFilter } from "@/services/rooms";
 import type { FindSlotsParams, TimeSlot } from "@/services/scheduler";
-import type { CreateBookingPayload, ReschedulePayload } from "@/services/booking";
+import type {
+  CreateBookingPayload,
+  ReschedulePayload,
+} from "@/services/booking";
 import type { Booking, MeetingRoom, EventType } from "@/db/schema";
 
 export type {
@@ -27,11 +30,18 @@ function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
   const url = `${getBaseUrl()}${endpoint}`;
   const headers = new Headers(options.headers || {});
 
-  if (!headers.has("Content-Type") && options.body && typeof options.body === "string") {
+  if (
+    !headers.has("Content-Type") &&
+    options.body &&
+    typeof options.body === "string"
+  ) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -51,7 +61,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       const errorData = await response.json();
       if (errorData.error) {
         errorMessage =
-          typeof errorData.error === "string" ? errorData.error : JSON.stringify(errorData.error);
+          typeof errorData.error === "string"
+            ? errorData.error
+            : JSON.stringify(errorData.error);
       }
     } catch {
       // Ignore JSON parse failure
@@ -84,7 +96,8 @@ export const apiClient = {
      */
     list: async (filter?: RoomFilter): Promise<MeetingRoom[]> => {
       const params = new URLSearchParams();
-      if (filter?.minCapacity) params.set("minCapacity", filter.minCapacity.toString());
+      if (filter?.minCapacity)
+        params.set("minCapacity", filter.minCapacity.toString());
       if (filter?.features && filter.features.length > 0) {
         params.set("features", filter.features.join(","));
       }
@@ -98,9 +111,12 @@ export const apiClient = {
      * Maps to: POST /api/rooms/sync
      */
     sync: async (): Promise<{ success: boolean; rooms: MeetingRoom[] }> => {
-      return request<{ success: boolean; rooms: MeetingRoom[] }>("/api/rooms/sync", {
-        method: "POST",
-      });
+      return request<{ success: boolean; rooms: MeetingRoom[] }>(
+        "/api/rooms/sync",
+        {
+          method: "POST",
+        },
+      );
     },
   },
 
@@ -122,7 +138,13 @@ export const apiClient = {
      * Fetch user agenda bookings for a given date.
      * Maps to: GET /api/bookings/agenda?date={date}&userId={userId}
      */
-    getAgenda: async ({ date, userId }: { date: string; userId?: string }): Promise<Booking[]> => {
+    getAgenda: async ({
+      date,
+      userId,
+    }: {
+      date: string;
+      userId?: string;
+    }): Promise<Booking[]> => {
       const params = new URLSearchParams({ date });
       if (userId) params.set("userId", userId);
       return request<Booking[]>(`/api/bookings/agenda?${params.toString()}`);
@@ -143,7 +165,10 @@ export const apiClient = {
      * Reschedule an existing meeting or update its details.
      * Maps to: PATCH /api/bookings/[id]
      */
-    reschedule: async (id: string, payload: ReschedulePayload): Promise<Booking> => {
+    reschedule: async (
+      id: string,
+      payload: ReschedulePayload,
+    ): Promise<Booking> => {
       return request<Booking>(`/api/bookings/${encodeURIComponent(id)}`, {
         method: "PATCH",
         body: JSON.stringify(payload),
@@ -154,7 +179,10 @@ export const apiClient = {
      * Update meeting details (title, description, room, times).
      * Maps to: PATCH /api/bookings/[id]
      */
-    update: async (id: string, payload: ReschedulePayload): Promise<Booking> => {
+    update: async (
+      id: string,
+      payload: ReschedulePayload,
+    ): Promise<Booking> => {
       return request<Booking>(`/api/bookings/${encodeURIComponent(id)}`, {
         method: "PATCH",
         body: JSON.stringify(payload),
@@ -184,7 +212,7 @@ export const apiClient = {
         userId?: string;
         attendeeEmails?: string[];
       },
-      init?: RequestInit
+      init?: RequestInit,
     ): Promise<CalendarResponse> => {
       const qs = new URLSearchParams();
       if (params?.timeMin) qs.set("timeMin", params.timeMin);
@@ -196,7 +224,7 @@ export const apiClient = {
       const queryString = qs.toString();
       return request<CalendarResponse>(
         `/api/calendar${queryString ? `?${queryString}` : ""}`,
-        init
+        init,
       );
     },
 
@@ -232,9 +260,11 @@ export const apiClient = {
      * Get specific event type details and its host by slug or id.
      * Maps to: GET /api/event-types/[slug]
      */
-    getBySlug: async (slug: string): Promise<{ eventType: EventType; host: unknown }> => {
+    getBySlug: async (
+      slug: string,
+    ): Promise<{ eventType: EventType; host: unknown }> => {
       return request<{ eventType: EventType; host: unknown }>(
-        `/api/event-types/${encodeURIComponent(slug)}`
+        `/api/event-types/${encodeURIComponent(slug)}`,
       );
     },
   },
@@ -245,7 +275,7 @@ export const apiClient = {
      * Maps to: GET /api/projects?teamId={teamId}
      */
     list: async (
-      teamId?: string
+      teamId?: string,
     ): Promise<
       Array<{
         id: string;

@@ -44,7 +44,9 @@ export const MOCK_PARTICIPANTS: ParticipantSchedule[] = [
     email: "jordan.lee@example.com",
     avatar:
       "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=96&h=96&fit=crop&crop=faces",
-    busySlots: [{ startMin: 12 * 60, endMin: 13 * 60, label: "Busy: 12:00-13:00" }],
+    busySlots: [
+      { startMin: 12 * 60, endMin: 13 * 60, label: "Busy: 12:00-13:00" },
+    ],
   },
   {
     id: "p-02",
@@ -65,7 +67,11 @@ export const MOCK_PARTICIPANTS: ParticipantSchedule[] = [
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop&crop=faces",
     busySlots: [
       { startMin: 10 * 60, endMin: 11 * 60 + 15, label: "Busy: 10:00-11:15" },
-      { startMin: 15 * 60 + 30, endMin: 16 * 60 + 30, label: "Busy: 15:30-16:30" },
+      {
+        startMin: 15 * 60 + 30,
+        endMin: 16 * 60 + 30,
+        label: "Busy: 15:30-16:30",
+      },
     ],
   },
   {
@@ -75,7 +81,11 @@ export const MOCK_PARTICIPANTS: ParticipantSchedule[] = [
     avatar:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop&crop=faces",
     busySlots: [
-      { startMin: 10 * 60 + 30, endMin: 11 * 60 + 30, label: "Busy: 10:30-11:30" },
+      {
+        startMin: 10 * 60 + 30,
+        endMin: 11 * 60 + 30,
+        label: "Busy: 10:30-11:30",
+      },
       { startMin: 16 * 60, endMin: 17 * 60, label: "Busy: 16:00-17:00" },
     ],
   },

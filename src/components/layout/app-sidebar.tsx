@@ -22,12 +22,16 @@ import { UserButton } from "@daveyplate/better-auth-ui";
 function SidebarNavMenu({ pathname }: { pathname: string }) {
   const segments = pathname.split("/").filter(Boolean);
   const activeKey =
-    pathname === "/" || segments[0] === "calendar" ? "calendar" : segments[0] || "calendar";
+    pathname === "/" || segments[0] === "calendar"
+      ? "calendar"
+      : segments[0] || "calendar";
 
   return (
     <SidebarMenu className="gap-0.5">
       {MAIN_NAV_ITEMS.map((item) => {
-        const isActive = pathname ? item.id === activeKey || pathname === item.url : false;
+        const isActive = pathname
+          ? item.id === activeKey || pathname === item.url
+          : false;
 
         return (
           <SidebarMenuItem key={item.id}>
@@ -38,7 +42,9 @@ function SidebarNavMenu({ pathname }: { pathname: string }) {
               render={<Link href={item.url} />}
             >
               <item.icon className="size-4 shrink-0 text-neutral-500 group-data-[active=true]:text-neutral-900 dark:text-neutral-400 dark:group-data-[active=true]:text-orange-400" />
-              <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+              <span className="group-data-[collapsible=icon]:hidden">
+                {item.title}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );
@@ -54,7 +60,11 @@ function ActiveSidebarNavMenu() {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" className="!border-r-0 dark:bg-neutral-950" {...props}>
+    <Sidebar
+      collapsible="icon"
+      className="!border-r-0 dark:bg-neutral-950"
+      {...props}
+    >
       {/* Top section: Workspace brand header */}
       <SidebarHeader className="p-2">
         <SidebarMenu>

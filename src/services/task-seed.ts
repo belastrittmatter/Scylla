@@ -2,7 +2,9 @@ import { db } from "@/db";
 import { user, team, teamMember, project, task } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function seedDefaultWorkspace(currentUserId?: string): Promise<void> {
+export async function seedDefaultWorkspace(
+  currentUserId?: string,
+): Promise<void> {
   // 1. Identify primary user
   let primaryUser = currentUserId
     ? (await db.select().from(user).where(eq(user.id, currentUserId)))[0]
@@ -60,7 +62,11 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
 
   const teammateIds: Record<string, string> = {};
   for (const tm of defaultTeammates) {
-    const [existing] = await db.select().from(user).where(eq(user.email, tm.email)).limit(1);
+    const [existing] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, tm.email))
+      .limit(1);
     if (existing) {
       teammateIds[tm.id] = existing.id;
     } else {
@@ -86,7 +92,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
       id: "team-eng-core",
       name: "Engineering Core",
       slug: "engineering-core",
-      description: "Core platform, infrastructure, MCP protocol bridges & web services",
+      description:
+        "Core platform, infrastructure, MCP protocol bridges & web services",
       ownerId: primaryUser.id,
     })
     .onConflictDoNothing()
@@ -98,7 +105,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
       id: "team-product-design",
       name: "Product & Design",
       slug: "product-design",
-      description: "UX design systems, user journey workflows, and interface standards",
+      description:
+        "UX design systems, user journey workflows, and interface standards",
       ownerId: primaryUser.id,
     })
     .onConflictDoNothing();
@@ -141,7 +149,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
       id: "proj-mcp-bridge",
       name: "MCP Client Protocol Bridge",
       slug: "mcp-client-bridge",
-      description: "Production MCP server implementation, tool router, and token cost benchmarking",
+      description:
+        "Production MCP server implementation, tool router, and token cost benchmarking",
       teamId: activeTeamId,
       status: "active",
       color: "#3b82f6",
@@ -155,7 +164,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
       id: "proj-kanban-dashboard",
       name: "Task & Workspace Dashboard",
       slug: "task-workspace-dashboard",
-      description: "Responsive Next.js 15 Kanban board, dense spreadsheet table, and task drawer",
+      description:
+        "Responsive Next.js 15 Kanban board, dense spreadsheet table, and task drawer",
       teamId: activeTeamId,
       status: "active",
       color: "#10b981",
@@ -169,7 +179,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
       id: "proj-calendar-sync",
       name: "Google Calendar & Room Sync",
       slug: "calendar-room-sync",
-      description: "Bidirectional calendar sync, visual timeline scheduler, and room availability",
+      description:
+        "Bidirectional calendar sync, visual timeline scheduler, and room availability",
       teamId: activeTeamId,
       status: "planning",
       color: "#8b5cf6",
@@ -187,7 +198,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
     {
       id: "task-101",
       title: "Implement Model Context Protocol (MCP) tool router",
-      description: "Standardize JSON-RPC handler for agenda, booking, and room query tools",
+      description:
+        "Standardize JSON-RPC handler for agenda, booking, and room query tools",
       status: "in_progress",
       priority: "urgent",
       projectId: activeMcpProjId,
@@ -200,7 +212,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
     {
       id: "task-102",
       title: "Database schema migration for team and task tables",
-      description: "Add Drizzle ORM definitions, foreign keys, and indexes for teams and projects",
+      description:
+        "Add Drizzle ORM definitions, foreign keys, and indexes for teams and projects",
       status: "done",
       priority: "high",
       projectId: activeMcpProjId,
@@ -213,7 +226,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
     {
       id: "task-103",
       title: "Design shadcn Task Drawer with responsive Base UI gestures",
-      description: "Refactor drawer to slide-over with swipeDirection right and hotkeys",
+      description:
+        "Refactor drawer to slide-over with swipeDirection right and hotkeys",
       status: "done",
       priority: "medium",
       projectId: activeKanbanProjId,
@@ -240,7 +254,8 @@ export async function seedDefaultWorkspace(currentUserId?: string): Promise<void
     {
       id: "task-105",
       title: "Build bidirectional Google Calendar sync engine with Meet links",
-      description: "Auto-generate conferenceData and sync attendees across organizational accounts",
+      description:
+        "Auto-generate conferenceData and sync attendees across organizational accounts",
       status: "in_review",
       priority: "high",
       projectId: activeCalProjId,

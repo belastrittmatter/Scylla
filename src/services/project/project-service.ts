@@ -12,7 +12,9 @@ import {
 } from "./project-types";
 
 export class ProjectService {
-  public static async createProject(input: CreateProjectInput): Promise<Project> {
+  public static async createProject(
+    input: CreateProjectInput,
+  ): Promise<Project> {
     const validated = CreateProjectSchema.parse(input);
     const teamRecord = await db.query.team.findFirst({
       where: eq(team.id, validated.teamId),
@@ -21,7 +23,9 @@ export class ProjectService {
       throw new Error(`Team with id "${validated.teamId}" not found`);
     }
 
-    const slug = validated.slug ? slugify(validated.slug) : slugify(validated.name);
+    const slug = validated.slug
+      ? slugify(validated.slug)
+      : slugify(validated.name);
 
     const [newProject] = await db
       .insert(project)
@@ -38,14 +42,19 @@ export class ProjectService {
     return newProject;
   }
 
-  public static async getProjectById(projectId: string): Promise<Project | null> {
+  public static async getProjectById(
+    projectId: string,
+  ): Promise<Project | null> {
     const record = await db.query.project.findFirst({
       where: eq(project.id, projectId),
     });
     return record ?? null;
   }
 
-  public static async getProjectBySlug(teamId: string, slug: string): Promise<Project | null> {
+  public static async getProjectBySlug(
+    teamId: string,
+    slug: string,
+  ): Promise<Project | null> {
     const record = await db.query.project.findFirst({
       where: and(eq(project.teamId, teamId), eq(project.slug, slug)),
     });
@@ -54,7 +63,7 @@ export class ProjectService {
 
   public static async listProjectsByTeam(
     teamId: string,
-    filter?: ProjectFilterInput
+    filter?: ProjectFilterInput,
   ): Promise<(Project & { teamName?: string | null })[]> {
     const conditions = [eq(project.teamId, teamId)];
 
@@ -84,7 +93,7 @@ export class ProjectService {
 
   public static async listProjectsByTeams(
     teamIds: string[],
-    filter?: ProjectFilterInput
+    filter?: ProjectFilterInput,
   ): Promise<(Project & { teamName?: string | null })[]> {
     if (!teamIds || teamIds.length === 0) {
       return [];
@@ -117,7 +126,7 @@ export class ProjectService {
   }
 
   public static async listProjects(
-    filter?: ProjectFilterInput
+    filter?: ProjectFilterInput,
   ): Promise<(Project & { teamName?: string | null })[]> {
     const query = db
       .select({
@@ -143,21 +152,22 @@ export class ProjectService {
 
   public static async updateProjectStatus(
     projectId: string,
-    status: ProjectStatus
+    status: ProjectStatus,
   ): Promise<Project> {
     return this.updateProject(projectId, { status });
   }
 
   public static async updateProject(
     projectId: string,
-    input: UpdateProjectInput
+    input: UpdateProjectInput,
   ): Promise<Project> {
     const validated = UpdateProjectSchema.parse(input);
 
     const updateData: Partial<typeof project.$inferInsert> = {};
     if (validated.name !== undefined) updateData.name = validated.name;
     if (validated.slug !== undefined) updateData.slug = slugify(validated.slug);
-    if (validated.description !== undefined) updateData.description = validated.description;
+    if (validated.description !== undefined)
+      updateData.description = validated.description;
     if (validated.status !== undefined) updateData.status = validated.status;
     if (validated.color !== undefined) updateData.color = validated.color;
 
@@ -175,7 +185,10 @@ export class ProjectService {
   }
 
   public static async deleteProject(projectId: string): Promise<boolean> {
-    const deleted = await db.delete(project).where(eq(project.id, projectId)).returning();
+    const deleted = await db
+      .delete(project)
+      .where(eq(project.id, projectId))
+      .returning();
 
     return deleted.length > 0;
   }

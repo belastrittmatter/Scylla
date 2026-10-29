@@ -10,7 +10,14 @@ import {
   startOfDay,
   addDays,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Search, RefreshCw } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Search,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -144,7 +151,9 @@ export function UntitledCalendarNav({
             <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               {format(date, "MMMM yyyy")}
             </span>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">{rangeSubtitle}</span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {rangeSubtitle}
+            </span>
           </div>
         </div>
 
@@ -194,13 +203,22 @@ export function UntitledCalendarNav({
               }
             />
             <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuItem onClick={() => setView("week")} className="cursor-pointer text-xs">
+              <DropdownMenuItem
+                onClick={() => setView("week")}
+                className="cursor-pointer text-xs"
+              >
                 Week view
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setView("month")} className="cursor-pointer text-xs">
+              <DropdownMenuItem
+                onClick={() => setView("month")}
+                className="cursor-pointer text-xs"
+              >
                 Month view
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setView("day")} className="cursor-pointer text-xs">
+              <DropdownMenuItem
+                onClick={() => setView("day")}
+                className="cursor-pointer text-xs"
+              >
                 Day view
               </DropdownMenuItem>
               <DropdownMenuItem

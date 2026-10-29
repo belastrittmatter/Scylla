@@ -1,6 +1,23 @@
 import { db } from "@/db";
-import { task, team, project, taskTimeSession, type Task, type TaskTimeSession } from "@/db/schema";
-import { eq, and, lte, lt, inArray, desc, asc, isNull, type SQL } from "drizzle-orm";
+import {
+  task,
+  team,
+  project,
+  taskTimeSession,
+  type Task,
+  type TaskTimeSession,
+} from "@/db/schema";
+import {
+  eq,
+  and,
+  lte,
+  lt,
+  inArray,
+  desc,
+  asc,
+  isNull,
+  type SQL,
+} from "drizzle-orm";
 import {
   CreateTaskSchema,
   UpdateTaskSchema,
@@ -30,7 +47,12 @@ export class TaskService {
         ? db
             .select({ position: task.position })
             .from(task)
-            .where(and(eq(task.teamId, validated.teamId), eq(task.status, validated.status)))
+            .where(
+              and(
+                eq(task.teamId, validated.teamId),
+                eq(task.status, validated.status),
+              ),
+            )
             .orderBy(desc(task.position))
             .limit(1)
         : Promise.resolve([]),
@@ -43,7 +65,7 @@ export class TaskService {
     if (validated.projectId) {
       if (!projectRecord || projectRecord.teamId !== validated.teamId) {
         throw new Error(
-          `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`
+          `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
         );
       }
     }
@@ -79,12 +101,18 @@ export class TaskService {
     return newTask;
   }
 
-  public static async getTaskById(taskId: string): Promise<TaskWithRelations | null> {
+  public static async getTaskById(
+    taskId: string,
+  ): Promise<TaskWithRelations | null> {
     const record = await db.query.task.findFirst({
       where: eq(task.id, taskId),
       with: {
-        creator: { columns: { id: true, name: true, email: true, image: true } },
-        assignee: { columns: { id: true, name: true, email: true, image: true } },
+        creator: {
+          columns: { id: true, name: true, email: true, image: true },
+        },
+        assignee: {
+          columns: { id: true, name: true, email: true, image: true },
+        },
         project: { columns: { id: true, name: true, slug: true, color: true } },
       },
     });
@@ -119,14 +147,17 @@ export class TaskService {
       }
     }
 
-    if (filter.assigneeId) conditions.push(eq(task.assigneeId, filter.assigneeId));
+    if (filter.assigneeId)
+      conditions.push(eq(task.assigneeId, filter.assigneeId));
 
     if (filter.dueBefore) conditions.push(lte(task.dueDate, filter.dueBefore));
 
     if (filter.overdue) {
       const now = new Date();
       conditions.push(lt(task.dueDate, now));
-      conditions.push(inArray(task.status, ["todo", "in_progress", "in_review"]));
+      conditions.push(
+        inArray(task.status, ["todo", "in_progress", "in_review"]),
+      );
     }
 
     return await db
@@ -139,7 +170,7 @@ export class TaskService {
   public static async updateTask(
     taskId: string,
     input: UpdateTaskInput,
-    currentUserId?: string
+    currentUserId?: string,
   ): Promise<Task> {
     const validated = UpdateTaskSchema.parse(input);
 
@@ -148,38 +179,59 @@ export class TaskService {
     });
     if (!existing) throw new Error(`Task with id "${taskId}" not found`);
 
-    if (validated.status !== undefined && validated.status !== existing.status) {
+    if (
+      validated.status !== undefined &&
+      validated.status !== existing.status
+    ) {
       if (validated.status === "in_progress") {
         const effectiveUserId =
-          currentUserId || validated.assigneeId || existing.assigneeId || existing.creatorId;
+          currentUserId ||
+          validated.assigneeId ||
+          existing.assigneeId ||
+          existing.creatorId;
         await TaskService.startTaskSession(taskId, effectiveUserId);
       } else if (existing.status === "in_progress") {
-        await TaskService.stopTaskSession(taskId, MIN_TASK_SESSION_DURATION_SECONDS);
+        await TaskService.stopTaskSession(
+          taskId,
+          MIN_TASK_SESSION_DURATION_SECONDS,
+        );
       }
     }
 
     const updateData: Partial<typeof task.$inferInsert> = {};
     if (validated.title !== undefined) updateData.title = validated.title;
-    if (validated.description !== undefined) updateData.description = validated.description;
+    if (validated.description !== undefined)
+      updateData.description = validated.description;
     if (validated.status !== undefined) updateData.status = validated.status;
-    if (validated.priority !== undefined) updateData.priority = validated.priority;
-    if (validated.projectId !== undefined) updateData.projectId = validated.projectId;
-    if (validated.assigneeId !== undefined) updateData.assigneeId = validated.assigneeId;
+    if (validated.priority !== undefined)
+      updateData.priority = validated.priority;
+    if (validated.projectId !== undefined)
+      updateData.projectId = validated.projectId;
+    if (validated.assigneeId !== undefined)
+      updateData.assigneeId = validated.assigneeId;
     if (validated.dueDate !== undefined) updateData.dueDate = validated.dueDate;
-    if (validated.position !== undefined) updateData.position = validated.position;
+    if (validated.position !== undefined)
+      updateData.position = validated.position;
     if (validated.estimatedMinutes !== undefined)
       updateData.estimatedMinutes = validated.estimatedMinutes;
 
-    const [updated] = await db.update(task).set(updateData).where(eq(task.id, taskId)).returning();
+    const [updated] = await db
+      .update(task)
+      .set(updateData)
+      .where(eq(task.id, taskId))
+      .returning();
     return updated;
   }
 
   public static async startTaskSession(
     taskId: string,
-    userId?: string | null
+    userId?: string | null,
   ): Promise<TaskTimeSession> {
     const existingActive = await db.query.taskTimeSession.findFirst({
-      where: and(eq(taskTimeSession.taskId, taskId), isNull(taskTimeSession.endedAt)),
+      where: and(
+        eq(taskTimeSession.taskId, taskId),
+        isNull(taskTimeSession.endedAt),
+      ),
     });
     if (existingActive) {
       return existingActive;
@@ -197,29 +249,37 @@ export class TaskService {
       return inserted[0];
     }
     const concurrentActive = await db.query.taskTimeSession.findFirst({
-      where: and(eq(taskTimeSession.taskId, taskId), isNull(taskTimeSession.endedAt)),
+      where: and(
+        eq(taskTimeSession.taskId, taskId),
+        isNull(taskTimeSession.endedAt),
+      ),
     });
     return concurrentActive!;
   }
 
   public static async stopTaskSession(
     taskId: string,
-    minDurationSeconds = MIN_TASK_SESSION_DURATION_SECONDS
+    minDurationSeconds = MIN_TASK_SESSION_DURATION_SECONDS,
   ): Promise<TaskTimeSession | null> {
     const activeSession = await db.query.taskTimeSession.findFirst({
-      where: and(eq(taskTimeSession.taskId, taskId), isNull(taskTimeSession.endedAt)),
+      where: and(
+        eq(taskTimeSession.taskId, taskId),
+        isNull(taskTimeSession.endedAt),
+      ),
     });
     if (!activeSession) return null;
 
     const now = new Date();
     const durationSeconds = Math.max(
       0,
-      Math.round((now.getTime() - activeSession.startedAt.getTime()) / 1000)
+      Math.round((now.getTime() - activeSession.startedAt.getTime()) / 1000),
     );
 
     // Anti-spam filter: discard session if shorter than minDurationSeconds (e.g. rapid drag-and-drop)
     if (durationSeconds < minDurationSeconds) {
-      await db.delete(taskTimeSession).where(eq(taskTimeSession.id, activeSession.id));
+      await db
+        .delete(taskTimeSession)
+        .where(eq(taskTimeSession.id, activeSession.id));
       return null;
     }
 
@@ -235,7 +295,9 @@ export class TaskService {
     return updated;
   }
 
-  public static async getTaskTimeSessions(taskId: string): Promise<TaskTimeSession[]> {
+  public static async getTaskTimeSessions(
+    taskId: string,
+  ): Promise<TaskTimeSession[]> {
     return await db
       .select()
       .from(taskTimeSession)
@@ -244,20 +306,25 @@ export class TaskService {
   }
 
   public static async deleteTask(taskId: string): Promise<boolean> {
-    const deleted = await db.delete(task).where(eq(task.id, taskId)).returning();
+    const deleted = await db
+      .delete(task)
+      .where(eq(task.id, taskId))
+      .returning();
     return deleted.length > 0;
   }
 
   public static async reorderTaskPositions(
-    updates: Array<{ id: string; position: number; status?: TaskStatus }>
+    updates: Array<{ id: string; position: number; status?: TaskStatus }>,
   ): Promise<void> {
     await db.transaction(async (tx) => {
       await Promise.all(
         updates.map((item) => {
-          const updateSet: Partial<typeof task.$inferInsert> = { position: item.position };
+          const updateSet: Partial<typeof task.$inferInsert> = {
+            position: item.position,
+          };
           if (item.status) updateSet.status = item.status;
           return tx.update(task).set(updateSet).where(eq(task.id, item.id));
-        })
+        }),
       );
     });
   }

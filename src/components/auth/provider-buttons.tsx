@@ -20,7 +20,10 @@ export type SocialLayout = "auto" | "horizontal" | "vertical" | "grid";
  *
  * @param socialLayout - Preferred layout for the provider buttons; `"auto"` chooses based on the number of providers.
  */
-export function ProviderButtons({ socialLayout = "auto", view = "signIn" }: ProviderButtonsProps) {
+export function ProviderButtons({
+  socialLayout = "auto",
+  view = "signIn",
+}: ProviderButtonsProps) {
   const { socialProviders } = useAuth();
 
   const resolvedSocialLayout = useMemo(() => {
@@ -41,7 +44,7 @@ export function ProviderButtons({ socialLayout = "auto", view = "signIn" }: Prov
         "gap-3",
         resolvedSocialLayout === "grid" && "grid grid-cols-2",
         resolvedSocialLayout === "vertical" && "flex flex-col",
-        resolvedSocialLayout === "horizontal" && "flex flex-row flex-wrap"
+        resolvedSocialLayout === "horizontal" && "flex flex-row flex-wrap",
       )}
     >
       {socialProviders?.map((provider) => (

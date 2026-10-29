@@ -24,14 +24,15 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
           text: getAgendaUiHtml(),
         },
       ],
-    })
+    }),
   );
 
   // 1. Tool: list_event_types
   server.registerTool(
     "list_event_types",
     {
-      description: "List available meeting templates, durations, and booking event types.",
+      description:
+        "List available meeting templates, durations, and booking event types.",
       inputSchema: listEventTypesSchema,
     },
     async () => {
@@ -39,7 +40,7 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
       return {
         content: [{ type: "text", text: JSON.stringify(eventTypes, null, 2) }],
       };
-    }
+    },
   );
 
   // 2. Tool: get_my_agenda
@@ -84,7 +85,9 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
       }).format(new Date());
       const dateStr = date ? date.split("T")[0] : todayIct;
       const startOfDay = new Date(`${dateStr}T00:00:00+07:00`);
-      const endOfDay = new Date(startOfDay.getTime() + (days || 1) * 24 * 60 * 60 * 1000 - 1);
+      const endOfDay = new Date(
+        startOfDay.getTime() + (days || 1) * 24 * 60 * 60 * 1000 - 1,
+      );
 
       const events = await GoogleCalendarService.listEvents("primary", {
         accessToken: token,
@@ -104,8 +107,13 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
             ? (e.end as { dateTime?: string; date?: string })
             : null;
         const startVal =
-          typeof e.start === "string" ? e.start : startObj?.dateTime || startObj?.date || "";
-        const endVal = typeof e.end === "string" ? e.end : endObj?.dateTime || endObj?.date || "";
+          typeof e.start === "string"
+            ? e.start
+            : startObj?.dateTime || startObj?.date || "";
+        const endVal =
+          typeof e.end === "string"
+            ? e.end
+            : endObj?.dateTime || endObj?.date || "";
         return {
           id: e.id,
           title: e.summary,
@@ -155,6 +163,6 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
         ],
         structuredContent,
       };
-    }
+    },
   );
 }

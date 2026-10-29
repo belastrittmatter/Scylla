@@ -1,7 +1,10 @@
 import { ProjectService } from "@/services/project/project-service";
 import { TeamService } from "@/services/team/team-service";
 import { CreateProjectSchema } from "@/services/api-schemas";
-import { ProjectStatusSchema, type ProjectStatus } from "@/services/project/project-types";
+import {
+  ProjectStatusSchema,
+  type ProjectStatus,
+} from "@/services/project/project-types";
 import { isUniqueConstraintError, resolveUserId } from "@/services/api-utils";
 
 export async function GET(req: Request) {
@@ -14,7 +17,7 @@ export async function GET(req: Request) {
       if (!teamId) {
         return Response.json(
           { error: "teamId parameter is required when querying by slug" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       const project = await ProjectService.getProjectBySlug(teamId, slug);
@@ -29,7 +32,10 @@ export async function GET(req: Request) {
     if (statusParam) {
       const parsedStatus = ProjectStatusSchema.safeParse(statusParam);
       if (!parsedStatus.success) {
-        return Response.json({ error: "Invalid status parameter" }, { status: 400 });
+        return Response.json(
+          { error: "Invalid status parameter" },
+          { status: 400 },
+        );
       }
       status = parsedStatus.data;
     }
@@ -37,7 +43,7 @@ export async function GET(req: Request) {
     if (teamId) {
       const projects = await ProjectService.listProjectsByTeam(
         teamId,
-        status ? { status } : undefined
+        status ? { status } : undefined,
       );
       return Response.json(projects, { status: 200 });
     }
@@ -55,13 +61,13 @@ export async function GET(req: Request) {
 
     const projects = await ProjectService.listProjectsByTeams(
       teamIds,
-      status ? { status } : undefined
+      status ? { status } : undefined,
     );
     return Response.json(projects, { status: 200 });
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to get projects" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -72,14 +78,17 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     const parseResult = CreateProjectSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -87,9 +96,13 @@ export async function POST(req: Request) {
     return Response.json(newProject, { status: 201 });
   } catch (err) {
     if (isUniqueConstraintError(err)) {
-      return Response.json({ error: "A project with this slug already exists" }, { status: 409 });
+      return Response.json(
+        { error: "A project with this slug already exists" },
+        { status: 409 },
+      );
     }
-    const message = err instanceof Error ? err.message : "Failed to create project";
+    const message =
+      err instanceof Error ? err.message : "Failed to create project";
     if (message.includes("not found")) {
       return Response.json({ error: message }, { status: 404 });
     }

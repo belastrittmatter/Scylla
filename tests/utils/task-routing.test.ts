@@ -97,22 +97,28 @@ describe("Task Workspace Slug Routing Utilities", () => {
       expect(findProjectBySlugOrId(mockProjects, "all")).toBeUndefined();
       expect(findProjectBySlugOrId(mockProjects, undefined)).toBeUndefined();
       expect(findProjectBySlugOrId(mockProjects, "")).toBeUndefined();
-      expect(findProjectBySlugOrId(mockProjects, "unknown-slug")).toBeUndefined();
+      expect(
+        findProjectBySlugOrId(mockProjects, "unknown-slug"),
+      ).toBeUndefined();
     });
   });
 
   describe("buildTaskWorkspaceUrl", () => {
     test("builds team-level task URL when project is not specified", () => {
-      expect(buildTaskWorkspaceUrl("engineering-core")).toBe("/tasks/engineering-core");
+      expect(buildTaskWorkspaceUrl("engineering-core")).toBe(
+        "/tasks/engineering-core",
+      );
     });
 
     test("builds team-level task URL when project is 'all'", () => {
-      expect(buildTaskWorkspaceUrl("engineering-core", "all")).toBe("/tasks/engineering-core");
+      expect(buildTaskWorkspaceUrl("engineering-core", "all")).toBe(
+        "/tasks/engineering-core",
+      );
     });
 
     test("builds scoped project task URL when project slug is provided", () => {
       expect(buildTaskWorkspaceUrl("engineering-core", "mobile-app")).toBe(
-        "/tasks/engineering-core/mobile-app"
+        "/tasks/engineering-core/mobile-app",
       );
     });
   });

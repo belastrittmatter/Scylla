@@ -31,7 +31,10 @@ interface ScheduleTimelineProps {
   readonly onSelectSlot: (slot: ScheduleSlot) => void;
 }
 
-function renderHourRuler(label: string, extraProps?: Record<string, string>): React.ReactElement {
+function renderHourRuler(
+  label: string,
+  extraProps?: Record<string, string>,
+): React.ReactElement {
   return (
     <div {...extraProps} className="flex items-center gap-3 py-0.5">
       <div className="text-muted-foreground w-40 shrink-0 text-[11px] font-semibold uppercase tracking-wider">
@@ -55,7 +58,7 @@ function renderHourRuler(label: string, extraProps?: Record<string, string>): Re
 function renderTrack(
   busyList: readonly BusyInterval[],
   sharedFreeBands: readonly BusyInterval[],
-  isSharedRow = false
+  isSharedRow = false,
 ): React.ReactElement {
   const items = isSharedRow ? sharedFreeBands : busyList;
   return (
@@ -77,7 +80,10 @@ function renderTrack(
       </div>
       {items.map((b, idx) => {
         const left = getTimelinePercent(getIctMinutes(b.start));
-        const width = Math.max(1.5, getTimelinePercent(getIctMinutes(b.end)) - left);
+        const width = Math.max(
+          1.5,
+          getTimelinePercent(getIctMinutes(b.end)) - left,
+        );
         return (
           <div
             key={isSharedRow ? b.start : `${b.start}-${idx}`}
@@ -109,11 +115,18 @@ export function ScheduleTimeline({
     const el = tracksRef.current;
     if (!el || isSyncing || openSlots.length === 0) return;
     const rect = el.getBoundingClientRect();
-    const snapped = findClosestSlotByClientX(clientX, rect.left, rect.width, openSlots);
+    const snapped = findClosestSlotByClientX(
+      clientX,
+      rect.left,
+      rect.width,
+      openSlots,
+    );
     if (snapped && snapped.start !== selectedSlot?.start) onSelectSlot(snapped);
   };
 
-  const selLeft = selectedSlot ? getTimelinePercent(getIctMinutes(selectedSlot.start)) : 0;
+  const selLeft = selectedSlot
+    ? getTimelinePercent(getIctMinutes(selectedSlot.start))
+    : 0;
   const selWidth = selectedSlot
     ? Math.max(2, getTimelinePercent(getIctMinutes(selectedSlot.end)) - selLeft)
     : 0;
@@ -179,7 +192,10 @@ export function ScheduleTimeline({
           >
             {participants.map((p) => (
               <React.Fragment key={p.email || p.name}>
-                {renderTrack([...(p.busy ?? []), ...bookedIntervals], sharedFreeBands)}
+                {renderTrack(
+                  [...(p.busy ?? []), ...bookedIntervals],
+                  sharedFreeBands,
+                )}
               </React.Fragment>
             ))}
             {selectedRoom && renderTrack(roomBusyList, sharedFreeBands)}

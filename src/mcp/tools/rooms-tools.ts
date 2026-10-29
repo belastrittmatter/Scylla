@@ -1,5 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { GoogleCalendarService, type ResourceRoom } from "@/services/google-calendar";
+import {
+  GoogleCalendarService,
+  type ResourceRoom,
+} from "@/services/google-calendar";
 import { db, meetingRoom } from "@/db";
 import { listMeetingRoomsSchema } from "../schemas";
 import type { McpToolContext } from "../types";
@@ -22,10 +25,13 @@ export function registerRoomsTools(server: McpServer, ctx: McpToolContext) {
           .then((token) =>
             GoogleCalendarService.listResourceRooms({
               accessToken: token || undefined,
-            })
+            }),
           )
           .catch((err) => {
-            console.warn("Could not fetch Google resource rooms in list_meeting_rooms:", err);
+            console.warn(
+              "Could not fetch Google resource rooms in list_meeting_rooms:",
+              err,
+            );
             return [] as ResourceRoom[];
           }),
         db.select().from(meetingRoom),
@@ -38,7 +44,7 @@ export function registerRoomsTools(server: McpServer, ctx: McpToolContext) {
           (r) =>
             r.email.toLowerCase() === gr.email.toLowerCase() ||
             (r.googleResourceEmail &&
-              r.googleResourceEmail.toLowerCase() === gr.email.toLowerCase())
+              r.googleResourceEmail.toLowerCase() === gr.email.toLowerCase()),
         );
 
         if (!alreadyExists) {
@@ -67,13 +73,15 @@ export function registerRoomsTools(server: McpServer, ctx: McpToolContext) {
       }
       if (officeLocation && officeLocation !== "all") {
         filtered = filtered.filter((r) =>
-          (r.officeLocation || "").toLowerCase().includes(officeLocation.toLowerCase())
+          (r.officeLocation || "")
+            .toLowerCase()
+            .includes(officeLocation.toLowerCase()),
         );
       }
 
       return {
         content: [{ type: "text", text: JSON.stringify(filtered, null, 2) }],
       };
-    }
+    },
   );
 }

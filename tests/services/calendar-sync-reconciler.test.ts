@@ -105,9 +105,18 @@ describe("Calendar Sync Reconciler", () => {
     expect(cancelledIds.has(b3Local.id)).toBe(false);
 
     // Verify DB records
-    const [updatedB1] = await db.select().from(booking).where(eq(booking.id, b1.id));
-    const [updatedB2] = await db.select().from(booking).where(eq(booking.id, b2.id));
-    const [updatedB3] = await db.select().from(booking).where(eq(booking.id, b3Local.id));
+    const [updatedB1] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, b1.id));
+    const [updatedB2] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, b2.id));
+    const [updatedB3] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, b3Local.id));
 
     expect(updatedB1.status).toBe("cancelled");
     expect(updatedB1.cancellationReason).toBe("Deleted on Google Calendar");
@@ -155,7 +164,10 @@ describe("Calendar Sync Reconciler", () => {
 
     expect(cancelledIds.has(b.id)).toBe(true);
 
-    const [updated] = await db.select().from(booking).where(eq(booking.id, b.id));
+    const [updated] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, b.id));
     expect(updated.status).toBe("cancelled");
 
     await db.delete(booking).where(eq(booking.id, b.id));

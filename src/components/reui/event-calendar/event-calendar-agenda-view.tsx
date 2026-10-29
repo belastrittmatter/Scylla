@@ -32,16 +32,20 @@ import { CalendarIcon } from "lucide-react";
 // visibleRange from it); a per-view prop here would silently disagree.
 type EventCalendarAgendaViewProps = useRender.ComponentProps<"div">;
 
-function EventCalendarAgendaView({ className, render, ...props }: EventCalendarAgendaViewProps) {
+function EventCalendarAgendaView({
+  className,
+  render,
+  ...props
+}: EventCalendarAgendaViewProps) {
   const instance = useEventCalendar();
   const settings = useEventCalendarSettings();
   const viewConfig = useEventCalendarViewConfig();
-  const visibleRange = useEventCalendarSelector<unknown, EventCalendarDateRange>(
-    (state) => state.visibleRange,
-    {
-      isEqual: (a, b) => getRangeKey(a) === getRangeKey(b),
-    }
-  );
+  const visibleRange = useEventCalendarSelector<
+    unknown,
+    EventCalendarDateRange
+  >((state) => state.visibleRange, {
+    isEqual: (a, b) => getRangeKey(a) === getRangeKey(b),
+  });
   // Subscribe to event changes via the day-bucket content of the whole range
   useEventCalendarSelector((state) => state.events);
 
@@ -50,7 +54,10 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
     let cursor = zonedStartOfDay(visibleRange.start, settings.timeZone);
     while (cursor < visibleRange.end) {
       result.push(cursor);
-      cursor = zonedStartOfDay(addDays(toZoned(cursor, settings.timeZone), 1), settings.timeZone);
+      cursor = zonedStartOfDay(
+        addDays(toZoned(cursor, settings.timeZone), 1),
+        settings.timeZone,
+      );
     }
     return result;
   }, [visibleRange, settings.timeZone]);
@@ -62,12 +69,14 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
       bucket: index.byDay.get(getDayKey(day, settings.timeZone)),
     }))
     .filter((group) => {
-      const total = (group.bucket?.allDay.length ?? 0) + (group.bucket?.timed.length ?? 0);
+      const total =
+        (group.bucket?.allDay.length ?? 0) + (group.bucket?.timed.length ?? 0);
       return total > 0;
     });
 
   const isToday = (day: Date) =>
-    getDayKey(day, settings.timeZone) === getDayKey(new Date(), settings.timeZone);
+    getDayKey(day, settings.timeZone) ===
+    getDayKey(new Date(), settings.timeZone);
 
   const native = viewConfig.scrollbars === "native";
 
@@ -78,7 +87,7 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
           data-slot="event-calendar-no-events"
           className={cn(
             "flex min-h-72 flex-col items-center justify-center gap-4 py-16",
-            viewConfig.classNames?.noEvents
+            viewConfig.classNames?.noEvents,
           )}
         >
           {viewConfig.renderNoEvents?.() ?? (
@@ -86,7 +95,9 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
               <IconStack>
                 <CalendarIcon className="size-5" aria-hidden="true" />
               </IconStack>
-              <span className="text-muted-foreground text-sm">{settings.i18n.labels.noEvents}</span>
+              <span className="text-muted-foreground text-sm">
+                {settings.i18n.labels.noEvents}
+              </span>
             </>
           )}
         </div>
@@ -131,18 +142,26 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
                     // scrollbars already sit outside the content box, so this
                     // only applies to the custom-scrollbar path.
                     !native && "me-2.5",
-                    viewConfig.classNames?.agendaDayHeader
+                    viewConfig.classNames?.agendaDayHeader,
                   )}
                 >
                   <span
-                    className={cn("text-foreground font-semibold", isToday(day) && "text-primary")}
+                    className={cn(
+                      "text-foreground font-semibold",
+                      isToday(day) && "text-primary",
+                    )}
                   >
                     {weekday}
                   </span>
-                  <span className="text-muted-foreground font-medium tabular-nums">{dayDate}</span>
+                  <span className="text-muted-foreground font-medium tabular-nums">
+                    {dayDate}
+                  </span>
                 </div>
                 {items.map((segment) => (
-                  <EventCalendarAgendaItem key={segment.occurrence.key} segment={segment} />
+                  <EventCalendarAgendaItem
+                    key={segment.occurrence.key}
+                    segment={segment}
+                  />
                 ))}
               </div>
             );
@@ -165,7 +184,7 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
     className: cn(
       "flex min-h-0 flex-1 flex-col overflow-hidden border-t",
       viewConfig.classNames?.agendaView,
-      className
+      className,
     ),
     children: native ? (
       <div
@@ -196,7 +215,11 @@ function EventCalendarAgendaView({ className, render, ...props }: EventCalendarA
  * and title (all replaceable via renderAgendaEvent). Clicking selects the
  * event (drag/resize stay off in the agenda).
  */
-function EventCalendarAgendaItem({ segment }: { segment: EventCalendarSegment }) {
+function EventCalendarAgendaItem({
+  segment,
+}: {
+  segment: EventCalendarSegment;
+}) {
   const viewConfig = useEventCalendarViewConfig();
   return (
     <EventCalendarEvent
@@ -204,7 +227,7 @@ function EventCalendarAgendaItem({ segment }: { segment: EventCalendarSegment })
       className={cn(
         // read-only list: hover only, no selected/focused styling on click
         "hover:bg-accent/40 gap-3 rounded-none border-b px-4 py-2.5 transition-colors",
-        viewConfig.classNames?.agendaItem
+        viewConfig.classNames?.agendaItem,
       )}
     />
   );

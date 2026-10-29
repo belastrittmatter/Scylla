@@ -9,7 +9,10 @@ import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { CalendarEventTracker } from "@/utils/calendar-event-tracker";
-import { isGoogleApiUrl, handleMockGoogleRequest } from "@/utils/mock-google-calendar";
+import {
+  isGoogleApiUrl,
+  handleMockGoogleRequest,
+} from "@/utils/mock-google-calendar";
 
 export interface ResourceRoom {
   id: string;
@@ -43,7 +46,9 @@ export interface CreateEventInput {
   description?: string;
   start: Date | string;
   end: Date | string;
-  attendees?: Array<string | { email: string; name?: string; responseStatus?: string }>;
+  attendees?: Array<
+    string | { email: string; name?: string; responseStatus?: string }
+  >;
   roomEmail?: string;
   calendarId?: string;
   conference?: boolean;
@@ -56,7 +61,9 @@ export interface UpdateEventInput {
   description?: string;
   start?: Date | string;
   end?: Date | string;
-  attendees?: Array<string | { email: string; name?: string; responseStatus?: string }>;
+  attendees?: Array<
+    string | { email: string; name?: string; responseStatus?: string }
+  >;
   roomEmail?: string;
   calendarId?: string;
   accessToken?: string;
@@ -98,8 +105,10 @@ function toIsoString(val: Date | string): string {
 }
 
 function normalizeAttendees(
-  attendees?: Array<string | { email: string; name?: string; responseStatus?: string }>,
-  roomEmail?: string
+  attendees?: Array<
+    string | { email: string; name?: string; responseStatus?: string }
+  >,
+  roomEmail?: string,
 ): CalendarEventAttendee[] {
   const result: CalendarEventAttendee[] = [];
   const seen = new Set<string>();
@@ -142,8 +151,14 @@ function normalizeAttendees(
 }
 
 export class GoogleCalendarService {
-  private static cachedRooms: { data: ResourceRoom[]; expiresAt: number } | null = null;
-  private static cachedUsers: { data: DirectoryUser[]; expiresAt: number } | null = null;
+  private static cachedRooms: {
+    data: ResourceRoom[];
+    expiresAt: number;
+  } | null = null;
+  private static cachedUsers: {
+    data: DirectoryUser[];
+    expiresAt: number;
+  } | null = null;
   private static hasAdminApiPermission: boolean = true;
 
   /**
@@ -155,7 +170,7 @@ export class GoogleCalendarService {
     return Boolean(
       process.env.GOOGLE_CLIENT_ID &&
       process.env.GOOGLE_CLIENT_SECRET &&
-      process.env.GOOGLE_REFRESH_TOKEN
+      process.env.GOOGLE_REFRESH_TOKEN,
     );
   }
 
@@ -183,11 +198,18 @@ export class GoogleCalendarService {
    */
   public static async fetchWithMock(
     url: string | URL | Request,
-    init?: RequestInit
+    init?: RequestInit,
   ): Promise<Response> {
-    const urlStr = typeof url === "string" ? url : url instanceof URL ? url.toString() : url.url;
+    const urlStr =
+      typeof url === "string"
+        ? url
+        : url instanceof URL
+          ? url.toString()
+          : url.url;
 
-    const isCustomFetch = !globalThis.fetch.toString().includes("[native code]");
+    const isCustomFetch = !globalThis.fetch
+      .toString()
+      .includes("[native code]");
     if (isCustomFetch) {
       return globalThis.fetch(url, init);
     }
@@ -229,9 +251,11 @@ export class GoogleCalendarService {
    */
   public static async cleanupTrackedEvents(
     calendarId = "primary",
-    token?: string
+    token?: string,
   ): Promise<{ deleted: string[]; failed: string[] }> {
-    return CalendarEventTracker.cleanupAll((id) => this.deleteEvent(id, calendarId, token));
+    return CalendarEventTracker.cleanupAll((id) =>
+      this.deleteEvent(id, calendarId, token),
+    );
   }
 
   /**
@@ -263,16 +287,19 @@ export class GoogleCalendarService {
     // Attempt refresh if refresh token and client credentials exist
     if (accountRecord.refreshToken && clientId && clientSecret) {
       try {
-        const res = await this.fetchWithMock("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            refresh_token: accountRecord.refreshToken,
-            grant_type: "refresh_token",
-          }),
-        });
+        const res = await this.fetchWithMock(
+          "https://oauth2.googleapis.com/token",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: clientId,
+              client_secret: clientSecret,
+              refresh_token: accountRecord.refreshToken,
+              grant_type: "refresh_token",
+            }),
+          },
+        );
 
         const data = await res.json();
         if (res.ok && data.access_token) {
@@ -289,7 +316,10 @@ export class GoogleCalendarService {
               })
               .where(eq(account.id, accountRecord.id));
           } catch (dbErr) {
-            console.warn("Could not persist refreshed Google token to DB:", dbErr);
+            console.warn(
+              "Could not persist refreshed Google token to DB:",
+              dbErr,
+            );
           }
 
           return data.access_token;
@@ -309,7 +339,9 @@ export class GoogleCalendarService {
    * Refreshes OAuth2 access token when live credentials are set,
    * or falls back to database Google account token if available.
    */
-  public static async getAccessToken(explicitToken?: string): Promise<string | null> {
+  public static async getAccessToken(
+    explicitToken?: string,
+  ): Promise<string | null> {
     if (explicitToken) return explicitToken;
     if (process.env.GOOGLE_ACCESS_TOKEN) return process.env.GOOGLE_ACCESS_TOKEN;
 
@@ -323,16 +355,19 @@ export class GoogleCalendarService {
 
     if (clientId && clientSecret && refreshToken) {
       try {
-        const res = await this.fetchWithMock("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            refresh_token: refreshToken,
-            grant_type: "refresh_token",
-          }),
-        });
+        const res = await this.fetchWithMock(
+          "https://oauth2.googleapis.com/token",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: clientId,
+              client_secret: clientSecret,
+              refresh_token: refreshToken,
+              grant_type: "refresh_token",
+            }),
+          },
+        );
 
         const data = await res.json();
         if (res.ok && data.access_token) {
@@ -373,14 +408,20 @@ export class GoogleCalendarService {
     rawCapacity?: number,
     rawDescription?: string,
     buildingId?: string,
-    floorName?: string
+    floorName?: string,
   ): ResourceRoom {
     const rawName = displayName || email.split("@")[0];
 
     // Extract capacity from parentheses, e.g. "(6)" or "(14 seats)"
-    const capMatch = rawName.match(/[\(\[]\s*(\d+)\s*(?:seats|chỗ|p)?\s*[\)\]]/i);
+    const capMatch = rawName.match(
+      /[\(\[]\s*(\d+)\s*(?:seats|chỗ|p)?\s*[\)\]]/i,
+    );
     let capacity = capMatch ? parseInt(capMatch[1], 10) : 10;
-    if (typeof rawCapacity === "number" && !isNaN(rawCapacity) && rawCapacity > 0) {
+    if (
+      typeof rawCapacity === "number" &&
+      !isNaN(rawCapacity) &&
+      rawCapacity > 0
+    ) {
       capacity = rawCapacity;
     }
 
@@ -448,12 +489,16 @@ export class GoogleCalendarService {
     if (fullFeatureStr.includes("projector")) {
       featuresSet.add("projector");
     }
-    if (fullFeatureStr.includes("whiteboard") || fullFeatureStr.includes("bảng")) {
+    if (
+      fullFeatureStr.includes("whiteboard") ||
+      fullFeatureStr.includes("bảng")
+    ) {
       featuresSet.add("whiteboard");
     }
 
     const desc =
-      rawDescription || `${building}${floor ? ` • Floor ${floor}` : ""} • ${capacity} seats`;
+      rawDescription ||
+      `${building}${floor ? ` • Floor ${floor}` : ""} • ${capacity} seats`;
 
     return {
       id: email,
@@ -476,7 +521,7 @@ export class GoogleCalendarService {
     displayName?: string,
     image?: string,
     title?: string,
-    department?: string
+    department?: string,
   ): DirectoryUser {
     let cleanName = displayName?.trim();
     if (!cleanName || cleanName.toLowerCase() === email.toLowerCase()) {
@@ -484,7 +529,9 @@ export class GoogleCalendarService {
       cleanName = localPart
         .split(/[._-]/)
         .filter(Boolean)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .map(
+          (part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+        )
         .join(" ");
     }
 
@@ -511,7 +558,7 @@ export class GoogleCalendarService {
         accessToken?: string | null;
         accessTokenExpiresAt?: Date | null;
       };
-    }
+    },
   ): Promise<{
     name: string;
     isResource: boolean;
@@ -534,7 +581,7 @@ export class GoogleCalendarService {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-        }
+        },
       );
       if (res.ok) {
         const data = await res.json();
@@ -584,22 +631,27 @@ export class GoogleCalendarService {
         accessToken?: string | null;
         accessTokenExpiresAt?: Date | null;
       };
-    }
+    },
   ): Promise<{ name: string; isResource: boolean; details?: string }> {
     const lowerEmail = email.trim().toLowerCase();
     const isResourcePattern =
-      lowerEmail.includes("resource.calendar.google.com") || lowerEmail.includes("meetingroom");
+      lowerEmail.includes("resource.calendar.google.com") ||
+      lowerEmail.includes("meetingroom");
 
     // 1. Check known rooms and teammates from Google in parallel
     const [rooms, users] = await Promise.all([
       this.listResourceRooms(options).catch(() => [] as ResourceRoom[]),
       isResourcePattern
         ? Promise.resolve([] as DirectoryUser[])
-        : this.searchDirectoryUsers("", options).catch(() => [] as DirectoryUser[]),
+        : this.searchDirectoryUsers("", options).catch(
+            () => [] as DirectoryUser[],
+          ),
     ]);
 
     const matchedRoom = rooms.find(
-      (r) => r.email.toLowerCase() === lowerEmail || r.id.toLowerCase() === lowerEmail
+      (r) =>
+        r.email.toLowerCase() === lowerEmail ||
+        r.id.toLowerCase() === lowerEmail,
     );
     if (matchedRoom) {
       return {
@@ -649,7 +701,8 @@ export class GoogleCalendarService {
    * Lists physical resource rooms available in the organization from Google Workspace Directory.
    */
   public static async listResourceRooms(
-    accessTokenOrOptions?: string | { accountRecord?: unknown; accessToken?: string }
+    accessTokenOrOptions?:
+      string | { accountRecord?: unknown; accessToken?: string },
   ): Promise<ResourceRoom[]> {
     if (
       this.cachedRooms &&
@@ -664,7 +717,9 @@ export class GoogleCalendarService {
         ? accessTokenOrOptions
         : {
             accessToken:
-              typeof accessTokenOrOptions === "string" ? accessTokenOrOptions : undefined,
+              typeof accessTokenOrOptions === "string"
+                ? accessTokenOrOptions
+                : undefined,
           };
 
     const token = options.accountRecord
@@ -674,13 +729,13 @@ export class GoogleCalendarService {
             refreshToken?: string | null;
             accessToken?: string | null;
             accessTokenExpiresAt?: Date | null;
-          }
+          },
         )
       : await this.getAccessToken(options.accessToken);
 
     if (!token) {
       throw new Error(
-        "Google API access token is not available. Please sign in or re-authenticate."
+        "Google API access token is not available. Please sign in or re-authenticate.",
       );
     }
 
@@ -693,7 +748,7 @@ export class GoogleCalendarService {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
-      }
+      },
     );
 
     const data = await res.json();
@@ -710,9 +765,15 @@ export class GoogleCalendarService {
       const em = String(item.resourceEmail || "").toLowerCase();
       if (em && !roomMap.has(em)) {
         const itemCap =
-          typeof item.capacity === "number" ? item.capacity : Number(item.capacity) || undefined;
-        const itemDesc = String(item.userVisibleDescription || item.resourceDescription || "");
-        const itemBuilding = item.buildingId ? String(item.buildingId) : undefined;
+          typeof item.capacity === "number"
+            ? item.capacity
+            : Number(item.capacity) || undefined;
+        const itemDesc = String(
+          item.userVisibleDescription || item.resourceDescription || "",
+        );
+        const itemBuilding = item.buildingId
+          ? String(item.buildingId)
+          : undefined;
         const itemFloor = item.floorName ? String(item.floorName) : undefined;
 
         roomMap.set(
@@ -723,8 +784,8 @@ export class GoogleCalendarService {
             itemCap,
             itemDesc || undefined,
             itemBuilding,
-            itemFloor
-          )
+            itemFloor,
+          ),
         );
       }
     }
@@ -741,7 +802,8 @@ export class GoogleCalendarService {
    */
   public static async searchDirectoryUsers(
     query: string,
-    accessTokenOrOptions?: string | { accountRecord?: unknown; accessToken?: string }
+    accessTokenOrOptions?:
+      string | { accountRecord?: unknown; accessToken?: string },
   ): Promise<DirectoryUser[]> {
     const q = query.trim();
     const lowerQuery = q.toLowerCase();
@@ -752,9 +814,12 @@ export class GoogleCalendarService {
           u.name.toLowerCase().includes(lowerQuery) ||
           u.email.toLowerCase().includes(lowerQuery) ||
           (u.title && u.title.toLowerCase().includes(lowerQuery)) ||
-          (u.department && u.department.toLowerCase().includes(lowerQuery))
+          (u.department && u.department.toLowerCase().includes(lowerQuery)),
       );
-      if (q.includes("@") && !filtered.some((u) => u.email.toLowerCase() === lowerQuery)) {
+      if (
+        q.includes("@") &&
+        !filtered.some((u) => u.email.toLowerCase() === lowerQuery)
+      ) {
         return [...filtered, this.parseGoogleUser(q)];
       }
       return filtered;
@@ -775,7 +840,9 @@ export class GoogleCalendarService {
         ? accessTokenOrOptions
         : {
             accessToken:
-              typeof accessTokenOrOptions === "string" ? accessTokenOrOptions : undefined,
+              typeof accessTokenOrOptions === "string"
+                ? accessTokenOrOptions
+                : undefined,
           };
 
     const token = options.accountRecord
@@ -785,14 +852,16 @@ export class GoogleCalendarService {
             refreshToken?: string | null;
             accessToken?: string | null;
             accessTokenExpiresAt?: Date | null;
-          }
+          },
         )
       : await this.getAccessToken(options.accessToken);
 
     const userMap = new Map<string, DirectoryUser>();
 
     if (!token) {
-      console.warn("Google Directory API access token not available for searchDirectoryUsers");
+      console.warn(
+        "Google Directory API access token not available for searchDirectoryUsers",
+      );
       return [];
     }
 
@@ -803,21 +872,24 @@ export class GoogleCalendarService {
 
     const adminUrl = q
       ? `https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&query=${encodeURIComponent(
-          q
+          q,
         )}&maxResults=20`
       : "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=20";
 
     const [evRes, calRes, pRes, adminRes] = await Promise.all([
       this.fetchWithMock(
         "https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=250",
-        { headers }
+        { headers },
       ).catch((eventErr) => {
-        console.warn("Failed to extract teammates from Google Calendar events:", eventErr);
+        console.warn(
+          "Failed to extract teammates from Google Calendar events:",
+          eventErr,
+        );
         return null;
       }),
       this.fetchWithMock(
         "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250",
-        { headers }
+        { headers },
       ).catch((calErr) => {
         console.warn("CalendarList colleague discovery failed:", calErr);
         return null;
@@ -825,14 +897,19 @@ export class GoogleCalendarService {
       q
         ? this.fetchWithMock(
             `https://people.googleapis.com/v1/people:searchDirectoryPeople?query=${encodeURIComponent(
-              q
+              q,
             )}&readMask=names,emailAddresses,photos,organizations&sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&pageSize=20`,
-            { headers }
+            { headers },
           ).catch(() => null)
         : Promise.resolve(null),
       this.hasAdminApiPermission
         ? this.fetchWithMock(adminUrl, { headers }).catch((res) => {
-            if (res && typeof res === "object" && "status" in res && res.status === 403) {
+            if (
+              res &&
+              typeof res === "object" &&
+              "status" in res &&
+              res.status === 403
+            ) {
               this.hasAdminApiPermission = false;
             }
             return null;
@@ -845,7 +922,11 @@ export class GoogleCalendarService {
       if (evRes?.ok) {
         const evData = await evRes.json();
         const items = (evData.items || []) as Array<{
-          attendees?: Array<{ email?: string; displayName?: string; resource?: boolean }>;
+          attendees?: Array<{
+            email?: string;
+            displayName?: string;
+            resource?: boolean;
+          }>;
           organizer?: { email?: string; displayName?: string };
         }>;
 
@@ -860,7 +941,10 @@ export class GoogleCalendarService {
             ) {
               userMap.set(
                 orgEmail,
-                this.parseGoogleUser(item.organizer.email, item.organizer.displayName)
+                this.parseGoogleUser(
+                  item.organizer.email,
+                  item.organizer.displayName,
+                ),
               );
             }
           }
@@ -877,13 +961,19 @@ export class GoogleCalendarService {
               email.includes("meetingroom");
 
             if (!isRoom && !userMap.has(email)) {
-              userMap.set(email, this.parseGoogleUser(att.email!, att.displayName));
+              userMap.set(
+                email,
+                this.parseGoogleUser(att.email!, att.displayName),
+              );
             }
           }
         }
       }
     } catch (eventErr) {
-      console.warn("Failed to extract teammates from Google Calendar events:", eventErr);
+      console.warn(
+        "Failed to extract teammates from Google Calendar events:",
+        eventErr,
+      );
     }
 
     // 2. Secondary: Subscribed colleague calendars in Google CalendarList
@@ -901,7 +991,10 @@ export class GoogleCalendarService {
             !id.includes("holiday@") &&
             !userMap.has(id)
           ) {
-            userMap.set(id, this.parseGoogleUser(String(cal.id || ""), summary));
+            userMap.set(
+              id,
+              this.parseGoogleUser(String(cal.id || ""), summary),
+            );
           }
         }
       }
@@ -934,8 +1027,8 @@ export class GoogleCalendarService {
                 nameObj?.displayName,
                 photoObj?.url,
                 orgObj?.title,
-                orgObj?.department
-              )
+                orgObj?.department,
+              ),
             );
           }
         }
@@ -961,8 +1054,8 @@ export class GoogleCalendarService {
                 this.parseGoogleUser(
                   String(u.primaryEmail || ""),
                   nameObj?.fullName,
-                  u.thumbnailPhotoUrl ? String(u.thumbnailPhotoUrl) : undefined
-                )
+                  u.thumbnailPhotoUrl ? String(u.thumbnailPhotoUrl) : undefined,
+                ),
               );
             }
           }
@@ -999,15 +1092,18 @@ export class GoogleCalendarService {
     start: Date,
     end: Date,
     accessTokenOrOptions?:
-      string | { accountRecord?: typeof account.$inferSelect; accessToken?: string },
-    optionalAccountRecord?: typeof account.$inferSelect
+      | string
+      | { accountRecord?: typeof account.$inferSelect; accessToken?: string },
+    optionalAccountRecord?: typeof account.$inferSelect,
   ): Promise<Record<string, FreeBusyInterval[]>> {
     const options =
       typeof accessTokenOrOptions === "object" && accessTokenOrOptions !== null
         ? accessTokenOrOptions
         : {
             accessToken:
-              typeof accessTokenOrOptions === "string" ? accessTokenOrOptions : undefined,
+              typeof accessTokenOrOptions === "string"
+                ? accessTokenOrOptions
+                : undefined,
             accountRecord: optionalAccountRecord,
           };
 
@@ -1019,7 +1115,9 @@ export class GoogleCalendarService {
 
     if (!token || emails.length === 0) {
       if (!token && emails.length > 0) {
-        console.warn("Google Calendar API access token not available for getFreeBusy");
+        console.warn(
+          "Google Calendar API access token not available for getFreeBusy",
+        );
       }
       const emptyEntries: Record<string, FreeBusyInterval[]> = {};
       for (const email of emails) {
@@ -1072,7 +1170,7 @@ export class GoogleCalendarService {
           (interval: { start: string; end: string }) => ({
             start: interval.start,
             end: interval.end,
-          })
+          }),
         );
       }
       return entries;
@@ -1091,7 +1189,7 @@ export class GoogleCalendarService {
    */
   public static async createEvent(
     payload: CreateEventInput,
-    accessToken?: string
+    accessToken?: string,
   ): Promise<CalendarEventResult> {
     const summary = payload.summary || payload.title || "Scheduled Meeting";
     const startIso = toIsoString(payload.start);
@@ -1101,7 +1199,9 @@ export class GoogleCalendarService {
     const token = await this.getAccessToken(accessToken || payload.accessToken);
 
     if (!token) {
-      throw new Error("Google Calendar API access token is required to create an event");
+      throw new Error(
+        "Google Calendar API access token is required to create an event",
+      );
     }
 
     const gcalPayload: Record<string, unknown> = {
@@ -1127,7 +1227,7 @@ export class GoogleCalendarService {
 
     const res = await this.fetchWithMock(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events?conferenceDataVersion=1`,
       {
         method: "POST",
@@ -1136,7 +1236,7 @@ export class GoogleCalendarService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(gcalPayload),
-      }
+      },
     );
 
     const data = await res.json();
@@ -1145,7 +1245,8 @@ export class GoogleCalendarService {
       throw new Error(`Google Calendar createEvent failed: ${errorMsg}`);
     }
 
-    const meetingUrl = data.hangoutLink || data.conferenceData?.entryPoints?.[0]?.uri;
+    const meetingUrl =
+      data.hangoutLink || data.conferenceData?.entryPoints?.[0]?.uri;
 
     const result: CalendarEventResult = {
       id: String(data.id || ""),
@@ -1157,12 +1258,16 @@ export class GoogleCalendarService {
       htmlLink: data.htmlLink ? String(data.htmlLink) : undefined,
       start: { dateTime: data.start?.dateTime || startIso },
       end: { dateTime: data.end?.dateTime || endIso },
-      attendees: ((data.attendees || []) as Array<Record<string, unknown>>).map((a) => ({
-        email: String(a.email || ""),
-        name: a.displayName ? String(a.displayName) : undefined,
-        responseStatus: a.responseStatus ? String(a.responseStatus) : undefined,
-        resource: Boolean(a.resource),
-      })),
+      attendees: ((data.attendees || []) as Array<Record<string, unknown>>).map(
+        (a) => ({
+          email: String(a.email || ""),
+          name: a.displayName ? String(a.displayName) : undefined,
+          responseStatus: a.responseStatus
+            ? String(a.responseStatus)
+            : undefined,
+          resource: Boolean(a.resource),
+        }),
+      ),
       roomEmail: payload.roomEmail,
     };
 
@@ -1176,13 +1281,15 @@ export class GoogleCalendarService {
   public static async updateEvent(
     eventId: string,
     payload: UpdateEventInput,
-    accessToken?: string
+    accessToken?: string,
   ): Promise<CalendarEventResult> {
     const calendarId = payload.calendarId || "primary";
     const token = await this.getAccessToken(accessToken || payload.accessToken);
 
     if (!token) {
-      throw new Error("Google Calendar API access token is required to update an event");
+      throw new Error(
+        "Google Calendar API access token is required to update an event",
+      );
     }
 
     const gcalPayload: Record<string, unknown> = {};
@@ -1200,7 +1307,10 @@ export class GoogleCalendarService {
       gcalPayload.end = { dateTime: toIsoString(payload.end) };
     }
     if (payload.attendees) {
-      gcalPayload.attendees = normalizeAttendees(payload.attendees, payload.roomEmail).map((a) => ({
+      gcalPayload.attendees = normalizeAttendees(
+        payload.attendees,
+        payload.roomEmail,
+      ).map((a) => ({
         email: a.email,
         displayName: a.name,
         resource: a.resource,
@@ -1209,7 +1319,7 @@ export class GoogleCalendarService {
 
     const res = await this.fetchWithMock(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events/${encodeURIComponent(eventId)}?conferenceDataVersion=1`,
       {
         method: "PATCH",
@@ -1218,31 +1328,42 @@ export class GoogleCalendarService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(gcalPayload),
-      }
+      },
     );
 
     const data = await res.json();
     if (!res.ok) {
       const errorMsg = data?.error?.message || JSON.stringify(data);
       console.warn("Google Calendar updateEvent failed:", errorMsg);
-      if (process.env.NODE_ENV === "test" || res.status === 429 || res.status === 403) {
+      if (
+        process.env.NODE_ENV === "test" ||
+        res.status === 429 ||
+        res.status === 403
+      ) {
         return {
           id: eventId,
           status: "confirmed",
           summary: payload.summary || payload.title || "Updated Meeting",
           description: payload.description,
           meetingUrl: "https://meet.google.com/abc-defg-hij",
-          start: { dateTime: payload.start ? new Date(payload.start).toISOString() : "" },
-          end: { dateTime: payload.end ? new Date(payload.end).toISOString() : "" },
+          start: {
+            dateTime: payload.start
+              ? new Date(payload.start).toISOString()
+              : "",
+          },
+          end: {
+            dateTime: payload.end ? new Date(payload.end).toISOString() : "",
+          },
           attendees: (payload.attendees || []).map((a) =>
-            typeof a === "string" ? { email: a } : a
+            typeof a === "string" ? { email: a } : a,
           ),
         };
       }
       throw new Error(`Google Calendar updateEvent failed: ${errorMsg}`);
     }
 
-    const meetingUrl = data.hangoutLink || data.conferenceData?.entryPoints?.[0]?.uri;
+    const meetingUrl =
+      data.hangoutLink || data.conferenceData?.entryPoints?.[0]?.uri;
 
     return {
       id: String(data.id || ""),
@@ -1254,12 +1375,16 @@ export class GoogleCalendarService {
       htmlLink: data.htmlLink ? String(data.htmlLink) : undefined,
       start: { dateTime: data.start?.dateTime || "" },
       end: { dateTime: data.end?.dateTime || "" },
-      attendees: ((data.attendees || []) as Array<Record<string, unknown>>).map((a) => ({
-        email: String(a.email || ""),
-        name: a.displayName ? String(a.displayName) : undefined,
-        responseStatus: a.responseStatus ? String(a.responseStatus) : undefined,
-        resource: Boolean(a.resource),
-      })),
+      attendees: ((data.attendees || []) as Array<Record<string, unknown>>).map(
+        (a) => ({
+          email: String(a.email || ""),
+          name: a.displayName ? String(a.displayName) : undefined,
+          responseStatus: a.responseStatus
+            ? String(a.responseStatus)
+            : undefined,
+          resource: Boolean(a.resource),
+        }),
+      ),
       roomEmail: payload.roomEmail,
     };
   }
@@ -1270,24 +1395,26 @@ export class GoogleCalendarService {
   public static async deleteEvent(
     eventId: string,
     calendarId: string = "primary",
-    accessToken?: string
+    accessToken?: string,
   ): Promise<DeleteEventResult> {
     const token = await this.getAccessToken(accessToken);
 
     if (!token) {
-      throw new Error("Google Calendar API access token is required to delete an event");
+      throw new Error(
+        "Google Calendar API access token is required to delete an event",
+      );
     }
 
     const res = await this.fetchWithMock(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendarId
+        calendarId,
       )}/events/${encodeURIComponent(eventId)}`,
       {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     if (!res.ok && res.status !== 404) {
@@ -1318,20 +1445,22 @@ export class GoogleCalendarService {
       singleEvents?: boolean;
       orderBy?: string;
       showDeleted?: boolean;
-    }
+    },
   ): Promise<CalendarEventResult[]> {
     let token = options?.accountRecord
       ? await this.refreshAccountToken(options.accountRecord)
       : await this.getAccessToken(options?.accessToken);
 
     if (!token) {
-      console.warn("Google Calendar API access token not available for listEvents");
+      console.warn(
+        "Google Calendar API access token not available for listEvents",
+      );
       return [];
     }
 
     const fetchEvents = async (authToken: string) => {
       const url = new URL(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
       );
 
       if (options?.timeMin) {
@@ -1341,7 +1470,10 @@ export class GoogleCalendarService {
         url.searchParams.set("timeMax", toIsoString(options.timeMax));
       }
       url.searchParams.set("maxResults", String(options?.maxResults ?? 100));
-      url.searchParams.set("singleEvents", String(options?.singleEvents ?? true));
+      url.searchParams.set(
+        "singleEvents",
+        String(options?.singleEvents ?? true),
+      );
       url.searchParams.set("orderBy", options?.orderBy ?? "startTime");
       if (options?.showDeleted) {
         url.searchParams.set("showDeleted", "true");
@@ -1379,8 +1511,10 @@ export class GoogleCalendarService {
       const items = (data.items || []) as Array<Record<string, unknown>>;
 
       return items.map((item) => {
-        const startObj = item.start as { dateTime?: string; date?: string } | undefined;
-        const endObj = item.end as { dateTime?: string; date?: string } | undefined;
+        const startObj = item.start as
+          { dateTime?: string; date?: string } | undefined;
+        const endObj = item.end as
+          { dateTime?: string; date?: string } | undefined;
         const confData = item.conferenceData as
           { entryPoints?: Array<{ uri?: string }> } | undefined;
 
@@ -1400,7 +1534,9 @@ export class GoogleCalendarService {
             ? new Date(`${endObj.date}T23:59:59Z`).toISOString()
             : "";
 
-        const attendeesRaw = (item.attendees || []) as Array<Record<string, unknown>>;
+        const attendeesRaw = (item.attendees || []) as Array<
+          Record<string, unknown>
+        >;
 
         return {
           id: String(item.id || ""),
@@ -1411,7 +1547,9 @@ export class GoogleCalendarService {
           meetingUrl: meetingUrl || undefined,
           hangoutsLink: item.hangoutLink ? String(item.hangoutLink) : undefined,
           htmlLink: item.htmlLink ? String(item.htmlLink) : undefined,
-          transparency: item.transparency ? String(item.transparency) : undefined,
+          transparency: item.transparency
+            ? String(item.transparency)
+            : undefined,
           eventType: item.eventType ? String(item.eventType) : undefined,
           isAllDay,
           start: { dateTime: startIso },
@@ -1419,7 +1557,9 @@ export class GoogleCalendarService {
           attendees: attendeesRaw.map((a) => ({
             email: String(a.email || ""),
             name: a.displayName ? String(a.displayName) : undefined,
-            responseStatus: a.responseStatus ? String(a.responseStatus) : undefined,
+            responseStatus: a.responseStatus
+              ? String(a.responseStatus)
+              : undefined,
             resource: Boolean(a.resource),
           })),
         };

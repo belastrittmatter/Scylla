@@ -1,0 +1,50 @@
+name: Feature Task
+description: Propose a new feature, capability, or MCP tool.
+title: "[FEAT] "
+labels: ["type:feat", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out this form to specify a feature task. After filing, the team will review and tag with Size and Area.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary & Goal
+      description: What capability does this add to the MCP server or project?
+      placeholder: "Add MCP tool `get_user_profile` allowing AI clients to query..."
+    validations:
+      required: true
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: Technical Specification & Implementation
+      description: Detailed description of endpoints, schemas, parameters, or packages.
+      placeholder: "- Schema: z.object({ userId: z.string() })\n- Handler location: src/tools/...\n- Returns: UserProfile object"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Definition of Done (Acceptance Criteria)
+      description: Checklist of conditions that must be satisfied.
+      value: |
+        - [ ] Implementation complete
+        - [ ] Unit / integration tests added
+        - [ ] Tested with MCP client (Inspector / Claude Desktop)
+        - [ ] Documentation updated
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated Size
+      description: Refer to the size rubric (XS to XL).
+      options:
+        - "XS (1 file, tiny change)"
+        - "S (single module / tool)"
+        - "M (multi-file tool + tests)"
+        - "L (complex feature / auth)"
+        - "XL (epic / needs split)"
+    validations:
+      required: true

@@ -15,14 +15,17 @@ export async function GET(_req: Request, context: RouteParams) {
 
     const task = await TaskService.getTaskById(id);
     if (!task) {
-      return Response.json({ error: `Task not found for id: ${id}` }, { status: 404 });
+      return Response.json(
+        { error: `Task not found for id: ${id}` },
+        { status: 404 },
+      );
     }
 
     return Response.json(task, { status: 200 });
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to get task" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -38,14 +41,17 @@ export async function PATCH(req: Request, context: RouteParams) {
     try {
       body = await req.json();
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     const parseResult = UpdateTaskSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,12 +70,13 @@ export async function PATCH(req: Request, context: RouteParams) {
         ...data,
         dueDate,
       },
-      userId || undefined
+      userId || undefined,
     );
 
     return Response.json(updated, { status: 200 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update task";
+    const message =
+      err instanceof Error ? err.message : "Failed to update task";
     if (message.includes("not found")) {
       return Response.json({ error: message }, { status: 404 });
     }
@@ -89,7 +96,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to delete task" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -57,7 +57,8 @@ function ConsentContent() {
 
   const clientId = searchParams.get("client_id") || "Unknown Client";
   const scope = searchParams.get("scope") || "";
-  const consentCode = searchParams.get("consent_code") || searchParams.get("code");
+  const consentCode =
+    searchParams.get("consent_code") || searchParams.get("code");
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -67,7 +68,9 @@ function ConsentContent() {
     setError(null);
     try {
       const search =
-        typeof window !== "undefined" ? window.location.search : searchParams.toString();
+        typeof window !== "undefined"
+          ? window.location.search
+          : searchParams.toString();
       const oauthQuery = extractOAuthQuery(search);
 
       const res = await fetch("/api/auth/oauth2/consent", {
@@ -88,7 +91,10 @@ function ConsentContent() {
 
       if (!res.ok) {
         throw new Error(
-          data.error_description || data.message || data.error || "Failed to submit consent"
+          data.error_description ||
+            data.message ||
+            data.error ||
+            "Failed to submit consent",
         );
       }
 
@@ -99,7 +105,9 @@ function ConsentContent() {
       }
     } catch (err: unknown) {
       console.error("Error submitting OAuth consent:", err);
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred.",
+      );
       setIsLoading(false);
     }
   };
@@ -109,7 +117,9 @@ function ConsentContent() {
       <div className="bg-background text-foreground flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="size-8 animate-spin text-orange-500" />
-          <p className="text-muted-foreground text-xs font-medium">Loading session...</p>
+          <p className="text-muted-foreground text-xs font-medium">
+            Loading session...
+          </p>
         </div>
       </div>
     );
@@ -130,7 +140,9 @@ function ConsentContent() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-foreground text-lg font-bold tracking-tight">Scylla</span>
+            <span className="text-foreground text-lg font-bold tracking-tight">
+              Scylla
+            </span>
             <Badge
               variant="outline"
               className="gap-1 border-orange-500/20 bg-orange-500/10 text-[10px] font-medium text-orange-600 dark:text-orange-400"
@@ -145,14 +157,18 @@ function ConsentContent() {
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 ring-4 ring-orange-500/5 dark:text-orange-400">
             <Lock className="size-6" />
           </div>
-          <h2 className="text-foreground text-base font-bold">Sign In Required</h2>
+          <h2 className="text-foreground text-base font-bold">
+            Sign In Required
+          </h2>
           <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-            Please sign in to your Scylla account before granting scheduling tools and calendar
-            access to MCP clients.
+            Please sign in to your Scylla account before granting scheduling
+            tools and calendar access to MCP clients.
           </p>
           <Button
             onClick={() =>
-              router.push(`/sign-in${typeof window !== "undefined" ? window.location.search : ""}`)
+              router.push(
+                `/sign-in${typeof window !== "undefined" ? window.location.search : ""}`,
+              )
             }
             className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs mt-6 h-10 w-full cursor-pointer gap-2 rounded-xl font-semibold"
           >
@@ -178,7 +194,9 @@ function ConsentContent() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-foreground text-lg font-bold tracking-tight">Scylla</span>
+          <span className="text-foreground text-lg font-bold tracking-tight">
+            Scylla
+          </span>
           <Badge
             variant="outline"
             className="gap-1 border-orange-500/20 bg-orange-500/10 text-[10px] font-medium text-orange-600 dark:text-orange-400"
@@ -226,8 +244,8 @@ function ConsentContent() {
               >
                 {clientId}
               </Badge>{" "}
-              is requesting access to interact with your Google Calendar and Scylla workspace
-              tools.
+              is requesting access to interact with your Google Calendar and
+              Scylla workspace tools.
             </p>
           </div>
 
@@ -242,9 +260,12 @@ function ConsentContent() {
                   <CalendarDays className="size-3.5" />
                 </div>
                 <div>
-                  <div className="text-foreground font-semibold">Read Free/Busy Availability</div>
+                  <div className="text-foreground font-semibold">
+                    Read Free/Busy Availability
+                  </div>
                   <p className="text-muted-foreground mt-0.5 text-[11px]">
-                    Query schedule free slots and busy periods for you and invited colleagues.
+                    Query schedule free slots and busy periods for you and
+                    invited colleagues.
                   </p>
                 </div>
               </div>
@@ -258,7 +279,8 @@ function ConsentContent() {
                     Schedule & Reschedule Meetings
                   </div>
                   <p className="text-muted-foreground mt-0.5 text-[11px]">
-                    Create calendar events with auto-generated Google Meet video conference links.
+                    Create calendar events with auto-generated Google Meet video
+                    conference links.
                   </p>
                 </div>
               </div>
@@ -272,7 +294,8 @@ function ConsentContent() {
                     Reserve Physical Meeting Rooms
                   </div>
                   <p className="text-muted-foreground mt-0.5 text-[11px]">
-                    Browse office room facilities and reserve equipped workspaces automatically.
+                    Browse office room facilities and reserve equipped
+                    workspaces automatically.
                   </p>
                 </div>
               </div>
@@ -288,7 +311,9 @@ function ConsentContent() {
           {/* User Email Indicator */}
           <div className="bg-muted/40 text-muted-foreground border-border/60 rounded-xl border px-3.5 py-2.5 text-center text-xs">
             Authorizing as{" "}
-            <span className="text-foreground font-semibold">{session.user.email}</span>
+            <span className="text-foreground font-semibold">
+              {session.user.email}
+            </span>
           </div>
         </CardContent>
 
@@ -333,7 +358,9 @@ export default function ConsentPage() {
         <div className="bg-background text-foreground flex min-h-screen items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="size-8 animate-spin text-orange-500" />
-            <p className="text-muted-foreground text-xs font-medium">Loading authorization...</p>
+            <p className="text-muted-foreground text-xs font-medium">
+              Loading authorization...
+            </p>
           </div>
         </div>
       }

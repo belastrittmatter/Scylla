@@ -74,7 +74,7 @@ describe("Team, Project, and Task Schema & Relations", () => {
           userId: testMember.id,
           role: "admin",
         })
-        .execute()
+        .execute(),
     ).rejects.toThrow();
 
     // 4. Create a project under the team
@@ -105,7 +105,7 @@ describe("Team, Project, and Task Schema & Relations", () => {
           teamId: newTeam.id,
           status: "planning",
         })
-        .execute()
+        .execute(),
     ).rejects.toThrow();
 
     // 5. Create a task under the project and team
@@ -113,7 +113,8 @@ describe("Team, Project, and Task Schema & Relations", () => {
       .insert(task)
       .values({
         title: "Implement MCP Tasks Tool Handler",
-        description: "Expose task start, status, and cancel tools for long-running workflows",
+        description:
+          "Expose task start, status, and cancel tools for long-running workflows",
         status: "todo",
         priority: "high",
         projectId: newProject.id,
@@ -178,8 +179,14 @@ describe("Team, Project, and Task Schema & Relations", () => {
     // 8. Test Cascade Deletion: Deleting team cascades to members, projects, and tasks
     await db.delete(team).where(eq(team.id, newTeam.id));
 
-    const remainingProjects = await db.select().from(project).where(eq(project.id, newProject.id));
-    const remainingTasks = await db.select().from(task).where(eq(task.id, newTask.id));
+    const remainingProjects = await db
+      .select()
+      .from(project)
+      .where(eq(project.id, newProject.id));
+    const remainingTasks = await db
+      .select()
+      .from(task)
+      .where(eq(task.id, newTask.id));
     const remainingMembers = await db
       .select()
       .from(teamMember)

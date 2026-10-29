@@ -9,8 +9,11 @@ export async function GET(req: Request) {
     return Response.json(items, { status: 200 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch event types" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to fetch event types",
+      },
+      { status: 500 },
     );
   }
 }
@@ -33,11 +36,17 @@ export async function POST(req: Request) {
     try {
       body = (await req.json()) as CreateEventTypeBody;
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
+      );
     }
 
     if (!body?.name && !body?.title) {
-      return Response.json({ error: "Event type name or title is required" }, { status: 400 });
+      return Response.json(
+        { error: "Event type name or title is required" },
+        { status: 400 },
+      );
     }
 
     let userId = body.userId;
@@ -61,15 +70,20 @@ export async function POST(req: Request) {
       description: body.description,
       duration: Number(body.duration) || 30,
       requiresRoom: Boolean(body.requiresRoom),
-      beforeBuffer: body.beforeBuffer !== undefined ? Number(body.beforeBuffer) : 0,
-      afterBuffer: body.afterBuffer !== undefined ? Number(body.afterBuffer) : 0,
+      beforeBuffer:
+        body.beforeBuffer !== undefined ? Number(body.beforeBuffer) : 0,
+      afterBuffer:
+        body.afterBuffer !== undefined ? Number(body.afterBuffer) : 0,
     });
 
     return Response.json(created, { status: 201 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to create event type" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to create event type",
+      },
+      { status: 500 },
     );
   }
 }

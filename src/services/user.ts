@@ -20,7 +20,7 @@ export class UserService {
   public static async searchTeammates(
     query: string = "",
     limit: number = 20,
-    options?: { accountRecord?: unknown; accessToken?: string }
+    options?: { accountRecord?: unknown; accessToken?: string },
   ): Promise<Teammate[]> {
     const trimmed = query.trim();
     const seenEmails = new Set<string>();
@@ -33,7 +33,12 @@ export class UserService {
         ? await db
             .select()
             .from(user)
-            .where(or(ilike(user.name, searchPattern), ilike(user.email, searchPattern)))
+            .where(
+              or(
+                ilike(user.name, searchPattern),
+                ilike(user.email, searchPattern),
+              ),
+            )
             .limit(limit)
         : await db.select().from(user).limit(limit);
 
@@ -56,7 +61,10 @@ export class UserService {
 
     // 2. Fetch directory users directly from Google Workspace
     try {
-      const directoryUsers = await GoogleCalendarService.searchDirectoryUsers(trimmed, options);
+      const directoryUsers = await GoogleCalendarService.searchDirectoryUsers(
+        trimmed,
+        options,
+      );
       for (const du of directoryUsers) {
         const em = du.email.toLowerCase();
         if (!seenEmails.has(em)) {
@@ -95,7 +103,11 @@ export class UserService {
    * Lookup a user by their unique database ID.
    */
   public static async getUserById(id: string): Promise<User | null> {
-    const records = await db.select().from(user).where(eq(user.id, id)).limit(1);
+    const records = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, id))
+      .limit(1);
     return records[0] || null;
   }
 

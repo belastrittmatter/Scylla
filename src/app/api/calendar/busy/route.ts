@@ -53,7 +53,9 @@ async function handleBusyQuery(params: {
 }) {
   const now = new Date();
   const defaultMin = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-  const defaultMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const defaultMax = new Date(
+    Date.now() + 7 * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   const timeMin = params.timeMin || defaultMin;
   const timeMax = params.timeMax || defaultMax;
@@ -64,7 +66,9 @@ async function handleBusyQuery(params: {
   let sessionUserId: string | undefined;
   if (params.sessionHeaders) {
     try {
-      const session = await auth.api.getSession({ headers: params.sessionHeaders });
+      const session = await auth.api.getSession({
+        headers: params.sessionHeaders,
+      });
       if (session?.user) {
         sessionUserId = session.user.id;
       }
@@ -75,7 +79,10 @@ async function handleBusyQuery(params: {
 
   let googleAccount = null;
   if (sessionUserId) {
-    const accounts = await db.select().from(account).where(eq(account.userId, sessionUserId));
+    const accounts = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, sessionUserId));
     googleAccount = accounts.find((a) => a.providerId === "google") || null;
   }
   if (!googleAccount) {
@@ -133,12 +140,18 @@ async function handleBusyQuery(params: {
     emailMetadata.set(em, { name: r.name, type: "room", roomId: r.id });
     if (r.email && r.email.toLowerCase() !== em) {
       targetEmails.add(r.email.toLowerCase());
-      emailMetadata.set(r.email.toLowerCase(), { name: r.name, type: "room", roomId: r.id });
+      emailMetadata.set(r.email.toLowerCase(), {
+        name: r.name,
+        type: "room",
+        roomId: r.id,
+      });
     }
   }
 
   // Fill in missing metadata by looking up remaining emails in user & meetingRoom tables in parallel
-  const unresolvedEmails = Array.from(targetEmails).filter((e) => !emailMetadata.has(e));
+  const unresolvedEmails = Array.from(targetEmails).filter(
+    (e) => !emailMetadata.has(e),
+  );
   if (unresolvedEmails.length > 0) {
     try {
       const [dbUsers, dbRooms] = await Promise.all([
@@ -156,11 +169,19 @@ async function handleBusyQuery(params: {
           .from(meetingRoom),
       ]);
       for (const u of dbUsers) {
-        emailMetadata.set(u.email.toLowerCase(), { name: u.name, type: "user", userId: u.id });
+        emailMetadata.set(u.email.toLowerCase(), {
+          name: u.name,
+          type: "user",
+          userId: u.id,
+        });
       }
       for (const r of dbRooms) {
         if (r.email) {
-          emailMetadata.set(r.email.toLowerCase(), { name: r.name, type: "room", roomId: r.id });
+          emailMetadata.set(r.email.toLowerCase(), {
+            name: r.name,
+            type: "room",
+            roomId: r.id,
+          });
         }
         if (r.googleResourceEmail) {
           emailMetadata.set(r.googleResourceEmail.toLowerCase(), {
@@ -187,7 +208,7 @@ async function handleBusyQuery(params: {
             type: info.isResource ? "room" : "user",
           });
         }
-      })
+      }),
     );
   }
 
@@ -198,7 +219,9 @@ async function handleBusyQuery(params: {
   for (const em of allEmailList) {
     const meta = emailMetadata.get(em);
     const isRoom =
-      meta?.type === "room" || em.includes("@resource.calendar.google.com") || em.includes("room");
+      meta?.type === "room" ||
+      em.includes("@resource.calendar.google.com") ||
+      em.includes("room");
     const defaultName = meta?.name || em.split("@")[0];
 
     calendars[em] = {
@@ -216,7 +239,10 @@ async function handleBusyQuery(params: {
           accountRecord: googleAccount,
           accessToken: googleAccount.accessToken || undefined,
         }).catch((gErr) => {
-          console.warn("Google freeBusy call error in /api/calendar/busy:", gErr);
+          console.warn(
+            "Google freeBusy call error in /api/calendar/busy:",
+            gErr,
+          );
           return null;
         })
       : Promise.resolve(null),
@@ -227,8 +253,8 @@ async function handleBusyQuery(params: {
         and(
           eq(booking.status, "confirmed"),
           lte(booking.startTime, endDate),
-          gte(booking.endTime, startDate)
-        )
+          gte(booking.endTime, startDate),
+        ),
       )
       .catch((dbErr) => {
         console.warn("DB booking lookup error in /api/calendar/busy:", dbErr);
@@ -244,14 +270,17 @@ async function handleBusyQuery(params: {
         calendars[lowerEm] = {
           name: emailMetadata.get(lowerEm)?.name || lowerEm.split("@")[0],
           email: lowerEm,
-          type: lowerEm.includes("resource.calendar.google.com") ? "room" : "user",
+          type: lowerEm.includes("resource.calendar.google.com")
+            ? "room"
+            : "user",
           busy: [],
         };
       }
       for (const inv of intervals) {
         const invStartMs = new Date(inv.start).getTime();
         const invEndMs = new Date(inv.end).getTime();
-        if (isNaN(invStartMs) || isNaN(invEndMs) || invStartMs >= invEndMs) continue;
+        if (isNaN(invStartMs) || isNaN(invEndMs) || invStartMs >= invEndMs)
+          continue;
         if (invEndMs - invStartMs >= 24 * 60 * 60 * 1000) continue;
 
         calendars[lowerEm].busy.push({
@@ -281,13 +310,15 @@ async function handleBusyQuery(params: {
         const attendeesRaw = Array.isArray(b.attendees)
           ? (b.attendees as Array<{ email?: string }>)
           : [];
-        const isAttendee = attendeesRaw.some((a) => a.email && a.email.toLowerCase() === em);
+        const isAttendee = attendeesRaw.some(
+          (a) => a.email && a.email.toLowerCase() === em,
+        );
 
         if (matchesRoom || matchesUser || isAttendee) {
           const alreadyExists = cal.busy.some(
             (inv) =>
               Math.abs(new Date(inv.start).getTime() - bStartMs) < 60000 &&
-              Math.abs(new Date(inv.end).getTime() - bEndMs) < 60000
+              Math.abs(new Date(inv.end).getTime() - bEndMs) < 60000,
           );
           if (!alreadyExists) {
             cal.busy.push({
@@ -379,8 +410,11 @@ export async function GET(req: Request) {
     return Response.json(result, { status: 200 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch busy schedules" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to fetch busy schedules",
+      },
+      { status: 500 },
     );
   }
 }
@@ -391,7 +425,11 @@ export async function POST(req: Request) {
     const { emails, roomIds, userIds, timeMin, timeMax } = body;
 
     const result = await handleBusyQuery({
-      emails: Array.isArray(emails) ? emails : typeof emails === "string" ? emails.split(",") : [],
+      emails: Array.isArray(emails)
+        ? emails
+        : typeof emails === "string"
+          ? emails.split(",")
+          : [],
       roomIds: Array.isArray(roomIds)
         ? roomIds
         : typeof roomIds === "string"
@@ -410,8 +448,11 @@ export async function POST(req: Request) {
     return Response.json(result, { status: 200 });
   } catch (err) {
     return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch busy schedules" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to fetch busy schedules",
+      },
+      { status: 500 },
     );
   }
 }

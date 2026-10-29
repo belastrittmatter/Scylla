@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Research Questions & Discussions
+    url: https://github.com/gradionhq/mcp-standard-research-intern/discussions
+    about: Ask questions or discuss MCP concepts before filing a task.

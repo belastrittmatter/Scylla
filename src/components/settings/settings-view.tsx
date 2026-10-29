@@ -21,14 +21,16 @@ export function SettingsView() {
   const mounted = React.useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
   const { data: session } = useSession();
   const { settings, updateSetting, resetToDefaults } = useCalendarSettings();
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
-    toast.success(`Theme switched to ${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} mode`);
+    toast.success(
+      `Theme switched to ${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} mode`,
+    );
   };
 
   const handleReset = () => {
@@ -46,8 +48,8 @@ export function SettingsView() {
             Calendar & Display Settings
           </h1>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Customize your schedule presentation, grid boundaries, active hours, and theme
-            preferences.
+            Customize your schedule presentation, grid boundaries, active hours,
+            and theme preferences.
           </p>
         </div>
 
@@ -56,7 +58,7 @@ export function SettingsView() {
             href="/calendar"
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "gap-1.5 border-neutral-200 text-xs text-neutral-700 dark:border-neutral-800 dark:text-neutral-300"
+              "gap-1.5 border-neutral-200 text-xs text-neutral-700 dark:border-neutral-800 dark:text-neutral-300",
             )}
           >
             Go to Calendar
@@ -77,16 +79,29 @@ export function SettingsView() {
       </div>
 
       {/* SECTION 1: Theme & Appearance */}
-      <SettingsThemeCard theme={theme} mounted={mounted} onThemeChange={handleThemeChange} />
+      <SettingsThemeCard
+        theme={theme}
+        mounted={mounted}
+        onThemeChange={handleThemeChange}
+      />
 
       {/* SECTION 2: Calendar View Preferences */}
-      <SettingsCalendarViewsCard settings={settings} updateSetting={updateSetting} />
+      <SettingsCalendarViewsCard
+        settings={settings}
+        updateSetting={updateSetting}
+      />
 
       {/* SECTION 3: Calendar Display & Working Hours Options */}
-      <SettingsCalendarOptionsCard settings={settings} updateSetting={updateSetting} />
+      <SettingsCalendarOptionsCard
+        settings={settings}
+        updateSetting={updateSetting}
+      />
 
       {/* SECTION 4: Account & Connected Integrations */}
-      <SettingsAccountCard userName={session?.user?.name} userEmail={session?.user?.email} />
+      <SettingsAccountCard
+        userName={session?.user?.name}
+        userEmail={session?.user?.email}
+      />
     </div>
   );
 }

@@ -19,10 +19,18 @@ import { Label } from "../ui/label";
 interface CreateTeamDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateTeam: (data: { name: string; slug?: string; description?: string }) => Promise<TeamItem>;
+  onCreateTeam: (data: {
+    name: string;
+    slug?: string;
+    description?: string;
+  }) => Promise<TeamItem>;
 }
 
-export function CreateTeamDialog({ open, onOpenChange, onCreateTeam }: CreateTeamDialogProps) {
+export function CreateTeamDialog({
+  open,
+  onOpenChange,
+  onCreateTeam,
+}: CreateTeamDialogProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -113,7 +121,11 @@ export function CreateTeamDialog({ open, onOpenChange, onCreateTeam }: CreateTea
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !name.trim()}>

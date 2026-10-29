@@ -21,11 +21,15 @@ export type {
 export function MeetingBookingClient({ details }: { details: InviteDetails }) {
   const { invite, organizer, room, members } = details;
 
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(() => new Date());
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
+    () => new Date(),
+  );
 
   const [timeZone] = React.useState<string>(() => {
     try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Ho_Chi_Minh";
+      return (
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Ho_Chi_Minh"
+      );
     } catch {
       return "Asia/Ho_Chi_Minh";
     }
@@ -40,7 +44,9 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
   const [guestNotes, setGuestNotes] = React.useState("");
   const [isBooking, setIsBooking] = React.useState(false);
 
-  const [bookedResult, setBookedResult] = React.useState<BookedResult | null>(null);
+  const [bookedResult, setBookedResult] = React.useState<BookedResult | null>(
+    null,
+  );
 
   React.useEffect(() => {
     let active = true;
@@ -126,7 +132,9 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
       setBookedResult(data);
       toast.success("Meeting scheduled successfully!");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to schedule meeting");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to schedule meeting",
+      );
     } finally {
       setIsBooking(false);
     }

@@ -25,7 +25,15 @@ import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badg
 import type { ProjectStatus } from "@/services/project/project-types";
 import type { ProjectItem } from "@/hooks/use-projects";
 
-const PRESET_COLORS = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#6366f1"];
+const PRESET_COLORS = [
+  "#3b82f6",
+  "#10b981",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#6366f1",
+];
 
 interface EditProjectDialogProps {
   project: ProjectItem | null;
@@ -39,7 +47,7 @@ interface EditProjectDialogProps {
       description?: string | null;
       status?: ProjectStatus;
       color?: string | null;
-    }
+    },
   ) => Promise<ProjectItem>;
 }
 
@@ -49,7 +57,11 @@ interface EditProjectFormProps {
   onUpdateProject: EditProjectDialogProps["onUpdateProject"];
 }
 
-function EditProjectForm({ project, onOpenChange, onUpdateProject }: EditProjectFormProps) {
+function EditProjectForm({
+  project,
+  onOpenChange,
+  onUpdateProject,
+}: EditProjectFormProps) {
   const [name, setName] = useState(project.name);
   const [slug, setSlug] = useState(project.slug);
   const [description, setDescription] = useState(project.description || "");
@@ -103,12 +115,19 @@ function EditProjectForm({ project, onOpenChange, onUpdateProject }: EditProject
         </div>
         <div className="grid gap-1">
           <Label htmlFor="edit-proj-slug">Project Slug</Label>
-          <Input id="edit-proj-slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Input
+            id="edit-proj-slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1">
             <Label htmlFor="edit-proj-status">Status</Label>
-            <Select value={status} onValueChange={(val) => val && setStatus(val as ProjectStatus)}>
+            <Select
+              value={status}
+              onValueChange={(val) => val && setStatus(val as ProjectStatus)}
+            >
               <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="Status">
                   {PROJECT_STATUS_CONFIG[status]?.label || "Active"}
@@ -154,7 +173,11 @@ function EditProjectForm({ project, onOpenChange, onUpdateProject }: EditProject
       </div>
 
       <DialogFooter className="gap-2 sm:gap-0">
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting || !name.trim()}>

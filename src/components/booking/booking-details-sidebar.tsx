@@ -4,7 +4,12 @@ import * as React from "react";
 import { Clock, Building2, Users, Sparkles, Globe, Lock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { InviteData, InviteOrganizer, InviteRoom, InviteMember } from "./booking-types";
+import type {
+  InviteData,
+  InviteOrganizer,
+  InviteRoom,
+  InviteMember,
+} from "./booking-types";
 
 interface BookingDetailsSidebarProps {
   invite: InviteData;
@@ -29,14 +34,18 @@ export function BookingDetailsSidebar({
             <Avatar className="border-background shadow-xs h-12 w-12 border-2">
               {organizer?.image && <AvatarImage src={organizer.image} />}
               <AvatarFallback className="bg-orange-500 font-semibold text-white">
-                {organizer?.name ? organizer.name.slice(0, 2).toUpperCase() : "AG"}
+                {organizer?.name
+                  ? organizer.name.slice(0, 2).toUpperCase()
+                  : "AG"}
               </AvatarFallback>
             </Avatar>
             <div>
               <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 Invited by
               </p>
-              <p className="text-foreground text-sm font-bold">{organizer?.name || "Organizer"}</p>
+              <p className="text-foreground text-sm font-bold">
+                {organizer?.name || "Organizer"}
+              </p>
             </div>
           </div>
 
@@ -60,7 +69,9 @@ export function BookingDetailsSidebar({
             )}
           </div>
 
-          <h1 className="text-foreground text-2xl font-bold tracking-tight">{invite.title}</h1>
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">
+            {invite.title}
+          </h1>
           {invite.description && (
             <p className="text-muted-foreground mt-2 whitespace-pre-wrap text-sm leading-relaxed">
               {invite.description}
@@ -78,13 +89,16 @@ export function BookingDetailsSidebar({
             <div className="space-y-2 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-3.5">
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 shrink-0 text-orange-500" />
-                <span className="text-foreground text-sm font-bold">Room: {room.name}</span>
+                <span className="text-foreground text-sm font-bold">
+                  Room: {room.name}
+                </span>
               </div>
               <div className="text-muted-foreground space-y-1 text-xs">
                 {room.building && (
                   <p className="flex items-center gap-1.5">
                     <span>
-                      🏢 {room.building} {room.floor ? `(Floor ${room.floor})` : ""}
+                      🏢 {room.building}{" "}
+                      {room.floor ? `(Floor ${room.floor})` : ""}
                     </span>
                   </p>
                 )}
@@ -131,14 +145,21 @@ export function BookingDetailsSidebar({
               <div className="text-foreground flex items-center gap-2 text-xs">
                 <span className="h-2 w-2 rounded-full bg-orange-500" />
                 <span className="font-semibold">{organizer.name}</span>
-                <span className="text-muted-foreground font-normal">(Host)</span>
+                <span className="text-muted-foreground font-normal">
+                  (Host)
+                </span>
               </div>
             )}
             {members.map((m) => (
-              <div key={m.id} className="text-foreground flex items-center gap-2 text-xs">
+              <div
+                key={m.id}
+                className="text-foreground flex items-center gap-2 text-xs"
+              >
                 <span className="bg-muted-foreground h-2 w-2 rounded-full" />
                 <span className="font-medium">{m.name}</span>
-                <span className="text-muted-foreground font-mono text-[11px]">({m.email})</span>
+                <span className="text-muted-foreground font-mono text-[11px]">
+                  ({m.email})
+                </span>
               </div>
             ))}
           </div>
@@ -146,8 +167,9 @@ export function BookingDetailsSidebar({
           <div className="text-foreground flex items-start gap-2.5 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-3 text-[12px]">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
             <span>
-              Available slots are dynamically resolved by computing the mutual free intervals of all
-              attendees {invite.locationType === "room" ? "and the physical room" : ""}.
+              Available slots are dynamically resolved by computing the mutual
+              free intervals of all attendees{" "}
+              {invite.locationType === "room" ? "and the physical room" : ""}.
             </span>
           </div>
         </div>
@@ -156,7 +178,8 @@ export function BookingDetailsSidebar({
       <div className="border-border text-muted-foreground flex items-center gap-2 border-t pt-4 text-xs">
         <Globe className="h-3.5 w-3.5 shrink-0" />
         <span>
-          Time zone: <strong className="text-foreground font-semibold">{timeZone}</strong>
+          Time zone:{" "}
+          <strong className="text-foreground font-semibold">{timeZone}</strong>
         </span>
       </div>
     </div>

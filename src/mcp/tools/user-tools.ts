@@ -31,11 +31,11 @@ export function registerUserTools(server: McpServer, ctx: McpToolContext) {
                 candidates: teammates,
               },
               null,
-              2
+              2,
             ),
           },
         ],
       };
-    }
+    },
   );
 }

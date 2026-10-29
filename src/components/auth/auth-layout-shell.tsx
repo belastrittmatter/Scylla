@@ -34,7 +34,9 @@ export function AuthLayoutShell({
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-foreground text-xl font-bold tracking-tight">Scylla</span>
+            <span className="text-foreground text-xl font-bold tracking-tight">
+              Scylla
+            </span>
             <Badge
               variant="outline"
               className="gap-1 border-orange-500/20 bg-orange-500/10 text-[10px] font-medium text-orange-600 dark:text-orange-400"
@@ -44,7 +46,9 @@ export function AuthLayoutShell({
             </Badge>
           </div>
         </Link>
-        <p className="text-muted-foreground mt-2 text-xs font-medium">{subtitle}</p>
+        <p className="text-muted-foreground mt-2 text-xs font-medium">
+          {subtitle}
+        </p>
       </div>
 
       {/* Main Auth Form Container */}

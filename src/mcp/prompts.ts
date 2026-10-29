@@ -11,7 +11,10 @@ export function registerAllMcpPrompts(server: McpServer) {
         targetUser: z
           .string()
           .describe("Target colleague name, nickname, or email (e.g. 'alex')"),
-        date: z.string().optional().describe("Meeting date (YYYY-MM-DD or 'today')"),
+        date: z
+          .string()
+          .optional()
+          .describe("Meeting date (YYYY-MM-DD or 'today')"),
       }),
     },
     (args) => ({
@@ -30,7 +33,7 @@ Follow this workflow:
           },
         },
       ],
-    })
+    }),
   );
 
   server.registerPrompt(
@@ -60,6 +63,6 @@ Follow this workflow:
           },
         },
       ],
-    })
+    }),
   );
 }

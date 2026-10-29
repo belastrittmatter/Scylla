@@ -9,7 +9,10 @@ export const formatSlotTime = (isoString: string, timeZone: string) => {
       hour12: true,
     }).format(new Date(isoString));
   } catch {
-    return new Date(isoString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return new Date(isoString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 };
 
@@ -35,12 +38,17 @@ export const formatFullDate = (isoString: string, timeZone: string) => {
 export const buildGoogleCalendarUrl = (
   booking: BookedResult["booking"],
   invite: InviteData,
-  room: InviteRoom | null
+  room: InviteRoom | null,
 ) => {
-  const startIso = new Date(booking.startTime).toISOString().replace(/-|:|\.\d\d\d/g, "");
-  const endIso = new Date(booking.endTime).toISOString().replace(/-|:|\.\d\d\d/g, "");
+  const startIso = new Date(booking.startTime)
+    .toISOString()
+    .replace(/-|:|\.\d\d\d/g, "");
+  const endIso = new Date(booking.endTime)
+    .toISOString()
+    .replace(/-|:|\.\d\d\d/g, "");
   const meetUrl = booking.googleMeetUrl || booking.meetingUrl || "";
-  const locationText = meetUrl || (room ? `${room.name} (${room.building || ""})` : "Online");
+  const locationText =
+    meetUrl || (room ? `${room.name} (${room.building || ""})` : "Online");
   const detailsText = `${invite.title}\n${invite.description || ""}\n${
     meetUrl ? `Google Meet: ${meetUrl}\n` : ""
   }Scheduled via Scylla Collective Scheduler`;

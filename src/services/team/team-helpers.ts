@@ -16,8 +16,12 @@ export const memberWithUserQuery = {
   },
 } as const;
 
-export function sortTeamMembersByRole<T extends { role: string }>(members: T[]): T[] {
+export function sortTeamMembersByRole<T extends { role: string }>(
+  members: T[],
+): T[] {
   return members.sort(
-    (a, b) => (ROLE_PRIORITY[a.role as TeamRole] ?? 99) - (ROLE_PRIORITY[b.role as TeamRole] ?? 99)
+    (a, b) =>
+      (ROLE_PRIORITY[a.role as TeamRole] ?? 99) -
+      (ROLE_PRIORITY[b.role as TeamRole] ?? 99),
   );
 }

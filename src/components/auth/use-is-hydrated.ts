@@ -14,6 +14,6 @@ export function useIsHydrated() {
   return useSyncExternalStore(
     subscribe,
     () => true,
-    () => false
+    () => false,
   );
 }

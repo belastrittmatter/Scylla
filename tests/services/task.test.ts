@@ -81,7 +81,7 @@ describe("TaskService Domain Logic", () => {
         creatorId: "usr_test",
         status: "todo",
         priority: "medium",
-      })
+      }),
     ).rejects.toThrow('Team with id "non-existent-team-id" not found');
   });
 
@@ -108,8 +108,10 @@ describe("TaskService Domain Logic", () => {
         creatorId: testUser.id,
         status: "todo",
         priority: "medium",
-      })
-    ).rejects.toThrow('Project with id "non-existent-project-id" not found in team');
+      }),
+    ).rejects.toThrow(
+      'Project with id "non-existent-project-id" not found in team',
+    );
 
     await db.delete(user).where(inArray(user.id, [testUser.id]));
   });
@@ -147,8 +149,10 @@ describe("TaskService Domain Logic", () => {
         creatorId: testUser.id,
         status: "todo",
         priority: "medium",
-      })
-    ).rejects.toThrow(`Project with id "${projectB.id}" not found in team "${teamA.id}"`);
+      }),
+    ).rejects.toThrow(
+      `Project with id "${projectB.id}" not found in team "${teamA.id}"`,
+    );
 
     await db.delete(user).where(inArray(user.id, [testUser.id]));
   });
@@ -181,7 +185,11 @@ describe("TaskService Domain Logic", () => {
     expect(task.estimatedMinutes).toBe(90);
 
     // 2. Move to in_progress -> starts session
-    await TaskService.updateTask(task.id, { status: "in_progress" }, testUser.id);
+    await TaskService.updateTask(
+      task.id,
+      { status: "in_progress" },
+      testUser.id,
+    );
     let sessions = await TaskService.getTaskTimeSessions(task.id);
     expect(sessions.length).toBe(1);
     expect(sessions[0].endedAt).toBeNull();
@@ -192,7 +200,11 @@ describe("TaskService Domain Logic", () => {
     expect(sessions.length).toBe(0); // Discarded spam session!
 
     // 4. Move to in_progress again, but simulate session lasting only 30 seconds (< 60s threshold)
-    await TaskService.updateTask(task.id, { status: "in_progress" }, testUser.id);
+    await TaskService.updateTask(
+      task.id,
+      { status: "in_progress" },
+      testUser.id,
+    );
     sessions = await TaskService.getTaskTimeSessions(task.id);
     expect(sessions.length).toBe(1);
     const shortSession = sessions[0];
@@ -212,7 +224,11 @@ describe("TaskService Domain Logic", () => {
     expect(sessions.length).toBe(0);
 
     // 5. Move to in_progress again, simulate valid work session lasting 90 seconds (>= 60s)
-    await TaskService.updateTask(task.id, { status: "in_progress" }, testUser.id);
+    await TaskService.updateTask(
+      task.id,
+      { status: "in_progress" },
+      testUser.id,
+    );
     sessions = await TaskService.getTaskTimeSessions(task.id);
     expect(sessions.length).toBe(1);
     const validSession = sessions[0];
@@ -226,7 +242,9 @@ describe("TaskService Domain Logic", () => {
       const activeWs = await TaskWorkspaceService.getWorkspaceData();
       const activeTask = activeWs.tasks.find((t) => t.id === task.id);
       expect(activeTask?.activeSessionStartedAt).not.toBeNull();
-      const diffMs = Math.abs(Date.now() - new Date(activeTask!.activeSessionStartedAt!).getTime());
+      const diffMs = Math.abs(
+        Date.now() - new Date(activeTask!.activeSessionStartedAt!).getTime(),
+      );
       expect(diffMs).toBeLessThan(10000); // within 10s of now, NOT 7 hours (25,200,000ms)
     } finally {
       process.env.TZ = origTz;
@@ -246,7 +264,8 @@ describe("TaskService Domain Logic", () => {
     expect(sessions[0].durationSeconds).toBeGreaterThanOrEqual(89);
 
     // Verify workspace aggregation
-    const { TaskWorkspaceService } = await import("../../src/services/task/task-workspace-service");
+    const { TaskWorkspaceService } =
+      await import("../../src/services/task/task-workspace-service");
     const wsData = await TaskWorkspaceService.getWorkspaceData();
     const wsTask = wsData.tasks.find((t) => t.id === task.id);
     expect(wsTask?.totalSpentSeconds).toBeGreaterThanOrEqual(89);

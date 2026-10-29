@@ -39,25 +39,31 @@ export function toTaskUser(u: User): TaskUser {
 }
 
 export class TaskWorkspaceService {
-  public static async getWorkspaceData(_currentUserId?: string): Promise<WorkspaceData> {
+  public static async getWorkspaceData(
+    _currentUserId?: string,
+  ): Promise<WorkspaceData> {
     const teams = await db.select().from(team).orderBy(asc(team.name));
 
-    const [projects, allUsersRaw, rawTasks, rawTeamMembers, rawSessionStats] = await Promise.all([
-      db.select().from(project).orderBy(asc(project.name)),
-      db.select().from(user).orderBy(asc(user.name)),
-      db.select().from(task).orderBy(asc(task.position), desc(task.createdAt)),
-      db.select().from(teamMember),
-      db
-        .select({
-          taskId: taskTimeSession.taskId,
-          totalSpentSeconds: sql<number>`COALESCE(SUM(CASE WHEN ${taskTimeSession.endedAt} IS NOT NULL THEN ${taskTimeSession.durationSeconds} ELSE 0 END), 0)::int`,
-          activeSessionStartedAt: sql<
-            string | null
-          >`MAX(CASE WHEN ${taskTimeSession.endedAt} IS NULL THEN ${taskTimeSession.startedAt} AT TIME ZONE 'UTC' ELSE NULL END)`,
-        })
-        .from(taskTimeSession)
-        .groupBy(taskTimeSession.taskId),
-    ]);
+    const [projects, allUsersRaw, rawTasks, rawTeamMembers, rawSessionStats] =
+      await Promise.all([
+        db.select().from(project).orderBy(asc(project.name)),
+        db.select().from(user).orderBy(asc(user.name)),
+        db
+          .select()
+          .from(task)
+          .orderBy(asc(task.position), desc(task.createdAt)),
+        db.select().from(teamMember),
+        db
+          .select({
+            taskId: taskTimeSession.taskId,
+            totalSpentSeconds: sql<number>`COALESCE(SUM(CASE WHEN ${taskTimeSession.endedAt} IS NOT NULL THEN ${taskTimeSession.durationSeconds} ELSE 0 END), 0)::int`,
+            activeSessionStartedAt: sql<
+              string | null
+            >`MAX(CASE WHEN ${taskTimeSession.endedAt} IS NULL THEN ${taskTimeSession.startedAt} AT TIME ZONE 'UTC' ELSE NULL END)`,
+          })
+          .from(taskTimeSession)
+          .groupBy(taskTimeSession.taskId),
+      ]);
     const users = allUsersRaw.map(toTaskUser);
 
     const userMap = new Map<string, TaskUser>(users.map((u) => [u.id, u]));
@@ -71,9 +77,11 @@ export class TaskWorkspaceService {
         s.taskId,
         {
           totalSpentSeconds: Number(s.totalSpentSeconds) || 0,
-          activeSessionStartedAt: parseDbTimestampToIso(s.activeSessionStartedAt),
+          activeSessionStartedAt: parseDbTimestampToIso(
+            s.activeSessionStartedAt,
+          ),
         },
-      ])
+      ]),
     );
 
     const tasks: TaskWithDetails[] = rawTasks.map((t) => {
@@ -96,7 +104,10 @@ export class TaskWorkspaceService {
     }));
 
     for (const t of teams) {
-      if (t.ownerId && !teamMembers.some((tm) => tm.teamId === t.id && tm.userId === t.ownerId)) {
+      if (
+        t.ownerId &&
+        !teamMembers.some((tm) => tm.teamId === t.id && tm.userId === t.ownerId)
+      ) {
         teamMembers.push({
           id: `owner-${t.id}-${t.ownerId}`,
           teamId: t.id,

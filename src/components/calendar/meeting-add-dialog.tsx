@@ -19,13 +19,21 @@ interface MeetingAddDialogProps {
   onAddMeeting: (meeting: MeetingItem) => void;
 }
 
-export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAddDialogProps) {
+export function MeetingAddDialog({
+  open,
+  onOpenChange,
+  onAddMeeting,
+}: MeetingAddDialogProps) {
   const [title, setTitle] = React.useState("");
   const [date, setDate] = React.useState("2025-01-10");
   const [startTime, setStartTime] = React.useState("14:00");
   const [endTime, setEndTime] = React.useState("15:00");
-  const [locationType, setLocationType] = React.useState<"room" | "virtual">("room");
-  const [selectedRoomId, setSelectedRoomId] = React.useState(HCM_MEETING_ROOMS[0].id);
+  const [locationType, setLocationType] = React.useState<"room" | "virtual">(
+    "room",
+  );
+  const [selectedRoomId, setSelectedRoomId] = React.useState(
+    HCM_MEETING_ROOMS[0].id,
+  );
   const [virtualPlatform, setVirtualPlatform] = React.useState("Google Meet");
   const [description, setDescription] = React.useState("");
   const [attendeesInput, setAttendeesInput] = React.useState("");
@@ -72,7 +80,10 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
       startTime: formattedStart,
       endTime: formattedEnd,
       duration: "1 hour",
-      location: locationType === "room" ? selectedRoom?.name || "Meeting Room" : virtualPlatform,
+      location:
+        locationType === "room"
+          ? selectedRoom?.name || "Meeting Room"
+          : virtualPlatform,
       locationType,
       meetingUrl:
         locationType === "virtual"
@@ -86,7 +97,11 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
         role: "Fullstack Engineer",
       },
       attendees: [
-        { name: "Alex Morgan", email: "alex.morgan@example.com", role: "Organizer" },
+        {
+          name: "Alex Morgan",
+          email: "alex.morgan@example.com",
+          role: "Organizer",
+        },
         ...attendeesList,
       ],
       roomDetails:
@@ -114,7 +129,9 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-6">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold">Schedule a Meeting</DialogTitle>
+          <DialogTitle className="text-lg font-bold">
+            Schedule a Meeting
+          </DialogTitle>
           <DialogDescription className="text-xs text-neutral-500">
             Book a physical meeting room or create a virtual meeting link.
           </DialogDescription>
@@ -139,7 +156,9 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
           {/* Date & Times */}
           <div className="grid grid-cols-3 gap-2.5">
             <div className="space-y-1">
-              <label className="font-medium text-neutral-600 dark:text-neutral-400">Date</label>
+              <label className="font-medium text-neutral-600 dark:text-neutral-400">
+                Date
+              </label>
               <input
                 type="date"
                 required
@@ -160,7 +179,9 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
               />
             </div>
             <div className="space-y-1">
-              <label className="font-medium text-neutral-600 dark:text-neutral-400">End Time</label>
+              <label className="font-medium text-neutral-600 dark:text-neutral-400">
+                End Time
+              </label>
               <input
                 type="time"
                 value={endTime}
@@ -229,7 +250,9 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
                 onChange={(e) => setVirtualPlatform(e.target.value)}
                 className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-xs focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-800"
               >
-                <option value="Google Meet">Google Meet (Auto-generate link)</option>
+                <option value="Google Meet">
+                  Google Meet (Auto-generate link)
+                </option>
                 <option value="Zoom Meeting">Zoom Meeting</option>
                 <option value="Microsoft Teams">Microsoft Teams</option>
               </select>
@@ -248,7 +271,9 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
               onChange={(e) => setAttendeesInput(e.target.value)}
               className="h-9 w-full rounded-lg border border-neutral-200 bg-white px-3 text-xs focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-800"
             />
-            <p className="text-[10px] text-neutral-400">Separate multiple emails with commas.</p>
+            <p className="text-[10px] text-neutral-400">
+              Separate multiple emails with commas.
+            </p>
           </div>
 
           {/* Description */}
@@ -266,7 +291,12 @@ export function MeetingAddDialog({ open, onOpenChange, onAddMeeting }: MeetingAd
           </div>
 
           <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button

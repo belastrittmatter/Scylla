@@ -137,7 +137,10 @@ export function getParticipantColumns(data?: ScheduleData | null): McpPerson[] {
   if (Array.isArray(data.allAttendees) && data.allAttendees.length > 0) {
     for (const a of data.allAttendees) {
       if (typeof a === "string") {
-        const matchTarget = data.targetUser && a === data.targetUser.email ? data.targetUser : null;
+        const matchTarget =
+          data.targetUser && a === data.targetUser.email
+            ? data.targetUser
+            : null;
         add(matchTarget || { name: formatEmailToName(a), email: a });
       } else if (a && typeof a === "object") {
         add(a);

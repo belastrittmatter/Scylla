@@ -15,7 +15,9 @@ export function McpHeaderControls({
   onSync,
 }: McpHeaderControlsProps): React.ReactElement {
   const [isDark, setIsDark] = React.useState(
-    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"),
   );
 
   const toggleTheme = (): void => {
@@ -33,7 +35,11 @@ export function McpHeaderControls({
         disabled={isSyncing}
         onClick={onSync}
       >
-        {isSyncing ? <Spinner className="size-3.5" /> : <RefreshCwIcon className="size-3.5" />}
+        {isSyncing ? (
+          <Spinner className="size-3.5" />
+        ) : (
+          <RefreshCwIcon className="size-3.5" />
+        )}
       </Button>
       <Button
         variant="outline"
@@ -42,7 +48,11 @@ export function McpHeaderControls({
         title={isDark ? "Switch to light mode" : "Switch to dark mode"}
         onClick={toggleTheme}
       >
-        {isDark ? <SunIcon className="size-3.5" /> : <MoonIcon className="size-3.5" />}
+        {isDark ? (
+          <SunIcon className="size-3.5" />
+        ) : (
+          <MoonIcon className="size-3.5" />
+        )}
       </Button>
     </div>
   );

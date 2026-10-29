@@ -30,7 +30,9 @@ export function CalendarEventLocationSection({
           <p className="truncate text-[11px] text-neutral-500">
             {roomDetails?.building || "Main Office"}
             {roomDetails?.floor ? ` • ${roomDetails.floor}` : ""}
-            {roomDetails?.capacity ? ` (Capacity: ${roomDetails.capacity} pax)` : ""}
+            {roomDetails?.capacity
+              ? ` (Capacity: ${roomDetails.capacity} pax)`
+              : ""}
           </p>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 
 export async function resolveUserId(
   req: Request,
-  explicitId?: string | null
+  explicitId?: string | null,
 ): Promise<string | undefined> {
   if (explicitId && explicitId !== "me") {
     return explicitId;
@@ -20,21 +20,31 @@ export function isUniqueConstraintError(err: unknown): boolean {
   const anyErr = err as {
     code?: string;
     message?: string;
-    cause?: { code?: string; message?: string; detail?: string; constraint?: string };
+    cause?: {
+      code?: string;
+      message?: string;
+      detail?: string;
+      constraint?: string;
+    };
   };
   return (
     anyErr.code === "23505" ||
     anyErr.cause?.code === "23505" ||
     Boolean(
       anyErr.message &&
-      (anyErr.message.includes("unique constraint") || anyErr.message.includes("duplicate key"))
+      (anyErr.message.includes("unique constraint") ||
+        anyErr.message.includes("duplicate key")),
     ) ||
     Boolean(
       anyErr.cause?.message &&
       (anyErr.cause.message.includes("unique constraint") ||
-        anyErr.cause.message.includes("duplicate key"))
+        anyErr.cause.message.includes("duplicate key")),
     ) ||
-    Boolean(anyErr.cause?.detail && anyErr.cause.detail.includes("already exists")) ||
-    Boolean(anyErr.cause?.constraint && anyErr.cause.constraint.includes("unique"))
+    Boolean(
+      anyErr.cause?.detail && anyErr.cause.detail.includes("already exists"),
+    ) ||
+    Boolean(
+      anyErr.cause?.constraint && anyErr.cause.constraint.includes("unique"),
+    )
   );
 }

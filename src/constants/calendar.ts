@@ -1,7 +1,14 @@
 export type CalendarViewType = "month" | "week" | "day";
 export type CalendarTabType = "all" | "shared" | "public" | "archived";
 export type EventColor =
-  "gray" | "blue" | "pink" | "purple" | "green" | "orange" | "yellow" | "indigo";
+  | "gray"
+  | "blue"
+  | "pink"
+  | "purple"
+  | "green"
+  | "orange"
+  | "yellow"
+  | "indigo";
 
 export interface CalendarEvent {
   id: string;
@@ -29,7 +36,8 @@ export const EVENT_COLOR_STYLES: Record<
     card: "bg-neutral-100/90 border-neutral-200/90 text-neutral-800 dark:bg-neutral-800/80 dark:border-neutral-700 dark:text-neutral-200",
     text: "text-neutral-700 dark:text-neutral-300",
     dot: "bg-neutral-500",
-    badge: "bg-neutral-200/80 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
+    badge:
+      "bg-neutral-200/80 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
   },
   blue: {
     card: "bg-sky-50/90 border-sky-200/90 text-sky-800 dark:bg-sky-950/40 dark:border-sky-800 dark:text-sky-300",
@@ -47,31 +55,36 @@ export const EVENT_COLOR_STYLES: Record<
     card: "bg-purple-50/90 border-purple-200/90 text-purple-800 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300",
     text: "text-purple-600 dark:text-purple-400",
     dot: "bg-purple-500",
-    badge: "bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300",
+    badge:
+      "bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300",
   },
   indigo: {
     card: "bg-indigo-50/90 border-indigo-200/90 text-indigo-800 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-300",
     text: "text-indigo-600 dark:text-indigo-400",
     dot: "bg-indigo-500",
-    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300",
+    badge:
+      "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300",
   },
   green: {
     card: "bg-emerald-50/90 border-emerald-200/90 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300",
     text: "text-emerald-600 dark:text-emerald-400",
     dot: "bg-emerald-500",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300",
+    badge:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300",
   },
   orange: {
     card: "bg-orange-50/90 border-orange-200/90 text-orange-800 dark:bg-orange-950/40 dark:border-orange-800 dark:text-orange-300",
     text: "text-orange-600 dark:text-orange-400",
     dot: "bg-orange-500",
-    badge: "bg-orange-100 text-orange-700 dark:bg-orange-950/80 dark:text-orange-300",
+    badge:
+      "bg-orange-100 text-orange-700 dark:bg-orange-950/80 dark:text-orange-300",
   },
   yellow: {
     card: "bg-amber-50/90 border-amber-200/90 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300",
     text: "text-amber-700 dark:text-amber-400",
     dot: "bg-amber-500",
-    badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300",
+    badge:
+      "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300",
   },
 };
 

@@ -9,7 +9,7 @@ export async function POST(_req?: Request) {
         count: rooms.length,
         rooms,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to sync rooms";
@@ -38,7 +38,7 @@ export async function POST(_req?: Request) {
         success: false,
         error: message,
       },
-      { status }
+      { status },
     );
   }
 }
