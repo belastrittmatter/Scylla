@@ -30,14 +30,11 @@ export function TeamMemberSearchInput({
   placeholder = "Search teammate by name or email...",
   disabled = false,
 }: TeamMemberSearchInputProps) {
-  const userSearch = useUserSearch({ limit: 8 });
+  const { setQuery, results, isLoading } = useUserSearch({ limit: 8 });
 
   React.useEffect(() => {
-    userSearch.setQuery(value);
-  }, [value, userSearch.setQuery]);
-
-  const results = userSearch.results;
-  const isLoading = userSearch.isLoading;
+    setQuery(value);
+  }, [value, setQuery]);
 
   const items = React.useMemo(() => {
     const trimmed = value.trim();
