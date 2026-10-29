@@ -80,6 +80,10 @@ const DEFAULT_HIDDEN_COLS: Record<string, boolean> = {
   cancelled: true,
 };
 
+function getNowTimestamp(): number {
+  return Date.now();
+}
+
 export function TaskBoardApp({
   initialData,
 }: {
@@ -100,7 +104,7 @@ export function TaskBoardApp({
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [now, setNow] = React.useState(() => Date.now());
 
-  const allTasks = data?.tasks ?? [];
+  const allTasks = React.useMemo(() => data?.tasks ?? [], [data?.tasks]);
 
   React.useEffect(() => {
     const hasActive = allTasks.some(
@@ -168,8 +172,7 @@ export function TaskBoardApp({
     if (!id || !target || target.status === newStatus) return;
 
     const prevTask = { ...target };
-    const prevStatus = target.status;
-    const nowTs = Date.now();
+    const nowTs = getNowTimestamp();
 
     const updateLocal = (st: string) =>
       setData((prev) =>
