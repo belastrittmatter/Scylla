@@ -1,0 +1,30 @@
+name: Spike / Research Task
+description: Research an MCP concept, architectural decision, or feasibility spike.
+title: "[SPIKE] "
+labels: ["type:spike", "needs-triage"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Research Question / Problem to Investigate
+      description: What specific question or hypothesis are we investigating?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope & Timebox
+      description: Boundaries of the investigation and estimated timebox (e.g. 1-2 days).
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Expected Deliverables
+      description: Write-up, proof of concept code, benchmark, or architecture proposal.
+      value: |
+        - [ ] Research document in `docs/` citing MCP spec revision 2026-07-28
+        - [ ] Proof-of-concept capture or code snippet
+        - [ ] Recommendation / conclusion for team implementation
+    validations:
+      required: true
