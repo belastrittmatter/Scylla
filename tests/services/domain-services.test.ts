@@ -18,7 +18,8 @@ describe("Domain Services", () => {
       expect(alexResults.length).toBeGreaterThan(0);
       expect(alexResults[0].name).toContain("Alex");
 
-      const emailResults = await UserService.searchTeammates("user1@example.com");
+      const emailResults =
+        await UserService.searchTeammates("user1@example.com");
       expect(emailResults.length).toBe(1);
       expect(emailResults[0].email).toBe("user1@example.com");
     });
@@ -32,7 +33,9 @@ describe("Domain Services", () => {
 
     test("searchTeammates includes Google Directory users even when DB has users", async () => {
       const results = await UserService.searchTeammates("Sarah");
-      expect(results.some((u) => u.email.includes("sarah@example.com"))).toBe(true);
+      expect(results.some((u) => u.email.includes("sarah@example.com"))).toBe(
+        true,
+      );
     });
 
     test("searchTeammates respects limit parameter", async () => {
@@ -56,7 +59,9 @@ describe("Domain Services", () => {
     });
 
     test("listRooms filters by features", async () => {
-      const rooms = await RoomService.listRooms({ features: ["video-conference"] });
+      const rooms = await RoomService.listRooms({
+        features: ["video-conference"],
+      });
       expect(rooms.length).toBeGreaterThan(0);
       for (const r of rooms) {
         expect(r.features).toContain("video-conference");
@@ -82,7 +87,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         9,
         0,
-        0
+        0,
       );
       const end = new Date(
         nextDate.getFullYear(),
@@ -90,7 +95,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         17,
         0,
-        0
+        0,
       );
 
       const slots = await SchedulerService.findSlots({
@@ -121,7 +126,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         10,
         0,
-        0
+        0,
       );
       const meetingEnd = new Date(
         nextDate.getFullYear(),
@@ -129,7 +134,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         11,
         0,
-        0
+        0,
       );
 
       // Create a booking where usr_test_user is organizer, and usr_alex_rivera is in attendees JSON
@@ -147,7 +152,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         9,
         0,
-        0
+        0,
       );
       const dayEnd = new Date(
         nextDate.getFullYear(),
@@ -155,7 +160,7 @@ describe("Domain Services", () => {
         nextDate.getDate(),
         17,
         0,
-        0
+        0,
       );
 
       // Search slots for alex@example.com on that day
@@ -209,7 +214,10 @@ describe("Domain Services", () => {
       const now = new Date();
       const bookingDate = new Date(now.getTime() + 48 * 3600 * 1000);
 
-      const agenda = await BookingService.getAgenda("usr_alex_rivera", bookingDate);
+      const agenda = await BookingService.getAgenda(
+        "usr_alex_rivera",
+        bookingDate,
+      );
       expect(Array.isArray(agenda)).toBe(true);
       expect(agenda.some((b) => b.id === createdBookingId)).toBe(true);
     });
@@ -225,8 +233,12 @@ describe("Domain Services", () => {
       });
 
       expect(updated.id).toBe(createdBookingId);
-      expect(new Date(updated.startTime).toISOString()).toBe(newStart.toISOString());
-      expect(new Date(updated.endTime).toISOString()).toBe(newEnd.toISOString());
+      expect(new Date(updated.startTime).toISOString()).toBe(
+        newStart.toISOString(),
+      );
+      expect(new Date(updated.endTime).toISOString()).toBe(
+        newEnd.toISOString(),
+      );
     });
 
     test("cancel cancels booking and deletes GCal event", async () => {
@@ -235,7 +247,10 @@ describe("Domain Services", () => {
 
       const now = new Date();
       const bookingDate = new Date(now.getTime() + 50 * 3600 * 1000);
-      const agenda = await BookingService.getAgenda("usr_alex_rivera", bookingDate);
+      const agenda = await BookingService.getAgenda(
+        "usr_alex_rivera",
+        bookingDate,
+      );
       expect(agenda.some((b) => b.id === createdBookingId)).toBe(false);
     });
 
@@ -248,7 +263,7 @@ describe("Domain Services", () => {
         BookingService.reschedule(createdBookingId, {
           startTime: newStart,
           endTime: newEnd,
-        })
+        }),
       ).rejects.toThrow("Cannot reschedule a cancelled booking");
     });
 
@@ -295,6 +310,66 @@ describe("Domain Services", () => {
 
       await BookingService.cancel(booking.id);
       await TeamService.deleteTeam(team.id);
+    });
+
+    test("cancelSeries cancels all bookings belonging to a recurring series", async () => {
+      const seriesId = `series_test_${Date.now()}`;
+      const now = new Date();
+
+      const booking1 = await BookingService.createBooking({
+        title: "Daily Standup Day 1",
+        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 70 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 70 * 3600 * 1000 + 15 * 60 * 1000),
+      });
+
+      const booking2 = await BookingService.createBooking({
+        title: "Daily Standup Day 2",
+        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 94 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 94 * 3600 * 1000 + 15 * 60 * 1000),
+      });
+
+      const cancelled = await BookingService.cancelSeries(seriesId);
+      expect(cancelled.length).toBe(2);
+      expect(cancelled.every((b) => b.status === "cancelled")).toBe(true);
+
+      const refreshed1 = await BookingService.getBookingById(booking1.id);
+      const refreshed2 = await BookingService.getBookingById(booking2.id);
+      expect(refreshed1?.status).toBe("cancelled");
+      expect(refreshed2?.status).toBe("cancelled");
+    });
+
+    test("cancelSeriesByBooking cancels entire series given any booking in the series", async () => {
+      const seriesId = `series_by_booking_${Date.now()}`;
+      const now = new Date();
+
+      const bookingA = await BookingService.createBooking({
+        title: "Weekly Review Week 1",
+        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 100 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 100 * 3600 * 1000 + 30 * 60 * 1000),
+      });
+
+      const bookingB = await BookingService.createBooking({
+        title: "Weekly Review Week 2",
+        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        organizerUserId: "usr_alex_rivera",
+        startTime: new Date(now.getTime() + 168 * 3600 * 1000),
+        endTime: new Date(now.getTime() + 168 * 3600 * 1000 + 30 * 60 * 1000),
+      });
+
+      // Cancel the entire series by passing bookingA's ID
+      const result = await BookingService.cancelSeriesByBooking(bookingA.id);
+      expect(result.length).toBe(2);
+
+      const checkA = await BookingService.getBookingById(bookingA.id);
+      const checkB = await BookingService.getBookingById(bookingB.id);
+      expect(checkA?.status).toBe("cancelled");
+      expect(checkB?.status).toBe("cancelled");
     });
   });
 });

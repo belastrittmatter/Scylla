@@ -4,7 +4,11 @@ import * as React from "react";
 import { FolderGit2, Search, X, Check, ChevronDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +25,14 @@ export interface CalendarProjectPickerProps {
   value?: string | null;
   onChange: (projectId: string | null, project?: ProjectOption | null) => void;
   disabled?: boolean;
+  hideLabel?: boolean;
 }
 
 export function CalendarProjectPicker({
   value,
   onChange,
   disabled = false,
+  hideLabel = false,
 }: CalendarProjectPickerProps) {
   const [projects, setProjects] = React.useState<ProjectOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -40,7 +46,9 @@ export function CalendarProjectPicker({
       .then((data) => {
         if (!ignore && Array.isArray(data)) setProjects(data);
       })
-      .catch((err) => console.warn("Failed to fetch projects for calendar picker:", err))
+      .catch((err) =>
+        console.warn("Failed to fetch projects for calendar picker:", err),
+      )
       .finally(() => {
         if (!ignore) setIsLoading(false);
       });
@@ -51,7 +59,7 @@ export function CalendarProjectPicker({
 
   const selectedProject = React.useMemo(
     () => projects.find((p) => p.id === value) || null,
-    [projects, value]
+    [projects, value],
   );
 
   const filteredProjects = React.useMemo(() => {
@@ -61,7 +69,7 @@ export function CalendarProjectPicker({
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.slug.toLowerCase().includes(q) ||
-        (p.teamName && p.teamName.toLowerCase().includes(q))
+        (p.teamName && p.teamName.toLowerCase().includes(q)),
     );
   }, [projects, searchQuery]);
 
@@ -73,7 +81,7 @@ export function CalendarProjectPicker({
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium">Link to Project (Optional)</Label>
+      {!hideLabel && <Label className="text-xs font-medium">Project</Label>}
       <Popover
         open={isOpen}
         onOpenChange={(open) => {
@@ -88,7 +96,7 @@ export function CalendarProjectPicker({
             "border-input focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
             "dark:bg-input/30 dark:hover:bg-input/50 flex h-8 w-full select-none items-center justify-between",
             "gap-1.5 rounded-lg border bg-transparent px-2.5 text-xs outline-none transition-colors",
-            "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
           )}
         >
           {selectedProject ? (
@@ -97,7 +105,9 @@ export function CalendarProjectPicker({
                 className="size-2 shrink-0 rounded-full"
                 style={{ backgroundColor: selectedProject.color || "#3b82f6" }}
               />
-              <span className="truncate font-medium">{selectedProject.name}</span>
+              <span className="truncate font-medium">
+                {selectedProject.name}
+              </span>
               {selectedProject.teamName && (
                 <span className="text-muted-foreground truncate text-[11px] font-normal">
                   ({selectedProject.teamName})
@@ -107,17 +117,21 @@ export function CalendarProjectPicker({
           ) : (
             <div className="text-muted-foreground flex items-center gap-2 truncate">
               <FolderGit2 className="size-3.5 shrink-0" />
-              <span>{isLoading ? "Loading projects..." : "Personal Event (No project)"}</span>
+              <span>{isLoading ? "Loading..." : "None"}</span>
             </div>
           )}
           <ChevronDown className="text-muted-foreground pointer-events-none size-4 shrink-0" />
         </PopoverTrigger>
 
-        <PopoverContent align="start" sideOffset={4} className="min-w-(--anchor-width) w-80 p-1.5">
+        <PopoverContent
+          align="start"
+          sideOffset={4}
+          className="min-w-(--anchor-width) w-80 p-1.5"
+        >
           <div className="relative mb-1 px-1">
             <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2" />
             <Input
-              placeholder="Search projects..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-8 w-full pl-8 pr-7 text-xs"
@@ -135,18 +149,21 @@ export function CalendarProjectPicker({
           </div>
 
           <div className="max-h-56 space-y-0.5 overflow-y-auto px-1 py-0.5">
-            {(!searchQuery || "personal event no project".includes(searchQuery.toLowerCase())) && (
+            {(!searchQuery ||
+              "none personal no project".includes(
+                searchQuery.toLowerCase(),
+              )) && (
               <button
                 type="button"
                 onClick={() => selectOption(null)}
                 className={cn(
                   "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                  !value && "bg-accent/60 font-medium"
+                  !value && "bg-accent/60 font-medium",
                 )}
               >
                 <div className="flex items-center gap-2 truncate">
                   <FolderGit2 className="text-muted-foreground size-3.5 shrink-0" />
-                  <span>Personal Event (No project)</span>
+                  <span>None</span>
                 </div>
                 {!value && <Check className="text-primary size-3.5 shrink-0" />}
               </button>
@@ -161,7 +178,7 @@ export function CalendarProjectPicker({
                   onClick={() => selectOption(proj.id)}
                   className={cn(
                     "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
-                    isSelected && "bg-accent/60 font-medium"
+                    isSelected && "bg-accent/60 font-medium",
                   )}
                 >
                   <div className="flex items-center gap-2 truncate">
@@ -176,7 +193,9 @@ export function CalendarProjectPicker({
                       </span>
                     )}
                   </div>
-                  {isSelected && <Check className="text-primary size-3.5 shrink-0" />}
+                  {isSelected && (
+                    <Check className="text-primary size-3.5 shrink-0" />
+                  )}
                 </button>
               );
             })}

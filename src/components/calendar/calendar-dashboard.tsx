@@ -25,18 +25,26 @@ import { useSession } from "@/lib/auth-client";
 import { useCalendarSettings } from "@/hooks/use-calendar-settings";
 
 const CalendarAddDialog = dynamic(
-  () => import("@/components/calendar/calendar-add-dialog").then((m) => m.CalendarAddDialog),
-  { ssr: false }
+  () =>
+    import("@/components/calendar/calendar-add-dialog").then(
+      (m) => m.CalendarAddDialog,
+    ),
+  { ssr: false },
 );
 
 const CalendarEventModal = dynamic(
-  () => import("@/components/calendar/calendar-event-modal").then((m) => m.CalendarEventModal),
-  { ssr: false }
+  () =>
+    import("@/components/calendar/calendar-event-modal").then(
+      (m) => m.CalendarEventModal,
+    ),
+  { ssr: false },
 );
 
 export function CalendarDashboard() {
   const { settings } = useCalendarSettings();
-  const [events, setEvents] = React.useState<CalendarEvent<CustomEventData>[]>([]);
+  const [events, setEvents] = React.useState<CalendarEvent<CustomEventData>[]>(
+    [],
+  );
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = React.useState<CalendarTabFilter>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -46,25 +54,29 @@ export function CalendarDashboard() {
     startTime: string;
     endTime: string;
   } | null>(null);
-  const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent<CustomEventData> | null>(
-    null
-  );
+  const [selectedEvent, setSelectedEvent] =
+    React.useState<CalendarEvent<CustomEventData> | null>(null);
   const [isDetailOpen, setIsDetailOpen] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Attendees (teammates & meeting rooms) selected for mutual availability check
-  const [selectedAttendees, setSelectedAttendees] = React.useState<CalendarAttendeeItem[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = React.useState<
+    CalendarAttendeeItem[]
+  >([]);
   const [isCalculatingSlots, setIsCalculatingSlots] = React.useState(false);
 
-  const handleToggleAttendee = React.useCallback((item: CalendarAttendeeItem) => {
-    setSelectedAttendees((prev) => {
-      const exists = prev.some((a) => a.id === item.id);
-      if (exists) {
-        return prev.filter((a) => a.id !== item.id);
-      }
-      return [...prev, item];
-    });
-  }, []);
+  const handleToggleAttendee = React.useCallback(
+    (item: CalendarAttendeeItem) => {
+      setSelectedAttendees((prev) => {
+        const exists = prev.some((a) => a.id === item.id);
+        if (exists) {
+          return prev.filter((a) => a.id !== item.id);
+        }
+        return [...prev, item];
+      });
+    },
+    [],
+  );
 
   const handleRemoveAttendee = React.useCallback((id: string) => {
     setSelectedAttendees((prev) => prev.filter((a) => a.id !== id));
@@ -75,7 +87,10 @@ export function CalendarDashboard() {
   }, []);
 
   // Track visible date range from calendar view (week, month, day) for performance optimization
-  const [dateRange, setDateRange] = React.useState<{ start: Date; end: Date } | null>(() => {
+  const [dateRange, setDateRange] = React.useState<{
+    start: Date;
+    end: Date;
+  } | null>(() => {
     try {
       return getViewDateRange(settings.defaultView, new Date(), {
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -92,18 +107,21 @@ export function CalendarDashboard() {
   const requestIdRef = React.useRef(0);
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
-  const handleRangeChange = React.useCallback((info: EventCalendarRangeInfo) => {
-    setDateRange((prev) => {
-      if (
-        prev &&
-        prev.start.getTime() === info.range.start.getTime() &&
-        prev.end.getTime() === info.range.end.getTime()
-      ) {
-        return prev;
-      }
-      return { start: info.range.start, end: info.range.end };
-    });
-  }, []);
+  const handleRangeChange = React.useCallback(
+    (info: EventCalendarRangeInfo) => {
+      setDateRange((prev) => {
+        if (
+          prev &&
+          prev.start.getTime() === info.range.start.getTime() &&
+          prev.end.getTime() === info.range.end.getTime()
+        ) {
+          return prev;
+        }
+        return { start: info.range.start, end: info.range.end };
+      });
+    },
+    [],
+  );
 
   // Fetch calendar events and working schedule from /api/calendar and open slots from /api/slots/find
   const syncCalendar = React.useCallback(
@@ -119,7 +137,9 @@ export function CalendarDashboard() {
       abortControllerRef.current = abortController;
 
       const activeUserId = session?.user?.id || "";
-      const attendeeEmails = selectedAttendees.map((a) => a.email).filter(Boolean);
+      const attendeeEmails = selectedAttendees
+        .map((a) => a.email)
+        .filter(Boolean);
       if (attendeeEmails.length > 0) {
         setIsCalculatingSlots(true);
       }
@@ -128,11 +148,12 @@ export function CalendarDashboard() {
           .getEvents(
             {
               userId: activeUserId,
-              attendeeEmails: attendeeEmails.length > 0 ? attendeeEmails : undefined,
+              attendeeEmails:
+                attendeeEmails.length > 0 ? attendeeEmails : undefined,
               timeMin: dateRange.start.toISOString(),
               timeMax: dateRange.end.toISOString(),
             },
-            { signal: abortController.signal }
+            { signal: abortController.signal },
           )
           .catch((err) => {
             if (err?.name === "AbortError") return null;
@@ -149,17 +170,30 @@ export function CalendarDashboard() {
           return;
         }
 
-        const calendarEvents: CalendarEvent<CustomEventData>[] = (calendarData.events || []).map(
-          (ev) => ({
+        const calendarEvents: CalendarEvent<CustomEventData>[] = (
+          calendarData.events || []
+        ).map((ev) => {
+          const seriesMatch = ev.description?.match(
+            /<!--series:([a-zA-Z0-9_-]+)-->/,
+          );
+          const seriesId =
+            ev.recurringEventId ||
+            ev.seriesId ||
+            (seriesMatch ? seriesMatch[1] : undefined);
+
+          return {
             id: ev.id,
             title: ev.title,
             start: new Date(ev.start),
             end: new Date(ev.end),
+            recurringEventId: seriesId,
             color: ev.color || (ev.source === "google" ? "#0284c7" : "#ea580c"),
             data: {
               category: ev.category || "shared",
-              location: ev.location || (ev.meetingUrl ? "Google Meet" : undefined),
+              location:
+                ev.location || (ev.meetingUrl ? "Google Meet" : undefined),
               description: ev.description || undefined,
+              seriesId,
               meetingUrl: ev.meetingUrl || undefined,
               attendees: ev.attendees || [],
               status: ev.status,
@@ -169,8 +203,8 @@ export function CalendarDashboard() {
               projectId: ev.projectId,
               project: ev.project,
             },
-          })
-        );
+          };
+        });
         setEvents(calendarEvents);
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
@@ -183,7 +217,7 @@ export function CalendarDashboard() {
         }
       }
     },
-    [session?.user?.id, selectedAttendees, dateRange]
+    [session?.user?.id, selectedAttendees, dateRange],
   );
 
   React.useEffect(() => {
@@ -221,14 +255,17 @@ export function CalendarDashboard() {
     setEvents((prev) => prev.filter((e) => e.id !== id));
   };
 
-  const handleSelectSlot = React.useCallback((draft: EventCalendarSlotDraft) => {
-    setSelectedSlotRange({
-      date: draft.start,
-      startTime: format(draft.start, "HH:mm"),
-      endTime: format(draft.end, "HH:mm"),
-    });
-    setIsAddOpen(true);
-  }, []);
+  const handleSelectSlot = React.useCallback(
+    (draft: EventCalendarSlotDraft) => {
+      setSelectedSlotRange({
+        date: draft.start,
+        startTime: format(draft.start, "HH:mm"),
+        endTime: format(draft.end, "HH:mm"),
+      });
+      setIsAddOpen(true);
+    },
+    [],
+  );
 
   const handleSlotClick = React.useCallback((slot: EventCalendarSlotInfo) => {
     const start = slot.date;
@@ -260,13 +297,15 @@ export function CalendarDashboard() {
         },
         error: (err) => {
           syncCalendar(true);
-          return err instanceof Error ? err.message : "Failed to reschedule event";
+          return err instanceof Error
+            ? err.message
+            : "Failed to reschedule event";
         },
       });
 
       return true;
     },
-    [syncCalendar]
+    [syncCalendar],
   );
 
   return (
@@ -303,7 +342,8 @@ export function CalendarDashboard() {
         }}
         renderDayHeader={({ day, isToday }) => {
           const isHighlighted = isToday;
-          const dayName = format(day, "EEE") === "Thu" ? "Thur" : format(day, "EEE");
+          const dayName =
+            format(day, "EEE") === "Thu" ? "Thur" : format(day, "EEE");
           const dayNumber = format(day, "d");
 
           return (
@@ -331,7 +371,11 @@ export function CalendarDashboard() {
                 <div className="relative flex w-full items-center">
                   <div className="w-18 shrink-0 pr-2.5 text-right">
                     <span className="text-[11px] font-semibold text-orange-600 dark:text-orange-400">
-                      {format(time, settings.timeFormat === "24h" ? "HH:mm" : "h:mm a")} •
+                      {format(
+                        time,
+                        settings.timeFormat === "24h" ? "HH:mm" : "h:mm a",
+                      )}{" "}
+                      •
                     </span>
                   </div>
                   <div className="flex-1 border-b-2 border-orange-500/70 dark:border-orange-500/60" />
@@ -341,15 +385,19 @@ export function CalendarDashboard() {
         }
         renderEvent={({ occurrence, segment, view }) => {
           const { event } = occurrence;
-          const timePattern = settings.timeFormat === "24h" ? "HH:mm" : "h:mm a";
+          const timePattern =
+            settings.timeFormat === "24h" ? "HH:mm" : "h:mm a";
           const startTime = format(occurrence.start, timePattern);
           const endTime = format(occurrence.end, timePattern);
           const timeRange = `${startTime} – ${endTime}`;
 
           const durationMinutes =
-            (occurrence.end.getTime() - occurrence.start.getTime()) / (1000 * 60);
+            (occurrence.end.getTime() - occurrence.start.getTime()) /
+            (1000 * 60);
           const segmentMinutes =
-            segment && segment.startMin !== undefined && segment.endMin !== undefined
+            segment &&
+            segment.startMin !== undefined &&
+            segment.endMin !== undefined
               ? segment.endMin - segment.startMin
               : durationMinutes;
           const isShort = durationMinutes <= 30 || segmentMinutes <= 30;
@@ -369,7 +417,9 @@ export function CalendarDashboard() {
                 )}
                 <span className="min-w-0 truncate font-semibold">
                   {event.title}
-                  <span className="ml-1 text-[11px] font-normal opacity-85">, {timeRange}</span>
+                  <span className="ml-1 text-[11px] font-normal opacity-85">
+                    , {timeRange}
+                  </span>
                 </span>
               </div>
             );
@@ -438,9 +488,38 @@ export function CalendarDashboard() {
       {/* Event Details Modal */}
       <CalendarEventModal
         event={selectedEvent}
+        allEvents={events}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         onDeleteEvent={handleDeleteEvent}
+        onDeleteSeries={(seriesId, eventId, eventTitle) => {
+          setEvents((prev) =>
+            prev.filter((e) => {
+              if (e.id === eventId) return false;
+              if (
+                seriesId &&
+                (e.recurringEventId === seriesId ||
+                  e.data?.seriesId === seriesId)
+              ) {
+                return false;
+              }
+              if (
+                seriesId &&
+                e.data?.description?.includes(`<!--series:${seriesId}-->`)
+              ) {
+                return false;
+              }
+              if (
+                eventTitle &&
+                e.title.trim().toLowerCase() === eventTitle.trim().toLowerCase()
+              ) {
+                return false;
+              }
+              return true;
+            }),
+          );
+          void syncCalendar(false);
+        }}
       />
     </div>
   );

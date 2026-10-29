@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   FolderGit2,
   ArrowRight,
+  Repeat,
 } from "lucide-react";
 import type { CalendarEvent } from "@/components/reui/event-calendar/event-calendar-types";
 import type { CustomEventData } from "@/mock-data/calendar-events";
@@ -37,20 +38,31 @@ import { CalendarEventAttendeesList } from "./calendar-event-attendees-list";
 
 interface CalendarEventModalProps {
   event: CalendarEvent<CustomEventData> | null;
+  allEvents?: CalendarEvent<CustomEventData>[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleteEvent: (id: string) => void;
+  onDeleteSeries?: (
+    seriesId: string,
+    eventId: string,
+    eventTitle?: string,
+  ) => void;
 }
 
 export function CalendarEventModal({
   event,
+  allEvents,
   open,
   onOpenChange,
   onDeleteEvent,
+  onDeleteSeries,
 }: CalendarEventModalProps) {
   const router = useRouter();
   const [copied, setCopied] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [_cancelTarget, setCancelTarget] = React.useState<
+    "single" | "series" | null
+  >(null);
   const [attendeeFilter, setAttendeeFilter] = React.useState("");
   const [prevOpen, setPrevOpen] = React.useState(open);
 
@@ -58,10 +70,14 @@ export function CalendarEventModal({
     setPrevOpen(open);
     if (!open) {
       setAttendeeFilter("");
+      setCancelTarget(null);
     }
   }
 
-  const attendees = React.useMemo(() => event?.data?.attendees || [], [event?.data?.attendees]);
+  const attendees = React.useMemo(
+    () => event?.data?.attendees || [],
+    [event?.data?.attendees],
+  );
 
   const filteredAttendees = React.useMemo(() => {
     if (!attendeeFilter.trim()) return attendees;
@@ -69,19 +85,58 @@ export function CalendarEventModal({
     return attendees.filter(
       (a) =>
         (a.name && a.name.toLowerCase().includes(q)) ||
-        (a.email && a.email.toLowerCase().includes(q))
+        (a.email && a.email.toLowerCase().includes(q)),
     );
   }, [attendees, attendeeFilter]);
 
+  const rawDescription = event?.data?.description || "";
+  const seriesId =
+    event?.recurringEventId ||
+    event?.data?.seriesId ||
+    rawDescription.match(/<!--series:([a-zA-Z0-9_-]+)-->/)?.[1] ||
+    null;
+
+  const siblingCount = React.useMemo(() => {
+    if (!allEvents || !event) return 0;
+    const eventStart = new Date(event.start).getTime();
+    const eventEnd = new Date(event.end).getTime();
+    const eventDuration = eventEnd - eventStart;
+    return allEvents.filter((e) => {
+      if (e.id === event.id) return false;
+      if (
+        seriesId &&
+        (e.recurringEventId === seriesId || e.data?.seriesId === seriesId)
+      ) {
+        return true;
+      }
+      if (
+        seriesId &&
+        e.data?.description?.includes(`<!--series:${seriesId}-->`)
+      ) {
+        return true;
+      }
+      const eStart = new Date(e.start).getTime();
+      const eEnd = new Date(e.end).getTime();
+      const d = eEnd - eStart;
+      const sameDuration = Math.abs(d - eventDuration) < 60000;
+      const sameTitle =
+        (e.title || "").trim().toLowerCase() ===
+        (event.title || "").trim().toLowerCase();
+      return sameTitle && sameDuration;
+    }).length;
+  }, [allEvents, event, seriesId]);
+
   if (!event) return null;
 
+  const startDate = new Date(event.start);
+  const endDate = new Date(event.end);
   const now = new Date();
-  const isLive = now >= event.start && now <= event.end;
-  const isPast = now > event.end;
+  const isLive = now >= startDate && now <= endDate;
+  const isPast = now > endDate;
 
   const durationMinutes = Math.max(
     1,
-    Math.round((event.end.getTime() - event.start.getTime()) / 60000)
+    Math.round((endDate.getTime() - startDate.getTime()) / 60000),
   );
   const durationLabel =
     durationMinutes >= 60
@@ -92,7 +147,10 @@ export function CalendarEventModal({
   const meetingUrl = event.data?.meetingUrl;
   const roomDetails = event.data?.roomDetails;
   const location = event.data?.location;
-  const description = event.data?.description;
+  const isRecurring = Boolean(seriesId) || siblingCount > 0;
+  const description = rawDescription
+    .replace(/<!--series:[a-zA-Z0-9_-]+-->/g, "")
+    .trim();
   const organizer = event.data?.organizer;
 
   const handleCopyLink = async () => {
@@ -113,8 +171,9 @@ export function CalendarEventModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteSingle = async () => {
     setIsDeleting(true);
+    setCancelTarget("single");
     try {
       await apiClient.bookings.cancel(event.id);
       toast.success("Meeting cancelled successfully");
@@ -127,6 +186,33 @@ export function CalendarEventModal({
       onOpenChange(false);
     } finally {
       setIsDeleting(false);
+      setCancelTarget(null);
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    setIsDeleting(true);
+    setCancelTarget("series");
+    try {
+      await apiClient.bookings.cancelSeries(event.id);
+      toast.success("All recurring meetings cancelled");
+      if (onDeleteSeries) {
+        onDeleteSeries(seriesId || "", event.id, event.title);
+      } else {
+        onDeleteEvent(event.id);
+      }
+      onOpenChange(false);
+    } catch {
+      if (onDeleteSeries) {
+        onDeleteSeries(seriesId || "", event.id, event.title);
+      } else {
+        onDeleteEvent(event.id);
+      }
+      toast.info("Recurring events removed from calendar view");
+      onOpenChange(false);
+    } finally {
+      setIsDeleting(false);
+      setCancelTarget(null);
     }
   };
 
@@ -174,9 +260,13 @@ export function CalendarEventModal({
               >
                 <span
                   className="size-1.5 rounded-full"
-                  style={{ backgroundColor: event.data.project.color || "#2563eb" }}
+                  style={{
+                    backgroundColor: event.data.project.color || "#2563eb",
+                  }}
                 />
-                <span className="max-w-[120px] truncate">{event.data.project.name}</span>
+                <span className="max-w-[120px] truncate">
+                  {event.data.project.name}
+                </span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
@@ -187,6 +277,13 @@ export function CalendarEventModal({
             {event.data?.source === "google" && (
               <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-400">
                 Google Calendar
+              </span>
+            )}
+
+            {isRecurring && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:border-purple-900/60 dark:bg-purple-950/60 dark:text-purple-300">
+                <Repeat className="size-3" />
+                Recurring
               </span>
             )}
           </div>
@@ -207,7 +304,8 @@ export function CalendarEventModal({
             <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
               <Clock className="size-4 shrink-0 text-neutral-400" />
               <span>
-                {format(event.start, "h:mm a")} – {format(event.end, "h:mm a")} ({durationLabel})
+                {format(event.start, "h:mm a")} – {format(event.end, "h:mm a")}{" "}
+                ({durationLabel})
               </span>
             </div>
           </div>
@@ -218,7 +316,9 @@ export function CalendarEventModal({
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 <div
                   className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
-                  style={{ backgroundColor: event.data.project.color || "#2563eb" }}
+                  style={{
+                    backgroundColor: event.data.project.color || "#2563eb",
+                  }}
                 >
                   <FolderGit2 className="size-4" />
                 </div>
@@ -263,7 +363,10 @@ export function CalendarEventModal({
                     <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                       Google Meet
                     </p>
-                    <p className="truncate text-[11px] text-neutral-500" title={meetingUrl}>
+                    <p
+                      className="truncate text-[11px] text-neutral-500"
+                      title={meetingUrl}
+                    >
                       {meetingUrl}
                     </p>
                   </div>
@@ -304,7 +407,10 @@ export function CalendarEventModal({
           )}
 
           {/* Location & Room Details */}
-          <CalendarEventLocationSection roomDetails={roomDetails} location={location} />
+          <CalendarEventLocationSection
+            roomDetails={roomDetails}
+            location={location}
+          />
 
           {/* Organizer */}
           {organizer && (
@@ -316,7 +422,10 @@ export function CalendarEventModal({
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <Avatar className="size-7 shrink-0 text-[10px]">
                     {organizer.avatar && (
-                      <AvatarImage src={organizer.avatar} alt={organizer.name} />
+                      <AvatarImage
+                        src={organizer.avatar}
+                        alt={organizer.name}
+                      />
                     )}
                     <AvatarFallback className="bg-orange-500 text-[10px] font-bold text-white">
                       {(organizer.name || organizer.email || "H")
@@ -333,14 +442,18 @@ export function CalendarEventModal({
                     </p>
                     {organizer.email &&
                       organizer.name &&
-                      organizer.email.toLowerCase() !== organizer.name.toLowerCase() && (
+                      organizer.email.toLowerCase() !==
+                        organizer.name.toLowerCase() && (
                         <p className="mt-0.5 truncate text-[10px] leading-tight text-neutral-500 dark:text-neutral-400">
                           {organizer.email}
                         </p>
                       )}
                   </div>
                 </div>
-                <Badge variant="secondary" className="shrink-0 gap-1 text-[10px] font-medium">
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 gap-1 text-[10px] font-medium"
+                >
                   <ShieldCheck className="size-3 text-orange-600" /> Host
                 </Badge>
               </div>
@@ -375,18 +488,18 @@ export function CalendarEventModal({
             variant="ghost"
             size="sm"
             disabled={isDeleting}
-            onClick={handleDelete}
+            onClick={isRecurring ? handleDeleteSeries : handleDeleteSingle}
             className="h-8 cursor-pointer gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
           >
             {isDeleting ? (
               <>
                 <Loader2 className="size-3.5 animate-spin" />
-                Cancelling...
+                {isRecurring ? "Cancelling all..." : "Cancelling..."}
               </>
             ) : (
               <>
                 <Trash2 className="size-3.5" />
-                Cancel Meeting
+                {isRecurring ? "Cancel Repeated Meetings" : "Cancel Meeting"}
               </>
             )}
           </Button>
