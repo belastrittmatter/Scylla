@@ -32,15 +32,13 @@ describe("MCP Team CRUD Tools Suite", () => {
         .where(eq(user.id, id))
         .limit(1);
       if (exists.length === 0) {
-        await db
-          .insert(user)
-          .values({
-            id,
-            email,
-            name,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
+        await db.insert(user).values({
+          id,
+          email,
+          name,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
       }
     }
   });
