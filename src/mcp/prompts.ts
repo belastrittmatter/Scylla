@@ -11,7 +11,10 @@ export function registerAllMcpPrompts(server: McpServer) {
         targetUser: z
           .string()
           .describe("Target colleague name, nickname, or email (e.g. 'alex')"),
-        date: z.string().optional().describe("Meeting date (YYYY-MM-DD or 'today')"),
+        date: z
+          .string()
+          .optional()
+          .describe("Meeting date (YYYY-MM-DD or 'today')"),
       }),
     },
     (args) => ({
@@ -30,7 +33,7 @@ Follow this workflow:
           },
         },
       ],
-    })
+    }),
   );
 
   server.registerPrompt(
@@ -60,6 +63,61 @@ Follow this workflow:
           },
         },
       ],
-    })
+    }),
+  );
+
+  server.registerPrompt(
+    "daily_meeting_flow",
+    {
+      description:
+        "Guided workflow for scheduling a daily standup / team sync: resolves team members, supports recurring daily repeat for 1 week (5 working days), checks room requirements, finds conflict-free slot, and books meeting.",
+      argsSchema: z.object({
+        teamId: z
+          .string()
+          .describe("Team ID or slug to schedule daily standup for"),
+        date: z
+          .string()
+          .optional()
+          .describe(
+            "Target start date for daily meeting (YYYY-MM-DD or 'today')",
+          ),
+        durationMinutes: z
+          .number()
+          .optional()
+          .default(15)
+          .describe("Meeting duration in minutes (defaults to 15m)"),
+        isOffline: z
+          .boolean()
+          .optional()
+          .describe("Whether a physical meeting room is required"),
+        repeatDays: z
+          .number()
+          .optional()
+          .default(1)
+          .describe(
+            "Number of consecutive workdays to book (e.g. 5 for a 1-week repeat)",
+          ),
+      }),
+    },
+    (args) => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `Please help schedule the daily standup for team "${args.teamId}" starting on ${args.date ?? "today"}${args.repeatDays && args.repeatDays > 1 ? ` repeating for ${args.repeatDays} workdays (1 week)` : ""}.
+Follow this daily meeting workflow:
+1. Fetch all members of team "${args.teamId}" using 'list_team_members' to assemble the attendee list.
+2. Determine if an offline room is needed (if isOffline=true or requested by user). If offline, call 'list_meeting_rooms' with minCapacity matching team size.
+3. Call 'find_common_meeting_slots' for all team members (duration: ${args.durationMinutes ?? 15} minutes) on ${args.date ?? "today"} to identify the target recurring standup time window (e.g., 09:30 - 09:45).
+4. If repeating for 1 week (repeatDays: ${args.repeatDays ?? 1}):
+   - Propose the schedule for Monday through Friday at that established time slot.
+   - For each workday in that 1-week window, call 'book_meeting' at the same time slot for that day.
+5. Suggest a clean meeting title (e.g. "[Team] Daily Standup") and brief 3-point standup agenda (Yesterday, Today, Blockers).
+6. Confirm with me, then finalize all bookings with calendar invites and Google Meet links.`,
+          },
+        },
+      ],
+    }),
   );
 }

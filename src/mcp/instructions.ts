@@ -44,4 +44,25 @@ Follow these workflow rules whenever a user expresses intent to create or update
 
 3. **Finalize Task Creation or Update**:
    - Once the user specifies or selects a project, call 'create_task' (or 'update_task') with the selected 'projectId' (or project slug).
+
+# Daily Standup & Team Meeting Instructions
+
+Follow these workflow rules whenever a user requests to schedule a "daily", "standup", or "team sync":
+
+1. **Resolve Team & Attendees**:
+   - Fetch team members using 'list_team_members' with the provided teamId or slug.
+   - Extract their emails for the attendee list.
+
+2. **Check Offline Room vs. Online Meet**:
+   - Confirm if team members are co-located in the same hub or if an in-person room is needed.
+   - If offline, query 'list_meeting_rooms' with minCapacity >= number of team members.
+
+3. **Compute Overlap Slots**:
+   - Use 'find_common_meeting_slots' for 15-30 minutes across all attendee calendars.
+
+4. **Propose & Book (Single Day or Recurring 1-Week Series)**:
+   - Format meeting title as "[Team Name] Daily Standup".
+   - Include standard standup agenda: Yesterday's progress, Today's focus, and Blockers.
+   - If the user specifies a repeat (e.g., "for 1 week" / "every day this week"), establish the consensus slot and create the booking for each workday (Monday–Friday) across that 1-week series.
+   - Call 'book_meeting' to generate calendar invites and Google Meet URLs.
 `.trim();
