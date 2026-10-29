@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   allowedDevOrigins: ["supplier-dover-pin-automotive.trycloudflare.com"],
   experimental: {
+    agentUpgrade: "security",
     agentFeedback: true,
   },
   cacheComponents: true,
