@@ -45,10 +45,6 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  if (process.env.NODE_ENV === "test") {
-    headers.set("x-bypass-auth", "true");
-  }
-
   const response = await fetch(url, {
     credentials: "include",
     ...options,
