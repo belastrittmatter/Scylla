@@ -28,12 +28,10 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = getSessionCookie(request);
 
-  // 1. Kiểm tra các trang protected thuộc (auth)
-  const isProtectedPage =
-    pathname === "/" ||
-    PROTECTED_PAGE_PREFIXES.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-    );
+  // 1. Check protected dashboard pages under (auth)
+  const isProtectedPage = PROTECTED_PAGE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
   if (isProtectedPage && !sessionCookie) {
     const signInUrl = new URL("/auth/sign-in", request.url);
@@ -41,7 +39,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // 2. Chặn các API yêu cầu đăng nhập nếu không có session
+  // 2. Block protected API routes when no valid session is present
   const isProtectedApi = PROTECTED_API_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -62,12 +60,21 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào homepage /
+  // 3. Redirect authenticated users away from sign-in / sign-up pages to /calendar
   if (
     sessionCookie &&
-    (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")
+    (pathname === "/auth/sign-in" ||
+      pathname === "/auth/sign-up" ||
+      pathname === "/sign-in")
   ) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/calendar", request.url));
+  }
+
+  // 4. Redirect legacy /sign-in route to canonical /auth/sign-in entrypoint
+  if (pathname === "/sign-in") {
+    const targetUrl = new URL("/auth/sign-in", request.url);
+    targetUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(targetUrl);
   }
 
   return NextResponse.next();
@@ -82,6 +89,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public asset extensions (svg, png, jpg, etc.)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?|css|js|mp4|webm)$).*)",
   ],
 };
