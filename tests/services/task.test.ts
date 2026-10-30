@@ -239,7 +239,7 @@ describe("TaskService Domain Logic", () => {
     try {
       const { TaskWorkspaceService } =
         await import("../../src/services/task/task-workspace-service");
-      const activeWs = await TaskWorkspaceService.getWorkspaceData();
+      const activeWs = await TaskWorkspaceService.getWorkspaceData(testUser.id);
       const activeTask = activeWs.tasks.find((t) => t.id === task.id);
       expect(activeTask?.activeSessionStartedAt).not.toBeNull();
       const diffMs = Math.abs(
@@ -266,7 +266,7 @@ describe("TaskService Domain Logic", () => {
     // Verify workspace aggregation
     const { TaskWorkspaceService } =
       await import("../../src/services/task/task-workspace-service");
-    const wsData = await TaskWorkspaceService.getWorkspaceData();
+    const wsData = await TaskWorkspaceService.getWorkspaceData(testUser.id);
     const wsTask = wsData.tasks.find((t) => t.id === task.id);
     expect(wsTask?.totalSpentSeconds).toBeGreaterThanOrEqual(89);
     expect(wsTask?.activeSessionStartedAt).toBeNull();

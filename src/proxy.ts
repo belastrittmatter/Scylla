@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
+import { auth } from "@/lib/auth";
 
 const PROTECTED_PAGE_PREFIXES = [
   "/calendar",
   "/projects",
   "/teams",
   "/tasks",
+  "/timeline",
   "/settings",
   "/support",
 ];
@@ -19,6 +21,7 @@ const PROTECTED_API_PREFIXES = [
   "/api/tasks",
   "/api/projects",
   "/api/teams",
+  "/api/bookings",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -43,13 +46,20 @@ export async function proxy(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
-  const isBypassAllowed =
-    process.env.NODE_ENV === "test" ||
-    request.headers.get("x-bypass-auth") === "true" ||
-    Boolean(request.headers.get("authorization"));
-
-  if (isProtectedApi && !sessionCookie && !isBypassAllowed) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isProtectedApi && !sessionCookie) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const session = await auth.api.getSession({ headers: request.headers });
+        if (!session) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+      } catch {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    } else {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào homepage /

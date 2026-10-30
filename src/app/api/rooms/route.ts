@@ -55,16 +55,6 @@ export async function GET(req: Request) {
         .where(eq(account.userId, sessionUserId));
       googleAccount = accounts.find((a) => a.providerId === "google") || null;
     }
-    if (!googleAccount) {
-      const anyGoogleAccounts = await db
-        .select()
-        .from(account)
-        .where(eq(account.providerId, "google"))
-        .limit(1);
-      if (anyGoogleAccounts.length > 0) {
-        googleAccount = anyGoogleAccounts[0];
-      }
-    }
 
     const rooms = await RoomService.listRooms(filter, {
       accountRecord: googleAccount || undefined,

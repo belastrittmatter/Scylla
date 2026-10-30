@@ -23,20 +23,25 @@ export async function POST(req: Request) {
     }
 
     const data = parseResult.data;
-    let organizerUserId = data.organizerUserId;
-    if (!organizerUserId || organizerUserId === "me") {
-      try {
-        const session = await auth.api.getSession({ headers: req.headers });
-        organizerUserId = session?.user?.id;
-      } catch {
-        // ignore
+    let organizerUserId: string | undefined;
+
+    try {
+      const session = await auth.api.getSession({ headers: req.headers });
+      if (session?.user?.id) {
+        organizerUserId = session.user.id;
       }
+    } catch {
+      // ignore
+    }
+
+    if (!organizerUserId && process.env.NODE_ENV === "test") {
+      organizerUserId = data.organizerUserId;
     }
 
     if (!organizerUserId) {
       return Response.json(
-        { error: "Organizer user ID is required when unauthenticated" },
-        { status: 400 },
+        { error: "Unauthorized: Active user session required" },
+        { status: 401 },
       );
     }
 
