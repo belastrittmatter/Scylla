@@ -44,6 +44,37 @@ server/
 ### Prerequisites
 
 - [Bun](https://bun.sh/) (v1.2+) or Node.js (v20+)
+- [Docker](https://www.docker.com/) & Docker Compose
+
+### Quickstart (Local PostgreSQL & Database Setup)
+
+1. **Configure Environment Variables**:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Start Local PostgreSQL**:
+   Spin up the local PostgreSQL container with healthchecks enabled:
+
+   ```bash
+   make db-up
+   # Or using Bun:
+   bun run db:up
+   ```
+
+3. **Push Schema and Seed Initial Data**:
+
+   ```bash
+   bun run db:push
+   bun run db:seed
+   ```
+
+   **Database Management Commands**:
+   - `make db-up` / `bun run db:up` — Start Postgres container in background (waits until healthy)
+   - `make db-down` / `bun run db:down` — Stop Postgres container
+   - `make db-logs` — Tail logs from the Postgres container
+   - `make db-reset` — Tear down database volume and restart clean container
 
 ### 1. Install Dependencies
 
