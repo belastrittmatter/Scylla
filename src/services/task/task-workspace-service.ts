@@ -94,10 +94,7 @@ export class TaskWorkspaceService {
         .from(task)
         .where(inArray(task.teamId, teamIds))
         .orderBy(asc(task.position), desc(task.createdAt)),
-      db
-        .select()
-        .from(teamMember)
-        .where(inArray(teamMember.teamId, teamIds)),
+      db.select().from(teamMember).where(inArray(teamMember.teamId, teamIds)),
     ]);
 
     // 3. Fetch session stats only for the scoped tasks

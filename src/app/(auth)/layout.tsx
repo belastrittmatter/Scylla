@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { AuthUIProvider } from "@/components/auth-provider";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
+export const instant = false;
+
 export default async function DashboardLayout({
   children,
 }: {

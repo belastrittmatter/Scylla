@@ -18,10 +18,7 @@ import {
   CreateTaskPayloadSchema,
   CreateTaskCommentPayloadSchema,
 } from "./schemas";
-import {
-  resolveActionUserId,
-  type ActionResult,
-} from "./auth-helper";
+import { resolveActionUserId, type ActionResult } from "./auth-helper";
 
 export async function getWorkspaceDataAction(): Promise<
   ActionResult<WorkspaceData>

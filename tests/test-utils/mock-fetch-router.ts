@@ -23,7 +23,7 @@ export function setupMockFetchRouter() {
     init?: RequestInit,
   ): Promise<Response> => {
     let urlStr: string;
-    let signal: AbortSignal | undefined = init?.signal;
+    let signal: AbortSignal | null | undefined = init?.signal;
 
     if (typeof input === "string") {
       urlStr = input;
