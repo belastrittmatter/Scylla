@@ -171,17 +171,19 @@ describe("Landing Page & Review Fixes", () => {
     expect(landingScripts).not.toContain("/js/plugin.js");
   });
 
-  it("removes Swiper and duplicate compiled Tailwind layers from public/css/landing.css", () => {
+  it("removes Swiper, unused blog prose styles, and unused utility rules from public/css/landing.css while preserving cascade layers", () => {
     const landingCss = readFileSync(
       join(ROOT_DIR, "public/css/landing.css"),
       "utf8",
     );
     const lineCount = landingCss.split("\n").length;
 
-    expect(lineCount).toBeLessThan(600);
+    expect(lineCount).toBeLessThan(3500);
     expect(landingCss).not.toContain(".swiper-container");
-    expect(landingCss).not.toContain("@layer utilities");
     expect(landingCss).not.toContain(".article-content");
+    expect(landingCss).toContain("@layer theme, base, components, utilities;");
+    expect(landingCss).toContain("@layer base");
+    expect(landingCss).toContain("@layer utilities");
     expect(landingCss).toContain(".scylla-landing {");
     expect(landingCss).toContain(":where(.scylla-landing)");
     expect(landingCss).toContain("fonts.googleapis.com/css2");
