@@ -15,3 +15,4 @@ package-lock.json
 .codex/
 .opencode/
 .husky/
+src/utils/mcp-ui-bundle.json
