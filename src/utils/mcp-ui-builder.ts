@@ -4,12 +4,13 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpViewType } from "@/components/mcp-ui/mcp-ui-types";
+import prebuiltBundle from "./mcp-ui-bundle.json";
 
 interface CompiledUiBundle {
   readonly css: string;
   readonly js: string;
   readonly renderMcpView: (view: McpViewType, data: unknown) => string;
-  readonly mtimeKey: number;
+  readonly mtimeKey?: number;
 }
 
 const serverRoot = path.resolve(
@@ -20,14 +21,45 @@ const mcpUiDir = path.join(serverRoot, "src/components/mcp-ui");
 const sharedUiDir = path.join(serverRoot, "src/components/ui");
 const globalsCssPath = path.join(serverRoot, "src/app/globals.css");
 const bundleScriptPath = path.join(serverRoot, "scripts/bundle-mcp-ui.ts");
-const prebuiltBundlePath = path.join(
-  serverRoot,
-  ".mcp-cache/mcp-ui-bundle.json",
-);
-const nodeRequire = createRequire(path.join(serverRoot, "package.json"));
+const nodeRequire = createRequire(import.meta.url);
 
 let cachedBundle: CompiledUiBundle | null = null;
+let staticPrebuiltBundle: CompiledUiBundle | null = null;
 let lastMtimeCheckMs = 0;
+
+function createBundleFromPayload(parsed: {
+  css: string;
+  js: string;
+  ssrJs: string;
+  mtimeKey?: number;
+}): CompiledUiBundle {
+  const cjsMod = {
+    exports: {} as {
+      renderMcpView: (view: McpViewType, data: unknown) => string;
+    },
+  };
+  const evaluateSsr = new Function(
+    "exports",
+    "module",
+    "require",
+    parsed.ssrJs,
+  );
+  evaluateSsr(cjsMod.exports, cjsMod, nodeRequire);
+
+  return {
+    css: parsed.css,
+    js: parsed.js,
+    renderMcpView: cjsMod.exports.renderMcpView,
+    mtimeKey: parsed.mtimeKey,
+  };
+}
+
+function getStaticPrebuiltBundle(): CompiledUiBundle {
+  if (!staticPrebuiltBundle) {
+    staticPrebuiltBundle = createBundleFromPayload(prebuiltBundle);
+  }
+  return staticPrebuiltBundle;
+}
 
 function getMcpUiMtimeKey(): number {
   try {
@@ -47,9 +79,16 @@ function getMcpUiMtimeKey(): number {
 
 function getCompiledBundle(): CompiledUiBundle {
   const isProd = process.env.NODE_ENV === "production";
-  if (cachedBundle && isProd) {
-    return cachedBundle;
+  const hasBun =
+    typeof process !== "undefined" && Boolean(process.versions?.bun);
+
+  // In production or any environment without Bun (e.g. Vercel serverless),
+  // always use the prebuilt bundle directly to avoid ENOENT spawn errors.
+  if (isProd || !hasBun) {
+    return getStaticPrebuiltBundle();
   }
+
+  // Development with Bun: support hot reload if files changed
   const now = Date.now();
   if (cachedBundle && now - lastMtimeCheckMs < 1000) {
     return cachedBundle;
@@ -59,43 +98,31 @@ function getCompiledBundle(): CompiledUiBundle {
   if (cachedBundle && cachedBundle.mtimeKey === mtimeKey) {
     return cachedBundle;
   }
-  const rawJson =
-    isProd && fs.existsSync(prebuiltBundlePath)
-      ? fs.readFileSync(prebuiltBundlePath, "utf-8")
-      : execFileSync(
-          process.versions.bun ? process.execPath : "bun",
-          ["run", bundleScriptPath],
-          {
-            cwd: serverRoot,
-            encoding: "utf-8",
-            maxBuffer: 32 * 1024 * 1024,
-          },
-        );
-  const parsed = JSON.parse(rawJson) as {
-    css: string;
-    js: string;
-    ssrJs: string;
-  };
-  const cjsMod = {
-    exports: {} as {
-      renderMcpView: (view: McpViewType, data: unknown) => string;
-    },
-  };
-  const evaluateSsr = new Function(
-    "exports",
-    "module",
-    "require",
-    parsed.ssrJs,
-  );
-  evaluateSsr(cjsMod.exports, cjsMod, nodeRequire);
 
-  cachedBundle = {
-    css: parsed.css,
-    js: parsed.js,
-    renderMcpView: cjsMod.exports.renderMcpView,
-    mtimeKey,
-  };
-  return cachedBundle;
+  try {
+    const rawJson = execFileSync(
+      process.execPath || "bun",
+      ["run", bundleScriptPath],
+      {
+        cwd: serverRoot,
+        encoding: "utf-8",
+        maxBuffer: 32 * 1024 * 1024,
+      },
+    );
+    const parsed = JSON.parse(rawJson) as {
+      css: string;
+      js: string;
+      ssrJs: string;
+    };
+    cachedBundle = createBundleFromPayload({ ...parsed, mtimeKey });
+    return cachedBundle;
+  } catch (error) {
+    console.warn(
+      "Failed to dynamically bundle MCP UI, falling back to prebuilt assets:",
+      error,
+    );
+    return getStaticPrebuiltBundle();
+  }
 }
 
 function safeJsonSerialize(data: unknown): string {
@@ -107,8 +134,8 @@ function buildMcpAppHtml(
   view: McpViewType,
   initialData?: unknown,
 ): string {
-  const { css, js, renderMcpView } = getCompiledBundle();
-  const ssrHtml = renderMcpView(view, initialData);
+  const { css, js, renderMcpView: renderView } = getCompiledBundle();
+  const ssrHtml = renderView(view, initialData);
   const safeDataJson = safeJsonSerialize(initialData);
   const safeJs = js.replace(/<\/script/gi, "<\\/script");
 
