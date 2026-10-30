@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "command -v bun >/dev/null 2>&1 && bun run scripts/bundle-mcp-ui.ts --write || true",
     "build": "next build",
     "build:mcp-ui": "bun run scripts/bundle-mcp-ui.ts --write",
     "start": "next start",

@@ -100,9 +100,12 @@ const css = optimize(compiledCss, { minify: true }).code;
 const payload = JSON.stringify({ css, js, ssrJs });
 
 if (process.argv.includes("--write")) {
-  const outPath = path.join(serverDir, ".mcp-cache/mcp-ui-bundle.json");
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, payload, "utf-8");
+  const cachePath = path.join(serverDir, ".mcp-cache/mcp-ui-bundle.json");
+  const srcPath = path.join(serverDir, "src/utils/mcp-ui-bundle.json");
+  for (const outPath of [cachePath, srcPath]) {
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, payload, "utf-8");
+  }
 } else {
   process.stdout.write(payload);
 }
