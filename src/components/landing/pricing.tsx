@@ -125,9 +125,14 @@ export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
                     Perfect for freelancers, startups, or small teams getting
                     started with AI workflows.
                   </p>
+                  {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard/auth pages. */}
                   <Link
                     className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
                     href="/auth/sign-in"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/auth/sign-in");
+                    }}
                   >
                     <div className="overflow-hidden flex flex-col">
                       <span className="p-3 transform duration-300 group-hover:-translate-y-full">
@@ -201,6 +206,10 @@ export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
                   <Link
                     className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-white font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 flex flex-col h-11 cursor-pointer"
                     href="/auth/sign-in"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/auth/sign-in");
+                    }}
                   >
                     <div className="overflow-hidden flex flex-col">
                       <span className="p-3 transform duration-300 group-hover:-translate-y-full">
@@ -281,9 +290,14 @@ export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
                     Perfect for freelancers, startups, or small teams getting
                     started with AI workflows.
                   </p>
+                  {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard/auth pages. */}
                   <Link
                     className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
                     href="/auth/sign-in"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/auth/sign-in");
+                    }}
                   >
                     <div className="overflow-hidden flex flex-col">
                       <span className="p-3 transform duration-300 group-hover:-translate-y-full">

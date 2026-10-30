@@ -57,15 +57,24 @@ export function LandingCtaBanner() {
                   data-news-button=""
                   className="mt-5 sm:mt-8 lg:mt-12 flex flex-wrap gap-4"
                 >
+                  {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
                   <Link
                     className="button-primary inline-flex items-center justify-center px-[26px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-primary/20 cursor-pointer"
                     href="/auth/sign-in"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/auth/sign-in");
+                    }}
                   >
                     Start Free Trial
                   </Link>
                   <Link
                     className="button-secondary text-sm cursor-pointer"
                     href="/calendar"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/calendar");
+                    }}
                   >
                     View Demo
                   </Link>

@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = getSessionCookie(request);
 
-  // 1. Kiểm tra các trang protected thuộc (auth)
+  // 1. Check protected dashboard pages under (auth)
   const isProtectedPage = PROTECTED_PAGE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // 2. Chặn các API yêu cầu đăng nhập nếu không có session
+  // 2. Block protected API routes when no valid session is present
   const isProtectedApi = PROTECTED_API_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào /calendar
+  // 3. Redirect authenticated users away from sign-in / sign-up pages to /calendar
   if (
     sessionCookie &&
     (pathname === "/auth/sign-in" ||

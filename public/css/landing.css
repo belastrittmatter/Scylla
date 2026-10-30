@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Urbanist:wght@200;300;400;500;600;700&display=swap");
+
 /* Swiper Plugins */
 /**
  * Swiper 4.5.0
@@ -789,127 +791,9 @@ body.scylla-landing-page {
 
 /*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
 @layer properties;
-@font-face {
-  font-family: "Instrument Serif";
-  src:
-    url("/fonts/InstrumentSerif-Regular.woff2") format("woff2"),
-    url("/fonts/InstrumentSerif-Regular.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Instrument Serif";
-  src:
-    url("/fonts/InstrumentSerif-Italic.woff2") format("woff2"),
-    url("/fonts/InstrumentSerif-Italic.woff") format("woff");
-  font-weight: normal;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Urbanist";
-  src:
-    url("/fonts/Urbanist-Bold.woff2") format("woff2"),
-    url("/fonts/Urbanist-Bold.woff") format("woff");
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Urbanist";
-  src:
-    url("/fonts/Urbanist-ExtraLight.woff2") format("woff2"),
-    url("/fonts/Urbanist-ExtraLight.woff") format("woff");
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Urbanist";
-  src:
-    url("/fonts/Urbanist-Medium.woff2") format("woff2"),
-    url("/fonts/Urbanist-Medium.woff") format("woff");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Urbanist";
-  src:
-    url("/fonts/Urbanist-Light.woff2") format("woff2"),
-    url("/fonts/Urbanist-Light.woff") format("woff");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Urbanist";
-  src:
-    url("/fonts/Urbanist-Regular.woff2") format("woff2"),
-    url("/fonts/Urbanist-Regular.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Urbanist";
-  src:
-    url("/fonts/Urbanist-SemiBold.woff2") format("woff2"),
-    url("/fonts/Urbanist-SemiBold.woff") format("woff");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "DM Sans";
-  src:
-    url("/fonts/DMSans-Light.woff2") format("woff2"),
-    url("/fonts/DMSans-Light.woff") format("woff");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "DM Sans";
-  src:
-    url("/fonts/DMSans-Regular.woff2") format("woff2"),
-    url("/fonts/DMSans-Regular.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "DM Sans";
-  src:
-    url("/fonts/DMSans-Bold.woff2") format("woff2"),
-    url("/fonts/DMSans-Bold.woff") format("woff");
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "DM Sans";
-  src:
-    url("/fonts/DMSans-Medium.woff2") format("woff2"),
-    url("/fonts/DMSans-Medium.woff") format("woff");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "DM Sans";
-  src:
-    url("/fonts/DMSans-SemiBold.woff2") format("woff2"),
-    url("/fonts/DMSans-SemiBold.woff") format("woff");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
 @layer theme, base, components, utilities;
 @layer theme {
-  :root,
-  :host {
+  .scylla-landing {
     --font-sans:
       ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -986,19 +870,18 @@ body.scylla-landing-page {
 }
 
 @layer base {
-  .scylla-landing,
-  .scylla-landing *,
-  .scylla-landing ::after,
-  .scylla-landing ::before,
-  .scylla-landing ::backdrop,
-  .scylla-landing ::file-selector-button {
+  :where(.scylla-landing),
+  :where(.scylla-landing) *,
+  :where(.scylla-landing) ::after,
+  :where(.scylla-landing) ::before,
+  :where(.scylla-landing) ::backdrop,
+  :where(.scylla-landing) ::file-selector-button {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     border: 0 solid;
   }
-  html,
-  :host {
+  :where(.scylla-landing) {
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
     tab-size: 4;
@@ -1016,37 +899,37 @@ body.scylla-landing-page {
     font-variation-settings: var(--default-font-variation-settings, normal);
     -webkit-tap-highlight-color: transparent;
   }
-  hr {
+  :where(.scylla-landing) hr {
     height: 0;
     color: inherit;
     border-top-width: 1px;
   }
-  abbr:where([title]) {
+  :where(.scylla-landing) abbr:where([title]) {
     -webkit-text-decoration: underline dotted;
     text-decoration: underline dotted;
   }
-  .scylla-landing h1,
-  .scylla-landing h2,
-  .scylla-landing h3,
-  .scylla-landing h4,
-  .scylla-landing h5,
-  .scylla-landing h6 {
+  :where(.scylla-landing) h1,
+  :where(.scylla-landing) h2,
+  :where(.scylla-landing) h3,
+  :where(.scylla-landing) h4,
+  :where(.scylla-landing) h5,
+  :where(.scylla-landing) h6 {
     font-size: inherit;
     font-weight: inherit;
   }
-  .scylla-landing a {
+  :where(.scylla-landing) a {
     color: inherit;
     -webkit-text-decoration: inherit;
     text-decoration: inherit;
   }
-  b,
-  strong {
+  :where(.scylla-landing) b,
+  :where(.scylla-landing) strong {
     font-weight: bolder;
   }
-  code,
-  kbd,
-  samp,
-  pre {
+  :where(.scylla-landing) code,
+  :where(.scylla-landing) kbd,
+  :where(.scylla-landing) samp,
+  :where(.scylla-landing) pre {
     font-family: var(
       --default-mono-font-family,
       ui-monospace,
@@ -1065,63 +948,63 @@ body.scylla-landing-page {
     );
     font-size: 1em;
   }
-  small {
+  :where(.scylla-landing) small {
     font-size: 80%;
   }
-  sub,
-  sup {
+  :where(.scylla-landing) sub,
+  :where(.scylla-landing) sup {
     font-size: 75%;
     line-height: 0;
     position: relative;
     vertical-align: baseline;
   }
-  sub {
+  :where(.scylla-landing) sub {
     bottom: -0.25em;
   }
-  sup {
+  :where(.scylla-landing) sup {
     top: -0.5em;
   }
-  table {
+  :where(.scylla-landing) table {
     text-indent: 0;
     border-color: inherit;
     border-collapse: collapse;
   }
-  :-moz-focusring {
+  :where(.scylla-landing) :-moz-focusring {
     outline: auto;
   }
-  progress {
+  :where(.scylla-landing) progress {
     vertical-align: baseline;
   }
-  summary {
+  :where(.scylla-landing) summary {
     display: list-item;
   }
-  ol,
-  ul,
-  menu {
+  :where(.scylla-landing) ol,
+  :where(.scylla-landing) ul,
+  :where(.scylla-landing) menu {
     list-style: none;
   }
-  .scylla-landing img,
-  .scylla-landing svg,
-  .scylla-landing video,
-  .scylla-landing canvas,
-  .scylla-landing audio,
-  .scylla-landing iframe,
-  .scylla-landing embed,
-  .scylla-landing object {
+  :where(.scylla-landing) img,
+  :where(.scylla-landing) svg,
+  :where(.scylla-landing) video,
+  :where(.scylla-landing) canvas,
+  :where(.scylla-landing) audio,
+  :where(.scylla-landing) iframe,
+  :where(.scylla-landing) embed,
+  :where(.scylla-landing) object {
     display: block;
     vertical-align: middle;
   }
-  .scylla-landing img,
-  .scylla-landing video {
+  :where(.scylla-landing) img,
+  :where(.scylla-landing) video {
     max-width: 100%;
     height: auto;
   }
-  .scylla-landing button,
-  .scylla-landing input,
-  .scylla-landing select,
-  .scylla-landing optgroup,
-  .scylla-landing textarea,
-  .scylla-landing ::file-selector-button {
+  :where(.scylla-landing) button,
+  :where(.scylla-landing) input,
+  :where(.scylla-landing) select,
+  :where(.scylla-landing) optgroup,
+  :where(.scylla-landing) textarea,
+  :where(.scylla-landing) ::file-selector-button {
     font: inherit;
     font-feature-settings: inherit;
     font-variation-settings: inherit;
@@ -1131,67 +1014,71 @@ body.scylla-landing-page {
     background-color: transparent;
     opacity: 1;
   }
-  :where(select:is([multiple], [size])) optgroup {
+  :where(.scylla-landing) :where(select:is([multiple], [size])) optgroup {
     font-weight: bolder;
   }
-  :where(select:is([multiple], [size])) optgroup option {
+  :where(.scylla-landing)
+    :where(select:is([multiple], [size]))
+    optgroup
+    option {
     padding-inline-start: 20px;
   }
-  ::file-selector-button {
+  :where(.scylla-landing) ::file-selector-button {
     margin-inline-end: 4px;
   }
-  ::placeholder {
+  :where(.scylla-landing) ::placeholder {
     opacity: 1;
   }
   @supports (not (-webkit-appearance: -apple-pay-button)) or
     (contain-intrinsic-size: 1px) {
-    ::placeholder {
+    :where(.scylla-landing) ::placeholder {
       color: currentcolor;
       @supports (color: color-mix(in lab, red, red)) {
         color: color-mix(in oklab, currentcolor 50%, transparent);
       }
     }
   }
-  textarea {
+  :where(.scylla-landing) textarea {
     resize: vertical;
   }
-  ::-webkit-search-decoration {
+  :where(.scylla-landing) ::-webkit-search-decoration {
     -webkit-appearance: none;
   }
-  ::-webkit-date-and-time-value {
+  :where(.scylla-landing) ::-webkit-date-and-time-value {
     min-height: 1lh;
     text-align: inherit;
   }
-  ::-webkit-datetime-edit {
+  :where(.scylla-landing) ::-webkit-datetime-edit {
     display: inline-flex;
   }
-  ::-webkit-datetime-edit-fields-wrapper {
+  :where(.scylla-landing) ::-webkit-datetime-edit-fields-wrapper {
     padding: 0;
   }
-  ::-webkit-datetime-edit,
-  ::-webkit-datetime-edit-year-field,
-  ::-webkit-datetime-edit-month-field,
-  ::-webkit-datetime-edit-day-field,
-  ::-webkit-datetime-edit-hour-field,
-  ::-webkit-datetime-edit-minute-field,
-  ::-webkit-datetime-edit-second-field,
-  ::-webkit-datetime-edit-millisecond-field,
-  ::-webkit-datetime-edit-meridiem-field {
+  :where(.scylla-landing) ::-webkit-datetime-edit,
+  :where(.scylla-landing) ::-webkit-datetime-edit-year-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-month-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-day-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-hour-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-minute-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-second-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-millisecond-field,
+  :where(.scylla-landing) ::-webkit-datetime-edit-meridiem-field {
     padding-block: 0;
   }
-  :-moz-ui-invalid {
+  :where(.scylla-landing) :-moz-ui-invalid {
     box-shadow: none;
   }
-  .scylla-landing button,
-  .scylla-landing input:where([type="button"], [type="reset"], [type="submit"]),
-  .scylla-landing ::file-selector-button {
+  :where(.scylla-landing) button,
+  :where(.scylla-landing)
+    input:where([type="button"], [type="reset"], [type="submit"]),
+  :where(.scylla-landing) ::file-selector-button {
     appearance: button;
   }
-  ::-webkit-inner-spin-button,
-  ::-webkit-outer-spin-button {
+  :where(.scylla-landing) ::-webkit-inner-spin-button,
+  :where(.scylla-landing) ::-webkit-outer-spin-button {
     height: auto;
   }
-  [hidden]:where(:not([hidden="until-found"])) {
+  :where(.scylla-landing) [hidden]:where(:not([hidden="until-found"])) {
     display: none !important;
   }
 }
@@ -4018,7 +3905,7 @@ body.scylla-landing-page {
   }
 }
 @layer base {
-  .scylla-landing {
+  :where(.scylla-landing) {
     background-color: var(--color-secondary);
     font-family: var(--font-dmSans);
     font-size: var(--text-base);
@@ -4026,16 +3913,16 @@ body.scylla-landing-page {
     --tw-leading: var(--leading-normal);
     line-height: var(--leading-normal);
   }
-  .scylla-landing h1,
-  .scylla-landing h2,
-  .scylla-landing h3,
-  .scylla-landing h4,
-  .scylla-landing h5,
-  .scylla-landing h6 {
+  :where(.scylla-landing) h1,
+  :where(.scylla-landing) h2,
+  :where(.scylla-landing) h3,
+  :where(.scylla-landing) h4,
+  :where(.scylla-landing) h5,
+  :where(.scylla-landing) h6 {
     font-family: var(--font-urbanist);
     color: var(--color-offWhite);
   }
-  .scylla-landing h1 {
+  :where(.scylla-landing) h1 {
     font-size: 40px;
     --tw-tracking: var(--tracking-normal);
     letter-spacing: var(--tracking-normal);
@@ -4070,7 +3957,7 @@ body.scylla-landing-page {
       font-size: 80px;
     }
   }
-  .scylla-landing h2 {
+  :where(.scylla-landing) h2 {
     font-size: var(--text-4xl);
     line-height: var(--tw-leading, var(--text-4xl--line-height));
     --tw-tracking: var(--tracking-normal);
@@ -4097,7 +3984,7 @@ body.scylla-landing-page {
       letter-spacing: calc(var(--tracking-tighter) * -1);
     }
   }
-  .scylla-landing h3 {
+  :where(.scylla-landing) h3 {
     font-size: var(--text-3xl);
     line-height: var(--tw-leading, var(--text-3xl--line-height));
     --tw-tracking: var(--tracking-normal);
@@ -4121,7 +4008,7 @@ body.scylla-landing-page {
       letter-spacing: calc(var(--tracking-tight) * -1);
     }
   }
-  .scylla-landing h4 {
+  :where(.scylla-landing) h4 {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
     --tw-tracking: var(--tracking-normal);
@@ -4146,7 +4033,7 @@ body.scylla-landing-page {
       letter-spacing: calc(0.2px * -1);
     }
   }
-  .scylla-landing h5 {
+  :where(.scylla-landing) h5 {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
     --tw-leading: var(--leading-snug) !important;
@@ -4161,7 +4048,7 @@ body.scylla-landing-page {
       font-size: 32px;
     }
   }
-  .scylla-landing h6 {
+  :where(.scylla-landing) h6 {
     font-size: var(--text-xl);
     line-height: var(--tw-leading, var(--text-xl--line-height));
     --tw-leading: var(--leading-snug) !important;
@@ -4180,18 +4067,18 @@ body.scylla-landing-page {
       font-size: 25px;
     }
   }
-  .scylla-landing ul,
-  .scylla-landing ol,
-  .scylla-landing p {
+  :where(.scylla-landing) ul,
+  :where(.scylla-landing) ol,
+  :where(.scylla-landing) p {
     color: color-mix(in srgb, #fbfbfb 80%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       color: color-mix(in oklab, var(--color-offWhite) 80%, transparent);
     }
   }
-  .scylla-landing a {
+  :where(.scylla-landing) a {
     color: var(--color-primary);
   }
-  .scylla-landing button {
+  :where(.scylla-landing) button {
     cursor: pointer;
   }
 }
@@ -5053,12 +4940,12 @@ body.scylla-landing-page {
     transition-duration: 0s;
   }
 }
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+.scylla-landing input[type="number"]::-webkit-inner-spin-button,
+.scylla-landing input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-input[type="number"] {
+.scylla-landing input[type="number"] {
   -moz-appearance: textfield;
 }
 .pricing-switch-slider {
@@ -6280,13 +6167,13 @@ input[type="number"] {
     transform: scale(1) rotate(-135deg);
   }
 }
-.progress {
+.scylla-landing .progress {
   transform: translateX(20px) rotate(45deg);
   transition: 0.3s ease-in-out;
   opacity: 0;
   visibility: hidden;
 }
-.progress.setvissible {
+.scylla-landing .progress.setvissible {
   transform: translateX(0px) rotate(45deg);
   opacity: 1;
   visibility: visible;

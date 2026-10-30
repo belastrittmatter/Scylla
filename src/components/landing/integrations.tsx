@@ -37,9 +37,14 @@ export function LandingIntegrations() {
                   your coding workspace.
                 </p>
                 <div data-button="" className="mt-5 sm:mt-8 lg:mt-9">
+                  {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
                   <Link
                     className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center cursor-pointer"
                     href="/tasks"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/tasks");
+                    }}
                   >
                     Explore MCP Tools
                   </Link>

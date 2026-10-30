@@ -3,6 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 
+// NOTE: Must use window.location.replace instead of Next.js client-side navigation
+// because Next.js caches CSS across route transitions, causing style conflicts
+// between the standalone landing page stylesheet and the dashboard layout.
 export function LandingHeader() {
   return (
     <header
@@ -25,10 +28,26 @@ export function LandingHeader() {
                   <Link href="/">Home</Link>
                 </li>
                 <li>
-                  <Link href="/tasks">Tasks</Link>
+                  <Link
+                    href="/tasks"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/tasks");
+                    }}
+                  >
+                    Tasks
+                  </Link>
                 </li>
                 <li>
-                  <Link href="/calendar">Calendar</Link>
+                  <Link
+                    href="/calendar"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/calendar");
+                    }}
+                  >
+                    Calendar
+                  </Link>
                 </li>
                 <li>
                   <Link href="#pricing">Pricing</Link>
@@ -36,6 +55,10 @@ export function LandingHeader() {
                 <li className="block sm:hidden">
                   <Link
                     href="/calendar"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.replace("/calendar");
+                    }}
                     className="button-secondary !inline-flex !py-2.5 px-5 text-sm leading-normal text-center !justify-center"
                   >
                     Open Calendar
@@ -46,6 +69,10 @@ export function LandingHeader() {
             <div className="flex items-center gap-4">
               <Link
                 href="/auth/sign-in"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.replace("/auth/sign-in");
+                }}
                 className="text-sm font-medium text-offWhite/80 hover:text-white transition-colors hidden sm:inline-block px-3 py-2"
               >
                 Sign In
@@ -53,6 +80,10 @@ export function LandingHeader() {
               <div className="hidden sm:block">
                 <Link
                   href="/calendar"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.replace("/calendar");
+                  }}
                   className="button-secondary !inline-flex !py-2.5 px-5 text-sm leading-normal"
                 >
                   Open Calendar

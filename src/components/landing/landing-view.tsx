@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { LandingScripts } from "./landing-scripts";
 import { LandingHeader } from "./header";
 import { LandingHero } from "./hero";

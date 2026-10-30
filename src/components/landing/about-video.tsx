@@ -83,7 +83,16 @@ export function LandingAboutVideo() {
             data-container="trail-section"
           >
             {/* Interactive MCP Kanban UI Window (Replaced static video with live interactive UI) */}
-            <div className="lg:max-w-[620px] xl:max-w-[660px] w-full rounded-[18px] border border-white/10 bg-[#121215] shadow-2xl overflow-hidden transition-all duration-300 hover:border-white/20">
+            <div
+              className="lg:max-w-[620px] xl:max-w-[660px] w-full rounded-[18px] border border-white/10 bg-[#121215] shadow-2xl overflow-hidden transition-all duration-300 hover:border-white/20 text-foreground"
+              style={
+                {
+                  "--color-primary": "var(--primary)",
+                  "--color-secondary": "var(--secondary)",
+                  fontFamily: "var(--font-sans)",
+                } as React.CSSProperties
+              }
+            >
               <InteractiveTaskBoardApp initialData={MOCK_MCP_KANBAN_DATA} />
             </div>
 
@@ -137,9 +146,14 @@ export function LandingAboutVideo() {
                 alt="gradient Border"
               />
               <div data-button="" className="">
+                {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
                 <Link
                   className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20"
                   href="/tasks"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.replace("/tasks");
+                  }}
                 >
                   Explore Full Task Board
                 </Link>

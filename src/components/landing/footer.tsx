@@ -120,11 +120,16 @@ export function LandingFooter() {
                     />
                   </button>
                   <div className="footer-menu-list overflow-hidden">
+                    {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
                     <ul className="flex flex-col gap-2.5 pt-4.5">
                       <li>
                         <Link
                           className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                           href="/tasks"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.replace("/tasks");
+                          }}
                         >
                           Task Kanban Board
                         </Link>
@@ -133,6 +138,10 @@ export function LandingFooter() {
                         <Link
                           className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                           href="/calendar"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.replace("/calendar");
+                          }}
                         >
                           Smart Calendar
                         </Link>
@@ -141,6 +150,10 @@ export function LandingFooter() {
                         <Link
                           className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                           href="/projects"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.replace("/projects");
+                          }}
                         >
                           Projects
                         </Link>
@@ -149,6 +162,10 @@ export function LandingFooter() {
                         <Link
                           className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                           href="/teams"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.replace("/teams");
+                          }}
                         >
                           Teams
                         </Link>
@@ -180,6 +197,10 @@ export function LandingFooter() {
                         <Link
                           className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                           href="/calendar"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.replace("/calendar");
+                          }}
                         >
                           Integrations
                         </Link>
@@ -188,6 +209,10 @@ export function LandingFooter() {
                         <Link
                           className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                           href="/support"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.location.replace("/support");
+                          }}
                         >
                           Support Center
                         </Link>

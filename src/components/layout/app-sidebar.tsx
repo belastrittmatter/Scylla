@@ -69,9 +69,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
+            {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts between the dashboard and landing page. */}
             <SidebarMenuButton
               size="lg"
-              render={<Link href="/calendar" />}
+              render={
+                <Link
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.replace("/");
+                  }}
+                />
+              }
               className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:p-0!"
             >
               {/* Collapsed sidebar icon: small logo mark as before */}
