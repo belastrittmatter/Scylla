@@ -31,7 +31,8 @@ describe("MCP UI Bridge & Formatting Helpers", () => {
   it("renders MCP tool UIs under production/no-Bun conditions and restores env", () => {
     const originalNodeEnv = process.env.NODE_ENV;
     try {
-      process.env.NODE_ENV = "production";
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "production";
 
       const agendaHtml = getAgendaUiHtml({
         user: { name: "Alice" },
