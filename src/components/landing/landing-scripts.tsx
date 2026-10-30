@@ -9,7 +9,6 @@ interface GsapWindow extends Window {
       globals?: (name: string, value: unknown) => void;
     };
   };
-  Swiper?: unknown;
   ScrollTrigger?: {
     getAll: () => Array<{ kill: () => void }>;
     refresh?: () => void;
@@ -62,7 +61,6 @@ export function LandingScripts() {
     const w = window as unknown as GsapWindow;
     const scripts = [
       "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/Swiper/5.4.5/js/swiper.min.js",
       "/js/main.js",
     ];
 
@@ -80,8 +78,7 @@ export function LandingScripts() {
         ensureGsapPluginsRegistered(w);
       } else {
         const isAlreadyLoaded =
-          (src.includes("gsap") && Boolean(w.gsap && w.ScrollTrigger)) ||
-          (src.includes("swiper") && Boolean(w.Swiper));
+          src.includes("gsap") && Boolean(w.gsap && w.ScrollTrigger);
         if (isAlreadyLoaded) {
           ensureGsapPluginsRegistered(w);
           loadScript(index + 1);

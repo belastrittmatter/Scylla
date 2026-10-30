@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import { HardLink } from "./hard-link";
 
 export function LandingHero() {
   return (
@@ -95,27 +95,18 @@ export function LandingHero() {
                 data-button=""
                 className="mt-6 sm:mt-8 lg:mt-10 flex flex-wrap items-center justify-center gap-4"
               >
-                {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
-                <Link
+                <HardLink
                   className="button-secondary cursor-pointer"
                   href="/calendar"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.replace("/calendar");
-                  }}
                 >
                   Launch Calendar
-                </Link>
-                <Link
+                </HardLink>
+                <HardLink
                   className="button-primary inline-flex items-center justify-center px-[26px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20 cursor-pointer"
                   href="/tasks"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.replace("/tasks");
-                  }}
                 >
                   Manage Tasks Free
-                </Link>
+                </HardLink>
               </div>
             </div>
             <div
@@ -135,4 +126,3 @@ export function LandingHero() {
     </>
   );
 }
-export { LandingHero as Hero };

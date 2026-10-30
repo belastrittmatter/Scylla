@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { TaskBoardData } from "@/components/mcp-ui/mcp-ui-types";
+import { HardLink } from "./hard-link";
 
 const InteractiveTaskBoardApp = dynamic(
   () =>
@@ -73,7 +73,7 @@ const MOCK_MCP_KANBAN_DATA: TaskBoardData = {
   ],
 };
 
-export function LandingAboutVideo() {
+export function LandingTaskBoardPreview() {
   return (
     <section className="section-bottom-border relative z-10 bg-[#09090b]">
       <div className="container">
@@ -146,17 +146,12 @@ export function LandingAboutVideo() {
                 alt="gradient Border"
               />
               <div data-button="" className="">
-                {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
-                <Link
+                <HardLink
                   className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20"
                   href="/tasks"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.replace("/tasks");
-                  }}
                 >
                   Explore Full Task Board
-                </Link>
+                </HardLink>
               </div>
             </div>
           </div>
@@ -165,4 +160,3 @@ export function LandingAboutVideo() {
     </section>
   );
 }
-export { LandingAboutVideo as AboutVideo };

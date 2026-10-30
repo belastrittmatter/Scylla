@@ -70,6 +70,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/calendar", request.url));
   }
 
+  // 4. Redirect legacy /sign-in route to canonical /auth/sign-in entrypoint
+  if (pathname === "/sign-in") {
+    const targetUrl = new URL("/auth/sign-in", request.url);
+    targetUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(targetUrl);
+  }
+
   return NextResponse.next();
 }
 

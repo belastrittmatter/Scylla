@@ -12,11 +12,19 @@ import { config as proxyConfig } from "@/proxy";
 const ROOT_DIR = process.cwd();
 
 describe("Landing Page & Review Fixes", () => {
-  it("removes unused duplicate files (src/styles/landing.css, video-modal.tsx, about.mp4, ai_agent, local gsap/plugin bundles)", () => {
+  it("removes unused duplicate files (src/styles/landing.css, video-modal.tsx, about-video.tsx, about.mp4, ai_agent, local gsap/plugin bundles)", () => {
     expect(existsSync(join(ROOT_DIR, "src/styles/landing.css"))).toBe(false);
     expect(
       existsSync(join(ROOT_DIR, "src/components/landing/video-modal.tsx")),
     ).toBe(false);
+    expect(
+      existsSync(join(ROOT_DIR, "src/components/landing/about-video.tsx")),
+    ).toBe(false);
+    expect(
+      existsSync(
+        join(ROOT_DIR, "src/components/landing/task-board-preview.tsx"),
+      ),
+    ).toBe(true);
     expect(existsSync(join(ROOT_DIR, "public/media/about.mp4"))).toBe(false);
     expect(existsSync(join(ROOT_DIR, "public/images/ai_agent"))).toBe(false);
     expect(existsSync(join(ROOT_DIR, "public/fonts"))).toBe(false);
@@ -26,28 +34,50 @@ describe("Landing Page & Review Fixes", () => {
     expect(existsSync(join(ROOT_DIR, "public/js/plugin.js"))).toBe(false);
   });
 
-  it("uses window.location.replace with a Next.js CSS cache note across landing and sidebar components", () => {
-    const filesToCheck = [
+  it("extracts HardLink with window.location.replace and Next.js CSS cache note and uses it across landing components", () => {
+    const hardLinkContent = readFileSync(
+      join(ROOT_DIR, "src/components/landing/hard-link.tsx"),
+      "utf8",
+    );
+    expect(hardLinkContent).toContain("window.location.replace");
+    expect(hardLinkContent).toContain("Next.js caches CSS");
+
+    const sidebarContent = readFileSync(
+      join(ROOT_DIR, "src/components/layout/app-sidebar.tsx"),
+      "utf8",
+    );
+    expect(sidebarContent).toContain("window.location.replace");
+    expect(sidebarContent).toContain("Next.js caches CSS");
+
+    const landingComponents = [
       "src/components/landing/header.tsx",
       "src/components/landing/hero.tsx",
-      "src/components/landing/about-video.tsx",
+      "src/components/landing/task-board-preview.tsx",
       "src/components/landing/cta-banner.tsx",
       "src/components/landing/footer.tsx",
       "src/components/landing/pricing.tsx",
       "src/components/landing/use-cases.tsx",
       "src/components/landing/process-steps.tsx",
       "src/components/landing/integrations.tsx",
-      "src/components/layout/app-sidebar.tsx",
     ];
 
-    for (const relPath of filesToCheck) {
+    for (const relPath of landingComponents) {
       const content = readFileSync(join(ROOT_DIR, relPath), "utf8");
-      expect(content).toContain("window.location.replace");
-      expect(content).toContain("Next.js caches CSS");
+      expect(content).toContain("HardLink");
     }
   });
 
-  it("points all sign-in CTAs to /auth/sign-in consistently", () => {
+  it("standardizes on Landing* named exports without redundant double alias exports", () => {
+    const indexContent = readFileSync(
+      join(ROOT_DIR, "src/components/landing/index.ts"),
+      "utf8",
+    );
+    expect(indexContent).toContain("LandingTaskBoardPreview");
+    expect(indexContent).not.toContain("AboutVideo");
+    expect(indexContent).not.toMatch(/\bexport\s*\{\s*Landing\w+\s*,\s*\w+/);
+  });
+
+  it("points all sign-in CTAs to /auth/sign-in and redirects /sign-in to /auth/sign-in", () => {
     const headerHtml = renderToString(React.createElement(LandingHeader));
     const ctaHtml = renderToString(React.createElement(LandingCtaBanner));
     const pricingHtml = renderToString(React.createElement(LandingPricing));
@@ -60,9 +90,16 @@ describe("Landing Page & Review Fixes", () => {
 
     expect(pricingHtml).toContain('href="/auth/sign-in"');
     expect(pricingHtml).not.toContain('href="/sign-in"');
+
+    const signInPage = readFileSync(
+      join(ROOT_DIR, "src/app/sign-in/page.tsx"),
+      "utf8",
+    );
+    expect(signInPage).toContain('redirect("/auth/sign-in")');
+    expect(signInPage).not.toContain("AuthLayoutShell");
   });
 
-  it("controls pricing monthly/yearly toggle via React state instead of imperative DOM mutation", () => {
+  it("controls pricing monthly/yearly toggle via React state and maps over PRICING_PLANS", () => {
     const monthlyHtml = renderToString(React.createElement(LandingPricing));
     expect(monthlyHtml).toContain("$19");
     expect(monthlyHtml).toContain("$49");
@@ -77,24 +114,40 @@ describe("Landing Page & Review Fixes", () => {
     expect(yearlyHtml).toContain("$990");
     expect(yearlyHtml).toContain("/year");
 
+    const pricingSource = readFileSync(
+      join(ROOT_DIR, "src/components/landing/pricing.tsx"),
+      "utf8",
+    );
+    expect(pricingSource).toContain("PRICING_PLANS.map");
+
+    const footerSource = readFileSync(
+      join(ROOT_DIR, "src/components/landing/footer.tsx"),
+      "utf8",
+    );
+    expect(footerSource).toContain("FOOTER_COLUMNS.map");
+
     const mainJs = readFileSync(join(ROOT_DIR, "public/js/main.js"), "utf8");
     expect(mainJs).not.toContain('getElementById("priceToggle")');
   });
 
-  it("uses DOMContentLoaded in public/js/main.js onReady and wraps script in IIFE without unguarded Swiper calls", () => {
+  it("prunes dead template code and Swiper from public/js/main.js while keeping GSAP animations", () => {
     const mainJs = readFileSync(join(ROOT_DIR, "public/js/main.js"), "utf8");
+    const lineCount = mainJs.split("\n").length;
+
+    expect(lineCount).toBeLessThan(700);
     expect(mainJs).toContain('document.addEventListener("DOMContentLoaded"');
     expect(mainJs.trimStart().startsWith("(function")).toBe(true);
     expect(mainJs.trimEnd().endsWith("})();")).toBe(true);
-    expect(mainJs).toContain(
-      'if (typeof Swiper === "undefined" || !document.querySelector(selector))',
-    );
     expect(mainJs).toContain("registerGsapPlugins();");
+    expect(mainJs).not.toContain("Swiper");
+    expect(mainJs).not.toContain("initLogoSlider");
+    expect(mainJs).not.toContain("isotope");
+    expect(mainJs).not.toContain("aboutVideoPreview");
     expect(mainJs).not.toContain('origin: "');
-    expect(mainJs).toContain('transformOrigin: "bottom left"');
+    expect(mainJs).toContain('transformOrigin: "top right"');
   });
 
-  it("renders landing stylesheet in MarketingLayout for SSR first-load and avoids duplicate link injection in LandingScripts", () => {
+  it("loads GSAP from CDN in LandingScripts without unused Swiper script", () => {
     const landingScripts = readFileSync(
       join(ROOT_DIR, "src/components/landing/landing-scripts.tsx"),
       "utf8",
@@ -112,23 +165,24 @@ describe("Landing Page & Review Fixes", () => {
     expect(landingScripts).toContain(
       "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
     );
-    expect(landingScripts).toContain(
-      "https://cdnjs.cloudflare.com/ajax/libs/Swiper/5.4.5/js/swiper.min.js",
-    );
+    expect(landingScripts).not.toContain("swiper");
+    expect(landingScripts).not.toContain("Swiper");
     expect(landingScripts).not.toContain("/js/gsap-latest-beta.min.js");
     expect(landingScripts).not.toContain("/js/plugin.js");
-    expect(landingScripts).not.toContain('createElement("link")');
-    expect(landingScripts).not.toContain("cssLink.remove()");
   });
 
-  it("scopes public/css/landing.css theme variables and base resets to .scylla-landing to prevent conflicts with globals.css", () => {
+  it("removes Swiper and duplicate compiled Tailwind layers from public/css/landing.css", () => {
     const landingCss = readFileSync(
       join(ROOT_DIR, "public/css/landing.css"),
       "utf8",
     );
+    const lineCount = landingCss.split("\n").length;
 
-    expect(landingCss).not.toMatch(/@layer theme\s*\{\s*:root/);
-    expect(landingCss).toMatch(/@layer theme\s*\{\s*\.scylla-landing\s*\{/);
+    expect(lineCount).toBeLessThan(600);
+    expect(landingCss).not.toContain(".swiper-container");
+    expect(landingCss).not.toContain("@layer utilities");
+    expect(landingCss).not.toContain(".article-content");
+    expect(landingCss).toContain(".scylla-landing {");
     expect(landingCss).toContain(":where(.scylla-landing)");
     expect(landingCss).toContain("fonts.googleapis.com/css2");
     expect(landingCss).not.toContain('url("/fonts/');

@@ -3,7 +3,7 @@
 import { LandingScripts } from "./landing-scripts";
 import { LandingHeader } from "./header";
 import { LandingHero } from "./hero";
-import { LandingAboutVideo } from "./about-video";
+import { LandingTaskBoardPreview } from "./task-board-preview";
 import { LandingProcessSteps } from "./process-steps";
 import { LandingUseCases } from "./use-cases";
 import { LandingIntegrations } from "./integrations";
@@ -25,7 +25,7 @@ export function LandingView() {
       <div id="smooth-wrapper">
         <div id="smooth-content">
           <LandingHero />
-          <LandingAboutVideo />
+          <LandingTaskBoardPreview />
           <LandingProcessSteps />
           <LandingUseCases />
           <LandingIntegrations />

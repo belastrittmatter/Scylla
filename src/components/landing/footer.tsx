@@ -2,6 +2,45 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { HardLink } from "./hard-link";
+
+interface FooterLinkItem {
+  label: string;
+  href: string;
+  isDashboardLink?: boolean;
+}
+
+interface FooterColumn {
+  title: string;
+  links: FooterLinkItem[];
+}
+
+const FOOTER_COLUMNS: FooterColumn[] = [
+  {
+    title: "Product",
+    links: [
+      { label: "Task Kanban Board", href: "/tasks", isDashboardLink: true },
+      { label: "Smart Calendar", href: "/calendar", isDashboardLink: true },
+      { label: "Projects", href: "/projects", isDashboardLink: true },
+      { label: "Teams", href: "/teams", isDashboardLink: true },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "Pricing Plans", href: "#pricing" },
+      { label: "Integrations", href: "/calendar", isDashboardLink: true },
+      { label: "Support Center", href: "/support", isDashboardLink: true },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "AI Policy", href: "/ai-policy" },
+      { label: "Security & Privacy", href: "/security-and-privacy" },
+    ],
+  },
+];
 
 export function LandingFooter() {
   return (
@@ -110,147 +149,44 @@ export function LandingFooter() {
 
               {/* Navigation Columns */}
               <div className="lg:max-w-[560px] w-full flex items-start justify-between gap-4 sm:gap-10 flex-col sm:flex-row footer-menu-wrapper">
-                <div className="w-full sm:w-auto pb-4 sm:pb-0 border-b sm:border-b-0 border-lineColor last:border-b-0 last:pb-0">
-                  <button className="!text-lg text-white font-medium -tracking-tight flex items-center justify-between gap-5 w-full footer-menu-toggle">
-                    Product
-                    <img
-                      className="block sm:hidden"
-                      src="/images/footer-arrow.svg"
-                      alt="icon"
-                    />
-                  </button>
-                  <div className="footer-menu-list overflow-hidden">
-                    {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard. */}
-                    <ul className="flex flex-col gap-2.5 pt-4.5">
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                          href="/tasks"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.replace("/tasks");
-                          }}
-                        >
-                          Task Kanban Board
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                          href="/calendar"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.replace("/calendar");
-                          }}
-                        >
-                          Smart Calendar
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                          href="/projects"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.replace("/projects");
-                          }}
-                        >
-                          Projects
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                          href="/teams"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.replace("/teams");
-                          }}
-                        >
-                          Teams
-                        </Link>
-                      </li>
-                    </ul>
+                {FOOTER_COLUMNS.map((column) => (
+                  <div
+                    key={column.title}
+                    className="w-full sm:w-auto pb-4 sm:pb-0 border-b sm:border-b-0 border-lineColor last:border-b-0 last:pb-0"
+                  >
+                    <button className="!text-lg text-white font-medium -tracking-tight flex items-center justify-between gap-5 w-full footer-menu-toggle">
+                      {column.title}
+                      <img
+                        className="block sm:hidden"
+                        src="/images/footer-arrow.svg"
+                        alt="icon"
+                      />
+                    </button>
+                    <div className="footer-menu-list overflow-hidden">
+                      <ul className="flex flex-col gap-2.5 pt-4.5">
+                        {column.links.map((link) => (
+                          <li key={link.label}>
+                            {link.isDashboardLink ? (
+                              <HardLink
+                                className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
+                                href={link.href}
+                              >
+                                {link.label}
+                              </HardLink>
+                            ) : (
+                              <Link
+                                className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
+                                href={link.href}
+                              >
+                                {link.label}
+                              </Link>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
-
-                <div className="w-full sm:w-auto pb-4 sm:pb-0 border-b sm:border-b-0 border-lineColor last:border-b-0 last:pb-0">
-                  <button className="!text-lg text-white font-medium -tracking-tight flex items-center justify-between gap-5 w-full footer-menu-toggle">
-                    Resources
-                    <img
-                      className="block sm:hidden"
-                      src="/images/footer-arrow.svg"
-                      alt="icon"
-                    />
-                  </button>
-                  <div className="footer-menu-list overflow-hidden">
-                    <ul className="flex flex-col gap-2.5 pt-4.5">
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
-                          href="#pricing"
-                        >
-                          Pricing Plans
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                          href="/calendar"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.replace("/calendar");
-                          }}
-                        >
-                          Integrations
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                          href="/support"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            window.location.replace("/support");
-                          }}
-                        >
-                          Support Center
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="w-full sm:w-auto pb-4 sm:pb-0 border-b sm:border-b-0 border-lineColor last:border-b-0 last:pb-0">
-                  <button className="!text-lg text-white font-medium -tracking-tight flex items-center justify-between gap-5 w-full footer-menu-toggle">
-                    Company
-                    <img
-                      className="block sm:hidden"
-                      src="/images/footer-arrow.svg"
-                      alt="icon"
-                    />
-                  </button>
-                  <div className="footer-menu-list overflow-hidden">
-                    <ul className="flex flex-col gap-2.5 pt-4.5">
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
-                          href="/ai-policy"
-                        >
-                          AI Policy
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
-                          href="/security-and-privacy"
-                        >
-                          Security &amp; Privacy
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -298,4 +234,3 @@ export function LandingFooter() {
     </footer>
   );
 }
-export { LandingFooter as Footer };

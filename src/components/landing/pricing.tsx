@@ -1,11 +1,73 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import { HardLink } from "./hard-link";
 
 export interface LandingPricingProps {
   defaultYearly?: boolean;
 }
+
+interface PricingPlan {
+  id: string;
+  name: string;
+  iconHref: string;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  description: string;
+  isFeatured?: boolean;
+  features: string[];
+}
+
+const PRICING_PLANS: PricingPlan[] = [
+  {
+    id: "starter",
+    name: "Starter",
+    iconHref: "#starter",
+    monthlyPrice: "$19",
+    yearlyPrice: "$190",
+    description:
+      "Perfect for freelancers, startups, or small teams getting started with AI workflows.",
+    features: [
+      "Up to 3 active projects",
+      "Basic automation tools",
+      "Email support",
+      "Standard analytics dashboard",
+    ],
+  },
+  {
+    id: "professional",
+    name: "Professional",
+    iconHref: "#professional",
+    monthlyPrice: "$49",
+    yearlyPrice: "$490",
+    description:
+      "Best for growing teams who need advanced tools and integrations.",
+    isFeatured: true,
+    features: [
+      "Everything in Starter",
+      "Advanced AI automation",
+      "Integrations with Slack, Google Drive",
+      "Priority email + chat support",
+      "Advanced analytics & reporting",
+    ],
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    iconHref: "#enterprise",
+    monthlyPrice: "$99",
+    yearlyPrice: "$990",
+    description:
+      "Perfect for freelancers, startups, or small teams getting started with AI workflows.",
+    features: [
+      "Everything in Professional",
+      "Custom AI model training",
+      "Dedicated account manager",
+      "On-premise or private cloud deployment",
+      "24/7 support with SLA",
+    ],
+  },
+];
 
 export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
   const [isYearly, setIsYearly] = React.useState(defaultYearly);
@@ -102,258 +164,69 @@ export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
               className="pricing-table grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10 sm:mt-12"
               data-lag="0.1"
             >
-              {/* Starter Card */}
-              <div data-sttr-card="">
-                <div className="pricing-card bg-blue px-5 pt-5 pb-5 sm:pb-8 lg:pb-10 rounded-xl sm:rounded-2xl md:rounded-[20px] border border-lineColor/50 group border-moving relative before:rounded-xl sm:before:rounded-2xl md:before:rounded-[20px] z-1">
-                  <div className="flex items-center gap-4">
-                    <svg className="w-6 h-6 fill-current text-offWhite/80">
-                      <use href="#starter" />
-                    </svg>
-                    <span className="flex-1 text-base sm:text-lg !leading-none text-offWhite/80 font-medium sm:-tracking-[0.3px]">
-                      Starter
-                    </span>
-                  </div>
-                  <div className="mt-4 md:mt-7">
-                    <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
-                      {isYearly ? "$190" : "$19"}
-                    </h3>
-                    <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
-                      /per user <span className="period">{periodLabel}</span>
-                    </span>
-                  </div>
-                  <p className="mt-5 md:mt-7 text-offWhite/80">
-                    Perfect for freelancers, startups, or small teams getting
-                    started with AI workflows.
-                  </p>
-                  {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard/auth pages. */}
-                  <Link
-                    className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
-                    href="/auth/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/auth/sign-in");
-                    }}
+              {PRICING_PLANS.map((plan) => (
+                <div key={plan.id} data-sttr-card="">
+                  <div
+                    className={`pricing-card ${plan.isFeatured ? "active " : ""}bg-blue px-5 pt-5 pb-5 sm:pb-8 lg:pb-10 rounded-xl sm:rounded-2xl md:rounded-[20px] border border-lineColor/50 group border-moving relative before:rounded-xl sm:before:rounded-2xl md:before:rounded-[20px] z-[1]`}
                   >
-                    <div className="overflow-hidden flex flex-col">
-                      <span className="p-3 transform duration-300 group-hover:-translate-y-full">
-                        Start for free
-                      </span>
-                      <span className="p-3 transform duration-300 group-hover:-translate-y-full">
-                        Get Started
+                    <div className="flex items-center gap-4">
+                      <svg className="w-6 h-6 fill-current text-offWhite/80">
+                        <use href={plan.iconHref} />
+                      </svg>
+                      <span className="flex-1 text-base sm:text-lg !leading-none text-offWhite/80 font-medium sm:-tracking-[0.3px]">
+                        {plan.name}
                       </span>
                     </div>
-                  </Link>
-                  {/* Features List */}
-                  <div className="mt-6 md:mt-10">
-                    <p className="text-lg font-medium !leading-snug tracking-tight mb-4">
-                      Features:
-                    </p>
-                    <ul className="flex flex-col gap-3">
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">Up to 3 active projects</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">Basic automation tools</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">Email support</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          Standard analytics dashboard
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Professional Card (Active) */}
-              <div data-sttr-card="">
-                <div className="pricing-card active bg-blue px-5 pt-5 pb-5 sm:pb-8 lg:pb-10 rounded-xl sm:rounded-2xl md:rounded-[20px] border border-lineColor/50 group border-moving relative before:rounded-xl sm:before:rounded-2xl md:before:rounded-[20px] z-[1]">
-                  <div className="flex items-center gap-4">
-                    <svg className="w-6 h-6 fill-current text-offWhite/80">
-                      <use href="#professional" />
-                    </svg>
-                    <span className="flex-1 text-base sm:text-lg !leading-none text-offWhite/80 font-medium sm:-tracking-[0.3px]">
-                      Professional
-                    </span>
-                  </div>
-                  <div className="mt-4 md:mt-7">
-                    <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
-                      {isYearly ? "$490" : "$49"}
-                    </h3>
-                    <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
-                      /per user <span className="period">{periodLabel}</span>
-                    </span>
-                  </div>
-                  <p className="mt-5 md:mt-7 text-offWhite/80">
-                    Best for growing teams who need advanced tools and
-                    integrations.
-                  </p>
-                  <Link
-                    className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-white font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 flex flex-col h-11 cursor-pointer"
-                    href="/auth/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/auth/sign-in");
-                    }}
-                  >
-                    <div className="overflow-hidden flex flex-col">
-                      <span className="p-3 transform duration-300 group-hover:-translate-y-full">
-                        Start for free
-                      </span>
-                      <span className="p-3 transform duration-300 group-hover:-translate-y-full">
-                        Get Started
+                    <div className="mt-4 md:mt-7">
+                      <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
+                        {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                      </h3>
+                      <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
+                        /per user <span className="period">{periodLabel}</span>
                       </span>
                     </div>
-                  </Link>
-                  {/* Features List */}
-                  <div className="mt-6 md:mt-10">
-                    <p className="text-lg font-medium !leading-snug tracking-tight mb-4">
-                      Features:
+                    <p className="mt-5 md:mt-7 text-offWhite/80">
+                      {plan.description}
                     </p>
-                    <ul className="flex flex-col gap-3">
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">Everything in Starter</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">Advanced AI automation</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          Integrations with Slack, Google Drive
+                    <HardLink
+                      className={
+                        plan.isFeatured
+                          ? "mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-white font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 flex flex-col h-11 cursor-pointer"
+                          : "mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
+                      }
+                      href="/auth/sign-in"
+                    >
+                      <div className="overflow-hidden flex flex-col">
+                        <span className="p-3 transform duration-300 group-hover:-translate-y-full">
+                          Start for free
                         </span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          Priority email + chat support
+                        <span className="p-3 transform duration-300 group-hover:-translate-y-full">
+                          Get Started
                         </span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          Advanced analytics &amp; reporting
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Enterprise Card */}
-              <div data-sttr-card="">
-                <div className="pricing-card bg-blue px-5 pt-5 pb-5 sm:pb-8 lg:pb-10 rounded-xl sm:rounded-2xl md:rounded-[20px] border border-lineColor/50 group border-moving relative before:rounded-xl sm:before:rounded-2xl md:before:rounded-[20px] z-[1]">
-                  <div className="flex items-center gap-4">
-                    <svg className="w-6 h-6 fill-current text-offWhite/80">
-                      <use href="#enterprise" />
-                    </svg>
-                    <span className="flex-1 text-base sm:text-lg !leading-none text-offWhite/80 font-medium sm:-tracking-[0.3px]">
-                      Enterprise
-                    </span>
-                  </div>
-                  <div className="mt-4 md:mt-7">
-                    <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
-                      {isYearly ? "$990" : "$99"}
-                    </h3>
-                    <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
-                      /per user <span className="period">{periodLabel}</span>
-                    </span>
-                  </div>
-                  <p className="mt-5 md:mt-7 text-offWhite/80">
-                    Perfect for freelancers, startups, or small teams getting
-                    started with AI workflows.
-                  </p>
-                  {/* NOTE: Must use window.location.replace instead of Next.js client-side navigation because Next.js caches CSS across route transitions, causing style conflicts when entering the dashboard/auth pages. */}
-                  <Link
-                    className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
-                    href="/auth/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/auth/sign-in");
-                    }}
-                  >
-                    <div className="overflow-hidden flex flex-col">
-                      <span className="p-3 transform duration-300 group-hover:-translate-y-full">
-                        Start for free
-                      </span>
-                      <span className="p-3 transform duration-300 group-hover:-translate-y-full">
-                        Get Started
-                      </span>
+                      </div>
+                    </HardLink>
+                    {/* Features List */}
+                    <div className="mt-6 md:mt-10">
+                      <p className="text-lg font-medium !leading-snug tracking-tight mb-4">
+                        Features:
+                      </p>
+                      <ul className="flex flex-col gap-3">
+                        {plan.features.map((feature) => (
+                          <li
+                            key={feature}
+                            className="flex items-center gap-3 text-offWhite/60"
+                          >
+                            <svg className="w-5 h-5">
+                              <use href="#pricingCheck" />
+                            </svg>
+                            <span className="flex-1">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </Link>
-                  {/* Features List */}
-                  <div className="mt-6 md:mt-10">
-                    <p className="text-lg font-medium !leading-snug tracking-tight mb-4">
-                      Features:
-                    </p>
-                    <ul className="flex flex-col gap-3">
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          Everything in Professional
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">Custom AI model training</span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          Dedicated account manager
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">
-                          On-premise or private cloud deployment
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-3 text-offWhite/60">
-                        <svg className="w-5 h-5">
-                          <use href="#pricingCheck" />
-                        </svg>
-                        <span className="flex-1">24/7 support with SLA</span>
-                      </li>
-                    </ul>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -361,4 +234,3 @@ export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
     </section>
   );
 }
-export { LandingPricing as Pricing };

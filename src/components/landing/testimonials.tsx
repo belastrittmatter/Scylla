@@ -171,4 +171,3 @@ export function LandingTestimonials() {
     </section>
   );
 }
-export { LandingTestimonials as Testimonials };
