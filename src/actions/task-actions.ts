@@ -19,7 +19,6 @@ import {
   CreateTaskCommentPayloadSchema,
 } from "./schemas";
 import {
-  getSessionUserId,
   resolveActionUserId,
   type ActionResult,
 } from "./auth-helper";

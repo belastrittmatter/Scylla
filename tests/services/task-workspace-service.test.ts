@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { db } from "@/db";
 import { user, project, task } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { TeamService } from "@/services/team/team-service";
 import { TaskWorkspaceService } from "@/services/task/task-workspace-service";
 

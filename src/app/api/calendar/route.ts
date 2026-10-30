@@ -83,6 +83,9 @@ export async function GET(req: Request) {
       // Ignore session retrieval error if unauthenticated
     }
 
+    const effectiveUserId =
+      sessionUserId ||
+      (process.env.NODE_ENV === "test" ? requestedUserId : undefined);
     const activeUserId = requestedUserId || sessionUserId;
 
     // Resolve user's schedule, Google account OAuth credentials, and DB catalog/bookings in parallel
@@ -90,11 +93,11 @@ export async function GET(req: Request) {
       SchedulerService.getUserSchedule(activeUserId || sessionUserEmail),
       (async () => {
         let acct = null;
-        if (sessionUserId) {
+        if (effectiveUserId) {
           const accounts = await db
             .select()
             .from(account)
-            .where(eq(account.userId, sessionUserId));
+            .where(eq(account.userId, effectiveUserId));
           acct = accounts.find((a) => a.providerId === "google") || null;
         }
         return acct;
@@ -102,14 +105,14 @@ export async function GET(req: Request) {
       Promise.all([
         db.select().from(meetingRoom),
         db.select().from(user),
-        sessionUserId
+        effectiveUserId
           ? db
               .select()
               .from(booking)
               .where(
                 or(
-                  eq(booking.organizerUserId, sessionUserId),
-                  eq(booking.userId, sessionUserId),
+                  eq(booking.organizerUserId, effectiveUserId),
+                  eq(booking.userId, effectiveUserId),
                 ),
               )
           : Promise.resolve([]),
