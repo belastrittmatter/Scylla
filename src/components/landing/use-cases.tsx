@@ -112,14 +112,7 @@ export function LandingUseCases() {
                   className="px-5 pt-5 pb-6 md:pb-10 bg-blue rounded-20 border border-lineColor/70 relative group border-moving before:rounded-xl sm:before:rounded-2xl lg:before:rounded-[20px] z-1 useCase-card transition-all duration-300 hover:border-white/30"
                   data-sttr-card=""
                 >
-                  <Link
-                    className="block cursor-pointer"
-                    href={item.link}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace(item.link);
-                    }}
-                  >
+                  <Link className="block cursor-pointer" href={item.link}>
                     <div className="flex items-center justify-between gap-5">
                       <div className="w-11 h-11 flex items-center justify-center bg-orange-500/10 border border-orange-500/20 rounded-[10px]">
                         <IconComp className="size-5 text-orange-400" />

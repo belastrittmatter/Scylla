@@ -18,6 +18,8 @@ export function LandingScripts() {
     // Ensure page background stays strictly dark (#09090B) during smooth scrolling
     const prevHtmlBg = document.documentElement.style.backgroundColor;
     const prevBodyBg = document.body.style.backgroundColor;
+    const prevHtmlDark = document.documentElement.classList.contains("dark");
+    const prevBodyDark = document.body.classList.contains("dark");
     document.documentElement.classList.add("dark", "scylla-landing-page");
     document.body.classList.add("dark", "scylla-landing-page");
     document.documentElement.style.backgroundColor = "#09090b";
@@ -61,6 +63,12 @@ export function LandingScripts() {
       // 2. Clean up landing classes and background styles
       document.documentElement.classList.remove("scylla-landing-page");
       document.body.classList.remove("overflow-hidden", "scylla-landing-page");
+      if (!prevHtmlDark) {
+        document.documentElement.classList.remove("dark");
+      }
+      if (!prevBodyDark) {
+        document.body.classList.remove("dark");
+      }
       document.documentElement.style.backgroundColor = prevHtmlBg || "";
       document.body.style.backgroundColor = prevBodyBg || "";
 

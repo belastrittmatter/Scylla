@@ -5,7 +5,7 @@ function onReady(fn) {
   ) {
     setTimeout(fn, 10);
   } else {
-    onReady(fn);
+    document.addEventListener("DOMContentLoaded", fn);
   }
 }
 /* 
@@ -269,25 +269,7 @@ function initLogoSlider(selector, options = {}) {
 }
 const logoSlider = initLogoSlider(".logo-auto-slider");
 
-// Pricing Table
-onReady(() => {
-  const e = document.getElementById("priceToggle");
-  if (!e) return;
-  const t = document.querySelectorAll(".price");
-  const s = document.querySelectorAll(".period");
-  const o = ["$19", "$49", "$99"];
-  const l = ["$190", "$490", "$990"];
-
-  e.addEventListener("change", () => {
-    const i = e.checked;
-    t.forEach((el, idx) => {
-      el.textContent = i ? l[idx] : o[idx];
-    });
-    s.forEach((el) => {
-      el.textContent = i ? "/year" : "/mo";
-    });
-  });
-});
+// Pricing Table (controlled by React state in pricing.tsx)
 
 onReady(() => {
   const e = document.getElementById("priceToggle2");

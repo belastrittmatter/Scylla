@@ -59,21 +59,13 @@ export function LandingCtaBanner() {
                 >
                   <Link
                     className="button-primary inline-flex items-center justify-center px-[26px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-primary/20 cursor-pointer"
-                    href="/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/sign-in");
-                    }}
+                    href="/auth/sign-in"
                   >
                     Start Free Trial
                   </Link>
                   <Link
                     className="button-secondary text-sm cursor-pointer"
                     href="/calendar"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/calendar");
-                    }}
                   >
                     View Demo
                   </Link>

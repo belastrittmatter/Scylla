@@ -63,7 +63,9 @@ export async function proxy(request: NextRequest) {
   // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào /calendar
   if (
     sessionCookie &&
-    (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")
+    (pathname === "/auth/sign-in" ||
+      pathname === "/auth/sign-up" ||
+      pathname === "/sign-in")
   ) {
     return NextResponse.redirect(new URL("/calendar", request.url));
   }
@@ -80,6 +82,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public asset extensions (svg, png, jpg, etc.)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?|css|js|mp4|webm)$).*)",
   ],
 };

@@ -3,7 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 
-export function LandingPricing() {
+export interface LandingPricingProps {
+  defaultYearly?: boolean;
+}
+
+export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
+  const [isYearly, setIsYearly] = React.useState(defaultYearly);
+  const periodLabel = isYearly ? "/year" : "/mo";
+
   return (
     <section className="section-bottom-border" id="pricing">
       <div className="container">
@@ -76,7 +83,13 @@ export function LandingPricing() {
                   Monthly
                 </span>
                 <label className="pricing-switch relative inline-block w-14 h-7 rounded-2xl bg-tertiary cursor-pointer">
-                  <input type="checkbox" id="priceToggle" className="hidden" />
+                  <input
+                    type="checkbox"
+                    id="priceToggle"
+                    className="hidden"
+                    checked={isYearly}
+                    onChange={(e) => setIsYearly(e.target.checked)}
+                  />
                   <span className="pricing-switch-slider absolute w-5 h-5 rounded-full bg-offWhite top-1 left-1 transition-transform duration-300"></span>
                 </label>
                 <span className="yearly text-base sm:text-lg sm:-tracking-[0.2px] text-offWhite/40 duration-300">
@@ -102,10 +115,10 @@ export function LandingPricing() {
                   </div>
                   <div className="mt-4 md:mt-7">
                     <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
-                      $19
+                      {isYearly ? "$190" : "$19"}
                     </h3>
                     <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
-                      /per user <span className="period">/mo</span>
+                      /per user <span className="period">{periodLabel}</span>
                     </span>
                   </div>
                   <p className="mt-5 md:mt-7 text-offWhite/80">
@@ -114,11 +127,7 @@ export function LandingPricing() {
                   </p>
                   <Link
                     className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
-                    href="/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/sign-in");
-                    }}
+                    href="/auth/sign-in"
                   >
                     <div className="overflow-hidden flex flex-col">
                       <span className="p-3 transform duration-300 group-hover:-translate-y-full">
@@ -179,10 +188,10 @@ export function LandingPricing() {
                   </div>
                   <div className="mt-4 md:mt-7">
                     <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
-                      $49
+                      {isYearly ? "$490" : "$49"}
                     </h3>
                     <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
-                      /per user <span className="period">/mo</span>
+                      /per user <span className="period">{periodLabel}</span>
                     </span>
                   </div>
                   <p className="mt-5 md:mt-7 text-offWhite/80">
@@ -191,11 +200,7 @@ export function LandingPricing() {
                   </p>
                   <Link
                     className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-white font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 flex flex-col h-11 cursor-pointer"
-                    href="/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/sign-in");
-                    }}
+                    href="/auth/sign-in"
                   >
                     <div className="overflow-hidden flex flex-col">
                       <span className="p-3 transform duration-300 group-hover:-translate-y-full">
@@ -266,10 +271,10 @@ export function LandingPricing() {
                   </div>
                   <div className="mt-4 md:mt-7">
                     <h3 className="price text-[40px] font-semibold !leading-tight tracking-tight">
-                      $99
+                      {isYearly ? "$990" : "$99"}
                     </h3>
                     <span className="mt-2.5 flex gap-1 text-offWhite/60 text-sm tracking-[0.1px]">
-                      /per user <span className="period">/mo</span>
+                      /per user <span className="period">{periodLabel}</span>
                     </span>
                   </div>
                   <p className="mt-5 md:mt-7 text-offWhite/80">
@@ -278,11 +283,7 @@ export function LandingPricing() {
                   </p>
                   <Link
                     className="mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
-                    href="/sign-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.replace("/sign-in");
-                    }}
+                    href="/auth/sign-in"
                   >
                     <div className="overflow-hidden flex flex-col">
                       <span className="p-3 transform duration-300 group-hover:-translate-y-full">

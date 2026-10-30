@@ -34,10 +34,6 @@ export function LandingProcessSteps() {
               <div className="mt-8">
                 <Link
                   href="/tasks"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.replace("/tasks");
-                  }}
                   className="inline-flex items-center justify-center px-6 py-3 text-white bg-white/10 hover:bg-white/15 border border-white/20 font-medium text-sm rounded-[10px] transition-colors shadow-lg shadow-orange-500/10 cursor-pointer"
                 >
                   Explore Task Workflow

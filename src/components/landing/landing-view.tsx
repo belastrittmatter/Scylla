@@ -12,7 +12,6 @@ import { LandingTestimonials } from "./testimonials";
 import { LandingPricing } from "./pricing";
 import { LandingCtaBanner } from "./cta-banner";
 import { LandingFooter } from "./footer";
-import { LandingVideoModal } from "./video-modal";
 
 export function LandingView() {
   return (
@@ -37,9 +36,6 @@ export function LandingView() {
           <LandingFooter />
         </div>
       </div>
-
-      {/* Video Modal Popup */}
-      <LandingVideoModal />
     </div>
   );
 }

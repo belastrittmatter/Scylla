@@ -98,20 +98,12 @@ export function LandingHero() {
                 <Link
                   className="button-secondary cursor-pointer"
                   href="/calendar"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.replace("/calendar");
-                  }}
                 >
                   Launch Calendar
                 </Link>
                 <Link
                   className="button-primary inline-flex items-center justify-center px-[26px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20 cursor-pointer"
                   href="/tasks"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.replace("/tasks");
-                  }}
                 >
                   Manage Tasks Free
                 </Link>
@@ -125,9 +117,6 @@ export function LandingHero() {
                 className="rounded-t-[20px] w-full"
                 src="/images/banner-dashboard.png"
                 alt="Scylla Task & Calendar dashboard preview"
-                style={{
-                  filter: "grayscale(100%) brightness(0.95) contrast(1.05)",
-                }}
               />
             </div>
           </div>

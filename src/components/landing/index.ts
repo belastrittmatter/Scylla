@@ -10,4 +10,3 @@ export { LandingTestimonials, Testimonials } from "./testimonials";
 export { LandingPricing, Pricing } from "./pricing";
 export { LandingCtaBanner, CtaBanner } from "./cta-banner";
 export { LandingFooter, Footer } from "./footer";
-export { LandingVideoModal, VideoModal } from "./video-modal";
