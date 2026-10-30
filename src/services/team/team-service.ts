@@ -6,7 +6,7 @@ import {
   type Team,
   type TeamMember,
 } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, or } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import {
   CreateTeamSchema,
@@ -80,6 +80,28 @@ export class TeamService {
       sortTeamMembersByRole(record.members);
     }
     return record as TeamWithMembers;
+  }
+
+  public static async isTeamAdminOrOwner(
+    teamIdOrSlug: string,
+    userId: string,
+  ): Promise<boolean> {
+    const teamRecord = await db.query.team.findFirst({
+      where: or(eq(team.id, teamIdOrSlug), eq(team.slug, teamIdOrSlug)),
+      columns: { id: true, ownerId: true },
+    });
+    if (!teamRecord) return false;
+    if (teamRecord.ownerId === userId) return true;
+
+    const membership = await db.query.teamMember.findFirst({
+      where: and(
+        eq(teamMember.teamId, teamRecord.id),
+        eq(teamMember.userId, userId),
+      ),
+      columns: { role: true },
+    });
+
+    return membership?.role === "owner" || membership?.role === "admin";
   }
 
   public static async listUserTeams(userId: string): Promise<Team[]> {

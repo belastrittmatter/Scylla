@@ -1,10 +1,18 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { apiClient } from "@/lib/api-client";
 import { seedDatabase } from "@/db/seed";
+import { setupMockFetchRouter } from "../test-utils/mock-fetch-router";
 
 describe("useUserSearch Logic Integration", () => {
+  let restoreFetch: () => void;
+
   beforeAll(async () => {
+    restoreFetch = setupMockFetchRouter();
     await seedDatabase();
+  });
+
+  afterAll(() => {
+    restoreFetch?.();
   });
 
   test("apiClient.users.search returns results for empty query", async () => {

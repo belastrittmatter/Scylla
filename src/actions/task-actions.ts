@@ -18,18 +18,14 @@ import {
   CreateTaskPayloadSchema,
   CreateTaskCommentPayloadSchema,
 } from "./schemas";
-import {
-  getSessionUserId,
-  resolveActionUserId,
-  type ActionResult,
-} from "./auth-helper";
+import { resolveActionUserId, type ActionResult } from "./auth-helper";
 
 export async function getWorkspaceDataAction(): Promise<
   ActionResult<WorkspaceData>
 > {
   try {
-    const userId = await getSessionUserId();
-    const data = await TaskService.getWorkspaceData(userId || undefined);
+    const userId = await resolveActionUserId();
+    const data = await TaskService.getWorkspaceData(userId);
     return { success: true, data };
   } catch (err) {
     return {

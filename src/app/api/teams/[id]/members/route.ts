@@ -1,5 +1,6 @@
 import { TeamService } from "@/services/team/team-service";
 import { AddTeamMemberSchema } from "@/services/api-schemas";
+import { resolveUserId } from "@/services/api-utils";
 
 interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
@@ -27,6 +28,19 @@ export async function POST(req: Request, context: RouteParams) {
     const { id: teamId } = await context.params;
     if (!teamId) {
       return Response.json({ error: "Team ID is required" }, { status: 400 });
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const isAuthorized = await TeamService.isTeamAdminOrOwner(teamId, callerId);
+    if (!isAuthorized) {
+      return Response.json(
+        { error: "Forbidden: Only team owners and admins can manage members" },
+        { status: 403 },
+      );
     }
 
     let body: unknown;

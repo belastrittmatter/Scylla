@@ -7,7 +7,7 @@
 
 import { db } from "@/db";
 import { account } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { CalendarEventTracker } from "@/utils/calendar-event-tracker";
 import {
   isGoogleApiUrl,
@@ -377,23 +377,6 @@ export class GoogleCalendarService {
       } catch (err) {
         console.warn("Error refreshing Google OAuth access token:", err);
       }
-    }
-
-    // Try finding a Google account token in the database
-    try {
-      const googleAccounts = await db
-        .select()
-        .from(account)
-        .where(eq(account.providerId, "google"))
-        .orderBy(desc(account.updatedAt))
-        .limit(1);
-
-      if (googleAccounts.length > 0) {
-        const acc = googleAccounts[0];
-        return await this.refreshAccountToken(acc);
-      }
-    } catch {
-      // Ignore DB lookup errors in environments without DB
     }
 
     return null;

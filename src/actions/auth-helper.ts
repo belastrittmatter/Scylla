@@ -31,7 +31,6 @@ export async function getSessionUserId(): Promise<string | null> {
 export async function resolveActionUserId(
   explicitId?: string | null,
 ): Promise<string> {
-  if (explicitId) return explicitId;
   const sessionUserId = await getSessionUserId();
   if (sessionUserId) return sessionUserId;
 
@@ -42,6 +41,7 @@ export async function resolveActionUserId(
     process.env.NODE_ENV === undefined;
 
   if (isDevOrTest) {
+    if (explicitId && explicitId !== "me") return explicitId;
     const [firstUser] = await db.select({ id: user.id }).from(user).limit(1);
     return firstUser?.id || "usr-primary";
   }

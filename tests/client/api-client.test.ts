@@ -1,10 +1,18 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { apiClient } from "@/lib/api-client";
 import { seedDatabase } from "@/db/seed";
+import { setupMockFetchRouter } from "../test-utils/mock-fetch-router";
 
 describe("Frontend API Client Mapping", () => {
+  let restoreFetch: () => void;
+
   beforeAll(async () => {
+    restoreFetch = setupMockFetchRouter();
     await seedDatabase();
+  });
+
+  afterAll(() => {
+    restoreFetch?.();
   });
 
   describe("apiClient.users.search", () => {

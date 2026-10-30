@@ -11,14 +11,15 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "prepare": "husky",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:setup": "npm run db:up && npm run db:push && npm run db:seed",
+    "db:setup": "bun run db:up && bun run db:push && bun run db:seed",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "node --env-file=.env ./node_modules/drizzle-kit/bin.cjs push",
+    "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "node --env-file=.env --import tsx src/db/seed.ts",
+    "db:seed": "bun run src/db/seed.ts",
     "db:auth-generate": "better-auth generate --output src/db/schema.ts",
     "test": "bun test",
     "test:cleanup-calendar": "bun run scripts/cleanup-test-calendar.ts",
@@ -67,7 +68,19 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

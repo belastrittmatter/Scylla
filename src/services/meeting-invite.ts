@@ -204,7 +204,7 @@ export class MeetingInviteService {
       );
       if (!allowedSet.has(input.guestEmail.trim().toLowerCase())) {
         throw new Error(
-          `This meeting invitation is restricted to invited recipients only: ${invite.allowedEmails.join(", ")}`,
+          "This meeting invitation is restricted to invited recipients only.",
         );
       }
     }
