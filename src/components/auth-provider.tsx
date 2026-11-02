@@ -29,6 +29,9 @@ export function AuthUIProvider({ children }: { children: React.ReactNode }) {
         authClient={authClient}
         Link={Link}
         navigate={(href) => router.push(href)}
+        avatar={true}
+        deleteUser={true}
+        social={{ providers: ["google"] }}
       >
         {children}
       </DaveyplateAuthUIProvider>

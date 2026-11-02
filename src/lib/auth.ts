@@ -4,6 +4,8 @@ import { jwt, bearer } from "better-auth/plugins";
 import { mcp } from "@better-auth/mcp";
 import { cimd } from "@better-auth/cimd";
 import { fetchClientMetadataResource } from "@better-auth/cimd/node";
+import { APIError } from "better-auth/api";
+import { userNameSchema } from "@/lib/validations/user";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 
@@ -15,6 +17,43 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          if (user.name !== undefined && user.name !== null) {
+            const parsed = userNameSchema.safeParse(user.name);
+            if (!parsed.success) {
+              throw new APIError("BAD_REQUEST", {
+                message:
+                  parsed.error.issues[0]?.message ||
+                  "Name must be 32 characters or less",
+              });
+            }
+          }
+        },
+      },
+      update: {
+        before: async (user) => {
+          if (user.name !== undefined && user.name !== null) {
+            const parsed = userNameSchema.safeParse(user.name);
+            if (!parsed.success) {
+              throw new APIError("BAD_REQUEST", {
+                message:
+                  parsed.error.issues[0]?.message ||
+                  "Name must be 32 characters or less",
+              });
+            }
+          }
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },
