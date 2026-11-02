@@ -16,14 +16,14 @@ export function LandingHero() {
         className="section-bottom-border relative z-1 overflow-hidden"
         data-hero-section=""
       >
-          <img
-            src="/images/banner-bg.webp"
-            alt=""
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-none h-auto min-h-full object-cover opacity-60 mix-blend-screen"
-            style={{
-              filter: "grayscale(100%) contrast(1.2)",
-            }}
-          />
+        <img
+          src="/images/banner-bg.webp"
+          alt=""
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-none h-auto min-h-full object-cover opacity-60 mix-blend-screen"
+          style={{
+            filter: "grayscale(100%) contrast(1.2)",
+          }}
+        />
         <div className="container">
           <div className="border-container pt-12 sm:pt-16 lg:pt-20 relative z-1">
             <div className="max-w-[560px] md:max-w-[720px] lg:max-w-[840px] mx-auto text-center">
@@ -43,8 +43,9 @@ export function LandingHero() {
                 className="mt-4 md:mt-5 font-normal text-sm sm:text-base lg:text-lg !leading-[1.65] tracking-[0.1px] text-offWhite/80 max-w-[700px] mx-auto"
               >
                 The unified workspace bridging visual Kanban boards, sub-second
-                deep-work timers, and intelligent multi-person calendar scheduling.
-                Eliminate context switching and keep your team in sync.
+                deep-work timers, and intelligent multi-person calendar
+                scheduling. Eliminate context switching and keep your team in
+                sync.
               </p>
               <div
                 data-button=""
@@ -65,11 +66,7 @@ export function LandingHero() {
               </div>
             </div>
             {/* Dashboard Thumbnail Wrapper with Backlight Bloom rising behind it */}
-            <div
-              data-thumbnail=""
-              className="relative mt-10 lg:mt-11.5"
-            >
-
+            <div data-thumbnail="" className="relative mt-10 lg:mt-11.5">
               <div className="home-banner-dashboard relative z-1 rounded-t-[20px] overflow-hidden p-1 sm:p-2.5 !pb-0 border border-white/10 border-b-0 bg-gradient-to-b from-white/10 to-transparent glowing-border">
                 <img
                   className="rounded-t-[20px] w-full"

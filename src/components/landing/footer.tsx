@@ -21,8 +21,16 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Smart Calendar", href: "/calendar", isDashboardLink: true },
       { label: "Task Kanban Board", href: "/tasks", isDashboardLink: true },
-      { label: "Time Tracking & Analytics", href: "/tasks", isDashboardLink: true },
-      { label: "Projects & Backlogs", href: "/projects", isDashboardLink: true },
+      {
+        label: "Time Tracking & Analytics",
+        href: "/tasks",
+        isDashboardLink: true,
+      },
+      {
+        label: "Projects & Backlogs",
+        href: "/projects",
+        isDashboardLink: true,
+      },
       { label: "Multi-Person Teams", href: "/teams", isDashboardLink: true },
     ],
   },
@@ -31,8 +39,16 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Features Overview", href: "/features" },
       { label: "Pricing Plans", href: "#pricing" },
-      { label: "MCP AI Integrations", href: "/calendar", isDashboardLink: true },
-      { label: "Documentation & Support", href: "/support", isDashboardLink: true },
+      {
+        label: "MCP AI Integrations",
+        href: "/calendar",
+        isDashboardLink: true,
+      },
+      {
+        label: "Documentation & Support",
+        href: "/support",
+        isDashboardLink: true,
+      },
     ],
   },
   {
@@ -70,10 +86,10 @@ export function LandingFooter() {
                   </div>
                   <h2 className="text-[25px]">Stay in the Flow</h2>
                   <p className="mt-3 sm:mt-4 text-offWhite/80 text-sm">
-                    Subscribe for the latest product releases, MCP agent updates, and deep-work strategies.
+                    Subscribe for the latest product releases, MCP agent
+                    updates, and deep-work strategies.
                   </p>
                 </div>
-            
               </div>
 
               {/* Navigation Columns */}
@@ -95,12 +111,12 @@ export function LandingFooter() {
                       <ul className="flex flex-col gap-2.5 pt-4.5">
                         {column.links.map((link) => (
                           <li key={link.label}>
-                              <HardLink
-                                className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                                href={link.href}
-                              >
-                                {link.label}
-                              </HardLink>
+                            <HardLink
+                              className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
+                              href={link.href}
+                            >
+                              {link.label}
+                            </HardLink>
                           </li>
                         ))}
                       </ul>
@@ -142,8 +158,6 @@ export function LandingFooter() {
                 </HardLink>
               </div>
             </div>
-
-            
           </div>
         </div>
       </div>

@@ -101,7 +101,9 @@ function TestimonialCard({ item }: { item: TestimonialItem }) {
           </div>
         </div>
         <div className="my-4 md:my-5 gradient-border w-full h-px"></div>
-        <p className="text-offWhite/80 text-sm leading-relaxed">{item.comment}</p>
+        <p className="text-offWhite/80 text-sm leading-relaxed">
+          {item.comment}
+        </p>
       </div>
     </div>
   );
@@ -136,7 +138,8 @@ export function LandingTestimonials() {
               className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base lg:text-lg overflow-hidden leading-relaxed"
               data-excerpt=""
             >
-              See how engineering leaders, founders, and product teams eliminate calendar chaos and protect deep work with Scylla.
+              See how engineering leaders, founders, and product teams eliminate
+              calendar chaos and protect deep work with Scylla.
             </p>
           </div>
 

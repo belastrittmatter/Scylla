@@ -54,7 +54,9 @@ export function LandingCtaBanner() {
                   data-news-excerpt=""
                   className="mt-4 sm:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
                 >
-                  Join thousands of developers, designers, and high-velocity teams orchestrating sprint backlogs and multi-person calendars in one unified system.
+                  Join thousands of developers, designers, and high-velocity
+                  teams orchestrating sprint backlogs and multi-person calendars
+                  in one unified system.
                 </p>
                 <div
                   data-news-button=""

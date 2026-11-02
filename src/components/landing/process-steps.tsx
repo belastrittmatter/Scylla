@@ -25,8 +25,14 @@ export function LandingProcessSteps() {
               >
                 Collaboration That Moves at the Speed of Thought
               </h2>
-              <p data-excerpt="" className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed">
-                Say goodbye to scattered Slack messages and disconnected Jira tickets. Keep discussions attached to deliverables, log focused deep work with sub-second timers, and leverage Model Context Protocol (MCP) to automate project management.
+              <p
+                data-excerpt=""
+                className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
+              >
+                Say goodbye to scattered Slack messages and disconnected Jira
+                tickets. Keep discussions attached to deliverables, log focused
+                deep work with sub-second timers, and leverage Model Context
+                Protocol (MCP) to automate project management.
               </p>
               <div className="mt-8">
                 <HardLink
@@ -57,7 +63,9 @@ export function LandingProcessSteps() {
                   </h3>
                   <div className="my-4 gradient-border w-full h-[1px]"></div>
                   <p className="text-offWhite/60 text-sm sm:text-base leading-relaxed">
-                    Collaborate directly inside every task card. Leave threaded comments, attach design specs, tag teammates, and unblock progress without leaving your flow state.
+                    Collaborate directly inside every task card. Leave threaded
+                    comments, attach design specs, tag teammates, and unblock
+                    progress without leaving your flow state.
                   </p>
                 </div>
               </div>
@@ -78,7 +86,9 @@ export function LandingProcessSteps() {
                   </h3>
                   <div className="my-4 gradient-border w-full h-[1px]"></div>
                   <p className="text-offWhite/60 text-sm sm:text-base leading-relaxed">
-                    Track real-time deep-work sessions with active sub-second precision. Contrast actual hours against initial estimates, prevent burnout, and gain actionable team velocity insights.
+                    Track real-time deep-work sessions with active sub-second
+                    precision. Contrast actual hours against initial estimates,
+                    prevent burnout, and gain actionable team velocity insights.
                   </p>
                 </div>
               </div>
@@ -99,7 +109,9 @@ export function LandingProcessSteps() {
                   </h3>
                   <div className="my-4 gradient-border w-full h-[1px]"></div>
                   <p className="text-offWhite/60 text-sm sm:text-base leading-relaxed">
-                    Empower coding assistants (Claude Desktop, Cursor, Windsurf) to create backlog items, update progress columns, and triage sprints autonomously via Scylla&apos;s standard MCP server.
+                    Empower coding assistants (Claude Desktop, Cursor, Windsurf)
+                    to create backlog items, update progress columns, and triage
+                    sprints autonomously via Scylla&apos;s standard MCP server.
                   </p>
                 </div>
               </div>

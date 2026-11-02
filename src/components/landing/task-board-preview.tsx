@@ -108,8 +108,14 @@ export function LandingTaskBoardPreview() {
               >
                 Turn Sprint Backlogs into Deep-Work Reality
               </h2>
-              <p data-excerpt="" className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed">
-                Prioritize sprints with zero overhead. Drag tasks across customizable workflow columns, track deep-work sessions with active sub-second timers, and automatically connect deliverables to calendar timelines.
+              <p
+                data-excerpt=""
+                className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
+              >
+                Prioritize sprints with zero overhead. Drag tasks across
+                customizable workflow columns, track deep-work sessions with
+                active sub-second timers, and automatically connect deliverables
+                to calendar timelines.
               </p>
               <img
                 data-line-top=""
@@ -124,7 +130,8 @@ export function LandingTaskBoardPreview() {
                 <li className="flex items-center gap-3">
                   <img src="/images/list-check.svg" alt="check" />
                   <span>
-                    Interactive drag-and-drop Kanban with priority states &amp; assignees.
+                    Interactive drag-and-drop Kanban with priority states &amp;
+                    assignees.
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
@@ -136,7 +143,8 @@ export function LandingTaskBoardPreview() {
                 <li className="flex items-center gap-3">
                   <img src="/images/list-check.svg" alt="check" />
                   <span>
-                    Seamless 1-click scheduling: lock tasks into calendar focus blocks.
+                    Seamless 1-click scheduling: lock tasks into calendar focus
+                    blocks.
                   </span>
                 </li>
               </ul>

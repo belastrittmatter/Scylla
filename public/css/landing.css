@@ -2380,7 +2380,7 @@ body.scylla-landing-page {
           left: calc(var(--spacing) * 0);
           z-index: 9999;
           display: flex !important;
-          height: fit-content !important;;
+          height: fit-content !important;
           --tw-translate-y: calc(var(--spacing) * 8);
           translate: var(--tw-translate-x) var(--tw-translate-y);
           flex-direction: column;

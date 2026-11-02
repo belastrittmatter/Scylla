@@ -45,7 +45,8 @@ const ROW_TWO_FEATURES: CalendarFeature[] = [
     description:
       "Link calendar events directly to active workspace projects. Access meeting agendas, client deliverables, and auto-assigned tasks in one place.",
     imageSrc: "/images/calendar/why-chose-04.png",
-    imageAlt: "Project-linked meetings connecting calendar events to deliverables",
+    imageAlt:
+      "Project-linked meetings connecting calendar events to deliverables",
     wrapperWidthClass: "sm:max-w-[339px] w-full",
     imageHeightClass: "h-[220px] sm:h-[260px] md:h-[280px]",
   },
@@ -54,7 +55,8 @@ const ROW_TWO_FEATURES: CalendarFeature[] = [
     description:
       "Share your custom availability link with clients. Guests select an open slot, and Scylla handles meeting room creation and calendar invites automatically.",
     imageSrc: "/images/calendar/why-chose-05.jpg",
-    imageAlt: "Personalized 1-click booking link widget with Google Meet generation",
+    imageAlt:
+      "Personalized 1-click booking link widget with Google Meet generation",
     wrapperWidthClass: "sm:max-w-[481px] w-full",
     imageHeightClass: "h-[220px] sm:h-[260px] md:h-[280px]",
   },
@@ -125,7 +127,8 @@ export function Calendar() {
               data-excerpt=""
             >
               Connect your tasks directly to your timeline. Say goodbye to
-              fragmented apps, double bookings, and endless schedule coordination.
+              fragmented apps, double bookings, and endless schedule
+              coordination.
             </p>
           </div>
 
