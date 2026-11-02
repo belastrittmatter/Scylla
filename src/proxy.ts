@@ -9,6 +9,7 @@ const PROTECTED_PAGE_PREFIXES = [
   "/tasks",
   "/timeline",
   "/settings",
+  "/account",
   "/support",
 ];
 
@@ -67,7 +68,14 @@ export async function proxy(request: NextRequest) {
     sessionCookie &&
     (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")
   ) {
-    return NextResponse.redirect(new URL("/", request.url));
+    try {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (session?.user) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    } catch {
+      // If session verification fails, allow navigating to sign-in / sign-up
+    }
   }
 
   return NextResponse.next();
