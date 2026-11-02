@@ -311,7 +311,7 @@ export function CalendarDashboard() {
   return (
     <div className="flex h-full min-h-[calc(100svh-57px)] w-full flex-col bg-white dark:bg-neutral-900">
       <EventCalendar<CustomEventData>
-        key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}`}
+        key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}-${settings.timeFormat}-${settings.showNowIndicator}`}
         events={displayedEvents}
         onEventsChange={setEvents}
         onRangeChange={handleRangeChange}
@@ -322,6 +322,17 @@ export function CalendarDashboard() {
         dayEndHour={settings.dayEndHour}
         weekStartsOn={settings.weekStartsOn}
         slotDuration={settings.slotDuration}
+        i18n={
+          settings.timeFormat === "24h"
+            ? {
+                formats: {
+                  timeGutter: "HH:mm",
+                  timeGutterMinute: "HH:mm",
+                  eventTime: "HH:mm",
+                },
+              }
+            : undefined
+        }
         viewSettings={{
           weekends: settings.showWeekends,
           nowIndicator: settings.showNowIndicator,
