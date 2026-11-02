@@ -1,13 +1,52 @@
 "use client";
 
-import { useAuth, useSignOut } from "@better-auth-ui/react";
 import { useEffect, useRef } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@better-auth-ui/react";
 import { cn } from "cn";
+import { Spinner } from "@/components/ui/spinner";
+import { signOut as defaultSignOut } from "@/lib/auth-client";
 
 export type SignOutProps = {
   className?: string;
 };
+
+export type PerformSignOutOptions = {
+  signOutFn?: (options?: {
+    fetchOptions?: {
+      onSuccess?: () => void;
+      onError?: () => void;
+    };
+  }) => Promise<unknown>;
+  onNavigateSignIn: () => void;
+  onRefresh?: () => void;
+};
+
+export async function performSignOut({
+  signOutFn = defaultSignOut,
+  onNavigateSignIn,
+  onRefresh,
+}: PerformSignOutOptions): Promise<void> {
+  let completed = false;
+  const finalize = () => {
+    if (completed) return;
+    completed = true;
+    onNavigateSignIn();
+    onRefresh?.();
+  };
+
+  try {
+    await signOutFn({
+      fetchOptions: {
+        onSuccess: finalize,
+        onError: finalize,
+      },
+    });
+    finalize();
+  } catch {
+    finalize();
+  }
+}
 
 /**
  * Signs the current user out on mount and renders a centered spinner while the operation completes.
@@ -17,29 +56,25 @@ export type SignOutProps = {
  */
 export function SignOut({ className }: SignOutProps) {
   const { authClient, basePaths, navigate, viewPaths } = useAuth();
-
-  const { mutate: signOut } = useSignOut(authClient, {
-    onError: () => {
-      navigate({
-        to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
-        replace: true,
-      });
-    },
-    onSuccess: () =>
-      navigate({
-        to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
-        replace: true,
-      }),
-  });
-
+  const router = useRouter();
   const hasSignedOut = useRef(false);
 
   useEffect(() => {
     if (hasSignedOut.current) return;
     hasSignedOut.current = true;
 
-    signOut();
-  }, [signOut]);
+    const signInPath = `${basePaths.auth}/${viewPaths.auth.signIn}`;
+
+    void performSignOut({
+      signOutFn: (options) => authClient.signOut(options),
+      onNavigateSignIn: () =>
+        navigate({
+          to: signInPath,
+          replace: true,
+        }),
+      onRefresh: () => router.refresh(),
+    });
+  }, [authClient, basePaths.auth, navigate, router, viewPaths.auth.signIn]);
 
   return <Spinner className={cn("mx-auto my-auto", className)} />;
 }
