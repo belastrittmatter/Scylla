@@ -36,11 +36,9 @@ body.scylla-landing-page {
   background-color: #09090b;
 }
 
-/* Eliminate all background purple/blue hues and convert shapes into clean subtle monochrome */
-.scylla-landing [data-bg-shape],
+/* Eliminate extraneous template background purple/blue hues and convert default shapes */
 .scylla-landing [data-glow-shape],
 .scylla-landing img[src*="shape"],
-.scylla-landing img[src*="banner-bg"],
 .scylla-landing video[data-news-video] {
   filter: grayscale(100%) brightness(0.65) contrast(1.1) !important;
   opacity: 0.2 !important;
@@ -2382,15 +2380,15 @@ body.scylla-landing-page {
           left: calc(var(--spacing) * 0);
           z-index: 9999;
           display: flex !important;
-          height: fit-content !important;
-          width: calc(var(--spacing) * 32);
+          height: fit-content !important;;
           --tw-translate-y: calc(var(--spacing) * 8);
           translate: var(--tw-translate-x) var(--tw-translate-y);
           flex-direction: column;
           gap: calc(var(--spacing) * 1);
           overflow: hidden;
           border-radius: var(--radius-md);
-          background-color: #222938;
+          background-color: #121215;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           padding: calc(var(--spacing) * 2);
           opacity: 0%;
           --tw-shadow:
@@ -2467,7 +2465,8 @@ body.scylla-landing-page {
           gap: calc(var(--spacing) * 5);
           overflow: hidden;
           border-radius: 10px;
-          background-color: #222938;
+          background-color: #121215;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           padding: calc(var(--spacing) * 4);
           opacity: 0%;
           --tw-shadow:
@@ -2654,20 +2653,24 @@ body.scylla-landing-page {
   }
   .main-menu {
     position: absolute;
-    left: 0;
-    width: 100%;
+    left: -1px;
+    right: -1px;
+    width: calc(100% + 2px);
     top: 100%;
-    background-color: #222938;
-    box-shadow: 0px 50px 70px -15px rgba(0, 0, 0, 0.25);
-    box-shadow: none;
-    padding: 30px;
+    background-color: #09090b;
+    border-left: 1px solid var(--color-lineColor);
+    border-right: 1px solid var(--color-lineColor);
+    border-bottom: 1px solid var(--color-lineColor);
+    border-top: none;
+    box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.95);
+    padding: 24px 20px;
     z-index: 99999;
     max-height: calc(100vh - 80px);
-    overflow: auto;
-    border-radius: 0px 0px 10px 10px;
+    overflow-y: auto;
+    border-radius: 0 !important;
     clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
     visibility: hidden;
-    transition: all 0.3s ease-in-out;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     &.menu-active {
       visibility: visible;
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
@@ -2676,31 +2679,47 @@ body.scylla-landing-page {
       width: 4px;
     }
     &::-webkit-scrollbar-thumb {
-      background-color: #4f46e5;
-      border-radius: 20px;
+      background-color: rgba(249, 115, 22, 0.4);
+      border-radius: 2px;
     }
     ul {
+      display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      gap: 2px;
+      width: 100%;
       li {
-        padding: 10px 0px;
         width: 100%;
-        &:first-child {
-          padding-top: 0;
-        }
+        padding: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         &:last-child {
-          padding-bottom: 0;
+          border-bottom: none;
         }
         a {
-          font-size: 16px;
-          line-height: 1.2;
+          font-size: 15px;
+          line-height: 1.4;
+          font-weight: 500;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          color: #ffffff;
+          color: rgba(251, 251, 251, 0.85);
+          padding: 12px 14px;
+          border-radius: 4px;
+          transition: all 0.2s ease-in-out;
           svg {
             transform: rotate(0);
             transition: transform 0.3s ease-in-out;
+          }
+          &:hover,
+          &:focus {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.05);
+          }
+        }
+        &.active > a {
+          color: #ffffff;
+          background-color: rgba(255, 255, 255, 0.08);
+          svg {
+            transform: rotateX(180deg);
           }
         }
         .sub-menu,
@@ -2708,25 +2727,44 @@ body.scylla-landing-page {
           display: none;
           overflow: hidden;
           transition: height 0.3s ease;
-          padding: 20px 20px 0px;
+          padding: 12px 14px;
+          margin-top: 4px;
+          margin-bottom: 8px;
+          background-color: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 4px;
           li {
+            border-bottom: none;
             a {
-              font-size: 16px;
-            }
-          }
-        }
-        &.active {
-          > a {
-            color: #ffffff;
-            svg {
-              transform: rotateX(180deg);
+              font-size: 14px;
+              padding: 8px 10px;
+              color: rgba(251, 251, 251, 0.7);
+              &:hover {
+                color: #ffffff;
+                background-color: rgba(255, 255, 255, 0.06);
+              }
             }
           }
         }
       }
+      li.block.sm\:hidden {
+        margin-top: 14px;
+        padding-top: 16px;
+        border-top: 1px solid var(--color-lineColor);
+        border-bottom: none;
+        .button-secondary {
+          width: 100%;
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          border-radius: 6px;
+          padding-block: 12px;
+        }
+      }
     }
     .megamenu-item {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       &:last-child {
         margin-bottom: 0px;
       }
@@ -2734,7 +2772,7 @@ body.scylla-landing-page {
     .mega-menu-list {
       display: none;
       overflow: hidden;
-      padding: 20px;
+      padding: 16px;
       transition: height 0.3s ease;
       &:last-child {
         padding-bottom: 0;
@@ -2754,7 +2792,7 @@ body.scylla-landing-page {
 }
 @media screen and (max-width: 640px) {
   .main-menu {
-    padding: 20px;
+    padding: 18px 16px;
   }
 }
 .section-spacing-lg {
@@ -2961,6 +2999,10 @@ body.scylla-landing-page {
   &::before {
     opacity: 0.2;
   }
+}
+.pricing-card:not(.active):hover .pricing-card-cta,
+.pricing-card:not(.active) .pricing-card-cta:hover {
+  color: var(--color-offWhite);
 }
 .scylla-landing .progress {
   transform: translateX(20px) rotate(45deg);

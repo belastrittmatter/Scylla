@@ -1,6 +1,25 @@
-import * as React from "react";
-import { LandingView } from "@/components/landing";
+import {
+  LandingHero,
+  LandingTaskBoardPreview,
+  LandingProcessSteps,
+  LandingCalendar,
+  LandingUseCases,
+  LandingIntegrations,
+  LandingTestimonials,
+  LandingPricing,
+} from "@/components/landing";
 
 export default function LandingPage() {
-  return <LandingView />;
+  return (
+    <>
+      <LandingHero />
+      <LandingTaskBoardPreview />
+      <LandingProcessSteps />
+      <LandingCalendar />
+      <LandingUseCases />
+      <LandingIntegrations />
+      <LandingTestimonials />
+      <LandingPricing />
+    </>
+  );
 }

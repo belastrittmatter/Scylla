@@ -36,12 +36,18 @@ export function LandingIntegrations() {
                   track active time, and organize project backlogs directly from
                   your coding workspace.
                 </p>
-                <div data-button="" className="mt-5 sm:mt-8 lg:mt-9">
+                <div data-button="" className="mt-5 sm:mt-8 lg:mt-9 flex flex-wrap gap-4">
                   <HardLink
-                    className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center cursor-pointer"
+                    className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all cursor-pointer"
                     href="/tasks"
                   >
-                    Explore MCP Tools
+                    Explore MCP Integration
+                  </HardLink>
+                  <HardLink
+                    className="button-secondary cursor-pointer !py-3 px-5 text-sm"
+                    href="/calendar"
+                  >
+                    View Calendar Tools
                   </HardLink>
                 </div>
               </div>

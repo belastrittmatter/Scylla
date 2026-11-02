@@ -39,35 +39,38 @@ export function LandingCtaBanner() {
               />
 
               {/* Content */}
-              <div className="w-full sm:w-[80%] lg:w-full max-w-[400px] md:max-w-[580px]">
+              <div className="w-full sm:w-[85%] lg:w-full max-w-[420px] md:max-w-[620px]">
+                <span className="badge-button mb-4 inline-block">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5 animate-pulse" />
+                  Elevate Your Workflow
+                </span>
                 <h3
                   data-news-title=""
-                  className="gradient-text !leading-[1.2] text-4xl md:text-5xl lg:text-[51px] font-semibold"
+                  className="gradient-text !leading-[1.15] text-3xl sm:text-4xl md:text-5xl lg:text-[51px] font-semibold"
                 >
-                  Ready to Supercharge Your Tasks and Calendar?
+                  Ready to Reclaim Your Team&apos;s Focus &amp; Rhythm?
                 </h3>
                 <p
                   data-news-excerpt=""
-                  className="mt-4 sm:mt-5 text-offWhite/80"
+                  className="mt-4 sm:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
                 >
-                  Join modern teams mastering daily execution and seamless team
-                  scheduling with Scylla. Free forever to get started.
+                  Join thousands of developers, designers, and high-velocity teams orchestrating sprint backlogs and multi-person calendars in one unified system.
                 </p>
                 <div
                   data-news-button=""
-                  className="mt-5 sm:mt-8 lg:mt-12 flex flex-wrap gap-4"
+                  className="mt-6 sm:mt-8 lg:mt-10 flex flex-wrap items-center gap-4"
                 >
                   <HardLink
-                    className="button-primary inline-flex items-center justify-center px-[26px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-primary/20 cursor-pointer"
+                    className="button-primary inline-flex items-center justify-center px-7 py-3.5 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all cursor-pointer"
                     href="/auth/sign-in"
                   >
-                    Start Free Trial
+                    Get Started Free
                   </HardLink>
                   <HardLink
-                    className="button-secondary text-sm cursor-pointer"
+                    className="button-secondary text-sm cursor-pointer !py-3.5 px-6"
                     href="/calendar"
                   >
-                    View Demo
+                    Explore Live Calendar
                   </HardLink>
                 </div>
               </div>

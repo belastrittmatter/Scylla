@@ -26,12 +26,13 @@ const PRICING_PLANS: PricingPlan[] = [
     monthlyPrice: "$19",
     yearlyPrice: "$190",
     description:
-      "Perfect for freelancers, startups, or small teams getting started with AI workflows.",
+      "Perfect for individuals and lean teams getting started with unified task and calendar scheduling.",
     features: [
-      "Up to 3 active projects",
-      "Basic automation tools",
-      "Email support",
-      "Standard analytics dashboard",
+      "Unlimited Kanban boards & task cards",
+      "Sub-second live deep-work timers",
+      "Two-way Google Calendar & Outlook sync",
+      "Up to 5 team members & shared schedules",
+      "Standard Model Context Protocol (MCP) access",
     ],
   },
   {
@@ -41,14 +42,15 @@ const PRICING_PLANS: PricingPlan[] = [
     monthlyPrice: "$49",
     yearlyPrice: "$490",
     description:
-      "Best for growing teams who need advanced tools and integrations.",
+      "Designed for fast-moving teams that need advanced schedule comparison and AI workflow triage.",
     isFeatured: true,
     features: [
       "Everything in Starter",
-      "Advanced AI automation",
-      "Integrations with Slack, Google Drive",
-      "Priority email + chat support",
-      "Advanced analytics & reporting",
+      "Multi-person availability overlay & room booking",
+      "Personalized 1-click booking links with Google Meet",
+      "Project-linked meeting agendas & task linking",
+      "Advanced sprint velocity & focus time analytics",
+      "Priority MCP rate limits for Cursor & Claude",
     ],
   },
   {
@@ -58,13 +60,14 @@ const PRICING_PLANS: PricingPlan[] = [
     monthlyPrice: "$99",
     yearlyPrice: "$990",
     description:
-      "Perfect for freelancers, startups, or small teams getting started with AI workflows.",
+      "Built for scaling organizations demanding enterprise-grade security, custom SLAs, and dedicated support.",
     features: [
       "Everything in Professional",
-      "Custom AI model training",
-      "Dedicated account manager",
-      "On-premise or private cloud deployment",
-      "24/7 support with SLA",
+      "SAML SSO, SCIM provisioning & custom RBAC",
+      "Dedicated MCP infrastructure & custom webhooks",
+      "Private cloud or on-premise VPC deployment options",
+      "99.99% uptime SLA with 24/7 priority response",
+      "Dedicated Customer Success manager",
     ],
   },
 ];
@@ -192,7 +195,7 @@ export function LandingPricing({ defaultYearly = false }: LandingPricingProps) {
                       className={
                         plan.isFeatured
                           ? "mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-white font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 flex flex-col h-11 cursor-pointer"
-                          : "mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
+                          : "pricing-card-cta mt-5 md:mt-7.5 w-full text-sm traking-[0.1px] text-secondary font-medium bg-linear-to-b from-offWhite to-platinum relative text-center rounded-xl z-1 before:absolute before:w-full before:h-full before:bg-linear-to-b before:from-slateBlue before:to-royalBlue before:top-0 before:left-0 before:-z-1 before:rounded-[11px] duration-300 before:duration-300 before:opacity-0 before:invisible group-hover:text-offWhite group-hover:before:opacity-100 group-hover:before:visible flex flex-col h-11 group-hover:!bg-transparent cursor-pointer"
                       }
                       href="/auth/sign-in"
                     >

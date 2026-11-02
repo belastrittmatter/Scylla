@@ -3,13 +3,13 @@ import { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
 
 describe("Proxy Authentication and Authorization", () => {
-  it("redirects unauthenticated access to /timeline to /auth/sign-in", async () => {
-    const req = new NextRequest("http://localhost:3000/timeline");
+  it("redirects unauthenticated access to /calendar to /auth/sign-in", async () => {
+    const req = new NextRequest("http://localhost:3000/calendar");
     const res = await proxy(req);
 
     expect(res.status).toBe(307);
     const location = res.headers.get("location");
-    expect(location).toContain("/auth/sign-in?callbackUrl=%2Ftimeline");
+    expect(location).toContain("/auth/sign-in?callbackUrl=%2Fcalendar");
   });
 
   it("blocks unauthenticated access to /api/bookings with 401", async () => {

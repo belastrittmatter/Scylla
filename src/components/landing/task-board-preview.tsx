@@ -38,7 +38,7 @@ const MOCK_MCP_KANBAN_DATA: TaskBoardData = {
       id: "tsk-02",
       title: "Live deep work time-tracker",
       description: "Real-time session timer actively ticking every second.",
-      status: "in_progress",
+      status: "todo",
       priority: "high",
       assigneeName: "Olivia Chen",
       estimatedMinutes: 90,
@@ -52,7 +52,7 @@ const MOCK_MCP_KANBAN_DATA: TaskBoardData = {
       id: "tsk-03",
       title: "Autonomous room & calendar triage",
       description: "Auto-detect meeting conflicts with Google Calendar sync.",
-      status: "in_progress",
+      status: "todo",
       priority: "urgent",
       assigneeName: "Riley Cooper",
       estimatedMinutes: 120,
@@ -63,7 +63,7 @@ const MOCK_MCP_KANBAN_DATA: TaskBoardData = {
       id: "tsk-04",
       title: "Multi-person schedule comparison",
       description: "Compute mutual free slots across multiple calendars.",
-      status: "done",
+      status: "todo",
       priority: "medium",
       assigneeName: "Jordan Lee",
       estimatedMinutes: 45,
@@ -98,17 +98,18 @@ export function LandingTaskBoardPreview() {
 
             {/* Content text */}
             <div className="lg:max-w-[540px] w-full lg:py-5">
+              <span className="badge-button mb-3 inline-block">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5" />
+                Visual Task Execution
+              </span>
               <h2
                 data-title=""
-                className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] font-semibold -tracking-[0.4px] !leading-[1.1]"
+                className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] font-semibold -tracking-[0.4px] !leading-[1.12]"
               >
-                Visual Drag &amp; Drop Tasks With Live Time-Tracking
+                Turn Sprint Backlogs into Deep-Work Reality
               </h2>
-              <p data-excerpt="" className="mt-4 md:mt-5 text-offWhite/80">
-                Manage your work effortlessly with interactive Kanban boards.
-                Drag tasks across progress columns, start focused live
-                time-trackers for deep work sessions, and keep milestones
-                clearly visible for every project.
+              <p data-excerpt="" className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed">
+                Prioritize sprints with zero overhead. Drag tasks across customizable workflow columns, track deep-work sessions with active sub-second timers, and automatically connect deliverables to calendar timelines.
               </p>
               <img
                 data-line-top=""
@@ -118,24 +119,24 @@ export function LandingTaskBoardPreview() {
               />
               <ul
                 data-list=""
-                className="font-medium text-offWhite/80 space-y-3.5"
+                className="font-medium text-offWhite/80 space-y-3.5 text-sm sm:text-base"
               >
                 <li className="flex items-center gap-3">
                   <img src="/images/list-check.svg" alt="check" />
                   <span>
-                    Fluid drag-and-drop Kanban &amp; list task workflows.
+                    Interactive drag-and-drop Kanban with priority states &amp; assignees.
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <img src="/images/list-check.svg" alt="check" />
                   <span>
-                    Integrated live time-tracker &amp; task duration analytics.
+                    Sub-second live session timers &amp; team velocity metrics.
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <img src="/images/list-check.svg" alt="check" />
                   <span>
-                    Automated deadline reminders &amp; project priority tags.
+                    Seamless 1-click scheduling: lock tasks into calendar focus blocks.
                   </span>
                 </li>
               </ul>
@@ -145,12 +146,12 @@ export function LandingTaskBoardPreview() {
                 src="/images/gradient-border.svg"
                 alt="gradient Border"
               />
-              <div data-button="" className="">
+              <div data-button="" className="flex flex-wrap items-center gap-4">
                 <HardLink
-                  className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20"
+                  className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20 cursor-pointer"
                   href="/tasks"
                 >
-                  Explore Full Task Board
+                  Open Interactive Task Board
                 </HardLink>
               </div>
             </div>

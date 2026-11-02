@@ -7,7 +7,6 @@ const PROTECTED_PAGE_PREFIXES = [
   "/projects",
   "/teams",
   "/tasks",
-  "/timeline",
   "/settings",
   "/support",
 ];

@@ -1,4 +1,3 @@
-export { LandingView } from "./landing-view";
 export { LandingScripts } from "./landing-scripts";
 export { HardLink } from "./hard-link";
 export { LandingHeader } from "./header";
@@ -11,3 +10,4 @@ export { LandingTestimonials } from "./testimonials";
 export { LandingPricing } from "./pricing";
 export { LandingCtaBanner } from "./cta-banner";
 export { LandingFooter } from "./footer";
+export { Calendar as LandingCalendar } from "./calendar";

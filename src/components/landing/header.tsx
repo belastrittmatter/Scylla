@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
 import { HardLink } from "./hard-link";
 
 export function LandingHeader() {
@@ -11,52 +9,46 @@ export function LandingHeader() {
       data-smooth-ignore="true"
     >
       <div className="container">
-        <div className="border-container">
-          <div className="header-wrapper flex items-center justify-between gap-5 relative py-3 lg:py-0">
-            <Link className="logo flex items-center" href="/">
+        <div className="border-container relative">
+          <div className="header-wrapper flex items-center justify-between gap-5 py-3 lg:py-0">
+            <HardLink className="logo flex items-center" href="/">
               <img
                 src="/images/logo.svg"
                 alt="Scylla logo"
                 className="h-7 w-auto"
               />
-            </Link>
+            </HardLink>
             <div className="main-menu">
               <ul>
                 <li>
-                  <Link href="/">Home</Link>
+                  <HardLink href="/">Home</HardLink>
                 </li>
                 <li>
-                  <HardLink href="/tasks">Tasks</HardLink>
+                  <HardLink href="/features">Features</HardLink>
                 </li>
                 <li>
-                  <HardLink href="/calendar">Calendar</HardLink>
+                  <HardLink href="/pricing">Pricing</HardLink>
                 </li>
                 <li>
-                  <Link href="#pricing">Pricing</Link>
+                  <HardLink href="/about">About</HardLink>
                 </li>
                 <li className="block sm:hidden">
                   <HardLink
-                    href="/calendar"
-                    className="button-secondary !inline-flex !py-2.5 px-5 text-sm leading-normal text-center !justify-center"
+                    href="/auth/sign-in"
+                    className="button-secondary !text-black !inline-flex !py-2.5 px-5 text-sm leading-normal"
                   >
-                    Open Calendar
+                    Get Started
                   </HardLink>
                 </li>
               </ul>
             </div>
             <div className="flex items-center gap-4">
-              <HardLink
-                href="/auth/sign-in"
-                className="text-sm font-medium text-offWhite/80 hover:text-white transition-colors hidden sm:inline-block px-3 py-2"
-              >
-                Sign In
-              </HardLink>
               <div className="hidden sm:block">
                 <HardLink
-                  href="/calendar"
+                  href="/auth/sign-in"
                   className="button-secondary !inline-flex !py-2.5 px-5 text-sm leading-normal"
                 >
-                  Open Calendar
+                  Get Started
                 </HardLink>
               </div>
               {/* Hamburger */}

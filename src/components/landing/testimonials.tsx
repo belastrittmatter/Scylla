@@ -12,96 +12,96 @@ interface TestimonialItem {
 const COLUMN_1_ITEMS: TestimonialItem[] = [
   {
     avatar: "/images/testimonial-01.jpg",
-    name: "Jenifer Lawrence",
-    role: "CEO & Engineer",
+    name: "Marcus Vance",
+    role: "VP of Engineering",
     comment:
-      "Scylla has completely transformed the way we manage projects. The automation features save us hours each week.",
+      "Scylla eliminated our weekly scheduling chaos. Our developers now get uninterrupted 4-hour deep work blocks without random meeting interruptions.",
   },
   {
     avatar: "/images/testimonial-02.jpg",
-    name: "David Thompson",
-    role: "Marketing Director",
+    name: "Sarah Jenkins",
+    role: "Head of Product",
     comment:
-      "With real-time insights, we make faster, better decisions. Scylla is now a core part of our daily workflow.",
+      "Having our calendar sync directly with sprint backlog tasks is a game changer. Every meeting now has linked deliverables and clear owners.",
   },
   {
     avatar: "/images/testimonial-03.jpg",
-    name: "Sophia Martinez",
-    role: "Product Manager",
+    name: "Alex Rivera",
+    role: "Lead Architect",
     comment:
-      "Real-time analytics help us spot issues before they become problems. Scylla keeps us proactive.",
+      "The real-time Google Calendar two-way sync is bulletproof. Zero lag, zero ghost bookings, and instant team availability overlays.",
   },
 ];
 
 const COLUMN_2_ITEMS: TestimonialItem[] = [
   {
     avatar: "/images/testimonial-04.jpg",
-    name: "Emily Carter",
-    role: "Creative Director",
+    name: "Elena Rostova",
+    role: "Founder & CEO",
     comment:
-      "Integrations are seamless. Now all our design, feedback, and task tracking live in one place.",
+      "We replaced three separate tools—Linear, Calendly, and Toggl—with Scylla. It cut our software overhead in half while doubling cross-team visibility.",
   },
   {
     avatar: "/images/testimonial-05.jpg",
     name: "Daniel Kim",
     role: "CTO",
     comment:
-      "The AI-powered recommendations have improved our workflow efficiency by over 40%.",
+      "Connecting Claude Desktop and Cursor to Scylla via MCP gives us superpowers. Our AI agent now triages backlogs and books syncs autonomously.",
   },
   {
     avatar: "/images/testimonial-06.jpg",
-    name: "Olivia Green",
-    role: "Project Manager",
+    name: "Maya Patel",
+    role: "Engineering Manager",
     comment:
-      "Finally, a platform that grows with our needs. We've scaled without losing control of our processes.",
+      "Comparing 8 engineers' schedules used to take 20 minutes of Slack back-and-forth. With Scylla's overlay, I spot mutual free slots in 5 seconds.",
   },
 ];
 
 const COLUMN_3_ITEMS: TestimonialItem[] = [
   {
     avatar: "/images/testimonial-07.jpg",
-    name: "Chloe Davis",
-    role: "HR Coordinator",
+    name: "Liam Chen",
+    role: "Staff Software Engineer",
     comment:
-      "Integrations are seamless. Now all our design, feedback, and task tracking live in one place.",
+      "The sub-second live session timers give me honest data on where my sprint time goes. It completely changed how I estimate complex technical stories.",
   },
   {
     avatar: "/images/testimonial-08.jpg",
-    name: "Jack Wilson",
-    role: "Senior Developer",
+    name: "Rachel Adams",
+    role: "Technical Program Manager",
     comment:
-      "The dashboards are so clear and customizable—it's easy to present insights to leadership.",
+      "Project-linked meeting agendas keep our sprint reviews laser-focused. Action items convert directly into Kanban tasks with one click.",
   },
   {
     avatar: "/images/testimonial-09.jpg",
-    name: "Grace Nguyen",
-    role: "Customer Success Manager",
+    name: "Kevin Zhang",
+    role: "DevOps Tech Lead",
     comment:
-      "Lead tracking is now effortless. Our close rate has improved significantly since using Scylla.",
+      "Room availability and Google Meet link generation work flawlessly. It's by far the most dependable scheduling platform we've ever deployed.",
   },
 ];
 
 function TestimonialCard({ item }: { item: TestimonialItem }) {
   return (
     <div>
-      <div className="px-5 pt-5 pb-6 md:pb-10 bg-blue rounded-xl sm:rounded-2xl lg:rounded-[20px] border border-lineColor/70 relative">
+      <div className="px-5 pt-5 pb-6 md:pb-8 bg-blue rounded-xl sm:rounded-2xl lg:rounded-[20px] border border-lineColor/70 relative transition-all duration-300 hover:border-white/30">
         <div className="flex items-center gap-4">
           <img
-            className="w-10.5 h-10.5 object-cover rounded-full"
+            className="w-10.5 h-10.5 object-cover rounded-full border border-white/10"
             src={item.avatar}
             alt={item.name}
           />
           <div className="flex-1">
-            <h3 className="font-dmSans text-offWhite text-base leading-tight font-normal">
+            <h3 className="font-dmSans text-offWhite text-base leading-tight font-medium">
               {item.name}
             </h3>
-            <p className="text-offWhite/60 text-sm leading-tight mt-1">
+            <p className="text-offWhite/60 text-xs sm:text-sm leading-tight mt-1">
               {item.role}
             </p>
           </div>
         </div>
-        <div className="my-4 md:my-5 lg:my-6 gradient-border w-full h-px"></div>
-        <p className="text-offWhite">{item.comment}</p>
+        <div className="my-4 md:my-5 gradient-border w-full h-px"></div>
+        <p className="text-offWhite/80 text-sm leading-relaxed">{item.comment}</p>
       </div>
     </div>
   );
@@ -119,25 +119,24 @@ export function LandingTestimonials() {
         <div className="border-container section-spacing-lg">
           {/* Section Title */}
           <div
-            className="max-w-[450px] sm:max-w-[520px] lg:max-w-[600px] mx-auto text-center mb-10 sm:mb-12 md:mb-16 xl:mb-20"
+            className="max-w-[450px] sm:max-w-[540px] lg:max-w-[650px] mx-auto text-center mb-10 sm:mb-12 md:mb-16 xl:mb-20"
             data-section-title=""
           >
             <span className="badge-button mb-5" data-subtitle="">
-              Testimonial
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5" />
+              Proven Impact
             </span>
             <h2
               className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] !leading-[1.2] font-semibold -tracking-[0.4px] overflow-hidden"
               data-title=""
             >
-              Trusted by professionals, loved by every teams.
+              Trusted by Engineers, Loved by High-Velocity Teams
             </h2>
             <p
-              className="mt-4 md:mt-5 text-offWhite/80 overflow-hidden"
+              className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base lg:text-lg overflow-hidden leading-relaxed"
               data-excerpt=""
             >
-              From startups to global enterprises, our users share how
-              Scylla&apos;s AI tools help them work smarter, faster, and more
-              efficiently.
+              See how engineering leaders, founders, and product teams eliminate calendar chaos and protect deep work with Scylla.
             </p>
           </div>
 
