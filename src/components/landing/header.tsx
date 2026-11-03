@@ -27,9 +27,6 @@ export function LandingHeader() {
                   <HardLink href="/features">Features</HardLink>
                 </li>
                 <li>
-                  <HardLink href="/pricing">Pricing</HardLink>
-                </li>
-                <li>
                   <HardLink href="/about">About</HardLink>
                 </li>
                 <li className="block sm:hidden">

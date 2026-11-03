@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { HardLink } from "./hard-link";
 
 interface FooterLinkItem {
@@ -38,7 +37,6 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Resources",
     links: [
       { label: "Features Overview", href: "/features" },
-      { label: "Pricing Plans", href: "#pricing" },
       {
         label: "MCP AI Integrations",
         href: "/calendar",

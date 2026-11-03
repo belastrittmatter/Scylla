@@ -21,8 +21,42 @@ import {
   isRoomBusyAt,
 } from "@/components/mcp-ui/schedule-helpers";
 import { TaskBoardApp } from "@/components/mcp-ui/task-board-app";
+import {
+  getAgendaUiHtml,
+  getScheduleUiHtml,
+  getTaskBoardUiHtml,
+} from "@/utils/mcp-ui-builder";
 
 describe("MCP UI Bridge & Formatting Helpers", () => {
+  it("renders MCP tool UIs under production/no-Bun conditions and restores env", () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    try {
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        "production";
+
+      const agendaHtml = getAgendaUiHtml({
+        user: { name: "Alice" },
+        events: [],
+      });
+      const scheduleHtml = getScheduleUiHtml({
+        currentUser: { name: "Alice", email: "alice@example.com", busy: [] },
+        allAttendees: [],
+        mutualSlots: [],
+      });
+      const taskBoardHtml = getTaskBoardUiHtml({
+        teamName: "Core",
+        tasks: [],
+      });
+
+      expect(agendaHtml).toContain("calendar_agenda_app");
+      expect(scheduleHtml).toContain("calendar_schedule_comparison_app");
+      expect(taskBoardHtml).toContain("task_kanban_board_app");
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV =
+        originalNodeEnv;
+    }
+  });
+
   it("extracts nested structuredContent payloads from SEP-1865 JSON-RPC envelopes", () => {
     const raw = {
       jsonrpc: "2.0",

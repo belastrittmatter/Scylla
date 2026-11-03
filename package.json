@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "if command -v bun >/dev/null 2>&1; then bun run build:mcp-ui; fi",
     "build": "next build",
     "build:mcp-ui": "bun run scripts/bundle-mcp-ui.ts --write",
     "start": "next start",
@@ -14,7 +15,6 @@
     "prepare": "husky",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:setup": "bun run db:up && bun run db:push && bun run db:seed",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

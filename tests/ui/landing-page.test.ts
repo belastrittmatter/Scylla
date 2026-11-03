@@ -6,19 +6,25 @@ import { join } from "node:path";
 import MarketingLayout from "@/app/(marketing)/layout";
 import { LandingHeader } from "@/components/landing/header";
 import { LandingCtaBanner } from "@/components/landing/cta-banner";
-import { LandingPricing } from "@/components/landing/pricing";
+import { LandingFooter } from "@/components/landing/footer";
 import { config as proxyConfig } from "@/proxy";
 
 const ROOT_DIR = process.cwd();
 
 describe("Landing Page & Review Fixes", () => {
-  it("removes unused duplicate files (src/styles/landing.css, video-modal.tsx, about-video.tsx, about.mp4, ai_agent, local gsap/plugin bundles)", () => {
+  it("removes unused duplicate files (src/styles/landing.css, video-modal.tsx, about-video.tsx, pricing.tsx, testimonials.tsx, about.mp4, ai_agent, local gsap/plugin bundles)", () => {
     expect(existsSync(join(ROOT_DIR, "src/styles/landing.css"))).toBe(false);
     expect(
       existsSync(join(ROOT_DIR, "src/components/landing/video-modal.tsx")),
     ).toBe(false);
     expect(
       existsSync(join(ROOT_DIR, "src/components/landing/about-video.tsx")),
+    ).toBe(false);
+    expect(
+      existsSync(join(ROOT_DIR, "src/components/landing/pricing.tsx")),
+    ).toBe(false);
+    expect(
+      existsSync(join(ROOT_DIR, "src/components/landing/testimonials.tsx")),
     ).toBe(false);
     expect(
       existsSync(
@@ -55,7 +61,6 @@ describe("Landing Page & Review Fixes", () => {
       "src/components/landing/task-board-preview.tsx",
       "src/components/landing/cta-banner.tsx",
       "src/components/landing/footer.tsx",
-      "src/components/landing/pricing.tsx",
       "src/components/landing/use-cases.tsx",
       "src/components/landing/process-steps.tsx",
       "src/components/landing/integrations.tsx",
@@ -74,22 +79,20 @@ describe("Landing Page & Review Fixes", () => {
     );
     expect(indexContent).toContain("LandingTaskBoardPreview");
     expect(indexContent).not.toContain("AboutVideo");
+    expect(indexContent).not.toContain("LandingPricing");
+    expect(indexContent).not.toContain("LandingTestimonials");
     expect(indexContent).not.toMatch(/\bexport\s*\{\s*Landing\w+\s*,\s*\w+/);
   });
 
   it("points all sign-in CTAs to /auth/sign-in and redirects /sign-in to /auth/sign-in", () => {
     const headerHtml = renderToString(React.createElement(LandingHeader));
     const ctaHtml = renderToString(React.createElement(LandingCtaBanner));
-    const pricingHtml = renderToString(React.createElement(LandingPricing));
 
     expect(headerHtml).toContain('href="/auth/sign-in"');
     expect(headerHtml).not.toContain('href="/sign-in"');
 
     expect(ctaHtml).toContain('href="/auth/sign-in"');
     expect(ctaHtml).not.toContain('href="/sign-in"');
-
-    expect(pricingHtml).toContain('href="/auth/sign-in"');
-    expect(pricingHtml).not.toContain('href="/sign-in"');
 
     const signInPage = readFileSync(
       join(ROOT_DIR, "src/app/sign-in/page.tsx"),
@@ -99,26 +102,18 @@ describe("Landing Page & Review Fixes", () => {
     expect(signInPage).not.toContain("AuthLayoutShell");
   });
 
-  it("controls pricing monthly/yearly toggle via React state and maps over PRICING_PLANS", () => {
-    const monthlyHtml = renderToString(React.createElement(LandingPricing));
-    expect(monthlyHtml).toContain("$19");
-    expect(monthlyHtml).toContain("$49");
-    expect(monthlyHtml).toContain("$99");
-    expect(monthlyHtml).toContain("/mo");
-
-    const yearlyHtml = renderToString(
-      React.createElement(LandingPricing, { defaultYearly: true }),
-    );
-    expect(yearlyHtml).toContain("$190");
-    expect(yearlyHtml).toContain("$490");
-    expect(yearlyHtml).toContain("$990");
-    expect(yearlyHtml).toContain("/year");
-
-    const pricingSource = readFileSync(
-      join(ROOT_DIR, "src/components/landing/pricing.tsx"),
+  it("maps over FOOTER_COLUMNS in footer and omits pricing and testimonials sections from landing page", () => {
+    const headerHtml = renderToString(React.createElement(LandingHeader));
+    const footerHtml = renderToString(React.createElement(LandingFooter));
+    const pageSource = readFileSync(
+      join(ROOT_DIR, "src/app/(marketing)/page.tsx"),
       "utf8",
     );
-    expect(pricingSource).toContain("PRICING_PLANS.map");
+
+    expect(headerHtml).not.toContain("/pricing");
+    expect(footerHtml).not.toContain("#pricing");
+    expect(pageSource).not.toContain("LandingPricing");
+    expect(pageSource).not.toContain("LandingTestimonials");
 
     const footerSource = readFileSync(
       join(ROOT_DIR, "src/components/landing/footer.tsx"),
