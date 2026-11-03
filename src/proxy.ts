@@ -63,7 +63,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào homepage /
+  // 3. Nếu đã đăng nhập mà truy cập trang sign-in / sign-up -> Chuyển hướng vào /calendar
   if (
     sessionCookie &&
     (pathname === "/auth/sign-in" || pathname === "/auth/sign-up")
@@ -71,7 +71,7 @@ export async function proxy(request: NextRequest) {
     try {
       const session = await auth.api.getSession({ headers: request.headers });
       if (session?.user) {
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect(new URL("/calendar", request.url));
       }
     } catch {
       // If session verification fails, allow navigating to sign-in / sign-up

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
+import { auth } from "@/lib/auth";
 
 describe("Proxy Authentication and Authorization", () => {
   it("redirects unauthenticated access to /timeline to /auth/sign-in", async () => {
@@ -76,5 +77,30 @@ describe("Proxy Authentication and Authorization", () => {
 
     // Should proceed to sign-in page, not redirect to /
     expect(res.status).toBe(200);
+  });
+
+  it("redirects authenticated /auth/sign-in access to /calendar", async () => {
+    const originalGetSession = auth.api.getSession;
+    (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+      (async () =>
+        ({ user: { id: "user-1" } }) as Awaited<
+          ReturnType<typeof originalGetSession>
+        >) as typeof auth.api.getSession;
+
+    try {
+      const req = new NextRequest("http://localhost:3000/auth/sign-in", {
+        headers: {
+          cookie: "better-auth.session_token=valid-token",
+        },
+      });
+      const res = await proxy(req);
+
+      expect(res.status).toBe(307);
+      const location = res.headers.get("location");
+      expect(location).toContain("/calendar");
+    } finally {
+      (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+        originalGetSession;
+    }
   });
 });
