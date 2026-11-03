@@ -65,13 +65,17 @@ function readStoredSettings(): CalendarSettings {
       ...parsed,
     });
     if (!validated.success) {
-      return DEFAULT_CALENDAR_SETTINGS;
+      cachedRaw = raw;
+      cachedSettings = DEFAULT_CALENDAR_SETTINGS;
+      return cachedSettings;
     }
     cachedRaw = raw;
     cachedSettings = validated.data;
     return cachedSettings;
   } catch {
-    return DEFAULT_CALENDAR_SETTINGS;
+    cachedRaw = null;
+    cachedSettings = DEFAULT_CALENDAR_SETTINGS;
+    return cachedSettings;
   }
 }
 
