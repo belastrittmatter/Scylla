@@ -123,6 +123,17 @@ describe("Landing Page & Review Fixes", () => {
 
     const mainJs = readFileSync(join(ROOT_DIR, "public/js/main.js"), "utf8");
     expect(mainJs).not.toContain('getElementById("priceToggle")');
+    expect(mainJs).not.toContain("revealStroke");
+
+    const landingCss = readFileSync(
+      join(ROOT_DIR, "public/css/landing.css"),
+      "utf8",
+    );
+    expect(landingCss).not.toContain(".pricing-card");
+    expect(landingCss).not.toContain(".pricing-switch");
+    expect(landingCss).not.toContain(".toggle-wrapper");
+    expect(landingCss).not.toContain(".testimonial-overlay");
+    expect(landingCss).not.toContain(".auto-scroll-content");
   });
 
   it("prunes dead template code and Swiper from public/js/main.js while keeping GSAP animations", () => {

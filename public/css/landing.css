@@ -2903,32 +2903,10 @@ body.scylla-landing-page {
     0px 0px 30px 0px rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
 }
-.pricing-card.border-moving:hover,
 .useCase-card.border-moving:hover {
   &::before {
     opacity: 0.25;
   }
-}
-.auto-scroll-content {
-  animation: autoScrollY 8s linear infinite;
-}
-.auto-scroll-content-reverse {
-  animation: autoScrollY 8s linear infinite reverse;
-}
-@keyframes autoScrollY {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50%);
-  }
-}
-.testimonial-overlay {
-  background-image:
-    linear-gradient(90deg, #09090b, #09090b00 15% 85%, #09090b),
-    linear-gradient(#09090b, #09090b00 15% 85%, #09090b);
-  position: absolute;
-  inset: 0%;
 }
 .glowing-border {
   position: relative;
@@ -2978,42 +2956,6 @@ body.scylla-landing-page {
 }
 .scylla-landing input[type="number"] {
   -moz-appearance: textfield;
-}
-.pricing-switch-slider {
-  box-shadow:
-    0px 1.34px 2.68px 0px #1018280f,
-    0px 1.34px 4.02px 0px #1018281a;
-}
-.pricing-switch input:checked + .pricing-switch-slider {
-  transform: translateX(27px);
-}
-.toggle-wrapper:has(input:checked) .yearly {
-  color: #fff;
-  opacity: 1;
-}
-.toggle-wrapper:not(:has(input:checked)) .monthly {
-  color: #fff;
-  opacity: 1;
-}
-.pricing-card.active.border-moving {
-  &::before {
-    opacity: 0.2;
-  }
-}
-.pricing-card:not(.active):hover .pricing-card-cta,
-.pricing-card:not(.active) .pricing-card-cta:hover {
-  color: var(--color-offWhite);
-}
-.scylla-landing .progress {
-  transform: translateX(20px) rotate(45deg);
-  transition: 0.3s ease-in-out;
-  opacity: 0;
-  visibility: hidden;
-}
-.scylla-landing .progress.setvissible {
-  transform: translateX(0px) rotate(45deg);
-  opacity: 1;
-  visibility: visible;
 }
 .sticky-card {
   will-change: transform;

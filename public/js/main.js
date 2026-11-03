@@ -555,25 +555,6 @@
     initAnimations();
   });
 
-  // Pricing arrow SVG draw loop
-  const revealStroke = document.querySelector("#revealStroke");
-  if (revealStroke) {
-    gsap.fromTo(
-      "#revealStroke",
-      { drawSVG: "0% 0%" },
-      {
-        drawSVG: "0% 100%",
-        duration: 2,
-        ease: "power2.inOut",
-        repeat: -1,
-        repeatDelay: 0.4,
-        onRepeat: () => {
-          gsap.set("#revealStroke", { drawSVG: "0% 0%" });
-        },
-      },
-    );
-  }
-
   // Sticky Header hide/show on scroll
   onReady(() => {
     const header = document.querySelector(".header-area");
