@@ -35,6 +35,12 @@ export const auth = betterAuth({
                   "Name must be 32 characters or less",
               });
             }
+            return {
+              data: {
+                ...user,
+                name: parsed.data,
+              },
+            };
           }
         },
       },
@@ -49,6 +55,12 @@ export const auth = betterAuth({
                   "Name must be 32 characters or less",
               });
             }
+            return {
+              data: {
+                ...user,
+                name: parsed.data,
+              },
+            };
           }
         },
       },

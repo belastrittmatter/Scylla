@@ -7,14 +7,17 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "cn";
 import {
   UpdateAvatarCard,
-  UpdateNameCard,
+  UpdateFieldCard,
   ChangeEmailCard,
   DeleteAccountCard,
 } from "@daveyplate/better-auth-ui";
+import { useSession } from "@/lib/auth-client";
 import { ConnectedAccountsCard } from "@/components/settings/connected-accounts-card";
 import { userNameSchema } from "@/lib/validations/user";
 
 export function AccountSettingsView() {
+  const { data: session } = useSession();
+
   return (
     <div className="mx-auto max-w-4xl space-y-10 p-4 sm:p-6 lg:p-8">
       {/* Header with Title, Description, and Navigation back to App Settings */}
@@ -54,18 +57,19 @@ export function AccountSettingsView() {
           </div>
           <div className="space-y-4">
             <UpdateAvatarCard />
-            <UpdateNameCard
-              {...({
-                validate: (val: string) =>
-                  userNameSchema.safeParse(val).success,
-                errorMessage: {
-                  validate: "Please use 32 characters at maximum.",
-                  invalid: "Please use 32 characters at maximum.",
-                },
-              } as React.ComponentProps<typeof UpdateNameCard> & {
-                validate: (val: string) => boolean;
-                errorMessage: { validate: string; invalid: string };
-              })}
+            <UpdateFieldCard
+              name="name"
+              label="Name"
+              value={session?.user.name}
+              description="Please enter your full name, or a display name you are comfortable with."
+              instructions="Please use 32 characters at maximum."
+              placeholder="Enter your name"
+              required
+              validate={(val: string) => userNameSchema.safeParse(val).success}
+              errorMessage={{
+                required: "Name cannot be empty.",
+                validate: "Name must be between 1 and 32 characters.",
+              }}
             />
             <ChangeEmailCard />
           </div>

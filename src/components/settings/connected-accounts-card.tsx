@@ -35,11 +35,17 @@ export function ConnectedAccountsCard() {
     if (!authClient) return;
     setIsActionLoading(true);
     try {
-      await authClient.linkSocial({
+      const res = await authClient.linkSocial({
         provider: "google",
         callbackURL:
-          typeof window !== "undefined" ? window.location.href : "/settings",
+          typeof window !== "undefined"
+            ? window.location.href
+            : "/account/settings",
       });
+      if (res?.error) {
+        toast.error(res.error.message || "Failed to connect Google account");
+        setIsActionLoading(false);
+      }
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to connect Google account",

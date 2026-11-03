@@ -65,12 +65,21 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
     expect(pageHtml).toContain('href="/settings"');
   });
 
-  it("strictly enforces <= 32 character limit on userNameSchema using Zod", () => {
+  it("strictly enforces <= 32 character limit on userNameSchema and trims whitespace", () => {
     expect(userNameSchema.safeParse("Alex Developer").success).toBe(true);
     expect(userNameSchema.safeParse("a".repeat(32)).success).toBe(true);
     expect(userNameSchema.safeParse("a".repeat(33)).success).toBe(false);
     expect(userNameSchema.safeParse("").success).toBe(false);
     expect(userNameSchema.safeParse("   ").success).toBe(false);
+
+    // Verify trimming behavior
+    const trimmed = userNameSchema.parse("  Alex Developer  ");
+    expect(trimmed).toBe("Alex Developer");
+    const trimmed32 = userNameSchema.parse("   " + "a".repeat(32) + "   ");
+    expect(trimmed32).toBe("a".repeat(32));
+    expect(
+      userNameSchema.safeParse("   " + "a".repeat(33) + "   ").success,
+    ).toBe(false);
   });
 
   it("strictly enforces calendar settings and working hours schemas using Zod", () => {
