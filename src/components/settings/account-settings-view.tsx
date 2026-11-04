@@ -13,6 +13,7 @@ import {
 } from "@daveyplate/better-auth-ui";
 import { useSession } from "@/lib/auth-client";
 import { ConnectedAccountsCard } from "@/components/settings/connected-accounts-card";
+import { AgentCapabilitiesCard } from "@/components/settings/agent-capabilities-card";
 import { userNameSchema } from "@/lib/validations/user";
 
 export function AccountSettingsView() {
@@ -87,6 +88,22 @@ export function AccountSettingsView() {
           </div>
           <div className="space-y-4">
             <ConnectedAccountsCard />
+          </div>
+        </section>
+
+        {/* AI Agents & Capabilities Section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+              AI Agents &amp; MCP Integrations
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Manage capability grants and access permissions for autonomous AI
+              agents.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <AgentCapabilitiesCard />
           </div>
         </section>
 

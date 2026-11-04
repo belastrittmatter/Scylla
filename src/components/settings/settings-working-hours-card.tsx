@@ -73,19 +73,15 @@ export function SettingsWorkingHoursCard() {
     `${settings.dayEndHour}:00`;
 
   return (
-    <Card className="w-full pb-0 text-start shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Briefcase className="size-4 text-muted-foreground" />
-            <CardTitle className="text-base font-semibold">
-              Working Hours Window
-            </CardTitle>
-          </div>
-          <CardDescription className="text-xs text-muted-foreground">
-            Set your schedule boundaries for availability planning.
-          </CardDescription>
-        </div>
+    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
+      <CardHeader className="gap-1.5 px-6">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold md:text-xl">
+          <Briefcase className="size-5 text-muted-foreground" />
+          Working Hours Window
+        </CardTitle>
+        <CardDescription className="text-xs text-muted-foreground md:text-sm">
+          Set your schedule boundaries for availability planning.
+        </CardDescription>
       </CardHeader>
       <CardContent className="px-6 pb-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

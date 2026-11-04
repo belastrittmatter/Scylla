@@ -76,17 +76,15 @@ export function ConnectedAccountsCard() {
   };
 
   return (
-    <Card className="w-full pb-0 text-start shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4">
-        <div className="space-y-1">
-          <CardTitle className="text-base font-semibold">
-            Connected Accounts
-          </CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
-            Connect third-party OAuth providers for single sign-on and calendar
-            sync.
-          </CardDescription>
-        </div>
+    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
+      <CardHeader className="gap-1.5 px-6">
+        <CardTitle className="text-lg font-semibold md:text-xl">
+          Connected Accounts
+        </CardTitle>
+        <CardDescription className="text-xs text-muted-foreground md:text-sm">
+          Connect third-party OAuth providers for single sign-on and calendar
+          sync.
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="px-6 pb-6">

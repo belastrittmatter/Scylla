@@ -32,16 +32,14 @@ export function SettingsThemeCard() {
   };
 
   return (
-    <Card className="w-full pb-0 text-start shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4">
-        <div className="space-y-1">
-          <CardTitle className="text-base font-semibold">
-            Interface Theme
-          </CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
-            Select your preferred visual theme for the Scylla interface.
-          </CardDescription>
-        </div>
+    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
+      <CardHeader className="gap-1.5 px-6">
+        <CardTitle className="text-lg font-semibold md:text-xl">
+          Interface Theme
+        </CardTitle>
+        <CardDescription className="text-xs text-muted-foreground md:text-sm">
+          Select your preferred visual theme for the Scylla interface.
+        </CardDescription>
       </CardHeader>
       <CardContent className="px-6 pb-6">
         {mounted ? (
