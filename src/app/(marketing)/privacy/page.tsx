@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Shield, Lock, Eye, Database, RefreshCw, Mail } from "lucide-react";
+import { Shield, Lock, RefreshCw, Mail } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Scylla - The AI-Powered Task & Calendar Workspace",

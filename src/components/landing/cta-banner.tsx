@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { HardLink } from "./hard-link";
+import Link from "next/link";
 
 export function LandingCtaBanner() {
   return (
@@ -54,24 +54,28 @@ export function LandingCtaBanner() {
                   data-news-excerpt=""
                   className="mt-4 sm:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
                 >
-                  Join thousands of developers, designers, and high-velocity teams orchestrating sprint backlogs and multi-person calendars in one unified system.
+                  Join thousands of developers, designers, and high-velocity
+                  teams orchestrating sprint backlogs and multi-person calendars
+                  in one unified system.
                 </p>
                 <div
                   data-news-button=""
                   className="mt-6 sm:mt-8 lg:mt-10 flex flex-wrap items-center gap-4"
                 >
-                  <HardLink
+                  <Link
+                    prefetch={false}
                     className="button-primary inline-flex items-center justify-center px-7 py-3.5 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all cursor-pointer"
                     href="/auth/sign-in"
                   >
                     Get Started Free
-                  </HardLink>
-                  <HardLink
+                  </Link>
+                  <Link
+                    prefetch={false}
                     className="button-secondary text-sm cursor-pointer !py-3.5 px-6"
                     href="/calendar"
                   >
                     Explore Live Calendar
-                  </HardLink>
+                  </Link>
                 </div>
               </div>
             </div>

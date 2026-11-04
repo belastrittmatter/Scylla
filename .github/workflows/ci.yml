@@ -7,14 +7,44 @@ on:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  validate:
-    name: Lint, Typecheck & Build
+  changes:
+    name: Detect Changed Paths
+    timeout-minutes: 5
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Filter file paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!docs/**'
+
+  quality:
+    name: Quality (${{ matrix.task }})
+    timeout-minutes: 10
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [format, typecheck, lint]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,7 +52,109 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run ${{ matrix.task }}
+        run: |
+          if [ "${{ matrix.task }}" = "format" ]; then
+            bun run format:check
+          elif [ "${{ matrix.task }}" = "typecheck" ]; then
+            bun run typecheck
+          elif [ "${{ matrix.task }}" = "lint" ]; then
+            bun run lint
+          fi
+
+  unit-tests:
+    name: Unit & UI Tests
+    timeout-minutes: 10
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run unit & UI test suites
+        run: bun test tests/ui tests/utils tests/test-utils tests/client/calendar-settings.test.ts
+
+  integration-tests:
+    name: Integration, DB & MCP Tests
+    timeout-minutes: 15
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: scylla_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Initialize clean database schema
+        run: bun run db:push --force
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/scylla_test"
+
+      - name: Run database, service, action & API test suites
+        run: bun test tests/api tests/actions tests/services tests/db tests/client/api-client.test.ts tests/client/use-user-search.test.ts
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/scylla_test"
+          BETTER_AUTH_SECRET: "ci_dummy_secret_ci_dummy_secret_32_chars_min"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+
+      - name: Verify MCP tool contracts & health check
+        run: bun run test:mcp
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/scylla_test"
+          BETTER_AUTH_SECRET: "ci_dummy_secret_ci_dummy_secret_32_chars_min"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+
+  build:
+    name: Next.js Production Build
+    timeout-minutes: 15
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -36,15 +168,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lock') }}-
 
-      - name: Check formatting (Prettier)
-        run: bun run format:check
-
-      - name: Typecheck (TypeScript)
-        run: bun run typecheck
-
-      - name: Lint (ESLint)
-        run: bun run lint
-
       - name: Verify Next.js Build
         run: bun run build
         env:
@@ -53,3 +176,54 @@ jobs:
           BETTER_AUTH_URL: "http://localhost:3000"
           NEXT_PUBLIC_APP_URL: "http://localhost:3000"
           NEXT_TELEMETRY_DISABLED: "1"
+
+  security:
+    name: Security & Secret Scan
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks secret detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      # Only critical/high block; the 3 remaining advisories are dev-only low/moderate.
+      - name: Run dependency audit
+        run: bun audit --audit-level=high
+
+  ci:
+    name: CI Verdict Gate
+    timeout-minutes: 5
+    if: always()
+    needs:
+      - changes
+      - quality
+      - unit-tests
+      - integration-tests
+      - build
+      - security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate pipeline verdict
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "Pipeline job results: $RESULTS"
+          if echo "$RESULTS" | grep -q '"result": "failure"' || echo "$RESULTS" | grep -q '"result": "cancelled"'; then
+            echo "❌ One or more required upstream jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "✅ All CI checks passed or were safely skipped."

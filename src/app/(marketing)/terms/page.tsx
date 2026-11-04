@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileText, CheckCircle2, AlertCircle, Scale, Mail } from "lucide-react";
+import { FileText, CheckCircle2, Scale, Mail } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Scylla - The AI-Powered Task & Calendar Workspace",

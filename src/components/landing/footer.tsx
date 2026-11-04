@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { HardLink } from "./hard-link";
 
 interface FooterLinkItem {
   label: string;
@@ -37,8 +36,6 @@ const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Resources",
     links: [
-      { label: "Features Overview", href: "/features" },
-      { label: "Pricing Plans", href: "#pricing" },
       {
         label: "MCP AI Integrations",
         href: "/calendar",
@@ -49,14 +46,6 @@ const FOOTER_COLUMNS: FooterColumn[] = [
         href: "/support",
         isDashboardLink: true,
       },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About Us", href: "/about" },
-      { label: "Our Missions", href: "/about#missions" },
-      { label: "Leadership Team", href: "/about#team" },
     ],
   },
   {
@@ -100,7 +89,7 @@ export function LandingFooter() {
               </div>
 
               {/* Navigation Columns */}
-              <div className="lg:max-w-[660px] w-full flex items-start justify-between gap-4 sm:gap-6 lg:gap-8 flex-col sm:flex-row footer-menu-wrapper">
+              <div className="lg:max-w-[640px] w-full flex items-start justify-between gap-4 sm:gap-8 lg:gap-10 flex-col sm:flex-row footer-menu-wrapper">
                 {FOOTER_COLUMNS.map((column) => (
                   <div
                     key={column.title}
@@ -118,12 +107,13 @@ export function LandingFooter() {
                       <ul className="flex flex-col gap-2.5 pt-4.5">
                         {column.links.map((link) => (
                           <li key={link.label}>
-                            <HardLink
+                            <Link
+                              prefetch={false}
                               className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
                               href={link.href}
                             >
                               {link.label}
-                            </HardLink>
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -135,35 +125,13 @@ export function LandingFooter() {
 
             {/* Bottom Copyright */}
             <div
-              className="mt-4 sm:mt-12 flex items-center justify-center md:justify-between gap-4 flex-col md:flex-row pt-5 lg:pt-6 border-t border-lineColor/50 overflow-hidden relative z-50"
+              className="mt-4 sm:mt-12 flex items-center justify-center pt-5 lg:pt-6 border-t border-lineColor/50 overflow-hidden relative z-50"
               data-sttr-card=""
             >
               <p className="text-white/80 text-center text-sm">
                 © 2026 Scylla. Built for high-velocity teams and seamless
                 scheduling.
               </p>
-              <div className="flex items-center gap-2 sm:gap-5 flex-wrap sm:flex-nowrap justify-center text-sm">
-                <HardLink
-                  className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
-                  href="/privacy"
-                >
-                  Privacy Policy
-                </HardLink>
-                <div className="w-[5px] h-[5px] rounded-full bg-offWhite/80"></div>
-                <HardLink
-                  className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
-                  href="/terms"
-                >
-                  Terms of Service
-                </HardLink>
-                <div className="w-[5px] h-[5px] rounded-full bg-offWhite/80"></div>
-                <HardLink
-                  className="text-offWhite/80 transition-colors duration-300 hover:text-primary"
-                  href="/ai-policy"
-                >
-                  AI Policy
-                </HardLink>
-              </div>
             </div>
           </div>
         </div>

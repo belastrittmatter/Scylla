@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bot, Shield, CheckCircle2, Lock, Mail } from "lucide-react";
+import { Bot, Shield, Mail } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "AI & Model Context Protocol Policy | Scylla",

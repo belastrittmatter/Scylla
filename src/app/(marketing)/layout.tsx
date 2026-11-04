@@ -19,7 +19,6 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="scylla-landing min-h-screen bg-[#09090b] text-[#FBFBFB] selection:bg-primary selection:text-white">
-      <link id="scylla-landing-css" rel="stylesheet" href="/css/landing.css" />
       {/* Dynamic GSAP, ScrollSmoother, and interactive scripts */}
       <LandingScripts />
 

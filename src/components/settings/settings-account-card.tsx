@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LogOut, Sparkles } from "lucide-react";
+import { performSignOut } from "@/components/auth/sign-out";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,6 +22,9 @@ export function SettingsAccountCard({
   userName,
   userEmail,
 }: SettingsAccountCardProps) {
+  const router = useRouter();
+  const [isSigningOut, setIsSigningOut] = React.useState(false);
+
   const initials = userName
     ? userName
         .split(" ")
@@ -27,6 +33,15 @@ export function SettingsAccountCard({
         .slice(0, 2)
         .toUpperCase()
     : "U";
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    await performSignOut({
+      onNavigateSignIn: () => router.replace("/auth/sign-in"),
+      onRefresh: () => router.refresh(),
+    });
+  };
 
   return (
     <Card className="shadow-xs border-neutral-200/80 dark:border-neutral-800 dark:bg-neutral-900">
@@ -62,11 +77,25 @@ export function SettingsAccountCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="flex size-2 animate-pulse rounded-full bg-emerald-500" />
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              Google Calendar & Meet Connected
-            </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex size-2 animate-pulse rounded-full bg-emerald-500" />
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                Google Calendar & Meet Connected
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isSigningOut}
+              onClick={handleSignOut}
+              className="gap-1.5 border-neutral-200 text-xs text-neutral-700 hover:text-red-600 dark:border-neutral-800 dark:text-neutral-300 dark:hover:text-red-400"
+            >
+              <LogOut className="size-3.5" />
+              {isSigningOut ? "Signing out..." : "Sign out"}
+            </Button>
           </div>
         </div>
       </CardContent>

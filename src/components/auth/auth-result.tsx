@@ -42,7 +42,7 @@ function AuthResultView({ className, fallbackIntent }: AuthResultProps) {
       case "continue":
         return {
           label: localization.auth.callbackContinue,
-          to: result.redirectTo ?? "/",
+          to: result.redirectTo ?? "/calendar",
         };
       case "forgotPassword":
         return {

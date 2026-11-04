@@ -5,8 +5,6 @@ import {
   LandingCalendar,
   LandingUseCases,
   LandingIntegrations,
-  LandingTestimonials,
-  LandingPricing,
 } from "@/components/landing";
 
 export default function LandingPage() {
@@ -18,8 +16,6 @@ export default function LandingPage() {
       <LandingCalendar />
       <LandingUseCases />
       <LandingIntegrations />
-      <LandingTestimonials />
-      <LandingPricing />
     </>
   );
 }
