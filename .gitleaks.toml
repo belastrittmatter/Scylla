@@ -1,0 +1,22 @@
+title = "Scylla Gitleaks Configuration"
+
+[allowlist]
+description = "Allowlist test fixtures, mock credentials, and documentation"
+paths = [
+  '''^tests/.*''',
+  '''^scripts/test-mcp-tools\.ts$''',
+  '''^docs/.*'''
+]
+regexes = [
+  '''agent_mock_token_[a-zA-Z0-9_-]+''',
+  '''ci_dummy_secret_[a-zA-Z0-9_-]+''',
+  '''scoped_access_token_[a-zA-Z0-9_-]+''',
+  '''session_token_agent_route_test''',
+  '''mock-valid-token'''
+]
+stopwords = [
+  "agent_mock_token_123",
+  "ci_dummy_secret_ci_dummy_secret_32_chars_min",
+  "scoped_access_token_123",
+  "session_token_agent_route_test"
+]
