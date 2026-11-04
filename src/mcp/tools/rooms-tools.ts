@@ -6,6 +6,7 @@ import {
 import { db, meetingRoom } from "@/db";
 import { listMeetingRoomsSchema } from "../schemas";
 import type { McpToolContext } from "../types";
+import { verifyScope } from "./auth-helpers";
 
 export function registerRoomsTools(server: McpServer, ctx: McpToolContext) {
   server.registerTool(
@@ -19,6 +20,9 @@ export function registerRoomsTools(server: McpServer, ctx: McpToolContext) {
       },
     },
     async ({ officeLocation, minCapacity }) => {
+      const scopeErr = verifyScope(ctx, "rooms.reservation");
+      if (scopeErr) return scopeErr;
+
       const [googleRooms, dbRooms] = await Promise.all([
         ctx
           .getAccessToken()

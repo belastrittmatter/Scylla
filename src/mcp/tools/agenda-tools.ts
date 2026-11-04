@@ -5,6 +5,7 @@ import { buildPersonalCalendarMarkdown } from "@/utils/mcp-markdown-builder";
 import { getAgendaUiHtml } from "@/utils/mcp-ui-builder";
 import { getMyAgendaSchema, listEventTypesSchema } from "../schemas";
 import type { McpToolContext } from "../types";
+import { verifyScope } from "./auth-helpers";
 
 export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
   // 0. Register UI Resource for MCP Apps (SEP-1865)
@@ -36,6 +37,9 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: listEventTypesSchema,
     },
     async () => {
+      const scopeErr = verifyScope(ctx, "calendar.readonly");
+      if (scopeErr) return scopeErr;
+
       const eventTypes = await SchedulerService.getEventTypes(ctx.userId);
       return {
         content: [{ type: "text", text: JSON.stringify(eventTypes, null, 2) }],
@@ -59,6 +63,9 @@ export function registerAgendaTools(server: McpServer, ctx: McpToolContext) {
       },
     },
     async ({ date, days = 1 }) => {
+      const scopeErr = verifyScope(ctx, "calendar.readonly");
+      if (scopeErr) return scopeErr;
+
       const [token, currentUserProfile] = await Promise.all([
         ctx.getAccessToken(),
         ctx.getCurrentUser(),

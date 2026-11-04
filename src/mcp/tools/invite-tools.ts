@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { MeetingInviteService } from "@/services/meeting-invite";
 import { createShareableBookingLinkSchema } from "../schemas";
 import type { McpToolContext } from "../types";
+import { verifyScope } from "./auth-helpers";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -22,6 +23,14 @@ export function registerInviteTools(server: McpServer, ctx: McpToolContext) {
       roomId,
       allowedGuestEmails = [],
     }) => {
+      const scopeErr = verifyScope(ctx, "calendar.events");
+      if (scopeErr) return scopeErr;
+
+      if (roomId) {
+        const roomScopeErr = verifyScope(ctx, "rooms.reservation");
+        if (roomScopeErr) return roomScopeErr;
+      }
+
       const [token, currentUserProfile] = await Promise.all([
         ctx.getAccessToken(),
         ctx.getCurrentUser(),

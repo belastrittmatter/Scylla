@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { UserService } from "@/services/user";
 import { resolveUserSchema } from "../schemas";
 import type { McpToolContext } from "../types";
+import { verifyScope } from "./auth-helpers";
 
 export function registerUserTools(server: McpServer, ctx: McpToolContext) {
   server.registerTool(
@@ -12,6 +13,9 @@ export function registerUserTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: resolveUserSchema,
     },
     async ({ query, limit = 5 }) => {
+      const scopeErr = verifyScope(ctx, "calendar.readonly");
+      if (scopeErr) return scopeErr;
+
       const token = await ctx.getAccessToken();
       const teammates = await UserService.searchTeammates(query, limit, {
         accessToken: token || undefined,

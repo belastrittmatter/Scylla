@@ -24,7 +24,7 @@ import { buildTaskBoardMarkdown } from "@/utils/mcp-markdown-builder";
 import { getTaskBoardUiHtml } from "@/utils/mcp-ui-builder";
 import type { McpToolContext } from "../types";
 import type { TaskStatus, TaskPriority } from "@/services/task/task-types";
-import { resolveProject, resolveUserId } from "./auth-helpers";
+import { resolveProject, resolveUserId, verifyScope } from "./auth-helpers";
 
 function parseAndValidateDate(
   dateStr: string | undefined | null,
@@ -131,6 +131,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: listTeamsSchema,
     },
     async () => {
+      const scopeErr = verifyScope(ctx, "teams.readonly");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const teams = await TeamService.listUserTeams(currentUser.id);
 
@@ -167,6 +170,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: listProjectsSchema,
     },
     async ({ teamId, status }) => {
+      const scopeErr = verifyScope(ctx, "projects.readonly");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const team = await resolveAndVerifyTeam(teamId, currentUser.id);
 
@@ -209,6 +215,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: createProjectSchema,
     },
     async ({ teamId, name, description, status, color }) => {
+      const scopeErr = verifyScope(ctx, "projects.manage");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const team = await resolveAndVerifyTeam(teamId, currentUser.id);
 
@@ -267,6 +276,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       overdue,
       hasActiveSession,
     }) => {
+      const scopeErr = verifyScope(ctx, "tasks.readonly");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const targetUserQuery = userQuery || assigneeId;
 
@@ -423,6 +435,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       dueDate,
       estimatedMinutes,
     }) => {
+      const scopeErr = verifyScope(ctx, "tasks.write");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const team = await resolveAndVerifyTeam(teamId, currentUser.id);
 
@@ -543,6 +558,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       dueDate,
       estimatedMinutes,
     }) => {
+      const scopeErr = verifyScope(ctx, "tasks.write");
+      if (scopeErr) return scopeErr;
+
       const [currentUser, existingTask] = await Promise.all([
         ctx.getCurrentUser(),
         TaskService.getTaskById(taskId),
@@ -685,6 +703,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       },
     },
     async ({ teamId, projectId }) => {
+      const scopeErr = verifyScope(ctx, "tasks.readonly");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const [team, projectObj] = await Promise.all([
         resolveAndVerifyTeam(teamId, currentUser.id),
@@ -791,6 +812,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: getActiveTasksSchema,
     },
     async ({ teamId, userId: userQuery }) => {
+      const scopeErr = verifyScope(ctx, "tasks.readonly");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const [targetTeamIds, resolvedAssignee] = await Promise.all([
         teamId
@@ -915,6 +939,9 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: getTaskTimelineSchema,
     },
     async ({ taskId }) => {
+      const scopeErr = verifyScope(ctx, "tasks.readonly");
+      if (scopeErr) return scopeErr;
+
       const currentUser = await ctx.getCurrentUser();
       const taskRecord = await TaskService.getTaskById(taskId);
       if (!taskRecord) {

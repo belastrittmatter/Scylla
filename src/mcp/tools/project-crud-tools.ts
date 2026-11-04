@@ -26,6 +26,7 @@ export function registerProjectCrudTools(
     },
     async ({ projectId, teamId }) => {
       try {
+        ctx.assertScope("projects.readonly");
         const [currentUser, initialProj] = await Promise.all([
           ctx.getCurrentUser(),
           ProjectService.getProjectById(projectId),
@@ -66,6 +67,7 @@ export function registerProjectCrudTools(
     },
     async ({ projectId, name, slug, description, status, color }) => {
       try {
+        ctx.assertScope("projects.manage");
         const [currentUser, proj] = await Promise.all([
           ctx.getCurrentUser(),
           ProjectService.getProjectById(projectId),
@@ -98,12 +100,13 @@ export function registerProjectCrudTools(
     },
     async ({ projectId }) => {
       try {
+        ctx.assertScope("projects.delete");
         const [currentUser, proj] = await Promise.all([
           ctx.getCurrentUser(),
           ProjectService.getProjectById(projectId),
         ]);
         if (!proj) throw new Error(`Project '${projectId}' not found.`);
-        await resolveTeamAndVerifyAccess(proj.teamId, currentUser.id);
+        await resolveTeamAndVerifyAccess(proj.teamId, currentUser.id, "admin");
 
         await ProjectService.deleteProject(proj.id);
         return formatToolSuccess({
