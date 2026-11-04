@@ -13,6 +13,7 @@ concurrency:
 jobs:
   changes:
     name: Detect Changed Paths
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,12 +30,14 @@ jobs:
         with:
           filters: |
             code:
+              - '**'
               - '!**/*.md'
               - '!.github/ISSUE_TEMPLATE/**'
               - '!docs/**'
 
   quality:
     name: Quality (${{ matrix.task }})
+    timeout-minutes: 10
     needs: [changes]
     if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -66,6 +69,7 @@ jobs:
 
   unit-tests:
     name: Unit & UI Tests
+    timeout-minutes: 10
     needs: [changes]
     if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -86,6 +90,7 @@ jobs:
 
   integration-tests:
     name: Integration, DB & MCP Tests
+    timeout-minutes: 15
     needs: [changes]
     if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -138,6 +143,7 @@ jobs:
 
   build:
     name: Next.js Production Build
+    timeout-minutes: 15
     needs: [changes]
     if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -173,6 +179,7 @@ jobs:
 
   security:
     name: Security & Secret Scan
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -198,6 +205,7 @@ jobs:
 
   ci:
     name: CI Verdict Gate
+    timeout-minutes: 5
     if: always()
     needs:
       - changes
@@ -209,8 +217,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate pipeline verdict
+        env:
+          RESULTS: ${{ toJSON(needs) }}
         run: |
-          RESULTS='${{ toJSON(needs) }}'
           echo "Pipeline job results: $RESULTS"
           if echo "$RESULTS" | grep -q '"result": "failure"' || echo "$RESULTS" | grep -q '"result": "cancelled"'; then
             echo "❌ One or more required upstream jobs failed or were cancelled."

@@ -89,6 +89,9 @@ export function testWorkflowStructure() {
     "bun audit",
     "ci:",
     "if: always()",
+    "- '**'",
+    "RESULTS: ${{ toJSON(needs) }}",
+    "timeout-minutes:",
   ];
 
   for (const token of requiredTokens) {
