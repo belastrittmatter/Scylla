@@ -62,8 +62,14 @@ describe("MCP Team CRUD Tools Suite", () => {
   });
 
   it("manages complete team lifecycle with role-based permissions", async () => {
-    const ownerServer = await createCalendarMcpServer({ sub: ownerId });
-    const strangerServer = await createCalendarMcpServer({ sub: strangerId });
+    const ownerServer = await createCalendarMcpServer({
+      sub: ownerId,
+      scopes: ["*"],
+    });
+    const strangerServer = await createCalendarMcpServer({
+      sub: strangerId,
+      scopes: ["*"],
+    });
     const ownerTools = getTools(ownerServer);
     const strangerTools = getTools(strangerServer);
 

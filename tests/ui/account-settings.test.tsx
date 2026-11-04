@@ -45,6 +45,8 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
     // Verify structured sections and cards
     expect(html).toContain("Profile");
     expect(html).toContain("Connected Accounts");
+    expect(html).toContain("AI Agents &amp; MCP Integrations");
+    expect(html).toContain("AI Agent &amp; MCP Capabilities");
     expect(html).toContain("Danger Zone");
     // Verify Security / Password section was removed as requested
     expect(html).not.toContain("Security &amp; Credentials");
