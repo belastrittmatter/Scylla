@@ -14,11 +14,17 @@ import type {
   EventCalendarSlotInfo,
 } from "@/components/reui/event-calendar/event-calendar-types";
 import { type CustomEventData } from "@/mock-data/calendar-events";
-import {
-  UntitledCalendarNav,
-  type CalendarTabFilter,
-} from "@/components/calendar/untitled-calendar-nav";
 import type { CalendarAttendeeItem } from "@/components/calendar/calendar-attendee-stack";
+import {
+  CalendarToolbar,
+  CalendarMobileDayLock,
+} from "@/components/calendar/calendar-toolbar";
+import { CalendarTeamPanel } from "@/components/calendar/calendar-team-panel";
+import { CalendarPeoplePanel } from "@/components/calendar/calendar-people-panel";
+import { CalendarRoomsPanel } from "@/components/calendar/calendar-rooms-panel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, RefreshCw, Search } from "lucide-react";
 import dynamic from "next/dynamic";
 import { apiClient } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
@@ -46,7 +52,6 @@ export function CalendarDashboard() {
     [],
   );
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = React.useState<CalendarTabFilter>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [selectedSlotRange, setSelectedSlotRange] = React.useState<{
@@ -63,7 +68,6 @@ export function CalendarDashboard() {
   const [selectedAttendees, setSelectedAttendees] = React.useState<
     CalendarAttendeeItem[]
   >([]);
-  const [isCalculatingSlots, setIsCalculatingSlots] = React.useState(false);
 
   const handleToggleAttendee = React.useCallback(
     (item: CalendarAttendeeItem) => {
@@ -77,14 +81,6 @@ export function CalendarDashboard() {
     },
     [],
   );
-
-  const handleRemoveAttendee = React.useCallback((id: string) => {
-    setSelectedAttendees((prev) => prev.filter((a) => a.id !== id));
-  }, []);
-
-  const handleClearAllAttendees = React.useCallback(() => {
-    setSelectedAttendees([]);
-  }, []);
 
   // Track visible date range from calendar view (week, month, day) for performance optimization
   const [dateRange, setDateRange] = React.useState<{
@@ -140,9 +136,6 @@ export function CalendarDashboard() {
       const attendeeEmails = selectedAttendees
         .map((a) => a.email)
         .filter(Boolean);
-      if (attendeeEmails.length > 0) {
-        setIsCalculatingSlots(true);
-      }
       try {
         const calendarData = await apiClient.calendar
           .getEvents(
@@ -213,7 +206,6 @@ export function CalendarDashboard() {
       } finally {
         if (requestId === requestIdRef.current) {
           setIsRefreshing(false);
-          setIsCalculatingSlots(false);
         }
       }
     },
@@ -226,12 +218,9 @@ export function CalendarDashboard() {
     });
   }, [syncCalendar]);
 
-  // Filter events by tab & search query
+  // Filter events by search query
   const displayedEvents = React.useMemo(() => {
     return events.filter((ev) => {
-      if (activeTab !== "all" && ev.data?.category !== activeTab) {
-        return false;
-      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return (
@@ -242,7 +231,7 @@ export function CalendarDashboard() {
       }
       return true;
     });
-  }, [events, activeTab, searchQuery]);
+  }, [events, searchQuery]);
 
   const handleAddEvent = (newEvent: CalendarEvent<CustomEventData>) => {
     setEvents((prev) => {
@@ -309,167 +298,213 @@ export function CalendarDashboard() {
   );
 
   return (
-    <div className="flex h-full min-h-[calc(100svh-57px)] w-full flex-col bg-white dark:bg-neutral-900">
-      <EventCalendar<CustomEventData>
-        key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}`}
-        events={displayedEvents}
-        onEventsChange={setEvents}
-        onRangeChange={handleRangeChange}
-        defaultView={settings.defaultView}
-        defaultDate={new Date()}
-        views={["week", "month", "day", "agenda"]}
-        dayStartHour={settings.dayStartHour}
-        dayEndHour={settings.dayEndHour}
-        weekStartsOn={settings.weekStartsOn}
-        slotDuration={settings.slotDuration}
-        viewSettings={{
-          weekends: settings.showWeekends,
-          nowIndicator: settings.showNowIndicator,
-        }}
-        onSelectSlot={handleSelectSlot}
-        onSlotClick={handleSlotClick}
-        onEventUpdate={handleEventUpdate}
-        className="flex h-full flex-1 flex-col"
-        classNames={{
-          timeGrid: "border-neutral-200/80 dark:border-neutral-800",
-          timeGutter: "w-18",
-          dayColumn: "border-neutral-100 dark:border-neutral-800/80",
-          event: "rounded-lg border shadow-2xs hover:shadow-xs transition-all",
-        }}
-        onEventClick={(occurrence) => {
-          setSelectedEvent(occurrence.event);
-          setIsDetailOpen(true);
-        }}
-        renderDayHeader={({ day, isToday }) => {
-          const isHighlighted = isToday;
-          const dayName =
-            format(day, "EEE") === "Thu" ? "Thur" : format(day, "EEE");
-          const dayNumber = format(day, "d");
+    <div className="flex min-h-[calc(100svh-57px)] w-full flex-col gap-5 p-6">
+      <header className="flex flex-wrap items-start gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Calendar</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Plan meetings across your team and rooms.
+          </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="relative w-52">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search events"
+              aria-label="Search events"
+              className="h-8 pl-8 text-xs"
+            />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => syncCalendar(true)}
+            aria-label="Refresh calendar"
+          >
+            <RefreshCw className={isRefreshing ? "animate-spin" : undefined} />
+          </Button>
+          <Button
+            onClick={() => {
+              setSelectedSlotRange(null);
+              setIsAddOpen(true);
+            }}
+            className="gap-1.5"
+          >
+            <Plus />
+            Add event
+          </Button>
+        </div>
+      </header>
 
-          return (
-            <div className="flex items-center justify-center py-2.5">
-              <span
-                className={`text-xs ${isHighlighted ? "font-semibold text-orange-600 dark:text-orange-400" : "font-medium text-neutral-600 dark:text-neutral-400"}`}
-              >
-                {dayName}
-              </span>
-              {isHighlighted ? (
-                <span className="shadow-2xs ml-1.5 flex size-6 items-center justify-center rounded-full bg-orange-500 text-xs font-semibold text-white ring-2 ring-orange-500/20">
-                  {dayNumber}
-                </span>
-              ) : (
-                <span className="ml-1.5 text-xs font-medium text-neutral-800 dark:text-neutral-200">
-                  {dayNumber}
-                </span>
-              )}
-            </div>
-          );
-        }}
-        renderNowIndicator={
-          settings.showNowIndicator
-            ? ({ time }) => (
-                <div className="relative flex w-full items-center">
-                  <div className="w-18 shrink-0 pr-2.5 text-right">
-                    <span className="text-[11px] font-semibold text-orange-600 dark:text-orange-400">
-                      {format(
-                        time,
-                        settings.timeFormat === "24h" ? "HH:mm" : "h:mm a",
-                      )}{" "}
-                      •
+      <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <CalendarTeamPanel
+            selectedAttendees={selectedAttendees}
+            onToggleAttendee={handleToggleAttendee}
+          />
+          <CalendarPeoplePanel
+            selectedAttendees={selectedAttendees}
+            onToggleAttendee={handleToggleAttendee}
+          />
+          <CalendarRoomsPanel
+            selectedAttendees={selectedAttendees}
+            onToggleAttendee={handleToggleAttendee}
+          />
+        </div>
+
+        <div className="flex h-[calc(100svh-12rem)] min-h-[560px] min-w-0 flex-col overflow-hidden rounded-[10px] border bg-card shadow-sm">
+          <EventCalendar<CustomEventData>
+            key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}`}
+            events={displayedEvents}
+            onEventsChange={setEvents}
+            onRangeChange={handleRangeChange}
+            defaultView={settings.defaultView}
+            defaultDate={new Date()}
+            views={["week", "month", "day", "agenda"]}
+            dayStartHour={settings.dayStartHour}
+            dayEndHour={settings.dayEndHour}
+            weekStartsOn={settings.weekStartsOn}
+            slotDuration={settings.slotDuration}
+            viewSettings={{
+              weekends: settings.showWeekends,
+              nowIndicator: settings.showNowIndicator,
+            }}
+            onSelectSlot={handleSelectSlot}
+            onSlotClick={handleSlotClick}
+            onEventUpdate={handleEventUpdate}
+            className="flex h-full min-h-0 flex-col"
+            classNames={{
+              timeGrid: "border-border",
+              timeGutter: "w-18",
+              dayColumn: "border-border",
+              event:
+                "rounded-lg border shadow-2xs transition-all hover:shadow-xs",
+            }}
+            onEventClick={(occurrence) => {
+              setSelectedEvent(occurrence.event);
+              setIsDetailOpen(true);
+            }}
+            renderDayHeader={({ day, isToday }) => {
+              const isHighlighted = isToday;
+              const dayName =
+                format(day, "EEE") === "Thu" ? "Thur" : format(day, "EEE");
+              const dayNumber = format(day, "d");
+
+              return (
+                <div className="flex items-center justify-center py-2.5">
+                  <span
+                    className={`text-xs ${isHighlighted ? "font-semibold text-primary" : "font-medium text-muted-foreground"}`}
+                  >
+                    {dayName}
+                  </span>
+                  {isHighlighted ? (
+                    <span className="shadow-2xs ml-1.5 flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground ring-2 ring-primary/20">
+                      {dayNumber}
+                    </span>
+                  ) : (
+                    <span className="ml-1.5 text-xs font-medium text-foreground">
+                      {dayNumber}
+                    </span>
+                  )}
+                </div>
+              );
+            }}
+            renderNowIndicator={
+              settings.showNowIndicator
+                ? ({ time }) => (
+                    <div className="relative flex w-full items-center">
+                      <div className="w-18 shrink-0 pr-2.5 text-right">
+                        <span className="text-[11px] font-semibold text-primary">
+                          {format(
+                            time,
+                            settings.timeFormat === "24h" ? "HH:mm" : "h:mm a",
+                          )}{" "}
+                          •
+                        </span>
+                      </div>
+                      <div className="flex-1 border-b-2 border-primary" />
+                    </div>
+                  )
+                : () => null
+            }
+            renderEvent={({ occurrence, segment, view }) => {
+              const { event } = occurrence;
+              const timePattern =
+                settings.timeFormat === "24h" ? "HH:mm" : "h:mm a";
+              const startTime = format(occurrence.start, timePattern);
+              const endTime = format(occurrence.end, timePattern);
+              const timeRange = `${startTime} – ${endTime}`;
+
+              const durationMinutes =
+                (occurrence.end.getTime() - occurrence.start.getTime()) /
+                (1000 * 60);
+              const segmentMinutes =
+                segment &&
+                segment.startMin !== undefined &&
+                segment.endMin !== undefined
+                  ? segment.endMin - segment.startMin
+                  : durationMinutes;
+              const isShort = durationMinutes <= 30 || segmentMinutes <= 30;
+              const isMedium = segmentMinutes <= 45;
+
+              const hasDot = event.data?.hasDot;
+              const dotColor = event.data?.dotColor || event.color;
+
+              if (isShort || view === "month") {
+                return (
+                  <div className="flex w-full select-none items-center gap-1 overflow-hidden text-xs leading-none">
+                    {hasDot && (
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: dotColor }}
+                      />
+                    )}
+                    <span className="min-w-0 truncate font-semibold">
+                      {event.title}
+                      <span className="ml-1 text-[11px] font-normal opacity-85">
+                        , {timeRange}
+                      </span>
                     </span>
                   </div>
-                  <div className="flex-1 border-b-2 border-orange-500/70 dark:border-orange-500/60" />
-                </div>
-              )
-            : () => null
-        }
-        renderEvent={({ occurrence, segment, view }) => {
-          const { event } = occurrence;
-          const timePattern =
-            settings.timeFormat === "24h" ? "HH:mm" : "h:mm a";
-          const startTime = format(occurrence.start, timePattern);
-          const endTime = format(occurrence.end, timePattern);
-          const timeRange = `${startTime} – ${endTime}`;
+                );
+              }
 
-          const durationMinutes =
-            (occurrence.end.getTime() - occurrence.start.getTime()) /
-            (1000 * 60);
-          const segmentMinutes =
-            segment &&
-            segment.startMin !== undefined &&
-            segment.endMin !== undefined
-              ? segment.endMin - segment.startMin
-              : durationMinutes;
-          const isShort = durationMinutes <= 30 || segmentMinutes <= 30;
-          const isMedium = segmentMinutes <= 45;
-
-          const hasDot = event.data?.hasDot;
-          const dotColor = event.data?.dotColor || event.color;
-
-          if (isShort || view === "month") {
-            return (
-              <div className="flex w-full select-none items-center gap-1 overflow-hidden text-xs leading-none">
-                {hasDot && (
-                  <span
-                    className="size-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: dotColor }}
-                  />
-                )}
-                <span className="min-w-0 truncate font-semibold">
-                  {event.title}
-                  <span className="ml-1 text-[11px] font-normal opacity-85">
-                    , {timeRange}
+              return (
+                <div className="flex h-full w-full select-none flex-col justify-start gap-0.5 overflow-hidden text-xs">
+                  <div className="flex min-w-0 items-start justify-between gap-1">
+                    <span
+                      className={`${isMedium ? "line-clamp-1" : "line-clamp-2"} min-w-0 font-semibold leading-tight tracking-tight`}
+                    >
+                      {event.title}
+                    </span>
+                    {hasDot && (
+                      <span
+                        className="mt-0.5 size-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: dotColor }}
+                      />
+                    )}
+                  </div>
+                  <span className="truncate whitespace-nowrap text-[11px] font-normal leading-tight opacity-85">
+                    {timeRange}
                   </span>
-                </span>
-              </div>
-            );
-          }
-
-          return (
-            <div className="flex h-full w-full select-none flex-col justify-start gap-0.5 overflow-hidden text-xs">
-              <div className="flex min-w-0 items-start justify-between gap-1">
-                <span
-                  className={`${isMedium ? "line-clamp-1" : "line-clamp-2"} min-w-0 font-semibold leading-tight tracking-tight`}
-                >
-                  {event.title}
-                </span>
-                {hasDot && (
-                  <span
-                    className="mt-0.5 size-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: dotColor }}
-                  />
-                )}
-              </div>
-              <span className="truncate whitespace-nowrap text-[11px] font-normal leading-tight opacity-85">
-                {timeRange}
-              </span>
+                </div>
+              );
+            }}
+          >
+            <CalendarToolbar weekStartsOn={settings.weekStartsOn} />
+            <CalendarMobileDayLock />
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+              <EventCalendarContent className="flex-1" />
             </div>
-          );
-        }}
-      >
-        <UntitledCalendarNav
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          weekStartsOn={settings.weekStartsOn}
-          onOpenAddEvent={() => {
-            setSelectedSlotRange(null);
-            setIsAddOpen(true);
-          }}
-          onRefresh={() => syncCalendar(true)}
-          isRefreshing={isRefreshing}
-          currentUser={session?.user}
-          selectedAttendees={selectedAttendees}
-          onToggleAttendee={handleToggleAttendee}
-          onRemoveAttendee={handleRemoveAttendee}
-          onClearAllAttendees={handleClearAllAttendees}
-          isCalculatingSlots={isCalculatingSlots}
-        />
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          <EventCalendarContent className="flex-1" />
+          </EventCalendar>
         </div>
-      </EventCalendar>
+      </div>
 
       {/* Add Event Dialog */}
       <CalendarAddDialog
