@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { requireMcpAuth } from "@better-auth/mcp";
-import { verifyAgentRequest } from "@better-auth/agent-auth";
 import {
   createMcpHandler,
   McpServer,
@@ -105,40 +104,52 @@ const mcpAuthHandler = requireMcpAuth(
 
 const handler = async (request: Request) => {
   // 1. Dual authentication: check Agent Auth protocol first if authorization header present
-  try {
-    const agentSession = await verifyAgentRequest(request, auth);
-    if (agentSession) {
-      const activeGrants = (
-        (
-          agentSession as {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    try {
+      const getAgentSessionFn = (
+        auth.api as unknown as {
+          getAgentSession?: (opts: { headers: Headers }) => Promise<unknown>;
+        }
+      ).getAgentSession;
+
+      const agentSession = getAgentSessionFn
+        ? await getAgentSessionFn({ headers: request.headers })
+        : null;
+
+      if (agentSession) {
+        const sessionObj = agentSession as {
+          userId?: string | null;
+          agentId?: string;
+          agent?: {
+            id?: string;
             capabilityGrants?: { capability: string; status?: string }[];
-          }
-        ).capabilityGrants || []
-      )
-        .filter((g) => !g.status || g.status === "active")
-        .map((g) => g.capability);
+          };
+          user?: { id?: string };
+        };
 
-      const agentObj = (
-        agentSession as { agent?: { id?: string; capabilities?: string[] } }
-      ).agent;
-      const userObj = (agentSession as { user?: { id?: string } }).user;
+        const grants = sessionObj.agent?.capabilityGrants || [];
+        const activeGrants = grants
+          .filter((g) => !g.status || g.status === "active")
+          .map((g) => g.capability);
 
-      const agentScopes =
-        activeGrants.length > 0 ? activeGrants : agentObj?.capabilities || [];
+        const agentId = sessionObj.agentId || sessionObj.agent?.id;
+        const userId = sessionObj.userId || sessionObj.user?.id;
 
-      const authInfo: CalendarMcpAuthInfo = {
-        sub: userObj?.id || agentObj?.id,
-        userId: userObj?.id,
-        agentId: agentObj?.id,
-        scopes: agentScopes,
-      };
+        const authInfo: CalendarMcpAuthInfo = {
+          sub: userId || agentId,
+          userId: userId || undefined,
+          agentId: agentId || undefined,
+          scopes: activeGrants,
+        };
 
-      return await mcpServerHandler.fetch(request, {
-        authInfo: authInfo as unknown as AuthInfo,
-      });
+        return await mcpServerHandler.fetch(request, {
+          authInfo: authInfo as unknown as AuthInfo,
+        });
+      }
+    } catch (err) {
+      console.warn("[MCP] Agent Auth session check failed:", err);
     }
-  } catch (err) {
-    console.warn("[MCP] verifyAgentRequest check failed:", err);
   }
 
   // 2. Fall back to standard MCP OAuth 2.1 authentication

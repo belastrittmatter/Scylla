@@ -7,6 +7,7 @@ import { agentAuth } from "@better-auth/agent-auth";
 import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { APIError } from "better-auth/api";
 import { userNameSchema } from "@/lib/validations/user";
+import { ALL_MCP_CAPABILITIES } from "@/constants/agent-capabilities";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 
@@ -99,6 +100,13 @@ export const auth = betterAuth({
       loginPage: "/sign-in",
       consentPage: "/consent",
       resource: `${appUrl}/api/mcp`,
+      scopes: [
+        "openid",
+        "profile",
+        "email",
+        "offline_access",
+        ...ALL_MCP_CAPABILITIES.map((c) => c.id),
+      ],
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
       clientRegistrationDefaultApplicationType: "infer",

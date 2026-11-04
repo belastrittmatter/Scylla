@@ -103,11 +103,11 @@ export async function revokeMcpClient(
       ),
     );
 
-  // 4. Update legacy agent row if present
+  // 4. Update legacy agent row if present (scoped to userId to prevent IDOR)
   await db
     .update(agent)
     .set({ status: "revoked", updatedAt: new Date() })
-    .where(eq(agent.id, clientIdOrAgentId))
+    .where(and(eq(agent.id, clientIdOrAgentId), eq(agent.userId, userId)))
     .catch(() => {});
 
   return true;

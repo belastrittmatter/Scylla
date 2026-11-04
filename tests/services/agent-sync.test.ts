@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { db } from "@/db";
-import { user, oauthClient, oauthConsent } from "@/db/schema";
+import { user, oauthClient, oauthConsent, agent, agentHost } from "@/db/schema";
 import {
   listConnectedMcpClients,
   revokeMcpClient,
@@ -102,5 +102,63 @@ describe("Native MCP OAuth Client Service (#36)", () => {
     expect(body.jsonrpc).toBe("2.0");
     expect(body.error.code).toBe(-32000);
     expect(body.error.message).toContain("revoked");
+  });
+
+  it("prevents IDOR: user cannot revoke another user's agent record", async () => {
+    const victimUserId = "usr_victim_agent_user";
+    const victimHostId = "host_victim_123";
+    const victimAgentId = "agent_victim_456";
+
+    // Clean up
+    await db.delete(agent).where(eq(agent.id, victimAgentId));
+    await db.delete(agentHost).where(eq(agentHost.id, victimHostId));
+    await db.delete(user).where(eq(user.id, victimUserId));
+
+    // Seed victim user, host, and active agent
+    await db.insert(user).values({
+      id: victimUserId,
+      name: "Victim User",
+      email: "victim@example.com",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await db.insert(agentHost).values({
+      id: victimHostId,
+      name: "Victim Host",
+      userId: victimUserId,
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await db.insert(agent).values({
+      id: victimAgentId,
+      name: "Victim Agent",
+      userId: victimUserId,
+      hostId: victimHostId,
+      publicKey: "key_abc",
+      status: "active",
+      mode: "delegated",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Attacker (testUserId) attempts to revoke victim's agent
+    await revokeMcpClient(testUserId, victimAgentId);
+
+    // Victim agent must still be active!
+    const victimAgentRecord = await db
+      .select()
+      .from(agent)
+      .where(eq(agent.id, victimAgentId))
+      .limit(1);
+
+    expect(victimAgentRecord[0]?.status).toBe("active");
+
+    // Clean up
+    await db.delete(agent).where(eq(agent.id, victimAgentId));
+    await db.delete(agentHost).where(eq(agentHost.id, victimHostId));
+    await db.delete(user).where(eq(user.id, victimUserId));
   });
 });

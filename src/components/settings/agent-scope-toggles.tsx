@@ -96,7 +96,23 @@ export function AgentScopeToggles({
               handleSelectPreset(ALL_MCP_CAPABILITIES.map((c) => c.id))
             }
           >
-            Select All
+            Grant All
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isBusy || updatingId !== null}
+            className="h-6 px-2 text-[11px] cursor-pointer"
+            onClick={() =>
+              handleSelectPreset(
+                ALL_MCP_CAPABILITIES.filter((c) => !c.isDestructive).map(
+                  (c) => c.id,
+                ),
+              )
+            }
+          >
+            Standard Only
           </Button>
           <Button
             type="button"

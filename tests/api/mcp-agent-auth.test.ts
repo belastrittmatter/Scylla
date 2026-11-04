@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { createCalendarMcpServer } from "@/app/api/mcp/route";
+import { createCalendarMcpServer, POST as mcpPost } from "@/app/api/mcp/route";
 import { GET as getAgentConfiguration } from "@/app/.well-known/agent-configuration/route";
 import { auth } from "@/lib/auth";
 import { db, user } from "@/db";
@@ -274,6 +274,71 @@ describe("MCP Agent Auth & Server-Side Scope Enforcement (#36)", () => {
       expect(taskRes.isError).toBe(true);
       expect(taskRes.structuredContent?.code).toBe("insufficient_scope");
       expect(taskRes.structuredContent?.required_scope).toBe("tasks.readonly");
+    });
+  });
+
+  describe("MCP Dual Authentication HTTP Handler (/api/mcp)", () => {
+    it("returns 401 challenge with WWW-Authenticate header when unauthenticated", async () => {
+      const req = new NextRequest("http://localhost:3000/api/mcp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/list",
+        }),
+      });
+
+      const res = await mcpPost(req);
+      expect(res.status).toBe(401);
+      const wwwAuth = res.headers.get("www-authenticate");
+      expect(wwwAuth).toBeDefined();
+      expect(wwwAuth).toContain("Bearer");
+    });
+
+    it("authenticates via getAgentSession when Bearer token is provided", async () => {
+      // Mock getAgentSession on auth.api
+      const authApi = auth.api as unknown as {
+        getAgentSession?: (opts: { headers: Headers }) => Promise<unknown>;
+      };
+      const origGetAgentSession = authApi.getAgentSession;
+      authApi.getAgentSession = async () => ({
+        userId: testUserId,
+        agentId: "agent_mock_test",
+        agent: {
+          id: "agent_mock_test",
+          capabilityGrants: [
+            { capability: "calendar.readonly", status: "active" },
+            { capability: "tasks.readonly", status: "active" },
+          ],
+        },
+      });
+
+      try {
+        const req = new NextRequest("http://localhost:3000/api/mcp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            Authorization: "Bearer agent_mock_token_123",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/list",
+          }),
+        });
+
+        const res = await mcpPost(req);
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        expect(text).toContain("tools");
+        expect(text).toContain("resolve_user");
+      } finally {
+        authApi.getAgentSession = origGetAgentSession;
+      }
     });
   });
 });
