@@ -1,12 +1,7 @@
 title = "Scylla Gitleaks Configuration"
 
 [allowlist]
-description = "Allowlist test fixtures, mock credentials, and documentation"
-paths = [
-  '''^tests/.*''',
-  '''^scripts/test-mcp-tools\.ts$''',
-  '''^docs/.*'''
-]
+description = "Allowlist synthetic fixture tokens used in tests, docs, and CI"
 regexes = [
   '''agent_mock_token_[a-zA-Z0-9_-]+''',
   '''ci_dummy_secret_[a-zA-Z0-9_-]+''',
