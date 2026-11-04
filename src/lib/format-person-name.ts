@@ -33,3 +33,14 @@ export function formatPersonName(
     .map(titleCaseWord)
     .join(" ");
 }
+
+/** Two-letter initials for an avatar fallback. */
+export function getPersonInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.charAt(0))
+    .join("")
+    .toUpperCase();
+}
