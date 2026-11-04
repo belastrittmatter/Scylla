@@ -1,4 +1,53 @@
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "fs";
+import { join } from "path";
+
+function getAllTestFiles(dir: string): string[] {
+  let results: string[] = [];
+  const list = readdirSync(dir);
+  for (const file of list) {
+    const fullPath = join(dir, file);
+    const stat = statSync(fullPath);
+    if (stat && stat.isDirectory()) {
+      results = results.concat(getAllTestFiles(fullPath));
+    } else if (file.endsWith(".test.ts") || file.endsWith(".test.tsx")) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+export function testAllSuitesCovered() {
+  const allTests = getAllTestFiles("tests");
+  const ciContent = readFileSync(".github/workflows/ci.yml", "utf-8");
+
+  const missing: string[] = [];
+
+  for (const testFile of allTests) {
+    const parts = testFile.split("/");
+    const parentDir = parts.slice(0, 2).join("/"); // e.g. tests/ui, tests/api
+
+    // A test is covered if its exact path or its parent directory is targeted by bun test in ci.yml
+    const exactCovered = ciContent.includes(testFile);
+    const dirCovered =
+      ciContent.includes(`bun test ${parentDir}`) ||
+      ciContent.includes(` ${parentDir} `) ||
+      ciContent.includes(` ${parentDir}\n`);
+
+    if (!exactCovered && !dirCovered) {
+      missing.push(testFile);
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `The following test files are not covered in CI:\n${missing.join("\n")}`,
+    );
+  }
+
+  console.log(
+    `✅ All ${allTests.length} test suites under tests/ are covered in CI workflow`,
+  );
+}
 
 export function testGitleaksConfig() {
   if (!existsSync(".gitleaks.toml")) {
@@ -54,4 +103,5 @@ if (process.argv[1]?.endsWith("verify-ci-workflow.ts")) {
   console.log("✅ Gitleaks configuration test passed");
   testWorkflowStructure();
   console.log("✅ CI Workflow structure test passed");
+  testAllSuitesCovered();
 }
