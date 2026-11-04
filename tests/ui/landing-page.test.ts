@@ -50,7 +50,7 @@ describe("Landing Page & Review Fixes", () => {
       "utf8",
     );
     expect(sidebarContent).not.toContain("window.location.replace");
-    expect(sidebarContent).toContain('href="/"');
+    expect(sidebarContent).toContain('href="/calendar"');
 
     const landingComponents = [
       "src/components/landing/header.tsx",

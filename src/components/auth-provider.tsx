@@ -22,7 +22,7 @@ export function AuthUIProvider({ children }: { children: React.ReactNode }) {
       authClient={authClient}
       Link={Link}
       navigate={navigate}
-      redirectTo="/"
+      redirectTo="/calendar"
       socialProviders={["google"]}
     >
       <DaveyplateAuthUIProvider
@@ -30,6 +30,7 @@ export function AuthUIProvider({ children }: { children: React.ReactNode }) {
         Link={Link}
         navigate={(href) => router.push(href)}
         replace={(href) => router.replace(href)}
+        redirectTo="/calendar"
         onSessionChange={() => router.refresh()}
         account={{
           basePath: "",
