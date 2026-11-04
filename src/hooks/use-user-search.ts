@@ -51,11 +51,8 @@ export function useUserSearch({
   const setQuery = React.useCallback(
     (newQuery: string) => {
       setQueryState(newQuery);
-      // Synchronously perform client-side filtering on all previously seen users
-      const filtered = filterKnown(newQuery);
-      if (filtered.length > 0) {
-        setResults(filtered);
-      }
+      // Synchronously filter known users; an unmatched fragment clears stale rows.
+      setResults(filterKnown(newQuery));
     },
     [filterKnown],
   );

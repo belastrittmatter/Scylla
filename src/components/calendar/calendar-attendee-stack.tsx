@@ -127,8 +127,9 @@ export function CalendarAttendeeStack({
       );
     }
 
-    // If query is an email address and not yet in the list, allow direct selection
-    if (q.includes("@") && !result.some((it) => it.email.toLowerCase() === q)) {
+    // A complete email is selectable directly; fragments never become options
+    const isCompleteEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q);
+    if (isCompleteEmail && !result.some((it) => it.email.toLowerCase() === q)) {
       const isRoom =
         q.includes("resource.calendar.google.com") || q.includes("room");
       result = [
