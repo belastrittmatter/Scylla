@@ -64,6 +64,11 @@ export function CalendarDashboard() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
+  // Below lg the panels sit under the calendar, so start them collapsed.
+  const [compact] = React.useState(
+    () => window.matchMedia("(max-width: 1023px)").matches,
+  );
+
   // Attendees (teammates & meeting rooms) selected for mutual availability check
   const [selectedAttendees, setSelectedAttendees] = React.useState<
     CalendarAttendeeItem[]
@@ -342,11 +347,12 @@ export function CalendarDashboard() {
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="flex min-w-0 flex-col gap-4">
+      <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="order-last flex min-w-0 flex-col gap-4 lg:order-none">
           <CalendarTeamPanel
             selectedAttendees={selectedAttendees}
             onToggleAttendee={handleToggleAttendee}
+            defaultOpen={!compact}
           />
           <CalendarPeoplePanel
             selectedAttendees={selectedAttendees}
@@ -355,10 +361,11 @@ export function CalendarDashboard() {
           <CalendarRoomsPanel
             selectedAttendees={selectedAttendees}
             onToggleAttendee={handleToggleAttendee}
+            defaultOpen={!compact}
           />
         </div>
 
-        <div className="flex h-[calc(100svh-12rem)] min-h-[560px] min-w-0 flex-col overflow-hidden rounded-[10px] border bg-card shadow-sm">
+        <div className="order-first flex h-[calc(100svh-12rem)] min-h-[560px] min-w-0 flex-col overflow-hidden rounded-[10px] border bg-card shadow-sm lg:order-none">
           <EventCalendar<CustomEventData>
             key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}`}
             events={displayedEvents}

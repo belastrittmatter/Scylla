@@ -10,11 +10,13 @@ import type { CalendarAttendeeItem } from "./calendar-attendee-stack";
 interface CalendarRoomsPanelProps {
   selectedAttendees: CalendarAttendeeItem[];
   onToggleAttendee: (item: CalendarAttendeeItem) => void;
+  defaultOpen?: boolean;
 }
 
 export function CalendarRoomsPanel({
   selectedAttendees,
   onToggleAttendee,
+  defaultOpen,
 }: CalendarRoomsPanelProps): React.ReactElement {
   const [rooms, setRooms] = React.useState<CalendarAttendeeItem[]>([]);
 
@@ -49,7 +51,11 @@ export function CalendarRoomsPanel({
   );
 
   return (
-    <CalendarPanelCard title="Rooms" meta={`${rooms.length}`}>
+    <CalendarPanelCard
+      title="Rooms"
+      meta={`${rooms.length}`}
+      defaultOpen={defaultOpen}
+    >
       <div className="space-y-0.5">
         {rooms.length === 0 ? (
           <p className="px-2 py-3 text-xs text-muted-foreground">

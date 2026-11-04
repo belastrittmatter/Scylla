@@ -18,14 +18,24 @@ import type { CalendarAttendeeItem } from "./calendar-attendee-stack";
 
 type TeamMember = Awaited<ReturnType<typeof apiClient.teams.members>>[number];
 
+function teamDisplayName(name: string): string {
+  if (!/^[a-z0-9_-]+$/.test(name)) return name;
+  return name
+    .split(/[-_]+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 interface CalendarTeamPanelProps {
   selectedAttendees: CalendarAttendeeItem[];
   onToggleAttendee: (item: CalendarAttendeeItem) => void;
+  defaultOpen?: boolean;
 }
 
 export function CalendarTeamPanel({
   selectedAttendees,
   onToggleAttendee,
+  defaultOpen,
 }: CalendarTeamPanelProps): React.ReactElement | null {
   const { teams } = useTeams();
   const [pickedTeamId, setPickedTeamId] = React.useState("");
@@ -57,7 +67,11 @@ export function CalendarTeamPanel({
   if (teams.length === 0) return null;
 
   return (
-    <CalendarPanelCard title="Team" meta={`${members.length}`}>
+    <CalendarPanelCard
+      title="Team"
+      meta={`${members.length} members`}
+      defaultOpen={defaultOpen}
+    >
       <Select
         value={teamId}
         onValueChange={(value) => setPickedTeamId(value ?? "")}
@@ -68,13 +82,13 @@ export function CalendarTeamPanel({
         <SelectContent>
           {teams.map((team) => (
             <SelectItem key={team.id} value={team.id}>
-              {team.name}
+              {teamDisplayName(team.name)}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <div className="mt-2 space-y-0.5">
+      <div className="mt-2 max-h-[300px] space-y-0.5 overflow-y-auto pr-1">
         {members.map((member) => {
           const name = formatPersonName(member.user.name, member.user.email);
           const item: CalendarAttendeeItem = {
