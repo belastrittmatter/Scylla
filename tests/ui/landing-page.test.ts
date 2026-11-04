@@ -12,8 +12,12 @@ import { config as proxyConfig } from "@/proxy";
 const ROOT_DIR = process.cwd();
 
 describe("Landing Page & Review Fixes", () => {
-  it("removes unused duplicate files (src/styles/landing.css, video-modal.tsx, about-video.tsx, pricing.tsx, testimonials.tsx, about.mp4, ai_agent, local gsap/plugin bundles)", () => {
+  it("removes unused duplicate files (src/styles/landing.css, public/css/landing.css, hard-link.tsx, video-modal.tsx, about-video.tsx, pricing.tsx, testimonials.tsx, about.mp4, ai_agent, local gsap/plugin bundles)", () => {
     expect(existsSync(join(ROOT_DIR, "src/styles/landing.css"))).toBe(false);
+    expect(existsSync(join(ROOT_DIR, "public/css/landing.css"))).toBe(false);
+    expect(
+      existsSync(join(ROOT_DIR, "src/components/landing/hard-link.tsx")),
+    ).toBe(false);
     expect(
       existsSync(join(ROOT_DIR, "src/components/landing/video-modal.tsx")),
     ).toBe(false);
@@ -40,20 +44,13 @@ describe("Landing Page & Review Fixes", () => {
     expect(existsSync(join(ROOT_DIR, "public/js/plugin.js"))).toBe(false);
   });
 
-  it("extracts HardLink with window.location.replace and Next.js CSS cache note and uses it across landing components", () => {
-    const hardLinkContent = readFileSync(
-      join(ROOT_DIR, "src/components/landing/hard-link.tsx"),
-      "utf8",
-    );
-    expect(hardLinkContent).toContain("window.location.replace");
-    expect(hardLinkContent).toContain("Next.js caches CSS");
-
+  it("uses standard Next.js Link without window.location.replace across landing components and sidebar", () => {
     const sidebarContent = readFileSync(
       join(ROOT_DIR, "src/components/layout/app-sidebar.tsx"),
       "utf8",
     );
-    expect(sidebarContent).toContain("window.location.replace");
-    expect(sidebarContent).toContain("Next.js caches CSS");
+    expect(sidebarContent).not.toContain("window.location.replace");
+    expect(sidebarContent).toContain('href="/"');
 
     const landingComponents = [
       "src/components/landing/header.tsx",
@@ -68,7 +65,9 @@ describe("Landing Page & Review Fixes", () => {
 
     for (const relPath of landingComponents) {
       const content = readFileSync(join(ROOT_DIR, relPath), "utf8");
-      expect(content).toContain("HardLink");
+      expect(content).not.toContain("HardLink");
+      expect(content).not.toContain("window.location.replace");
+      expect(content).toContain('from "next/link"');
     }
   });
 
@@ -78,6 +77,7 @@ describe("Landing Page & Review Fixes", () => {
       "utf8",
     );
     expect(indexContent).toContain("LandingTaskBoardPreview");
+    expect(indexContent).not.toContain("HardLink");
     expect(indexContent).not.toContain("AboutVideo");
     expect(indexContent).not.toContain("LandingPricing");
     expect(indexContent).not.toContain("LandingTestimonials");
@@ -125,18 +125,18 @@ describe("Landing Page & Review Fixes", () => {
     expect(mainJs).not.toContain('getElementById("priceToggle")');
     expect(mainJs).not.toContain("revealStroke");
 
-    const landingCss = readFileSync(
-      join(ROOT_DIR, "public/css/landing.css"),
+    const globalsCss = readFileSync(
+      join(ROOT_DIR, "src/app/globals.css"),
       "utf8",
     );
-    expect(landingCss).not.toContain(".pricing-card");
-    expect(landingCss).not.toContain(".pricing-switch");
-    expect(landingCss).not.toContain(".toggle-wrapper");
-    expect(landingCss).not.toContain(".testimonial-overlay");
-    expect(landingCss).not.toContain(".auto-scroll-content");
+    expect(globalsCss).not.toContain(".pricing-card");
+    expect(globalsCss).not.toContain(".pricing-switch");
+    expect(globalsCss).not.toContain(".toggle-wrapper");
+    expect(globalsCss).not.toContain(".testimonial-overlay");
+    expect(globalsCss).not.toContain(".auto-scroll-content");
   });
 
-  it("prunes dead template code and Swiper from public/js/main.js while keeping GSAP animations", () => {
+  it("prunes dead template code and Swiper from public/js/main.js while keeping GSAP animations and cleanup", () => {
     const mainJs = readFileSync(join(ROOT_DIR, "public/js/main.js"), "utf8");
     const lineCount = mainJs.split("\n").length;
 
@@ -145,6 +145,7 @@ describe("Landing Page & Review Fixes", () => {
     expect(mainJs.trimStart().startsWith("(function")).toBe(true);
     expect(mainJs.trimEnd().endsWith("})();")).toBe(true);
     expect(mainJs).toContain("registerGsapPlugins();");
+    expect(mainJs).toContain("__scyllaLandingCleanup");
     expect(mainJs).not.toContain("Swiper");
     expect(mainJs).not.toContain("initLogoSlider");
     expect(mainJs).not.toContain("isotope");
@@ -153,7 +154,7 @@ describe("Landing Page & Review Fixes", () => {
     expect(mainJs).toContain('transformOrigin: "top right"');
   });
 
-  it("loads GSAP from CDN in LandingScripts without unused Swiper script", () => {
+  it("loads GSAP from CDN in LandingScripts without external landing.css link or unused Swiper script", () => {
     const landingScripts = readFileSync(
       join(ROOT_DIR, "src/components/landing/landing-scripts.tsx"),
       "utf8",
@@ -166,34 +167,29 @@ describe("Landing Page & Review Fixes", () => {
       ),
     );
 
-    expect(layoutHtml).toContain('href="/css/landing.css"');
-    expect(landingScripts).toContain('classList.remove("dark")');
+    expect(layoutHtml).not.toContain('href="/css/landing.css"');
     expect(landingScripts).toContain(
       "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
     );
+    expect(landingScripts).toContain("__scyllaLandingCleanup");
     expect(landingScripts).not.toContain("swiper");
     expect(landingScripts).not.toContain("Swiper");
     expect(landingScripts).not.toContain("/js/gsap-latest-beta.min.js");
     expect(landingScripts).not.toContain("/js/plugin.js");
   });
 
-  it("removes Swiper, unused blog prose styles, and unused utility rules from public/css/landing.css while preserving cascade layers", () => {
-    const landingCss = readFileSync(
-      join(ROOT_DIR, "public/css/landing.css"),
+  it("merges scoped landing styles into src/app/globals.css without Swiper, unused blog prose, or broken font paths", () => {
+    const globalsCss = readFileSync(
+      join(ROOT_DIR, "src/app/globals.css"),
       "utf8",
     );
-    const lineCount = landingCss.split("\n").length;
 
-    expect(lineCount).toBeLessThan(3500);
-    expect(landingCss).not.toContain(".swiper-container");
-    expect(landingCss).not.toContain(".article-content");
-    expect(landingCss).toContain("@layer theme, base, components, utilities;");
-    expect(landingCss).toContain("@layer base");
-    expect(landingCss).toContain("@layer utilities");
-    expect(landingCss).toContain(".scylla-landing {");
-    expect(landingCss).toContain(":where(.scylla-landing)");
-    expect(landingCss).toContain("fonts.googleapis.com/css2");
-    expect(landingCss).not.toContain('url("/fonts/');
+    expect(globalsCss).not.toContain(".swiper-container");
+    expect(globalsCss).not.toContain(".article-content");
+    expect(globalsCss).toContain(".scylla-landing {");
+    expect(globalsCss).toContain(":where(.scylla-landing)");
+    expect(globalsCss).toContain(".scylla-landing [data-kanban-preview]");
+    expect(globalsCss).not.toContain('url("/fonts/');
   });
 
   it("configures db:seed to use bun run src/db/seed.ts in package.json", () => {

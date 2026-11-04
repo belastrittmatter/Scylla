@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { HardLink } from "./hard-link";
+import Link from "next/link";
 
 export function LandingHero() {
   return (
     <>
       <div className="header-innerHeight">
         <div className="container">
-          <div className="border-container"></div>
+          <div className="border-container pt-[60px] lg:pt-[71px]"></div>
         </div>
       </div>
       {/* Banner Area Start */}
@@ -51,18 +51,20 @@ export function LandingHero() {
                 data-button=""
                 className="mt-6 sm:mt-8 lg:mt-10 flex flex-wrap items-center justify-center gap-4"
               >
-                <HardLink
+                <Link
+                  prefetch={false}
                   className="button-primary inline-flex items-center justify-center px-7 py-3.5 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all cursor-pointer"
                   href="/auth/sign-in"
                 >
                   Get Started Free
-                </HardLink>
-                <HardLink
+                </Link>
+                <Link
+                  prefetch={false}
                   className="button-secondary cursor-pointer !py-3.5 px-6 text-sm"
                   href="/calendar"
                 >
                   Explore Live Calendar
-                </HardLink>
+                </Link>
               </div>
             </div>
             {/* Dashboard Thumbnail Wrapper with Backlight Bloom rising behind it */}

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 
 interface GsapWindow extends Window {
   gsap?: {
@@ -10,7 +11,7 @@ interface GsapWindow extends Window {
     };
   };
   ScrollTrigger?: {
-    getAll: () => Array<{ kill: () => void }>;
+    getAll: () => Array<{ kill: (revert?: boolean) => void }>;
     refresh?: () => void;
   };
   ScrollSmoother?: {
@@ -19,7 +20,10 @@ interface GsapWindow extends Window {
   DrawSVGPlugin?: unknown;
   MorphSVGPlugin?: unknown;
   SplitText?: unknown;
+  __scyllaLandingCleanup?: () => void;
 }
+
+const MARKETING_PATHS = new Set(["/"]);
 
 function ensureGsapPluginsRegistered(w: GsapWindow) {
   if (w.gsap && typeof w.gsap.registerPlugin === "function") {
@@ -45,16 +49,23 @@ function ensureGsapPluginsRegistered(w: GsapWindow) {
 }
 
 export function LandingScripts() {
-  React.useEffect(() => {
-    let mounted = true;
+  const pathname = usePathname();
 
-    // Ensure page background stays strictly dark (#09090B) during smooth scrolling
+  React.useEffect(() => {
+    if (pathname && !MARKETING_PATHS.has(pathname)) {
+      return;
+    }
+
+    let mounted = true;
+    let hydrationTimer: ReturnType<typeof setTimeout> | null = null;
+    let rafId: number | null = null;
+
+    // Ensure page background stays dark (#09090B) during smooth scrolling on marketing routes
+    // without mutating the root `.dark` class owned by next-themes.
     const prevHtmlBg = document.documentElement.style.backgroundColor;
     const prevBodyBg = document.body.style.backgroundColor;
-    const prevHtmlDark = document.documentElement.classList.contains("dark");
-    const prevBodyDark = document.body.classList.contains("dark");
-    document.documentElement.classList.add("dark", "scylla-landing-page");
-    document.body.classList.add("dark", "scylla-landing-page");
+    document.documentElement.classList.add("scylla-landing-page");
+    document.body.classList.add("scylla-landing-page");
     document.documentElement.style.backgroundColor = "#09090b";
     document.body.style.backgroundColor = "#09090b";
 
@@ -63,6 +74,15 @@ export function LandingScripts() {
       "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
       "/js/main.js",
     ];
+
+    // Clean up any previous landing script state before re-initializing
+    if (typeof w.__scyllaLandingCleanup === "function") {
+      try {
+        w.__scyllaLandingCleanup();
+      } catch (_e) {
+        // Ignore cleanup error
+      }
+    }
 
     // Only remove previously appended main.js instances; never remove/re-append CDN vendor scripts
     // so React Strict Mode remounts do not execute all.min.js twice and overwrite window.gsap.
@@ -121,49 +141,33 @@ export function LandingScripts() {
       document.body.appendChild(s);
     };
 
-    const startScripts = () => {
+    // Wait one animation frame after mount/hydration before loading GSAP and main.js
+    rafId = window.requestAnimationFrame(() => {
       if (!mounted) return;
-      loadScript(0);
-    };
-
-    const cssLink = document.getElementById(
-      "scylla-landing-css",
-    ) as HTMLLinkElement | null;
-    if (cssLink && !cssLink.sheet) {
-      cssLink.addEventListener("load", startScripts, { once: true });
-      cssLink.addEventListener("error", startScripts, { once: true });
-    } else {
-      startScripts();
-    }
+      hydrationTimer = setTimeout(() => {
+        if (mounted) loadScript(0);
+      }, 0);
+    });
 
     return () => {
       mounted = false;
-      if (cssLink) {
-        cssLink.removeEventListener("load", startScripts);
-        cssLink.removeEventListener("error", startScripts);
+      if (hydrationTimer !== null) {
+        clearTimeout(hydrationTimer);
+      }
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
       }
 
-      // Clean up landing classes and background styles
-      document.documentElement.classList.remove("scylla-landing-page");
-      document.body.classList.remove("overflow-hidden", "scylla-landing-page");
-      if (!prevHtmlDark) {
-        document.documentElement.classList.remove("dark");
-      }
-      if (!prevBodyDark) {
-        document.body.classList.remove("dark");
-      }
-      document.documentElement.style.backgroundColor = prevHtmlBg || "";
-      document.body.style.backgroundColor = prevBodyBg || "";
-
-      // Kill GSAP ScrollTrigger and ScrollSmoother
-      if (typeof window !== "undefined") {
-        if (w.ScrollTrigger) {
-          try {
-            w.ScrollTrigger.getAll().forEach((t) => t.kill());
-          } catch (_e) {
-            // Ignore GSAP cleanup error
-          }
+      if (typeof w.__scyllaLandingCleanup === "function") {
+        try {
+          w.__scyllaLandingCleanup();
+        } catch (_e) {
+          // Ignore cleanup error
         }
+      }
+
+      // Kill GSAP ScrollSmoother FIRST, then ScrollTrigger
+      if (typeof window !== "undefined") {
         if (w.ScrollSmoother) {
           try {
             const sm = w.ScrollSmoother.get();
@@ -172,12 +176,33 @@ export function LandingScripts() {
             // Ignore GSAP cleanup error
           }
         }
+        if (w.ScrollTrigger) {
+          try {
+            w.ScrollTrigger.getAll().forEach((t) => t.kill(true));
+          } catch (_e) {
+            // Ignore GSAP cleanup error
+          }
+        }
       }
+
+      // Clean up landing classes and inline styles left by ScrollSmoother / GSAP
+      document.documentElement.classList.remove("scylla-landing-page");
+      document.body.classList.remove(
+        "overflow-hidden",
+        "scylla-landing-page",
+        "menu-overlay",
+      );
+      document.documentElement.style.backgroundColor = prevHtmlBg || "";
+      document.body.style.backgroundColor = prevBodyBg || "";
+      document.documentElement.style.removeProperty("height");
+      document.documentElement.style.removeProperty("overflow");
+      document.body.style.removeProperty("height");
+      document.body.style.removeProperty("overflow");
 
       const addedMain = document.querySelectorAll("script[data-landing-main]");
       addedMain.forEach((el) => el.remove());
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

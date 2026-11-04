@@ -1,5 +1,4 @@
 export { LandingScripts } from "./landing-scripts";
-export { HardLink } from "./hard-link";
 export { LandingHeader } from "./header";
 export { LandingHero } from "./hero";
 export { LandingTaskBoardPreview } from "./task-board-preview";

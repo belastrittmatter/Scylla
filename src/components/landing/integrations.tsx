@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { HardLink } from "./hard-link";
+import Link from "next/link";
 
 export function LandingIntegrations() {
   return (
@@ -40,18 +40,20 @@ export function LandingIntegrations() {
                   data-button=""
                   className="mt-5 sm:mt-8 lg:mt-9 flex flex-wrap gap-4"
                 >
-                  <HardLink
+                  <Link
+                    prefetch={false}
                     className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all cursor-pointer"
                     href="/tasks"
                   >
                     Explore MCP Integration
-                  </HardLink>
-                  <HardLink
+                  </Link>
+                  <Link
+                    prefetch={false}
                     className="button-secondary cursor-pointer !py-3 px-5 text-sm"
                     href="/calendar"
                   >
                     View Calendar Tools
-                  </HardLink>
+                  </Link>
                 </div>
               </div>
 
@@ -70,7 +72,7 @@ export function LandingIntegrations() {
                 data-bg-shape=""
                 src="/images/workflow-shape.png"
                 alt="workflow-shape"
-                className="absolute bottom-0 left-0 -z-1"
+                className="absolute bottom-0 left-0 right-0 w-full object-cover -z-1"
               />
               <img
                 data-glow-shape=""

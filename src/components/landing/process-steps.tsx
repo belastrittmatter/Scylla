@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Bot, MessageSquareText, Timer } from "lucide-react";
-import { HardLink } from "./hard-link";
 
 export function LandingProcessSteps() {
   return (
@@ -14,33 +14,36 @@ export function LandingProcessSteps() {
       <div className="container">
         <div className="border-container section-spacing-lg sticky-cards">
           <div className="flex items-start justify-between gap-10 relative flex-col md:flex-row process-wrapper">
-            <div className="max-w-[520px] md:max-w-[560px] w-full md:sticky sticky-card">
-              <span className="badge-button mb-3 inline-block">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5" />
-                Collaborative Productivity
-              </span>
-              <h2
-                data-title=""
-                className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] font-semibold -tracking-[0.4px] !leading-[1.12]"
-              >
-                Collaboration That Moves at the Speed of Thought
-              </h2>
-              <p
-                data-excerpt=""
-                className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
-              >
-                Say goodbye to scattered Slack messages and disconnected Jira
-                tickets. Keep discussions attached to deliverables, log focused
-                deep work with sub-second timers, and leverage Model Context
-                Protocol (MCP) to automate project management.
-              </p>
-              <div className="mt-8">
-                <HardLink
-                  href="/tasks"
-                  className="button-primary inline-flex items-center justify-center px-6 py-3.5 text-white font-medium text-sm rounded-[10px] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35 transition-all cursor-pointer"
+            <div className="max-w-[520px] md:max-w-[560px] w-full">
+              <div className="sticky-card">
+                <span className="badge-button mb-3 inline-block">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5" />
+                  Collaborative Productivity
+                </span>
+                <h2
+                  data-title=""
+                  className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] font-semibold -tracking-[0.4px] !leading-[1.12]"
                 >
-                  See Task Workflow in Action
-                </HardLink>
+                  Collaboration That Moves at the Speed of Thought
+                </h2>
+                <p
+                  data-excerpt=""
+                  className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
+                >
+                  Say goodbye to scattered Slack messages and disconnected Jira
+                  tickets. Keep discussions attached to deliverables, log
+                  focused deep work with sub-second timers, and leverage Model
+                  Context Protocol (MCP) to automate project management.
+                </p>
+                <div className="mt-8">
+                  <Link
+                    prefetch={false}
+                    href="/tasks"
+                    className="button-primary inline-flex items-center justify-center px-6 py-3.5 text-white font-medium text-sm rounded-[10px] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35 transition-all cursor-pointer"
+                  >
+                    See Task Workflow in Action
+                  </Link>
+                </div>
               </div>
             </div>
             <div
@@ -48,7 +51,7 @@ export function LandingProcessSteps() {
               data-card=""
             >
               {/* Process Card 1: Comment & Interactive Collaboration */}
-              <div className="md:sticky sticky-card">
+              <div className="sticky-card relative z-10">
                 <div className="px-5 pt-5 pb-5 md:pb-10 bg-blue rounded-[20px] border border-lineColor/70 transition-all duration-300 hover:border-white/30">
                   <div className="flex items-center justify-between gap-5">
                     <div className="w-11 h-11 flex items-center justify-center bg-orange-500/10 border border-orange-500/20 rounded-[10px]">
@@ -71,7 +74,7 @@ export function LandingProcessSteps() {
               </div>
 
               {/* Process Card 2: Live Time-Tracking */}
-              <div className="md:sticky sticky-card">
+              <div className="sticky-card relative z-20">
                 <div className="px-5 pt-5 pb-5 md:pb-10 bg-blue rounded-[20px] border border-lineColor/70 transition-all duration-300 hover:border-white/30">
                   <div className="flex items-center justify-between gap-5">
                     <div className="w-11 h-11 flex items-center justify-center bg-orange-500/10 border border-orange-500/20 rounded-[10px]">
@@ -94,7 +97,7 @@ export function LandingProcessSteps() {
               </div>
 
               {/* Process Card 3: AI & MCP Management */}
-              <div className="md:sticky sticky-card">
+              <div className="sticky-card relative z-30">
                 <div className="px-5 pt-5 pb-5 md:pb-10 bg-blue rounded-[20px] border border-lineColor/70 transition-all duration-300 hover:border-white/30">
                   <div className="flex items-center justify-between gap-5">
                     <div className="w-11 h-11 flex items-center justify-center bg-orange-500/10 border border-orange-500/20 rounded-[10px]">
