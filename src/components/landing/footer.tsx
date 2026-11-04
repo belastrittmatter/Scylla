@@ -21,8 +21,16 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Smart Calendar", href: "/calendar", isDashboardLink: true },
       { label: "Task Kanban Board", href: "/tasks", isDashboardLink: true },
-      { label: "Time Tracking & Analytics", href: "/tasks", isDashboardLink: true },
-      { label: "Projects & Backlogs", href: "/projects", isDashboardLink: true },
+      {
+        label: "Time Tracking & Analytics",
+        href: "/tasks",
+        isDashboardLink: true,
+      },
+      {
+        label: "Projects & Backlogs",
+        href: "/projects",
+        isDashboardLink: true,
+      },
       { label: "Multi-Person Teams", href: "/teams", isDashboardLink: true },
     ],
   },
@@ -31,17 +39,32 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Features Overview", href: "/features" },
       { label: "Pricing Plans", href: "#pricing" },
-      { label: "MCP AI Integrations", href: "/calendar", isDashboardLink: true },
-      { label: "Documentation & Support", href: "/support", isDashboardLink: true },
+      {
+        label: "MCP AI Integrations",
+        href: "/calendar",
+        isDashboardLink: true,
+      },
+      {
+        label: "Documentation & Support",
+        href: "/support",
+        isDashboardLink: true,
+      },
     ],
   },
   {
     title: "Company",
     links: [
       { label: "About Us", href: "/about" },
+      { label: "Our Missions", href: "/about#missions" },
+      { label: "Leadership Team", href: "/about#team" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms of Service", href: "/terms" },
-      { label: "Model Context Protocol Policy", href: "/ai-policy" },
+      { label: "AI & MCP Policy", href: "/ai-policy" },
     ],
   },
 ];
@@ -70,14 +93,14 @@ export function LandingFooter() {
                   </div>
                   <h2 className="text-[25px]">Stay in the Flow</h2>
                   <p className="mt-3 sm:mt-4 text-offWhite/80 text-sm">
-                    Subscribe for the latest product releases, MCP agent updates, and deep-work strategies.
+                    Subscribe for the latest product releases, MCP agent
+                    updates, and deep-work strategies.
                   </p>
                 </div>
-            
               </div>
 
               {/* Navigation Columns */}
-              <div className="lg:max-w-[560px] w-full flex items-start justify-between gap-4 sm:gap-10 flex-col sm:flex-row footer-menu-wrapper">
+              <div className="lg:max-w-[660px] w-full flex items-start justify-between gap-4 sm:gap-6 lg:gap-8 flex-col sm:flex-row footer-menu-wrapper">
                 {FOOTER_COLUMNS.map((column) => (
                   <div
                     key={column.title}
@@ -95,12 +118,12 @@ export function LandingFooter() {
                       <ul className="flex flex-col gap-2.5 pt-4.5">
                         {column.links.map((link) => (
                           <li key={link.label}>
-                              <HardLink
-                                className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                                href={link.href}
-                              >
-                                {link.label}
-                              </HardLink>
+                            <HardLink
+                              className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
+                              href={link.href}
+                            >
+                              {link.label}
+                            </HardLink>
                           </li>
                         ))}
                       </ul>
@@ -142,8 +165,6 @@ export function LandingFooter() {
                 </HardLink>
               </div>
             </div>
-
-            
           </div>
         </div>
       </div>

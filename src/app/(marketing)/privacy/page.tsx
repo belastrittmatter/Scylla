@@ -36,7 +36,31 @@ export default function PrivacyPolicyPage() {
                 Commitment to User Privacy
               </h2>
               <p className="text-offWhite/70 leading-relaxed">
-                At Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;), we take your privacy and data security seriously. This Privacy Policy describes how we collect, use, store, and disclose information when you access or use our productivity platform, task Kanban boards, calendar synchronization services, and Model Context Protocol (MCP) integrations (collectively, the &ldquo;Service&rdquo;).
+                At Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;,
+                &ldquo;us&rdquo;, or &ldquo;our&rdquo;), we take your privacy
+                and data security seriously. This Privacy Policy describes how
+                we collect, use, store, and disclose information when you access
+                or use our productivity platform, task Kanban boards, calendar
+                synchronization services, and Model Context Protocol (MCP)
+                integrations (collectively, the &ldquo;Service&rdquo;).
+              </p>
+              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
+                Please also review our{" "}
+                <Link
+                  href="/terms"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/ai-policy"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
+                  AI &amp; MCP Policy
+                </Link>{" "}
+                for comprehensive terms governing platform usage and AI
+                integrations.
               </p>
             </div>
 
@@ -46,17 +70,33 @@ export default function PrivacyPolicyPage() {
                 1. Information We Collect
               </h2>
               <p>
-                We collect information you provide directly to us, as well as information collected automatically when you use our Service:
+                We collect information you provide directly to us, as well as
+                information collected automatically when you use our Service:
               </p>
               <ul className="list-disc pl-6 space-y-2 text-offWhite/70">
                 <li>
-                  <strong className="text-offWhite">Account Information:</strong> When you register or sign in via Google OAuth or email, we collect your name, email address, profile picture, and organization details.
+                  <strong className="text-offWhite">
+                    Account Information:
+                  </strong>{" "}
+                  When you register or sign in via Google OAuth or email, we
+                  collect your name, email address, profile picture, and
+                  organization details.
                 </li>
                 <li>
-                  <strong className="text-offWhite">Task &amp; Workspace Data:</strong> Kanban task titles, descriptions, due dates, priority tags, time-tracking logs, comments, and project associations you create in Scylla.
+                  <strong className="text-offWhite">
+                    Task &amp; Workspace Data:
+                  </strong>{" "}
+                  Kanban task titles, descriptions, due dates, priority tags,
+                  time-tracking logs, comments, and project associations you
+                  create in Scylla.
                 </li>
                 <li>
-                  <strong className="text-offWhite">Connected Calendar Data:</strong> Calendar IDs, event titles, scheduled timestamps, attendees, conference call URLs, and availability status necessary to detect schedule conflicts and book meetings.
+                  <strong className="text-offWhite">
+                    Connected Calendar Data:
+                  </strong>{" "}
+                  Calendar IDs, event titles, scheduled timestamps, attendees,
+                  conference call URLs, and availability status necessary to
+                  detect schedule conflicts and book meetings.
                 </li>
               </ul>
             </div>
@@ -68,18 +108,30 @@ export default function PrivacyPolicyPage() {
                 2. Google Calendar API &amp; User Data Policy Compliance
               </h2>
               <p>
-                Scylla connects to Google APIs (including Google Calendar API) to provide automated multi-person schedule comparison and bi-directional event synchronization.
+                Scylla connects to Google APIs (including Google Calendar API)
+                to provide automated multi-person schedule comparison and
+                bi-directional event synchronization.
               </p>
               <div className="space-y-3 text-offWhite/80">
                 <p>
-                  <strong className="text-offWhite">How We Use Google Data:</strong> We access your Google Calendar solely to calculate mutual free/busy times with your teammates, synchronize scheduled tasks with your calendar timeline, and create confirmed event invites on your behalf.
+                  <strong className="text-offWhite">
+                    How We Use Google Data:
+                  </strong>{" "}
+                  We access your Google Calendar solely to calculate mutual
+                  free/busy times with your teammates, synchronize scheduled
+                  tasks with your calendar timeline, and create confirmed event
+                  invites on your behalf.
                 </p>
                 <p>
-                  <strong className="text-offWhite">Google API Limited Use Disclosure:</strong> Scylla&apos;s use and transfer of information received from Google APIs to any other app will strictly adhere to the{" "}
+                  <strong className="text-offWhite">
+                    Google API Limited Use Disclosure:
+                  </strong>{" "}
+                  Scylla&apos;s use and transfer of information received from
+                  Google APIs to any other app will strictly adhere to the{" "}
                   <a
                     href="https://developers.google.com/terms/api-services-user-data-policy"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-orange-400 underline hover:text-orange-300"
                   >
                     Google API Services User Data Policy
@@ -87,10 +139,26 @@ export default function PrivacyPolicyPage() {
                   , including the Limited Use requirements.
                 </p>
                 <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
-                  <li>We do <strong>NOT</strong> sell your Google user data to third parties.</li>
-                  <li>We do <strong>NOT</strong> use or transfer Google user data for serving advertisements, including personalized, retargeted, or interest-based advertising.</li>
-                  <li>We do <strong>NOT</strong> use Google user data to train generalized AI/ML models without your explicit affirmative consent.</li>
-                  <li>Human access to your calendar data is strictly prohibited unless required to resolve security incidents, comply with applicable law, or with your express permission for technical support.</li>
+                  <li>
+                    We do <strong>NOT</strong> sell your Google user data to
+                    third parties.
+                  </li>
+                  <li>
+                    We do <strong>NOT</strong> use or transfer Google user data
+                    for serving advertisements, including personalized,
+                    retargeted, or interest-based advertising.
+                  </li>
+                  <li>
+                    We do <strong>NOT</strong> use Google user data to train
+                    generalized AI/ML models without your explicit affirmative
+                    consent.
+                  </li>
+                  <li>
+                    Human access to your calendar data is strictly prohibited
+                    unless required to resolve security incidents, comply with
+                    applicable law, or with your express permission for
+                    technical support.
+                  </li>
                 </ul>
               </div>
             </div>
@@ -100,12 +168,29 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
                 3. How We Use Your Information
               </h2>
-              <p>We use the collected information for the following specific purposes:</p>
+              <p>
+                We use the collected information for the following specific
+                purposes:
+              </p>
               <ul className="list-disc pl-6 space-y-2 text-offWhite/70">
-                <li>To provide, maintain, and optimize our core task management, visual time-blocking, and calendar scheduling platform.</li>
-                <li>To synchronize events bidirectionally with Google Calendar, Microsoft Outlook, and connected workspace tools.</li>
-                <li>To enable Model Context Protocol (MCP) server endpoints allowing authorized AI coding assistants (such as Claude Desktop and Cursor) to schedule meetings and manage backlog items at your request.</li>
-                <li>To detect, prevent, and address technical issues, security vulnerabilities, or unauthorized activity.</li>
+                <li>
+                  To provide, maintain, and optimize our core task management,
+                  visual time-blocking, and calendar scheduling platform.
+                </li>
+                <li>
+                  To synchronize events bidirectionally with Google Calendar,
+                  Microsoft Outlook, and connected workspace tools.
+                </li>
+                <li>
+                  To enable Model Context Protocol (MCP) server endpoints
+                  allowing authorized AI coding assistants (such as Claude
+                  Desktop and Cursor) to schedule meetings and manage backlog
+                  items at your request.
+                </li>
+                <li>
+                  To detect, prevent, and address technical issues, security
+                  vulnerabilities, or unauthorized activity.
+                </li>
               </ul>
             </div>
 
@@ -115,10 +200,16 @@ export default function PrivacyPolicyPage() {
                 4. Data Storage, Security &amp; Retention
               </h2>
               <p>
-                We implement enterprise-grade technical and organizational safeguards to protect your personal data, including TLS 1.3 encryption in transit and AES-256 encryption at rest.
+                We implement enterprise-grade technical and organizational
+                safeguards to protect your personal data, including TLS 1.3
+                encryption in transit and AES-256 encryption at rest.
               </p>
               <p>
-                We retain your information only as long as your account is active or as necessary to provide you the Service. You can disconnect your Google Calendar integration at any time directly through Scylla settings or through your Google Account Security Permissions page.
+                We retain your information only as long as your account is
+                active or as necessary to provide you the Service. You can
+                disconnect your Google Calendar integration at any time directly
+                through Scylla settings or through your Google Account Security
+                Permissions page.
               </p>
             </div>
 
@@ -127,12 +218,23 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
                 5. Your Data Rights &amp; Choices
               </h2>
-              <p>Depending on your jurisdiction (including GDPR and CCPA/CPRA), you have the right to:</p>
+              <p>
+                Depending on your jurisdiction (including GDPR and CCPA/CPRA),
+                you have the right to:
+              </p>
               <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
-                <li>Access, download, or export a copy of your personal data.</li>
+                <li>
+                  Access, download, or export a copy of your personal data.
+                </li>
                 <li>Correct inaccurate or incomplete account information.</li>
-                <li>Request immediate and permanent deletion of your account and all associated workspace data.</li>
-                <li>Revoke third-party authorization (including Google Calendar OAuth tokens) at any time.</li>
+                <li>
+                  Request immediate and permanent deletion of your account and
+                  all associated workspace data.
+                </li>
+                <li>
+                  Revoke third-party authorization (including Google Calendar
+                  OAuth tokens) at any time.
+                </li>
               </ul>
             </div>
 
@@ -142,7 +244,9 @@ export default function PrivacyPolicyPage() {
                 6. Contact Us
               </h2>
               <p>
-                If you have questions, feedback, or requests regarding this Privacy Policy or your data, please contact our Data Protection Officer at:
+                If you have questions, feedback, or requests regarding this
+                Privacy Policy or your data, please contact our Data Protection
+                Officer at:
               </p>
               <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
                 <Mail className="size-5 text-orange-400" />

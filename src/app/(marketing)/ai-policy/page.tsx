@@ -23,7 +23,8 @@ export default function AiPolicyPage() {
               AI &amp; MCP Protocol Policy
             </h1>
             <p className="mt-3 text-offWhite/60 text-sm sm:text-base">
-              Last Updated: November 1, 2026 &bull; Model Context Protocol Standard
+              Last Updated: November 1, 2026 &bull; Model Context Protocol
+              Standard
             </p>
           </div>
 
@@ -35,7 +36,30 @@ export default function AiPolicyPage() {
                 Human-in-the-Loop &amp; Open Standards
               </h2>
               <p className="text-offWhite/70 leading-relaxed">
-                Scylla integrates with the open Model Context Protocol (MCP) to allow authorized AI coding agents (such as Claude Desktop, Cursor, and Windsurf) to assist you with scheduling, meeting prep, and task triage. Our policy ensures that you always maintain 100% control, ownership, and visibility over any action an AI assistant performs.
+                Scylla integrates with the open Model Context Protocol (MCP) to
+                allow authorized AI coding agents (such as Claude Desktop,
+                Cursor, and Windsurf) to assist you with scheduling, meeting
+                prep, and task triage. Our policy ensures that you always
+                maintain 100% control, ownership, and visibility over any action
+                an AI assistant performs.
+              </p>
+              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
+                For complete details regarding our data collection practices and
+                user rights, please consult our{" "}
+                <Link
+                  href="/privacy"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/terms"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
+                  Terms of Service
+                </Link>
+                .
               </p>
             </div>
 
@@ -44,7 +68,9 @@ export default function AiPolicyPage() {
                 1. Zero Unauthorized Model Training
               </h2>
               <p>
-                We do <strong>NOT</strong> use your private workspace data, Kanban tasks, comments, or connected Google Calendar events to train public or foundational artificial intelligence models.
+                We do <strong>NOT</strong> use your private workspace data,
+                Kanban tasks, comments, or connected Google Calendar events to
+                train public or foundational artificial intelligence models.
               </p>
             </div>
 
@@ -53,7 +79,10 @@ export default function AiPolicyPage() {
                 2. Explicit Authorization for Agent Actions
               </h2>
               <p>
-                AI assistants access Scylla tools exclusively via authenticated MCP server tokens generated in your user settings. You can revoke, rotate, or restrict an agent token&apos;s permissions (e.g., read-only vs. read-write) at any time.
+                AI assistants access Scylla tools exclusively via authenticated
+                MCP server tokens generated in your user settings. You can
+                revoke, rotate, or restrict an agent token&apos;s permissions
+                (e.g., read-only vs. read-write) at any time.
               </p>
             </div>
 
@@ -62,16 +91,19 @@ export default function AiPolicyPage() {
                 3. Google Calendar API Isolation
               </h2>
               <p>
-                Data received from Google APIs (such as meeting schedules and participant emails) is handled in strict compliance with the{" "}
+                Data received from Google APIs (such as meeting schedules and
+                participant emails) is handled in strict compliance with the{" "}
                 <a
                   href="https://developers.google.com/terms/api-services-user-data-policy"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="text-orange-400 underline hover:text-orange-300"
                 >
                   Google API Services User Data Policy
                 </a>
-                . AI agents operating via Scylla cannot bypass calendar access boundaries or access private calendars without explicit user consent.
+                . AI agents operating via Scylla cannot bypass calendar access
+                boundaries or access private calendars without explicit user
+                consent.
               </p>
             </div>
 
@@ -80,7 +112,8 @@ export default function AiPolicyPage() {
                 4. Questions &amp; Support
               </h2>
               <p>
-                For questions regarding our AI policy or MCP implementation, please contact our team at:
+                For questions regarding our AI policy or MCP implementation,
+                please contact our team at:
               </p>
               <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
                 <Mail className="size-5 text-orange-400" />

@@ -36,7 +36,32 @@ export default function TermsOfServicePage() {
                 Agreement to Terms
               </h2>
               <p className="text-offWhite/70 leading-relaxed">
-                These Terms of Service (&ldquo;Terms&rdquo;) constitute a legally binding agreement between you (&ldquo;User&rdquo;, &ldquo;you&rdquo;) and Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;). By creating an account, accessing our web application, integrating external calendars, or utilizing our Model Context Protocol (MCP) APIs, you agree to be bound by these Terms. If you do not agree to these Terms, you must not access or use the Service.
+                These Terms of Service (&ldquo;Terms&rdquo;) constitute a
+                legally binding agreement between you (&ldquo;User&rdquo;,
+                &ldquo;you&rdquo;) and Scylla (&ldquo;Scylla&rdquo;,
+                &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;). By
+                creating an account, accessing our web application, integrating
+                external calendars, or utilizing our Model Context Protocol
+                (MCP) APIs, you agree to be bound by these Terms. If you do not
+                agree to these Terms, you must not access or use the Service.
+              </p>
+              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
+                Your use of the Service is also subject to our{" "}
+                <Link
+                  href="/privacy"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/ai-policy"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
+                  AI &amp; MCP Policy
+                </Link>
+                , which describe how we handle user data and govern AI assistant
+                capabilities.
               </p>
             </div>
 
@@ -46,14 +71,31 @@ export default function TermsOfServicePage() {
                 1. Description of Services
               </h2>
               <p>
-                Scylla provides an intelligent, unified productivity workspace including:
+                Scylla provides an intelligent, unified productivity workspace
+                including:
               </p>
               <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
-                <li>Interactive Kanban boards, task timelines, sprint backlogs, and milestone tracking.</li>
-                <li>Sub-second live deep-work session timers and team velocity analytics.</li>
-                <li>Multi-person calendar scheduling, room availability detection, and personalized booking links.</li>
-                <li>Bi-directional synchronization with Google Calendar, Microsoft Outlook, and third-party calendars.</li>
-                <li>Standard Model Context Protocol (MCP) server endpoints allowing authorized AI coding agents to interact with your workspace.</li>
+                <li>
+                  Interactive Kanban boards, task timelines, sprint backlogs,
+                  and milestone tracking.
+                </li>
+                <li>
+                  Sub-second live deep-work session timers and team velocity
+                  analytics.
+                </li>
+                <li>
+                  Multi-person calendar scheduling, room availability detection,
+                  and personalized booking links.
+                </li>
+                <li>
+                  Bi-directional synchronization with Google Calendar, Microsoft
+                  Outlook, and third-party calendars.
+                </li>
+                <li>
+                  Standard Model Context Protocol (MCP) server endpoints
+                  allowing authorized AI coding agents to interact with your
+                  workspace.
+                </li>
               </ul>
             </div>
 
@@ -63,7 +105,11 @@ export default function TermsOfServicePage() {
                 2. Accounts &amp; Security
               </h2>
               <p>
-                To access features of the Service, you must register an account using Google OAuth or authorized single sign-on credentials. You are responsible for safeguarding your credentials, API tokens, and MCP access keys. You agree to notify us immediately of any unauthorized use of your account.
+                To access features of the Service, you must register an account
+                using Google OAuth or authorized single sign-on credentials. You
+                are responsible for safeguarding your credentials, API tokens,
+                and MCP access keys. You agree to notify us immediately of any
+                unauthorized use of your account.
               </p>
             </div>
 
@@ -74,14 +120,24 @@ export default function TermsOfServicePage() {
                 3. Third-Party Integrations &amp; Google Services
               </h2>
               <p>
-                When you connect your Google Account or external calendar providers to Scylla, you authorize us to access, retrieve, and synchronize event availability and meeting data in accordance with our{" "}
-                <Link href="/privacy" className="text-orange-400 underline hover:text-orange-300">
+                When you connect your Google Account or external calendar
+                providers to Scylla, you authorize us to access, retrieve, and
+                synchronize event availability and meeting data in accordance
+                with our{" "}
+                <Link
+                  href="/privacy"
+                  className="text-orange-400 underline hover:text-orange-300"
+                >
                   Privacy Policy
                 </Link>
                 .
               </p>
               <p className="text-offWhite/70">
-                Our integration with Google Calendar complies strictly with the Google API Services User Data Policy, including Limited Use restrictions. You may disconnect third-party services at any time from Scylla settings or through the respective third-party provider&apos;s security dashboard.
+                Our integration with Google Calendar complies strictly with the
+                Google API Services User Data Policy, including Limited Use
+                restrictions. You may disconnect third-party services at any
+                time from Scylla settings or through the respective third-party
+                provider&apos;s security dashboard.
               </p>
             </div>
 
@@ -92,10 +148,23 @@ export default function TermsOfServicePage() {
               </h2>
               <p>You agree that you will not:</p>
               <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
-                <li>Use the Service to transmit unsolicited commercial communications (&ldquo;spam&rdquo;) or fraudulent calendar invitations.</li>
-                <li>Attempt to probe, scan, or test the vulnerability of our systems or breach security mechanisms.</li>
-                <li>Reverse engineer, decompile, or disassemble any portion of the Service, except where permitted by applicable law.</li>
-                <li>Use the Service in violation of applicable laws, export regulations, or third-party intellectual property rights.</li>
+                <li>
+                  Use the Service to transmit unsolicited commercial
+                  communications (&ldquo;spam&rdquo;) or fraudulent calendar
+                  invitations.
+                </li>
+                <li>
+                  Attempt to probe, scan, or test the vulnerability of our
+                  systems or breach security mechanisms.
+                </li>
+                <li>
+                  Reverse engineer, decompile, or disassemble any portion of the
+                  Service, except where permitted by applicable law.
+                </li>
+                <li>
+                  Use the Service in violation of applicable laws, export
+                  regulations, or third-party intellectual property rights.
+                </li>
               </ul>
             </div>
 
@@ -105,7 +174,11 @@ export default function TermsOfServicePage() {
                 5. Intellectual Property Rights
               </h2>
               <p>
-                You retain full ownership of all task descriptions, meeting agendas, notes, and intellectual content you upload to Scylla. Scylla and its licensors retain all right, title, and interest in and to the platform, including our trademarks, logos, visual design, and proprietary software.
+                You retain full ownership of all task descriptions, meeting
+                agendas, notes, and intellectual content you upload to Scylla.
+                Scylla and its licensors retain all right, title, and interest
+                in and to the platform, including our trademarks, logos, visual
+                design, and proprietary software.
               </p>
             </div>
 
@@ -115,10 +188,17 @@ export default function TermsOfServicePage() {
                 6. Disclaimers &amp; Limitation of Liability
               </h2>
               <p className="text-offWhite/70">
-                THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. TO THE FULLEST EXTENT PERMITTED BY LAW, SCYLLA DISCLAIMS ALL WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+                THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS
+                AVAILABLE&rdquo; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS
+                OR IMPLIED. TO THE FULLEST EXTENT PERMITTED BY LAW, SCYLLA
+                DISCLAIMS ALL WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR
+                A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
               </p>
               <p className="text-offWhite/70">
-                IN NO EVENT SHALL SCYLLA BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICE, CALENDAR SYNCHRONIZATION DELAYS, OR THIRD-PARTY SERVICE OUTAGES.
+                IN NO EVENT SHALL SCYLLA BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+                SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF OR IN
+                CONNECTION WITH YOUR USE OF THE SERVICE, CALENDAR
+                SYNCHRONIZATION DELAYS, OR THIRD-PARTY SERVICE OUTAGES.
               </p>
             </div>
 
@@ -128,7 +208,9 @@ export default function TermsOfServicePage() {
                 7. Termination
               </h2>
               <p>
-                You may terminate your account at any time. We reserve the right to suspend or terminate your access to the Service if you violate these Terms or if required by law.
+                You may terminate your account at any time. We reserve the right
+                to suspend or terminate your access to the Service if you
+                violate these Terms or if required by law.
               </p>
             </div>
 
@@ -138,7 +220,8 @@ export default function TermsOfServicePage() {
                 8. Contact Information
               </h2>
               <p>
-                If you have questions regarding these Terms of Service, please reach out to:
+                If you have questions regarding these Terms of Service, please
+                reach out to:
               </p>
               <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
                 <Mail className="size-5 text-orange-400" />
