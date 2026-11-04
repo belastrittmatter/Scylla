@@ -101,7 +101,7 @@ function ConsentContent() {
       if (data.redirectURI || data.url) {
         window.location.href = data.redirectURI || data.url;
       } else {
-        router.push("/");
+        router.push("/calendar");
       }
     } catch (err: unknown) {
       console.error("Error submitting OAuth consent:", err);

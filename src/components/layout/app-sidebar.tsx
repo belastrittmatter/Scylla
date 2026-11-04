@@ -71,7 +71,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              render={<Link prefetch={false} href="/" />}
+              render={<Link prefetch={false} href="/calendar" />}
               className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:p-0!"
             >
               {/* Collapsed sidebar icon: small logo mark as before */}
