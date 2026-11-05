@@ -4,14 +4,27 @@ import * as React from "react";
 import { UserAvatar } from "@daveyplate/better-auth-ui";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { formatPersonName } from "@/lib/format-person-name";
 import type { CustomEventData } from "@/mock-data/calendar-events";
 
+type Attendee = NonNullable<CustomEventData["attendees"]>[number];
+
 interface CalendarEventAttendeesListProps {
-  attendees: NonNullable<CustomEventData["attendees"]>;
+  attendees: Attendee[];
   organizer?: CustomEventData["organizer"];
   attendeeFilter: string;
   onFilterChange: (val: string) => void;
-  filteredAttendees: NonNullable<CustomEventData["attendees"]>;
+  filteredAttendees: Attendee[];
+}
+
+function isOrganizer(
+  attendee: Attendee,
+  organizer?: CustomEventData["organizer"],
+): boolean {
+  const organizerEmail = organizer?.email?.toLowerCase();
+  return Boolean(
+    organizerEmail && attendee.email.toLowerCase() === organizerEmail,
+  );
 }
 
 export function CalendarEventAttendeesList({
@@ -20,88 +33,75 @@ export function CalendarEventAttendeesList({
   attendeeFilter,
   onFilterChange,
   filteredAttendees,
-}: CalendarEventAttendeesListProps) {
+}: CalendarEventAttendeesListProps): React.ReactElement {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-            Attendees
-          </label>
-          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-            {attendees.length}
-          </span>
-        </div>
-        {organizer &&
-          !attendees.some(
-            (a) =>
-              a.email.toLowerCase() === (organizer.email || "").toLowerCase(),
-          ) && (
-            <span
-              className="max-w-[200px] truncate text-[11px] text-neutral-400"
-              title={`Organized by ${organizer.name || organizer.email}`}
-            >
-              Host: {organizer.name || organizer.email}
-            </span>
-          )}
+      <div className="flex items-center gap-1.5">
+        <label className="text-xs font-semibold text-foreground">
+          Attendees
+        </label>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+          {attendees.length}
+        </span>
       </div>
 
       {attendees.length > 5 && (
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 size-3.5 text-neutral-400" />
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-2.5 top-2.5 size-3.5 text-muted-foreground"
+          />
           <Input
             value={attendeeFilter}
             onChange={(e) => onFilterChange(e.target.value)}
             placeholder="Filter attendees by name or email..."
-            className="h-8 border-neutral-200 bg-neutral-50/50 pl-8 text-xs dark:border-neutral-800 dark:bg-neutral-900/50"
+            className="h-8 pl-8 text-xs"
           />
         </div>
       )}
 
       {attendees.length > 0 ? (
-        <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-neutral-200/80 bg-neutral-50/30 p-2 dark:border-neutral-800 dark:bg-neutral-900/40">
+        <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border bg-muted/30 p-2">
           {filteredAttendees.length > 0 ? (
-            filteredAttendees.map((att, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between gap-2.5 rounded-md p-1.5 transition-colors hover:bg-neutral-100/70 dark:hover:bg-neutral-800/70"
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            filteredAttendees.map((att) => {
+              const name = formatPersonName(att.name, att.email);
+              return (
+                <div
+                  key={att.email}
+                  className="flex items-center gap-2.5 rounded-md p-1.5 transition-colors hover:bg-muted/60"
+                >
                   <UserAvatar
                     user={{
-                      name: att.name,
+                      name,
                       email: att.email,
                       image: att.avatar,
                     }}
                     className="size-6 shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium leading-tight text-neutral-900 dark:text-neutral-100">
-                      {att.name || att.email}
+                    <p className="truncate text-xs font-medium leading-tight text-foreground">
+                      {name}
                     </p>
-                    {att.name &&
-                      att.email &&
-                      att.name.toLowerCase() !== att.email.toLowerCase() && (
-                        <p className="mt-0.5 truncate text-[10px] leading-tight text-neutral-400 dark:text-neutral-500">
-                          {att.email}
-                        </p>
-                      )}
+                    <p className="mt-0.5 truncate text-[10px] leading-tight text-muted-foreground">
+                      {att.email}
+                    </p>
                   </div>
+                  {isOrganizer(att, organizer) && (
+                    <span className="shrink-0 text-[10px] font-semibold tracking-wide text-muted-foreground">
+                      HOST
+                    </span>
+                  )}
                 </div>
-
-                <span className="shrink-0 rounded border border-neutral-200/60 bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 dark:border-neutral-700/60 dark:bg-neutral-800 dark:text-neutral-400">
-                  {att.role || "Attendee"}
-                </span>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <p className="py-2 text-center text-[11px] italic text-neutral-400">
+            <p className="py-2 text-center text-[11px] italic text-muted-foreground">
               No attendees match &quot;{attendeeFilter}&quot;
             </p>
           )}
         </div>
       ) : (
-        <p className="px-1 text-[11px] italic text-neutral-400">
+        <p className="px-1 text-[11px] italic text-muted-foreground">
           No external attendees invited yet.
         </p>
       )}

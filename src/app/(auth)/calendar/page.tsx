@@ -11,7 +11,7 @@ const CalendarDashboard = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[calc(100svh-57px)] w-full items-center justify-center text-sm text-neutral-400">
+      <div className="flex h-[calc(100svh-57px)] w-full items-center justify-center text-sm text-muted-foreground">
         Loading calendar...
       </div>
     ),
@@ -22,7 +22,7 @@ export default function CalendarPage() {
   return (
     <React.Suspense
       fallback={
-        <div className="flex h-[calc(100svh-57px)] w-full items-center justify-center text-sm text-neutral-400">
+        <div className="flex h-[calc(100svh-57px)] w-full items-center justify-center text-sm text-muted-foreground">
           Loading calendar...
         </div>
       }
