@@ -92,8 +92,8 @@ export function KanbanCard({
       className={cn(
         "shadow-xs group relative select-none border p-3 transition-all hover:border-neutral-300 hover:shadow-sm dark:hover:border-neutral-700",
         isDone
-          ? "border-neutral-200/50 bg-neutral-50/50 dark:border-neutral-800/60 dark:bg-neutral-900/40"
-          : "border-neutral-200/70 bg-white dark:border-neutral-800 dark:bg-neutral-900/90",
+          ? "border-neutral-200/50 bg-muted/50 dark:border-neutral-800/60 dark:bg-card/60"
+          : "border-neutral-200/70 bg-card dark:border-neutral-800 dark:bg-card",
       )}
     >
       {/* Card Header: Priority, Est, Actions */}
@@ -114,7 +114,7 @@ export function KanbanCard({
             task.estimatedMinutes !== null && (
               <Badge
                 variant="outline"
-                className="border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-[11px] font-normal text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                className="border-neutral-200 bg-muted px-1.5 py-0.5 text-[11px] font-normal text-neutral-600 dark:border-neutral-700 dark:bg-muted dark:text-neutral-300"
               >
                 <Timer className="mr-1 size-3 text-neutral-400" />
                 {formatEstimatedMinutes(task.estimatedMinutes)}
@@ -133,7 +133,7 @@ export function KanbanCard({
             variant="ghost"
             size="icon-xs"
             onClick={() => setIsCollapsed((prev) => !prev)}
-            className="size-6 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+            className="size-6 text-neutral-400 transition-colors hover:bg-muted hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
             title={isCollapsed ? "Expand card" : "Collapse card"}
           >
             <ChevronDown
@@ -150,7 +150,7 @@ export function KanbanCard({
                 <Button
                   variant="outline"
                   size="xs"
-                  className="h-6 gap-1 border-neutral-200/80 bg-neutral-50/60 px-2 text-xs font-medium text-neutral-600 opacity-70 transition-all hover:bg-neutral-100 hover:text-neutral-900 group-hover:opacity-100 dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-white"
+                  className="h-6 gap-1 border-neutral-200/80 bg-muted/60 px-2 text-xs font-medium text-neutral-600 opacity-70 transition-all hover:bg-muted hover:text-neutral-900 group-hover:opacity-100 dark:border-neutral-700 dark:bg-muted/60 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-white"
                 >
                   <span>Move to</span>
                 </Button>
@@ -220,7 +220,7 @@ export function KanbanCard({
 
       {/* Active Time Tracking Bar (expanded) */}
       {!isCollapsed && task.status === "in_progress" && (
-        <div className="mt-2 rounded-md border border-neutral-100 bg-neutral-50/70 p-2 text-xs transition-colors dark:border-neutral-800 dark:bg-neutral-900/60">
+        <div className="mt-2 rounded-md border border-neutral-100 bg-muted/70 p-2 text-xs transition-colors dark:border-neutral-800 dark:bg-card/60">
           <div className="flex items-center justify-between text-[11px] font-medium">
             <span className="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-300">
               <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
@@ -245,7 +245,7 @@ export function KanbanCard({
 
           <div className="mt-1.5">
             <Progress value={progressPercent}>
-              <ProgressTrack className="h-1 bg-neutral-200/80 dark:bg-neutral-800">
+              <ProgressTrack className="h-1 bg-neutral-200/80 dark:bg-muted">
                 <ProgressIndicator
                   className={cn(
                     "transition-all duration-300",

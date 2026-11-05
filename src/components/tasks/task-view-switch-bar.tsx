@@ -16,7 +16,7 @@ export function TaskViewSwitchBar({
   taskCount,
 }: TaskViewSwitchBarProps) {
   return (
-    <div className="flex items-center justify-between border-b border-neutral-200/60 bg-white/50 px-6 py-2.5 dark:border-neutral-800 dark:bg-neutral-900/50">
+    <div className="flex items-center justify-between border-b border-neutral-200/60 bg-card/50 px-6 py-2.5 dark:border-neutral-800 dark:bg-card/50">
       <Tabs
         value={viewMode}
         onValueChange={(val) => {

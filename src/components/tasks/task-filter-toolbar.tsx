@@ -40,10 +40,10 @@ export function TaskFilterToolbar({
     filters.deadlineHorizon !== "all";
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/60 bg-white/40 px-6 py-2.5 dark:border-neutral-800/60 dark:bg-neutral-900/30">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/60 bg-card/40 px-6 py-2.5 dark:border-neutral-800/60 dark:bg-card/30">
       <div className="flex min-w-[280px] flex-1 flex-wrap items-center gap-2.5">
         {/* Search Input */}
-        <InputGroup className="h-9 min-w-[220px] max-w-[280px] flex-1 rounded-lg border-neutral-200/80 bg-white shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+        <InputGroup className="h-9 min-w-[220px] max-w-[280px] flex-1 rounded-lg border-neutral-200/80 bg-card shadow-none dark:border-neutral-800 dark:bg-card">
           <InputGroupAddon align="inline-start">
             <Search className="size-4 text-neutral-400" />
           </InputGroupAddon>
@@ -64,7 +64,7 @@ export function TaskFilterToolbar({
             onFiltersChange({ ...filters, status: val as TaskStatus | "all" })
           }
         >
-          <SelectTrigger className="h-9 min-w-[130px] rounded-lg border-neutral-200/80 bg-white text-sm shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+          <SelectTrigger className="h-9 min-w-[130px] rounded-lg border-neutral-200/80 bg-card text-sm shadow-none dark:border-neutral-800 dark:bg-card">
             <SelectValue placeholder="Status">
               {filters.status === "all"
                 ? "All Statuses"
@@ -108,7 +108,7 @@ export function TaskFilterToolbar({
             })
           }
         >
-          <SelectTrigger className="h-9 min-w-[125px] rounded-lg border-neutral-200/80 bg-white text-sm shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+          <SelectTrigger className="h-9 min-w-[125px] rounded-lg border-neutral-200/80 bg-card text-sm shadow-none dark:border-neutral-800 dark:bg-card">
             <SelectValue placeholder="Priority">
               {filters.priority === "all"
                 ? "All Priorities"
@@ -156,7 +156,7 @@ export function TaskFilterToolbar({
             })
           }
         >
-          <SelectTrigger className="h-9 min-w-[135px] rounded-lg border-neutral-200/80 bg-white text-sm shadow-none dark:border-neutral-800 dark:bg-neutral-900">
+          <SelectTrigger className="h-9 min-w-[135px] rounded-lg border-neutral-200/80 bg-card text-sm shadow-none dark:border-neutral-800 dark:bg-card">
             <SelectValue placeholder="Deadline">
               {filters.deadlineHorizon === "all"
                 ? "All Deadlines"

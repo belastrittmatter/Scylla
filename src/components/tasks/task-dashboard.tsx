@@ -381,9 +381,9 @@ export function TaskDashboard({
 
   if (teams.length === 0) {
     return (
-      <div className="flex h-[calc(100svh-57px)] w-full flex-col items-center justify-center bg-neutral-100/40 p-6 dark:bg-background">
+      <div className="flex h-[calc(100svh-57px)] w-full flex-col items-center justify-center bg-muted/40 p-6 dark:bg-background">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          <div className="shadow-xs flex size-14 items-center justify-center rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="shadow-xs flex size-14 items-center justify-center rounded-2xl border border-neutral-200 bg-card dark:border-neutral-800 dark:bg-card">
             <Users className="size-7 text-neutral-600 dark:text-neutral-400" />
           </div>
           <h2 className="mt-5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
@@ -413,7 +413,7 @@ export function TaskDashboard({
   }
 
   return (
-    <div className="flex h-[calc(100svh-57px)] w-full flex-col overflow-hidden bg-neutral-100/40 dark:bg-background">
+    <div className="flex h-[calc(100svh-57px)] w-full flex-col overflow-hidden bg-muted/40 dark:bg-background">
       <WorkspaceNavHeader
         teams={teams}
         projects={teamProjects}
@@ -466,11 +466,11 @@ export function TaskDashboard({
                     key={team.id}
                     type="button"
                     onClick={() => handleSelectTeam(team.id)}
-                    className="shadow-xs group flex flex-col justify-between rounded-xl border border-neutral-200 bg-white p-5 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+                    className="shadow-xs group flex flex-col justify-between rounded-xl border border-neutral-200 bg-card p-5 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-card dark:hover:border-neutral-700"
                   >
                     <div>
                       <div className="flex items-center justify-between">
-                        <div className="flex size-10 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-700 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-300">
+                        <div className="flex size-10 items-center justify-center rounded-lg border border-neutral-200 bg-muted text-neutral-700 dark:border-neutral-800 dark:bg-muted dark:text-neutral-300">
                           <Users className="size-5" />
                         </div>
                         <span className="font-mono text-xs text-neutral-400">
@@ -505,9 +505,9 @@ export function TaskDashboard({
               <button
                 type="button"
                 onClick={() => setIsCreateTeamOpen(true)}
-                className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50/50 p-6 text-center transition-all hover:border-neutral-300 hover:bg-neutral-100/50 dark:border-neutral-800 dark:bg-neutral-900/30 dark:hover:border-neutral-700 dark:hover:bg-neutral-900/50"
+                className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-muted/50 p-6 text-center transition-all hover:border-neutral-300 hover:bg-muted/50 dark:border-neutral-800 dark:bg-card/30 dark:hover:border-neutral-700 dark:hover:bg-card/50"
               >
-                <div className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
+                <div className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-card dark:border-neutral-700 dark:bg-muted">
                   <Plus className="size-5 text-neutral-500 dark:text-neutral-400" />
                 </div>
                 <span className="mt-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
@@ -524,7 +524,7 @@ export function TaskDashboard({
         teamProjects.length === 0 ? (
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center p-6">
             <div className="mx-auto flex max-w-md flex-col items-center text-center">
-              <div className="shadow-xs flex size-14 items-center justify-center rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+              <div className="shadow-xs flex size-14 items-center justify-center rounded-2xl border border-neutral-200 bg-card dark:border-neutral-800 dark:bg-card">
                 <FolderKanban className="size-7 text-neutral-600 dark:text-neutral-400" />
               </div>
               <h2 className="mt-5 text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
@@ -604,7 +604,7 @@ export function TaskDashboard({
                       key={project.id}
                       type="button"
                       onClick={() => handleSelectProject(project.id)}
-                      className="shadow-xs group flex flex-col justify-between rounded-xl border border-neutral-200 bg-white p-5 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+                      className="shadow-xs group flex flex-col justify-between rounded-xl border border-neutral-200 bg-card p-5 text-left transition-all hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-card dark:hover:border-neutral-700"
                     >
                       <div>
                         <div className="flex items-center justify-between">
@@ -624,7 +624,7 @@ export function TaskDashboard({
                               variant="outline"
                               className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                                 STATUS_BADGES[project.status] ||
-                                "border-neutral-300 bg-neutral-100 text-neutral-800"
+                                "border-neutral-300 bg-muted text-neutral-800"
                               }`}
                             >
                               {project.status}
@@ -652,9 +652,9 @@ export function TaskDashboard({
                 <button
                   type="button"
                   onClick={() => setIsCreateProjectOpen(true)}
-                  className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50/50 p-6 text-center transition-all hover:border-neutral-300 hover:bg-neutral-100/50 dark:border-neutral-800 dark:bg-neutral-900/30 dark:hover:border-neutral-700 dark:hover:bg-neutral-900/50"
+                  className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-muted/50 p-6 text-center transition-all hover:border-neutral-300 hover:bg-muted/50 dark:border-neutral-800 dark:bg-card/30 dark:hover:border-neutral-700 dark:hover:bg-card/50"
                 >
-                  <div className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
+                  <div className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-card dark:border-neutral-700 dark:bg-muted">
                     <Plus className="size-5 text-neutral-500 dark:text-neutral-400" />
                   </div>
                   <span className="mt-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">

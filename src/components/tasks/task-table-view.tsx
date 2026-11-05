@@ -74,9 +74,9 @@ export function TaskTableView({
 
   return (
     <div className="h-full w-full overflow-auto p-6">
-      <div className="shadow-xs overflow-hidden rounded-xl border border-neutral-200/80 bg-white dark:border-neutral-800 dark:bg-neutral-900/90">
+      <div className="shadow-xs overflow-hidden rounded-xl border border-neutral-200/80 bg-card dark:border-neutral-800 dark:bg-card">
         <Table>
-          <TableHeader className="bg-neutral-50/80 dark:bg-neutral-800/60">
+          <TableHeader className="bg-muted/80 dark:bg-muted/60">
             <TableRow>
               <TableHead
                 className="cursor-pointer py-3.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200"

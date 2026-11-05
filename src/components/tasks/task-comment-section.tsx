@@ -81,7 +81,7 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
                     {c.user?.initials || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 rounded-lg bg-neutral-50 p-2.5 dark:bg-neutral-800/60">
+                <div className="flex-1 rounded-lg bg-muted p-2.5 dark:bg-muted/60">
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="font-semibold text-neutral-800 dark:text-neutral-200">
                       {author}

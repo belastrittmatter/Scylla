@@ -60,7 +60,7 @@ export function TeamSearchPicker({
         type="button"
         disabled={disabled}
         className={cn(
-          "flex h-9 min-w-[210px] items-center justify-between gap-2 rounded-lg border border-neutral-200/90 bg-neutral-50/90 px-3 text-sm font-semibold text-neutral-900 outline-none transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100",
+          "flex h-9 min-w-[210px] items-center justify-between gap-2 rounded-lg border border-neutral-200/90 bg-muted/90 px-3 text-sm font-semibold text-neutral-900 outline-none transition-colors dark:border-neutral-700 dark:bg-muted dark:text-neutral-100",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
           "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
         )}
