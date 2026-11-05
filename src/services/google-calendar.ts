@@ -162,6 +162,14 @@ export class GoogleCalendarService {
   private static hasAdminApiPermission: boolean = true;
 
   /**
+   * Clears in-memory directory and resource room caches.
+   */
+  public static clearCache(): void {
+    this.cachedRooms = null;
+    this.cachedUsers = null;
+  }
+
+  /**
    * Determine whether live Google API credentials or access token are configured.
    */
   public static isConfigured(accessToken?: string): boolean {
