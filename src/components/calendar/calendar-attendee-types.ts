@@ -5,4 +5,5 @@ export interface CalendarAttendeeItem {
   image?: string | null;
   type: "user" | "room";
   details?: string;
+  capacity?: number;
 }

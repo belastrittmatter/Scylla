@@ -10,14 +10,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <BreadcrumbProvider>
       <SidebarProvider
-        className="relative h-svh w-full overflow-hidden bg-muted/40"
+        className="relative h-svh w-full overflow-hidden bg-sidebar"
         defaultOpen
       >
         <React.Suspense fallback={null}>
-          <AppSidebar className="z-10" />
+          <AppSidebar />
         </React.Suspense>
 
-        <SidebarInset className="relative z-10 flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-transparent">
+        <SidebarInset className="relative flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-muted/40">
           {/* Fixed Header */}
           <div className="shrink-0">
             <React.Suspense fallback={null}>

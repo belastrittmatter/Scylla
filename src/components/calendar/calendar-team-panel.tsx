@@ -30,12 +30,14 @@ function teamDisplayName(name: string): string {
 interface CalendarTeamPanelProps {
   selectedAttendees: CalendarAttendeeItem[];
   onToggleAttendee: (item: CalendarAttendeeItem) => void;
+  currentUserEmail?: string;
   defaultOpen?: boolean;
 }
 
 export function CalendarTeamPanel({
   selectedAttendees,
   onToggleAttendee,
+  currentUserEmail,
   defaultOpen,
 }: CalendarTeamPanelProps): React.ReactElement | null {
   const { teams } = useTeams();
@@ -65,13 +67,18 @@ export function CalendarTeamPanel({
     [selectedAttendees],
   );
 
+  const currentEmail = currentUserEmail?.trim().toLowerCase();
+  const visibleMembers = members.filter(
+    (member) => member.user.email.trim().toLowerCase() !== currentEmail,
+  );
+
   // The card is absent for a user who belongs to no team.
   if (teams.length === 0) return null;
 
   return (
     <CalendarPanelCard
       title="Team"
-      meta={`${members.length} members`}
+      meta={`${visibleMembers.length} members`}
       icon={UsersRound}
       defaultOpen={defaultOpen}
     >
@@ -93,8 +100,8 @@ export function CalendarTeamPanel({
         </SelectContent>
       </Select>
 
-      <div className="mt-2 space-y-0.5">
-        {members.map((member) => {
+      <div className="mt-2 divide-y divide-border/50">
+        {visibleMembers.map((member) => {
           const name = formatPersonName(member.user.name, member.user.email);
           const item: CalendarAttendeeItem = {
             id: member.user.id,

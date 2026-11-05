@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, SearchX, Users } from "lucide-react";
+import { Search, SearchX, Users, X } from "lucide-react";
 import { useUserSearch } from "@/hooks/use-user-search";
 import { formatPersonName, getPersonInitials } from "@/lib/format-person-name";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 interface CalendarPeoplePanelProps {
   selectedAttendees: CalendarAttendeeItem[];
   onToggleAttendee: (item: CalendarAttendeeItem) => void;
+  currentUserEmail?: string;
 }
 
 function PeoplePanelSkeleton(): React.ReactElement {
@@ -35,6 +36,7 @@ function PeoplePanelSkeleton(): React.ReactElement {
 export function CalendarPeoplePanel({
   selectedAttendees,
   onToggleAttendee,
+  currentUserEmail,
 }: CalendarPeoplePanelProps): React.ReactElement {
   const { query, setQuery, results, isLoading, hasLoaded } = useUserSearch({
     limit: 20,
@@ -46,20 +48,25 @@ export function CalendarPeoplePanel({
   );
   const selectedPeople = selectedAttendees.filter(
     (item) => item.type === "user",
-  ).length;
+  );
 
-  const items = results.map((user) => {
-    const name = formatPersonName(user.name, user.email);
-    const item: CalendarAttendeeItem = {
-      id: user.id || user.email,
-      name,
-      email: user.email,
-      image: user.image,
-      type: "user",
-      details: user.title || user.department || "Teammate",
-    };
-    return { item, name };
-  });
+  const currentEmail = currentUserEmail?.trim().toLowerCase();
+
+  const items = results
+    .filter((user) => user.email.trim().toLowerCase() !== currentEmail)
+    .map((user) => {
+      const name = formatPersonName(user.name, user.email);
+      const item: CalendarAttendeeItem = {
+        id: user.id || user.email,
+        name,
+        email: user.email,
+        image: user.image,
+        type: "user",
+        details: user.title || user.department || "Teammate",
+      };
+      return { item, name };
+    })
+    .filter(({ item }) => !selectedIds.has(item.id));
 
   const showSkeleton =
     !hasLoaded || (isLoading && query.trim() !== "" && items.length === 0);
@@ -67,9 +74,48 @@ export function CalendarPeoplePanel({
   return (
     <CalendarPanelCard
       title="People"
-      meta={`${selectedPeople} selected`}
+      meta={`${selectedPeople.length} selected`}
       icon={Users}
     >
+      {selectedPeople.length > 0 && (
+        <div className="mb-2 rounded-lg bg-muted/40 p-1">
+          <p className="px-2 py-1 text-[11px] font-medium text-muted-foreground">
+            Selected ({selectedPeople.length})
+          </p>
+          <div className="divide-y divide-border/50">
+            {selectedPeople.map((person) => (
+              <div
+                key={person.id}
+                className="flex items-center gap-2.5 px-2 py-1.5"
+              >
+                <Avatar size="sm">
+                  {person.image && (
+                    <AvatarImage src={person.image} alt={person.name} />
+                  )}
+                  <AvatarFallback>
+                    {getPersonInitials(person.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium">{person.name}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {person.email}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggleAttendee(person)}
+                  aria-label={`Remove ${person.name}`}
+                  className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X aria-hidden className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="relative">
         <Search
           aria-hidden
@@ -85,7 +131,7 @@ export function CalendarPeoplePanel({
         />
       </div>
 
-      <div className="mt-2 space-y-0.5">
+      <div className="mt-2 divide-y divide-border/50">
         {showSkeleton ? (
           <PeoplePanelSkeleton />
         ) : items.length === 0 ? (
@@ -94,47 +140,34 @@ export function CalendarPeoplePanel({
             <span>No teammates found</span>
           </div>
         ) : (
-          items.map(({ item, name }) => {
-            const isSelected = selectedIds.has(item.id);
-
-            return (
-              <div
-                key={item.id}
-                className={`flex items-center gap-2.5 rounded-lg p-2 ${
-                  isSelected ? "bg-accent/60" : "hover:bg-muted/60"
-                }`}
+          items.map(({ item, name }) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-muted/60"
+            >
+              <Avatar size="sm">
+                {item.image && <AvatarImage src={item.image} alt={name} />}
+                <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
+              </Avatar>
+              <button
+                type="button"
+                onClick={() => onToggleAttendee(item)}
+                className="min-w-0 flex-1 cursor-pointer text-left"
               >
-                <Avatar
-                  size="sm"
-                  className={isSelected ? "ring-2 ring-background" : undefined}
-                >
-                  {item.image && <AvatarImage src={item.image} alt={name} />}
-                  <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
-                </Avatar>
-                <button
-                  type="button"
-                  onClick={() => onToggleAttendee(item)}
-                  className="min-w-0 flex-1 cursor-pointer text-left"
-                >
-                  <span
-                    className={`block truncate text-sm ${
-                      isSelected ? "font-semibold" : "font-medium"
-                    }`}
-                  >
-                    {name}
-                  </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {item.email}
-                  </span>
-                </button>
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={() => onToggleAttendee(item)}
-                  aria-label={`Include ${name}`}
-                />
-              </div>
-            );
-          })
+                <span className="block truncate text-sm font-medium">
+                  {name}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {item.email}
+                </span>
+              </button>
+              <Checkbox
+                checked={false}
+                onCheckedChange={() => onToggleAttendee(item)}
+                aria-label={`Include ${name}`}
+              />
+            </div>
+          ))
         )}
       </div>
     </CalendarPanelCard>

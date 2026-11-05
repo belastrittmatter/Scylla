@@ -29,7 +29,7 @@ export function CalendarPanelCard({
       onToggle={(event) => setOpen(event.currentTarget.open)}
       className="group rounded-[10px] border bg-card text-card-foreground shadow-sm"
     >
-      <summary className="flex cursor-pointer select-none list-none items-center gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer select-none list-none items-center gap-2 rounded-t-[10px] px-4 py-3 transition-colors hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
         {Icon && (
           <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
             <Icon aria-hidden className="size-3.5" />

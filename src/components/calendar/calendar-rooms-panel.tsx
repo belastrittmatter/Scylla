@@ -33,7 +33,8 @@ export function CalendarRoomsPanel({
             email: room.email,
             image: null,
             type: "room",
-            details: `${room.building || "Main Office"} · ${room.capacity} seats`,
+            details: room.building || "Main Office",
+            capacity: room.capacity,
           })),
         );
       })
@@ -57,7 +58,7 @@ export function CalendarRoomsPanel({
       icon={Building2}
       defaultOpen={defaultOpen}
     >
-      <div className="space-y-0.5">
+      <div className="divide-y divide-border/50">
         {rooms.length === 0 ? (
           <p className="px-2 py-3 text-xs text-muted-foreground">
             No rooms found
@@ -80,7 +81,7 @@ export function CalendarRoomsPanel({
                 >
                   <Building2 aria-hidden className="size-3.5" />
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <p
                     className={`truncate text-sm ${
                       isSelected ? "font-semibold" : "font-medium"
@@ -88,9 +89,14 @@ export function CalendarRoomsPanel({
                   >
                     {room.name}
                   </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {room.details}
-                  </p>
+                  {room.capacity !== undefined && (
+                    <span
+                      title={`Capacity ${room.capacity}`}
+                      className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums text-muted-foreground"
+                    >
+                      {room.capacity}
+                    </span>
+                  )}
                 </div>
                 <Switch
                   checked={isSelected}

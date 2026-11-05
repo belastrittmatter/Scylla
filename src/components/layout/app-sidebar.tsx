@@ -15,8 +15,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { ChevronDown } from "lucide-react";
 import { MAIN_NAV_ITEMS, WORKSPACE_INFO } from "@/constants/navigation";
 import { UserButton } from "@daveyplate/better-auth-ui";
 
@@ -39,7 +39,7 @@ function SidebarNavMenu({ pathname }: { pathname: string }) {
             <SidebarMenuButton
               isActive={isActive}
               tooltip={item.title}
-              className="h-8.5 text-[13px] font-normal tracking-[-0.01em] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground"
+              className="h-9 rounded-lg text-[13px] font-normal tracking-[-0.01em] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground"
               render={<Link href={item.url} />}
             >
               <item.icon className="size-4 shrink-0" />
@@ -114,12 +114,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       {/* Bottom navigation links & user info card */}
-      <SidebarFooter className="gap-2 p-2">
-        <SidebarSeparator />
-        <UserButton
-          variant="ghost"
-          className="w-full cursor-pointer justify-start transition-colors hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
-        />
+      <SidebarFooter className="gap-2 border-t border-sidebar-border p-2">
+        <div className="relative">
+          <UserButton
+            variant="ghost"
+            className="w-full cursor-pointer justify-start pr-8 transition-colors hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
+          />
+          <ChevronDown
+            aria-hidden
+            className="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-sidebar-foreground/60"
+          />
+        </div>
       </SidebarFooter>
 
       {/* Resizable / Toggle Rail */}

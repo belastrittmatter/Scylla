@@ -344,8 +344,14 @@ export function CalendarDashboard() {
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search events"
               aria-label="Search events"
-              className="h-8 pl-8 text-xs"
+              className="h-8 pl-8 pr-12 text-xs"
             />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground"
+            >
+              ⌘K
+            </span>
           </div>
           <Button
             variant="ghost"
@@ -373,11 +379,13 @@ export function CalendarDashboard() {
           <CalendarTeamPanel
             selectedAttendees={selectedAttendees}
             onToggleAttendee={handleToggleAttendee}
+            currentUserEmail={session?.user?.email}
             defaultOpen={!compact}
           />
           <CalendarPeoplePanel
             selectedAttendees={selectedAttendees}
             onToggleAttendee={handleToggleAttendee}
+            currentUserEmail={session?.user?.email}
           />
           <CalendarRoomsPanel
             selectedAttendees={selectedAttendees}
@@ -403,6 +411,7 @@ export function CalendarDashboard() {
               weekends: settings.showWeekends,
               nowIndicator: settings.showNowIndicator,
             }}
+            todayClassName="bg-primary/[0.02]"
             onSelectSlot={handleSelectSlot}
             onSlotClick={handleSlotClick}
             onEventUpdate={handleEventUpdate}
