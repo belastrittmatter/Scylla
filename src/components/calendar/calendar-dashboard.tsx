@@ -55,6 +55,7 @@ export function CalendarDashboard() {
   );
   const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [selectedSlotRange, setSelectedSlotRange] = React.useState<{
     date: Date;
@@ -235,6 +236,18 @@ export function CalendarDashboard() {
     });
   }, [syncCalendar]);
 
+  // ⌘K is a decorative hint; focus the header search when pressed.
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Filter events by search query
   const displayedEvents = React.useMemo(() => {
     return events.filter((ev) => {
@@ -339,6 +352,7 @@ export function CalendarDashboard() {
               className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
             />
             <Input
+              ref={searchInputRef}
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}

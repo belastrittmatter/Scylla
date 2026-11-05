@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarPanelCard } from "./calendar-panel-card";
+import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
 type TeamMember = Awaited<ReturnType<typeof apiClient.teams.members>>[number];
@@ -81,6 +81,7 @@ export function CalendarTeamPanel({
       meta={`${visibleMembers.length} members`}
       icon={UsersRound}
       defaultOpen={defaultOpen}
+      bodyClassName="max-h-[220px] overflow-y-auto"
     >
       <Select
         value={teamId}
@@ -100,7 +101,7 @@ export function CalendarTeamPanel({
         </SelectContent>
       </Select>
 
-      <div className="mt-2 divide-y divide-border/50">
+      <div className="mt-2 space-y-0.5">
         {visibleMembers.map((member) => {
           const name = formatPersonName(member.user.name, member.user.email);
           const item: CalendarAttendeeItem = {
@@ -111,43 +112,23 @@ export function CalendarTeamPanel({
             type: "user",
             details: member.role,
           };
-          const isSelected = selectedIds.has(item.id);
 
           return (
-            <div
+            <CalendarSelectableRow
               key={member.id}
-              className={`flex items-center gap-2.5 rounded-lg p-2 ${
-                isSelected ? "bg-accent/60" : "hover:bg-muted/60"
-              }`}
-            >
-              <Avatar
-                size="sm"
-                className={isSelected ? "ring-2 ring-background" : undefined}
-              >
-                {member.user.image && (
-                  <AvatarImage src={member.user.image} alt={name} />
-                )}
-                <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`truncate text-sm ${
-                    isSelected ? "font-semibold" : "font-medium"
-                  }`}
-                >
-                  {name}
-                </p>
-                <p className="truncate text-xs capitalize text-muted-foreground">
-                  {member.role}
-                </p>
-              </div>
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => onToggleAttendee(item)}
-                aria-label={`Include ${name}`}
-                className="data-checked:border-foreground data-checked:bg-foreground data-checked:text-background"
-              />
-            </div>
+              label={name}
+              sublabel={<span className="capitalize">{member.role}</span>}
+              checked={selectedIds.has(item.id)}
+              onToggle={() => onToggleAttendee(item)}
+              avatar={
+                <Avatar size="sm">
+                  {member.user.image && (
+                    <AvatarImage src={member.user.image} alt={name} />
+                  )}
+                  <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
+                </Avatar>
+              }
+            />
           );
         })}
       </div>
