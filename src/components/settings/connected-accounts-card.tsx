@@ -30,6 +30,7 @@ export function ConnectedAccountsCard() {
     (account: Account) => account.providerId === "google",
   );
   const isGoogleConnected = Boolean(googleAccount);
+  const canUnlinkGoogle = isGoogleConnected && (accounts?.length ?? 0) > 1;
 
   const handleLinkGoogle = async () => {
     if (!authClient) return;
@@ -65,11 +66,11 @@ export function ConnectedAccountsCard() {
       await refetch?.();
       toast.success("Google account disconnected");
     } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to disconnect Google account",
-      );
+      const errorMessage =
+        typeof err === "object" && err !== null && "message" in err
+          ? String(err.message)
+          : "Failed to disconnect Google account";
+      toast.error(errorMessage || "Failed to disconnect Google account");
     } finally {
       setIsActionLoading(false);
     }
@@ -119,7 +120,9 @@ export function ConnectedAccountsCard() {
               type="button"
               size="sm"
               variant={isGoogleConnected ? "outline" : "default"}
-              disabled={isActionLoading}
+              disabled={
+                isActionLoading || (isGoogleConnected && !canUnlinkGoogle)
+              }
               onClick={
                 isGoogleConnected ? handleUnlinkGoogle : handleLinkGoogle
               }
@@ -130,6 +133,11 @@ export function ConnectedAccountsCard() {
             </Button>
           </div>
         )}
+        {isGoogleConnected && !canUnlinkGoogle ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Keep at least one connected account for sign-in.
+          </p>
+        ) : null}
       </CardContent>
 
       <CardFooter className="rounded-b-xl border-t bg-sidebar !py-4 px-6 text-xs text-muted-foreground">

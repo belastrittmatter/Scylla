@@ -86,7 +86,7 @@ export function useConsentForm(clientId: string, requestedScopeParam: string) {
         if (redirectTarget) {
           window.location.href = redirectTarget;
         } else {
-          router.push("/");
+          router.push("/calendar");
         }
         return;
       }
@@ -164,7 +164,7 @@ export function useConsentForm(clientId: string, requestedScopeParam: string) {
       if (redirectTarget) {
         window.location.href = redirectTarget;
       } else {
-        router.push("/");
+        router.push("/calendar");
       }
     } catch (err: unknown) {
       console.error("Error submitting OAuth consent:", err);

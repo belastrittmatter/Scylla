@@ -72,7 +72,7 @@ export function AccountSettingsView() {
                 validate: "Name must be between 1 and 32 characters.",
               }}
             />
-            <ChangeEmailCard />
+            <ChangeEmailCard disabled />
           </div>
         </section>
 
