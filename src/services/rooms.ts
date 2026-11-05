@@ -56,6 +56,7 @@ export class RoomService {
    * into the local database `meeting_room` table via upsert.
    */
   public static async syncRoomsFromGoogle(): Promise<MeetingRoom[]> {
+    GoogleCalendarService.clearCache();
     const resourceRooms: ResourceRoom[] =
       await GoogleCalendarService.listResourceRooms();
     await Promise.all(resourceRooms.map((room) => this.upsertGoogleRoom(room)));

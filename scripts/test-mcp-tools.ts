@@ -17,7 +17,10 @@ async function main() {
   console.log("       MCP SERVER TOOL VERIFICATION & HEALTH CHECK ");
   console.log("==================================================\n");
 
-  const server = await createCalendarMcpServer();
+  const server = await createCalendarMcpServer({
+    sub: "usr_mcp_healthcheck",
+    scopes: ["*"],
+  });
   const tools = (server as unknown as McpServerWithInternals)._registeredTools;
 
   const toolNames = Object.keys(tools);

@@ -6,6 +6,7 @@ describe("GoogleCalendarService", () => {
   const originalToken = process.env.GOOGLE_ACCESS_TOKEN;
 
   beforeEach(() => {
+    GoogleCalendarService.clearCache();
     process.env.GOOGLE_ACCESS_TOKEN = "test-token";
 
     globalThis.fetch = (async (
@@ -161,6 +162,7 @@ describe("GoogleCalendarService", () => {
   });
 
   afterEach(() => {
+    GoogleCalendarService.clearCache();
     globalThis.fetch = originalFetch;
     if (originalToken !== undefined) {
       process.env.GOOGLE_ACCESS_TOKEN = originalToken;
