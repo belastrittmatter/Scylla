@@ -76,16 +76,10 @@ export function CalendarRoomsPanel({
               icon={Building2}
               checked={selectedIds.has(room.id)}
               onToggle={() => onToggleAttendee(room)}
-              sublabel={
-                room.capacity !== undefined ? (
-                  <span
-                    title={`Capacity ${room.capacity}`}
-                    className="inline-block rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums"
-                  >
-                    {room.capacity}
-                  </span>
-                ) : undefined
+              meta={
+                room.capacity !== undefined ? String(room.capacity) : undefined
               }
+              sublabel={room.details}
             />
           ))
         )}

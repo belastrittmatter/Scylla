@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface CalendarSelectableRowProps {
   label: string;
   sublabel?: React.ReactNode;
+  meta?: string;
   avatar?: React.ReactNode;
   icon?: LucideIcon;
   checked: boolean;
@@ -17,6 +18,7 @@ interface CalendarSelectableRowProps {
 export function CalendarSelectableRow({
   label,
   sublabel,
+  meta,
   avatar,
   icon: Icon,
   checked,
@@ -39,7 +41,14 @@ export function CalendarSelectableRow({
           </span>
         ))}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{label}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-sm font-medium">{label}</span>
+          {meta && (
+            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {meta}
+            </span>
+          )}
+        </span>
         {sublabel && (
           <span className="mt-0.5 block truncate text-xs text-muted-foreground">
             {sublabel}
