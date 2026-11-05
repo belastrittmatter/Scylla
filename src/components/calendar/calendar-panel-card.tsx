@@ -43,7 +43,7 @@ export function CalendarPanelCard({
         />
       </summary>
       <div
-        className={cn("max-h-[264px] overflow-y-auto px-4 pb-4", bodyClassName)}
+        className={cn("max-h-[200px] overflow-y-auto px-4 pb-4", bodyClassName)}
       >
         {children}
       </div>

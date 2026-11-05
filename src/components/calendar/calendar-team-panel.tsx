@@ -42,6 +42,7 @@ export function CalendarTeamPanel({
   const [pickedTeamId, setPickedTeamId] = React.useState("");
   const [members, setMembers] = React.useState<TeamMember[]>([]);
   const teamId = pickedTeamId || teams[0]?.id || "";
+  const selectedTeam = teams.find((team) => team.id === teamId);
 
   React.useEffect(() => {
     if (!teamId) return;
@@ -79,7 +80,9 @@ export function CalendarTeamPanel({
         onValueChange={(value) => setPickedTeamId(value ?? "")}
       >
         <SelectTrigger className="h-8 w-full text-xs" aria-label="Team">
-          <SelectValue placeholder="Select a team" />
+          <SelectValue placeholder="Select a team">
+            {selectedTeam ? teamDisplayName(selectedTeam.name) : undefined}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {teams.map((team) => (
