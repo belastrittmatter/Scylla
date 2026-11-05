@@ -93,7 +93,7 @@ export function ViewHeader({
   parent = WORKSPACE_INFO.brand,
 }: ViewHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background px-5 py-3 transition-colors">
+    <div className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background px-5 transition-colors">
       <div className="flex items-center gap-1.5">
         <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:text-foreground" />
 

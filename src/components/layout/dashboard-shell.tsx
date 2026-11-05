@@ -17,7 +17,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <AppSidebar />
         </React.Suspense>
 
-        <SidebarInset className="relative flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-muted/40">
+        <SidebarInset className="relative flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-background">
           {/* Fixed Header */}
           <div className="shrink-0">
             <React.Suspense fallback={null}>
