@@ -47,6 +47,9 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
     expect(html).toContain("Connected Accounts");
     expect(html).toContain("AI Agents &amp; MCP Integrations");
     expect(html).toContain("AI Agent &amp; MCP Capabilities");
+    expect(html).toContain("MCP Server URL");
+    expect(html).toContain("Copy");
+    expect(html).toContain("/api/mcp");
     expect(html).toContain("Danger Zone");
     // Verify Security / Password section was removed as requested
     expect(html).not.toContain("Security &amp; Credentials");
