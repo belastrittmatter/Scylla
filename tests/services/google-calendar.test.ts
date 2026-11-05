@@ -6,6 +6,7 @@ describe("GoogleCalendarService", () => {
   const originalToken = process.env.GOOGLE_ACCESS_TOKEN;
 
   beforeEach(() => {
+    GoogleCalendarService.clearCache();
     process.env.GOOGLE_ACCESS_TOKEN = "test-token";
 
     globalThis.fetch = (async (
@@ -161,6 +162,7 @@ describe("GoogleCalendarService", () => {
   });
 
   afterEach(() => {
+    GoogleCalendarService.clearCache();
     globalThis.fetch = originalFetch;
     if (originalToken !== undefined) {
       process.env.GOOGLE_ACCESS_TOKEN = originalToken;
@@ -340,5 +342,16 @@ describe("GoogleCalendarService", () => {
         (e) => e.id === "gcal_event_123" || e.summary === "Sync Team Standup",
       ),
     ).toBe(true);
+  });
+
+  test("clearCache resets in-memory room and directory user caches", async () => {
+    const initialRooms = await GoogleCalendarService.listResourceRooms();
+    expect(initialRooms.length).toBe(1);
+
+    GoogleCalendarService.clearCache();
+    globalThis.fetch = originalFetch;
+
+    const freshRooms = await GoogleCalendarService.listResourceRooms();
+    expect(freshRooms.length).toBeGreaterThanOrEqual(2);
   });
 });

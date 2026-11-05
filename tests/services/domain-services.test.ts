@@ -5,6 +5,9 @@ import { SchedulerService } from "../../src/services/scheduler";
 import { BookingService } from "../../src/services/booking";
 import { TeamService } from "../../src/services/team/team-service";
 import { ProjectService } from "../../src/services/project/project-service";
+import { inArray } from "drizzle-orm";
+import { db } from "../../src/db";
+import { meetingRoom } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
 
 describe("Domain Services", () => {
@@ -46,11 +49,22 @@ describe("Domain Services", () => {
 
   describe("RoomService", () => {
     test("syncRoomsFromGoogle syncs rooms and listRooms returns smallest-fit matching", async () => {
+      await db
+        .delete(meetingRoom)
+        .where(
+          inArray(meetingRoom.email, [
+            "room-alpha@resource.calendar.google.com",
+            "room-beta@resource.calendar.google.com",
+          ]),
+        );
       await RoomService.syncRoomsFromGoogle();
 
       const rooms = await RoomService.listRooms({ minCapacity: 4 });
       expect(rooms.length).toBeGreaterThan(0);
       expect(rooms[0].capacity).toBeGreaterThanOrEqual(4);
+      expect(
+        rooms.some((r) => r.email === "room-beta@resource.calendar.google.com"),
+      ).toBe(true);
 
       // Verify smallest-fit order (capacity ascending)
       for (let i = 1; i < rooms.length; i++) {

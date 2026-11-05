@@ -247,6 +247,14 @@ export class GoogleCalendarService {
   }
 
   /**
+   * Clears the in-memory room and directory user caches.
+   */
+  public static clearCache(): void {
+    this.cachedRooms = null;
+    this.cachedUsers = null;
+  }
+
+  /**
    * Deletes all tracked events from Google Calendar and clears the registry.
    */
   public static async cleanupTrackedEvents(
