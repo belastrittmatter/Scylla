@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { getRangeLabel } from "@/components/calendar/calendar-toolbar-lib";
+import {
+  getRangeLabel,
+  getViewChipLabel,
+} from "@/components/calendar/calendar-toolbar-lib";
 
 // Wednesday, November 4, 2026
 const WED = new Date(2026, 10, 4, 12, 0, 0);
@@ -31,5 +34,15 @@ describe("getRangeLabel", () => {
 
   test("agenda spans thirty days", () => {
     expect(getRangeLabel("agenda", WED, 1)).toBe("Nov 4 – Dec 3, 2026");
+  });
+});
+
+describe("getViewChipLabel", () => {
+  test("week uses the ISO week number", () => {
+    expect(getViewChipLabel("week", WED, 1)).toBe("Week 45");
+  });
+
+  test("other views fall back to the range label", () => {
+    expect(getViewChipLabel("month", WED, 1)).toBe("November 2026");
   });
 });

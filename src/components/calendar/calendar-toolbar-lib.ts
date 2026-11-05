@@ -31,3 +31,13 @@ export function getRangeLabel(
 
   return format(date, "EEEE, MMMM d, yyyy");
 }
+
+/** Compact label for the page-header chip: "Week 45" or the visible range. */
+export function getViewChipLabel(
+  view: CalendarView,
+  date: Date,
+  weekStartsOn: 0 | 1,
+): string {
+  if (view === "week") return `Week ${format(date, "II")}`;
+  return getRangeLabel(view, date, weekStartsOn);
+}

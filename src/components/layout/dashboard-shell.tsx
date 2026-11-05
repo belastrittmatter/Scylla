@@ -14,7 +14,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         defaultOpen
       >
         <React.Suspense fallback={null}>
-          <AppSidebar className="z-10 bg-transparent" />
+          <AppSidebar className="z-10" />
         </React.Suspense>
 
         <SidebarInset className="relative z-10 flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-transparent">

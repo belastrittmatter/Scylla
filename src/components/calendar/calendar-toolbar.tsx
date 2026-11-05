@@ -35,7 +35,7 @@ export function CalendarToolbar({
   const rangeLabel = getRangeLabel(view, date, weekStartsOn);
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-1.5 border-b px-3">
+    <div className="flex h-11 shrink-0 items-center gap-1.5 border-b bg-muted/30 px-3">
       <div className="flex shrink-0 items-center gap-0.5">
         <Button
           variant="ghost"

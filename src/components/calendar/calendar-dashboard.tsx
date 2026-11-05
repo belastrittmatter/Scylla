@@ -8,13 +8,14 @@ import { EventCalendarContent } from "@/components/reui/event-calendar/event-cal
 import { getViewDateRange } from "@/components/reui/event-calendar/event-calendar-lib";
 import type {
   CalendarEvent,
+  CalendarView,
   EventCalendarRangeInfo,
   EventCalendarProposedUpdate,
   EventCalendarSlotDraft,
   EventCalendarSlotInfo,
 } from "@/components/reui/event-calendar/event-calendar-types";
 import { type CustomEventData } from "@/mock-data/calendar-events";
-import type { CalendarAttendeeItem } from "@/components/calendar/calendar-attendee-stack";
+import type { CalendarAttendeeItem } from "@/components/calendar/calendar-attendee-types";
 import {
   CalendarToolbar,
   CalendarMobileDayLock,
@@ -29,6 +30,7 @@ import dynamic from "next/dynamic";
 import { apiClient } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
 import { useCalendarSettings } from "@/hooks/use-calendar-settings";
+import { getViewChipLabel } from "./calendar-toolbar-lib";
 
 const CalendarAddDialog = dynamic(
   () =>
@@ -105,11 +107,21 @@ export function CalendarDashboard() {
     }
   });
 
+  const [viewInfo, setViewInfo] = React.useState<{
+    view: CalendarView;
+    date: Date;
+  }>(() => ({ view: settings.defaultView, date: new Date() }));
+
   const requestIdRef = React.useRef(0);
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
   const handleRangeChange = React.useCallback(
     (info: EventCalendarRangeInfo) => {
+      setViewInfo((prev) =>
+        prev.view === info.view && prev.date.getTime() === info.date.getTime()
+          ? prev
+          : { view: info.view, date: info.date },
+      );
       setDateRange((prev) => {
         if (
           prev &&
@@ -306,7 +318,16 @@ export function CalendarDashboard() {
     <div className="flex min-h-[calc(100svh-57px)] w-full flex-col gap-5 p-6">
       <header className="flex flex-wrap items-start gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Calendar</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight">Calendar</h1>
+            <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {getViewChipLabel(
+                viewInfo.view,
+                viewInfo.date,
+                settings.weekStartsOn,
+              )}
+            </span>
+          </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Plan meetings across your team and rooms.
           </p>
@@ -387,9 +408,12 @@ export function CalendarDashboard() {
             onEventUpdate={handleEventUpdate}
             className="flex h-full min-h-0 flex-col"
             classNames={{
-              timeGrid: "border-border",
-              timeGutter: "w-18",
-              dayColumn: "border-border",
+              timeGrid: "border-border/70",
+              timeGridHeader: "border-border/70",
+              timeGutter: "w-18 border-border/70",
+              dayColumn: "border-border/70",
+              allDaySection: "border-border/70 bg-muted/20",
+              timeGutterLabel: "text-muted-foreground/70",
               event:
                 "rounded-lg border shadow-2xs transition-all hover:shadow-xs",
             }}

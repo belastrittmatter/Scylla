@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { UsersRound } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useTeams } from "@/hooks/use-teams";
 import { formatPersonName, getPersonInitials } from "@/lib/format-person-name";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CalendarPanelCard } from "./calendar-panel-card";
-import type { CalendarAttendeeItem } from "./calendar-attendee-stack";
+import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
 type TeamMember = Awaited<ReturnType<typeof apiClient.teams.members>>[number];
 
@@ -70,6 +71,7 @@ export function CalendarTeamPanel({
     <CalendarPanelCard
       title="Team"
       meta={`${members.length} members`}
+      icon={UsersRound}
       defaultOpen={defaultOpen}
     >
       <Select
@@ -88,7 +90,7 @@ export function CalendarTeamPanel({
         </SelectContent>
       </Select>
 
-      <div className="mt-2 max-h-[300px] space-y-0.5 overflow-y-auto pr-1">
+      <div className="mt-2 space-y-0.5">
         {members.map((member) => {
           const name = formatPersonName(member.user.name, member.user.email);
           const item: CalendarAttendeeItem = {
@@ -99,26 +101,38 @@ export function CalendarTeamPanel({
             type: "user",
             details: member.role,
           };
+          const isSelected = selectedIds.has(item.id);
 
           return (
             <div
               key={member.id}
-              className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-muted/60"
+              className={`flex items-center gap-2.5 rounded-lg p-2 ${
+                isSelected ? "bg-accent/60" : "hover:bg-muted/60"
+              }`}
             >
-              <Avatar size="sm">
+              <Avatar
+                size="sm"
+                className={isSelected ? "ring-2 ring-background" : undefined}
+              >
                 {member.user.image && (
                   <AvatarImage src={member.user.image} alt={name} />
                 )}
                 <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{name}</p>
+                <p
+                  className={`truncate text-sm ${
+                    isSelected ? "font-semibold" : "font-medium"
+                  }`}
+                >
+                  {name}
+                </p>
                 <p className="truncate text-xs capitalize text-muted-foreground">
                   {member.role}
                 </p>
               </div>
               <Switch
-                checked={selectedIds.has(item.id)}
+                checked={isSelected}
                 onCheckedChange={() => onToggleAttendee(item)}
                 aria-label={`Include ${name}`}
               />

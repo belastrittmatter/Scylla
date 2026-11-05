@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatPersonName } from "@/lib/format-person-name";
+import { formatPersonName, isFullEmail } from "@/lib/format-person-name";
 
 describe("formatPersonName", () => {
   test("title-cases a lowercase name without reordering", () => {
@@ -33,5 +33,20 @@ describe("formatPersonName", () => {
   test("returns an empty string only when both inputs are empty", () => {
     expect(formatPersonName(null, null)).toBe("");
     expect(formatPersonName("   ", "")).toBe("");
+  });
+});
+
+describe("isFullEmail", () => {
+  test("accepts a complete address", () => {
+    expect(isFullEmail("test.user@example.com")).toBe(true);
+  });
+
+  test("rejects a fragment without a domain", () => {
+    expect(isFullEmail("test.user@")).toBe(false);
+    expect(isFullEmail("alex")).toBe(false);
+  });
+
+  test("rejects an empty string", () => {
+    expect(isFullEmail("")).toBe(false);
   });
 });

@@ -1,5 +1,10 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** True only for a complete address, never for a fragment like "alex@". */
+export function isFullEmail(value: string): boolean {
+  return EMAIL_RE.test(value);
+}
+
 function titleCaseWord(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }

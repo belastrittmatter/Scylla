@@ -5,7 +5,7 @@ import { Building2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { Switch } from "@/components/ui/switch";
 import { CalendarPanelCard } from "./calendar-panel-card";
-import type { CalendarAttendeeItem } from "./calendar-attendee-stack";
+import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
 interface CalendarRoomsPanelProps {
   selectedAttendees: CalendarAttendeeItem[];
@@ -54,6 +54,7 @@ export function CalendarRoomsPanel({
     <CalendarPanelCard
       title="Rooms"
       meta={`${rooms.length}`}
+      icon={Building2}
       defaultOpen={defaultOpen}
     >
       <div className="space-y-0.5">
@@ -62,27 +63,43 @@ export function CalendarRoomsPanel({
             No rooms found
           </p>
         ) : (
-          rooms.map((room) => (
-            <div
-              key={room.id}
-              className="flex items-center gap-2.5 rounded-lg p-2 hover:bg-muted/60"
-            >
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                <Building2 aria-hidden className="size-3.5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{room.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {room.details}
-                </p>
+          rooms.map((room) => {
+            const isSelected = selectedIds.has(room.id);
+
+            return (
+              <div
+                key={room.id}
+                className={`flex items-center gap-2.5 rounded-lg p-2 ${
+                  isSelected ? "bg-accent/60" : "hover:bg-muted/60"
+                }`}
+              >
+                <span
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground ${
+                    isSelected ? "ring-2 ring-background" : ""
+                  }`}
+                >
+                  <Building2 aria-hidden className="size-3.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`truncate text-sm ${
+                      isSelected ? "font-semibold" : "font-medium"
+                    }`}
+                  >
+                    {room.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {room.details}
+                  </p>
+                </div>
+                <Switch
+                  checked={isSelected}
+                  onCheckedChange={() => onToggleAttendee(room)}
+                  aria-label={`Include ${room.name}`}
+                />
               </div>
-              <Switch
-                checked={selectedIds.has(room.id)}
-                onCheckedChange={() => onToggleAttendee(room)}
-                aria-label={`Include ${room.name}`}
-              />
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </CalendarPanelCard>
