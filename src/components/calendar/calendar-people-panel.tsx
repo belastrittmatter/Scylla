@@ -165,6 +165,7 @@ export function CalendarPeoplePanel({
                 checked={false}
                 onCheckedChange={() => onToggleAttendee(item)}
                 aria-label={`Include ${name}`}
+                className="data-checked:border-foreground data-checked:bg-foreground data-checked:text-background"
               />
             </div>
           ))

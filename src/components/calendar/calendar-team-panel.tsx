@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarPanelCard } from "./calendar-panel-card";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
@@ -141,10 +141,11 @@ export function CalendarTeamPanel({
                   {member.role}
                 </p>
               </div>
-              <Switch
+              <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => onToggleAttendee(item)}
                 aria-label={`Include ${name}`}
+                className="data-checked:border-foreground data-checked:bg-foreground data-checked:text-background"
               />
             </div>
           );

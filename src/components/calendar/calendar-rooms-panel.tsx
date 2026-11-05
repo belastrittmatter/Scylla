@@ -102,6 +102,7 @@ export function CalendarRoomsPanel({
                   checked={isSelected}
                   onCheckedChange={() => onToggleAttendee(room)}
                   aria-label={`Include ${room.name}`}
+                  className="data-checked:bg-foreground data-checked:text-background"
                 />
               </div>
             );
