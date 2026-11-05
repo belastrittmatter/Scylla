@@ -1,37 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
 import { AuthUIProvider } from "@/components/auth-provider";
 import { AuthLayoutShell } from "@/components/auth/auth-layout-shell";
-
-function SignOutContent() {
-  const router = useRouter();
-  const executed = React.useRef(false);
-
-  React.useEffect(() => {
-    if (executed.current) return;
-    executed.current = true;
-
-    void authClient.signOut().finally(() => {
-      router.push("/sign-in");
-    });
-  }, [router]);
-
-  return (
-    <div className="flex h-40 items-center justify-center">
-      <Loader2 className="size-6 animate-spin text-orange-500" />
-    </div>
-  );
-}
+import { SignOut } from "@/components/auth/sign-out";
 
 export default function SignOutPage() {
   return (
     <AuthUIProvider>
       <AuthLayoutShell subtitle="Signing out of your account...">
-        <SignOutContent />
+        <React.Suspense
+          fallback={
+            <div className="flex h-64 items-center justify-center">
+              <Loader2 className="size-8 animate-spin text-orange-500" />
+            </div>
+          }
+        >
+          <div className="flex h-40 items-center justify-center">
+            <SignOut className="size-6 text-orange-500" />
+          </div>
+        </React.Suspense>
       </AuthLayoutShell>
     </AuthUIProvider>
   );
