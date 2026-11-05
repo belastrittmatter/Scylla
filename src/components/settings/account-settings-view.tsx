@@ -10,6 +10,7 @@ import {
   UpdateFieldCard,
   ChangeEmailCard,
   DeleteAccountCard,
+  SessionsCard,
 } from "@daveyplate/better-auth-ui";
 import { useSession } from "@/lib/auth-client";
 import { ConnectedAccountsCard } from "@/components/settings/connected-accounts-card";
@@ -87,6 +88,22 @@ export function AccountSettingsView() {
           </div>
           <div className="space-y-4">
             <ConnectedAccountsCard />
+          </div>
+        </section>
+
+        {/* Security & Sessions Section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+              Security & Sessions
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              View active browser and device sessions and revoke access
+              remotely.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <SessionsCard />
           </div>
         </section>
 
