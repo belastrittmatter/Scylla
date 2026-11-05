@@ -1,19 +1,38 @@
 "use client";
 
 import * as React from "react";
+import { z } from "zod";
 
-export type CalendarViewPreference = "week" | "month" | "day" | "agenda";
+export const calendarSettingsSchema = z
+  .object({
+    defaultView: z.enum(["week", "month", "day", "agenda"]),
+    weekStartsOn: z.union([z.literal(0), z.literal(1)]),
+    dayStartHour: z.number().int().min(0).max(23),
+    dayEndHour: z.number().int().min(1).max(24),
+    showWeekends: z.boolean(),
+    timeFormat: z.enum(["12h", "24h"]),
+    slotDuration: z.union([z.literal(15), z.literal(30), z.literal(60)]),
+    showNowIndicator: z.boolean(),
+  })
+  .refine((data) => data.dayStartHour < data.dayEndHour, {
+    message: "Start hour must be before end hour",
+    path: ["dayStartHour"],
+  });
 
-export interface CalendarSettings {
-  defaultView: CalendarViewPreference;
-  weekStartsOn: 0 | 1; // 0 = Sunday, 1 = Monday
-  dayStartHour: number; // 0 - 23 (e.g. 8 for 8:00 AM)
-  dayEndHour: number; // 1 - 24 (e.g. 18 for 6:00 PM)
-  showWeekends: boolean;
-  timeFormat: "12h" | "24h";
-  slotDuration: number; // 15, 30, 60 minutes
-  showNowIndicator: boolean;
-}
+export const workingHoursSchema = z
+  .object({
+    dayStartHour: z.number().int().min(0).max(23),
+    dayEndHour: z.number().int().min(1).max(24),
+  })
+  .refine((data) => data.dayStartHour < data.dayEndHour, {
+    message: "Start hour must be before end hour",
+    path: ["dayStartHour"],
+  });
+
+export type CalendarViewPreference = z.infer<
+  typeof calendarSettingsSchema
+>["defaultView"];
+export type CalendarSettings = z.infer<typeof calendarSettingsSchema>;
 
 export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
   defaultView: "week",
@@ -41,25 +60,40 @@ function readStoredSettings(): CalendarSettings {
     if (!raw) return DEFAULT_CALENDAR_SETTINGS;
     if (raw === cachedRaw) return cachedSettings;
     const parsed = JSON.parse(raw);
-    cachedRaw = raw;
-    cachedSettings = {
+    const validated = calendarSettingsSchema.safeParse({
       ...DEFAULT_CALENDAR_SETTINGS,
       ...parsed,
-    };
+    });
+    if (!validated.success) {
+      cachedRaw = raw;
+      cachedSettings = DEFAULT_CALENDAR_SETTINGS;
+      return cachedSettings;
+    }
+    cachedRaw = raw;
+    cachedSettings = validated.data;
     return cachedSettings;
   } catch {
-    return DEFAULT_CALENDAR_SETTINGS;
+    cachedRaw = null;
+    cachedSettings = DEFAULT_CALENDAR_SETTINGS;
+    return cachedSettings;
   }
 }
 
 function writeStoredSettings(settings: CalendarSettings) {
   if (typeof window === "undefined") return;
+  const validated = calendarSettingsSchema.safeParse(settings);
+  if (!validated.success) {
+    console.error("Invalid calendar settings:", validated.error);
+    return;
+  }
   try {
-    const raw = JSON.stringify(settings);
+    const raw = JSON.stringify(validated.data);
     localStorage.setItem(STORAGE_KEY, raw);
     cachedRaw = raw;
-    cachedSettings = settings;
-    window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: settings }));
+    cachedSettings = validated.data;
+    window.dispatchEvent(
+      new CustomEvent(CHANGE_EVENT, { detail: validated.data }),
+    );
   } catch (err) {
     console.error("Failed to save calendar settings:", err);
   }

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
+import { auth } from "@/lib/auth";
 
 const ROOT_DIR = process.cwd();
 
@@ -17,17 +18,29 @@ describe("Proxy Authentication and Authorization", () => {
   });
 
   it("redirects authenticated users on /auth/sign-in, /auth/sign-up, and /sign-in to /calendar", async () => {
-    for (const path of ["/auth/sign-in", "/auth/sign-up", "/sign-in"]) {
-      const req = new NextRequest(`http://localhost:3000${path}`, {
-        headers: {
-          cookie: "better-auth.session_token=valid-session-token",
-        },
-      });
-      const res = await proxy(req);
+    const originalGetSession = auth.api.getSession;
+    (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+      (async () =>
+        ({ user: { id: "user-1" } }) as Awaited<
+          ReturnType<typeof originalGetSession>
+        >) as typeof auth.api.getSession;
 
-      expect(res.status).toBe(307);
-      const location = res.headers.get("location");
-      expect(location).toBe("http://localhost:3000/calendar");
+    try {
+      for (const path of ["/auth/sign-in", "/auth/sign-up", "/sign-in"]) {
+        const req = new NextRequest(`http://localhost:3000${path}`, {
+          headers: {
+            cookie: "better-auth.session_token=valid-session-token",
+          },
+        });
+        const res = await proxy(req);
+
+        expect(res.status).toBe(307);
+        const location = res.headers.get("location");
+        expect(location).toBe("http://localhost:3000/calendar");
+      }
+    } finally {
+      (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+        originalGetSession;
     }
   });
 
@@ -80,6 +93,17 @@ describe("Proxy Authentication and Authorization", () => {
     expect(consentPage).not.toContain('router.push("/")');
   });
 
+  it("redirects unauthenticated access to /account/settings to /auth/sign-in", async () => {
+    const req = new NextRequest("http://localhost:3000/account/settings");
+    const res = await proxy(req);
+
+    expect(res.status).toBe(307);
+    const location = res.headers.get("location");
+    expect(location).toContain(
+      "/auth/sign-in?callbackUrl=%2Faccount%2Fsettings",
+    );
+  });
+
   it("blocks unauthenticated access to /api/bookings with 401", async () => {
     const req = new NextRequest("http://localhost:3000/api/bookings");
     const res = await proxy(req);
@@ -120,6 +144,18 @@ describe("Proxy Authentication and Authorization", () => {
     const res = await proxy(req);
 
     // NextResponse.next() returns 200 by default in NextRequest handling
+    expect(res.status).toBe(200);
+  });
+
+  it("does not redirect to / from /auth/sign-in when session token is invalid or expired", async () => {
+    const req = new NextRequest("http://localhost:3000/auth/sign-in", {
+      headers: {
+        cookie: "better-auth.session_token=stale-or-invalid-token",
+      },
+    });
+    const res = await proxy(req);
+
+    // Should proceed to sign-in page, not redirect to /
     expect(res.status).toBe(200);
   });
 });

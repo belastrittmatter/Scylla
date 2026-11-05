@@ -48,6 +48,14 @@ const FOOTER_COLUMNS: FooterColumn[] = [
       },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "AI & MCP Policy", href: "/ai-policy" },
+    ],
+  },
 ];
 
 export function LandingFooter() {
@@ -81,7 +89,7 @@ export function LandingFooter() {
               </div>
 
               {/* Navigation Columns */}
-              <div className="lg:max-w-[560px] w-full flex items-start justify-between gap-4 sm:gap-10 flex-col sm:flex-row footer-menu-wrapper">
+              <div className="lg:max-w-[640px] w-full flex items-start justify-between gap-4 sm:gap-8 lg:gap-10 flex-col sm:flex-row footer-menu-wrapper">
                 {FOOTER_COLUMNS.map((column) => (
                   <div
                     key={column.title}

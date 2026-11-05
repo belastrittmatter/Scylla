@@ -410,7 +410,7 @@ export function CalendarDashboard() {
 
         <div className="order-first flex h-[calc(100svh-12rem)] min-h-[560px] min-w-0 flex-col overflow-hidden rounded-[10px] border bg-card shadow-sm lg:order-none">
           <EventCalendar<CustomEventData>
-            key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}`}
+            key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}-${settings.timeFormat}-${settings.showNowIndicator}`}
             events={displayedEvents}
             onEventsChange={setEvents}
             onRangeChange={handleRangeChange}
@@ -421,6 +421,17 @@ export function CalendarDashboard() {
             dayEndHour={settings.dayEndHour}
             weekStartsOn={settings.weekStartsOn}
             slotDuration={settings.slotDuration}
+            i18n={
+              settings.timeFormat === "24h"
+                ? {
+                    formats: {
+                      timeGutter: "HH:mm",
+                      timeGutterMinute: "HH:mm",
+                      eventTime: "HH:mm",
+                    },
+                  }
+                : undefined
+            }
             viewSettings={{
               weekends: settings.showWeekends,
               nowIndicator: settings.showNowIndicator,
