@@ -66,7 +66,7 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
 
         return isLast ? (
           <BreadcrumbItem key={item.path}>
-            <BreadcrumbPage className="font-medium text-neutral-800 dark:text-neutral-100">
+            <BreadcrumbPage className="font-medium text-foreground">
               {item.label}
             </BreadcrumbPage>
           </BreadcrumbItem>
@@ -75,12 +75,12 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
             <BreadcrumbItem>
               <BreadcrumbLink
                 render={<Link href={item.path} />}
-                className="text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 {item.label}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator className="text-neutral-300 dark:text-neutral-700" />
+            <BreadcrumbSeparator className="text-muted-foreground/50" />
           </React.Fragment>
         );
       })}
@@ -93,11 +93,11 @@ export function ViewHeader({
   parent = WORKSPACE_INFO.brand,
 }: ViewHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between border-b border-black/[0.06] bg-white/80 px-5 py-3 backdrop-blur-md transition-colors dark:border-white/[0.08] dark:bg-neutral-900/80">
+    <div className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background px-5 transition-colors">
       <div className="flex items-center gap-1.5">
-        <SidebarTrigger className="-ml-1 text-neutral-400 transition-colors hover:text-neutral-700 dark:hover:text-neutral-200" />
+        <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:text-foreground" />
 
-        <div className="mx-1 h-3 w-px bg-neutral-200 dark:bg-neutral-800" />
+        <div className="mx-1 h-3 w-px bg-border" />
 
         <Breadcrumb>
           <BreadcrumbList className="text-[13px] font-normal">
@@ -105,13 +105,13 @@ export function ViewHeader({
             <BreadcrumbItem>
               <BreadcrumbLink
                 render={<Link href="/calendar" />}
-                className="text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 {parent}
               </BreadcrumbLink>
             </BreadcrumbItem>
 
-            <BreadcrumbSeparator className="text-neutral-300 dark:text-neutral-700" />
+            <BreadcrumbSeparator className="text-muted-foreground/50" />
 
             {/* Dynamic path segments */}
             <React.Suspense fallback={null}>
@@ -125,7 +125,7 @@ export function ViewHeader({
         <ThemeToggle />
         <Link
           href="/settings"
-          className="flex size-8 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           title="Settings"
           aria-label="Settings"
         >

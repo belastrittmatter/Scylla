@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { apiClient } from "@/lib/api-client";
+import { isFullEmail } from "@/lib/format-person-name";
 import type { Teammate } from "@/services/user";
 
 export interface UseUserSearchOptions {
@@ -15,6 +16,7 @@ export interface UseUserSearchResult {
   setQuery: (q: string) => void;
   results: Teammate[];
   isLoading: boolean;
+  hasLoaded: boolean;
   error: Error | null;
   clear: () => void;
 }
@@ -27,6 +29,7 @@ export function useUserSearch({
   const [query, setQueryState] = React.useState("");
   const [results, setResults] = React.useState<Teammate[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [hasLoaded, setHasLoaded] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
 
   // Cache known users client-side so keystrokes produce instant synchronous filtering
@@ -51,11 +54,8 @@ export function useUserSearch({
   const setQuery = React.useCallback(
     (newQuery: string) => {
       setQueryState(newQuery);
-      // Synchronously perform client-side filtering on all previously seen users
-      const filtered = filterKnown(newQuery);
-      if (filtered.length > 0) {
-        setResults(filtered);
-      }
+      // Synchronously filter known users; an unmatched fragment clears stale rows.
+      setResults(filterKnown(newQuery));
     },
     [filterKnown],
   );
@@ -86,9 +86,8 @@ export function useUserSearch({
             ? (data as { data: Teammate[] }).data
             : [];
 
-        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
         if (
-          isValidEmail &&
+          isFullEmail(trimmed) &&
           !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())
         ) {
           list = [
@@ -118,6 +117,7 @@ export function useUserSearch({
       } finally {
         if (active) {
           setIsLoading(false);
+          setHasLoaded(true);
         }
       }
     }, debounceMs);
@@ -139,6 +139,7 @@ export function useUserSearch({
     setQuery,
     results,
     isLoading,
+    hasLoaded,
     error,
     clear,
   };

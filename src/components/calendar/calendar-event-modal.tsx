@@ -11,8 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -22,7 +20,6 @@ import {
   Trash2,
   ExternalLink,
   Loader2,
-  ShieldCheck,
   FolderGit2,
   ArrowRight,
   Repeat,
@@ -32,10 +29,26 @@ import type { CustomEventData } from "@/mock-data/calendar-events";
 import { HtmlDescriptionViewer } from "@/components/ui/html-description-viewer";
 import { apiClient } from "@/lib/api-client";
 import { copyToClipboard } from "@/lib/clipboard";
+import { formatPersonName } from "@/lib/format-person-name";
 import { toast } from "sonner";
 import { CalendarEventLocationSection } from "./calendar-event-location-section";
 import { CalendarEventAttendeesList } from "./calendar-event-attendees-list";
 import { CalendarCancelPrompt } from "./calendar-cancel-prompt";
+
+type Attendee = NonNullable<CustomEventData["attendees"]>[number];
+
+function isRoomAttendee(attendee: Attendee, roomName?: string): boolean {
+  const email = attendee.email.toLowerCase();
+  if (
+    email.includes("resource.calendar.google.com") ||
+    email.includes("meetingroom")
+  ) {
+    return true;
+  }
+  return Boolean(
+    roomName && attendee.name?.toLowerCase() === roomName.toLowerCase(),
+  );
+}
 
 interface CalendarEventModalProps {
   event: CalendarEvent<CustomEventData> | null;
@@ -81,16 +94,52 @@ export function CalendarEventModal({
     () => event?.data?.attendees || [],
     [event?.data?.attendees],
   );
+  const organizer = event?.data?.organizer;
+  const roomDetails = event?.data?.roomDetails;
+
+  const peopleAttendees = React.useMemo(
+    () =>
+      attendees.filter(
+        (attendee) => !isRoomAttendee(attendee, roomDetails?.name),
+      ),
+    [attendees, roomDetails?.name],
+  );
+  const roomEmail = attendees.find((attendee) =>
+    isRoomAttendee(attendee, roomDetails?.name),
+  )?.email;
+
+  // Keep the organizer visible with a single quiet HOST label.
+  const people = React.useMemo(() => {
+    const organizerEmail = organizer?.email?.toLowerCase();
+    if (
+      !organizer?.email ||
+      !organizerEmail ||
+      peopleAttendees.some(
+        (attendee) => attendee.email.toLowerCase() === organizerEmail,
+      )
+    ) {
+      return peopleAttendees;
+    }
+    return [
+      {
+        name: organizer.name,
+        email: organizer.email,
+        avatar: organizer.avatar,
+      },
+      ...peopleAttendees,
+    ];
+  }, [peopleAttendees, organizer]);
 
   const filteredAttendees = React.useMemo(() => {
-    if (!attendeeFilter.trim()) return attendees;
+    if (!attendeeFilter.trim()) return people;
     const q = attendeeFilter.toLowerCase();
-    return attendees.filter(
+    return people.filter(
       (a) =>
-        (a.name && a.name.toLowerCase().includes(q)) ||
+        (a.name &&
+          formatPersonName(a.name, a.email).toLowerCase().includes(q)) ||
         (a.email && a.email.toLowerCase().includes(q)),
     );
-  }, [attendees, attendeeFilter]);
+  }, [people, attendeeFilter]);
 
   const rawDescription = event?.data?.description || "";
   const seriesId =
@@ -148,13 +197,11 @@ export function CalendarEventModal({
 
   const category = event.data?.category || "all";
   const meetingUrl = event.data?.meetingUrl;
-  const roomDetails = event.data?.roomDetails;
   const location = event.data?.location;
   const isRecurring = Boolean(seriesId) || siblingCount > 0;
   const description = rawDescription
     .replace(/<!--series:[a-zA-Z0-9_-]+-->/g, "")
     .trim();
-  const organizer = event.data?.organizer;
 
   const handleCopyLink = async () => {
     if (!meetingUrl) return;
@@ -221,91 +268,59 @@ export function CalendarEventModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-border bg-background text-foreground max-h-[88vh] max-w-lg overflow-y-auto rounded-2xl border p-6 shadow-2xl">
+      <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto rounded-2xl border bg-card p-6 text-card-foreground shadow-2xl">
         <DialogHeader className="pb-1">
-          {/* Status and Category badges */}
-          <div className="flex items-center gap-2">
+          <div>
             {isLive ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                Live Now
+              <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-primary px-2.5 text-[11px] font-semibold text-primary-foreground">
+                <span
+                  aria-hidden
+                  className="size-1.5 animate-pulse rounded-full bg-primary-foreground motion-reduce:animate-none"
+                />
+                Live now
               </span>
             ) : isPast ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+              <span className="inline-flex h-[22px] items-center rounded-full bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground">
                 Completed
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-600 dark:bg-orange-950/60 dark:text-orange-300">
+              <span className="inline-flex h-[22px] items-center rounded-full bg-primary px-2.5 text-[11px] font-semibold text-primary-foreground">
                 Confirmed
-              </span>
-            )}
-
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200">
-              <span
-                className="size-1.5 rounded-full"
-                style={{ backgroundColor: event.color || "#ea580c" }}
-              />
-              <span className="capitalize">{category}</span>
-            </span>
-
-            {event.data?.project ? (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium"
-                style={{
-                  borderColor: event.data.project.color
-                    ? `${event.data.project.color}50`
-                    : "#2563eb50",
-                  backgroundColor: event.data.project.color
-                    ? `${event.data.project.color}15`
-                    : "#2563eb15",
-                  color: event.data.project.color || "#2563eb",
-                }}
-              >
-                <span
-                  className="size-1.5 rounded-full"
-                  style={{
-                    backgroundColor: event.data.project.color || "#2563eb",
-                  }}
-                />
-                <span className="max-w-[120px] truncate">
-                  {event.data.project.name}
-                </span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                Personal Event
-              </span>
-            )}
-
-            {event.data?.source === "google" && (
-              <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-400">
-                Google Calendar
-              </span>
-            )}
-
-            {isRecurring && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:border-purple-900/60 dark:bg-purple-950/60 dark:text-purple-300">
-                <Repeat className="size-3" />
-                Recurring
               </span>
             )}
           </div>
 
-          <DialogTitle className="mt-2 break-words text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+          <DialogTitle className="mt-2 break-words text-xl font-bold tracking-tight text-foreground">
             {event.title}
           </DialogTitle>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="max-w-[200px] truncate">
+              {event.data?.project?.name ?? "Personal event"}
+            </span>
+            <span aria-hidden>·</span>
+            <span className="capitalize">{category}</span>
+            {isRecurring && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1">
+                  <Repeat aria-hidden className="size-3" />
+                  Recurring
+                </span>
+              </>
+            )}
+          </p>
         </DialogHeader>
 
         <div className="space-y-4 py-1 text-xs">
           {/* Time & Date Card */}
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-neutral-200/80 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-800/40">
-            <div className="flex items-center gap-2 font-semibold text-neutral-800 dark:text-neutral-200">
-              <CalendarIcon className="size-4 shrink-0 text-neutral-400" />
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-3">
+            <div className="flex items-center gap-2 font-semibold text-foreground">
+              <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
               <span>{format(event.start, "EEEE, MMMM d, yyyy")}</span>
             </div>
-            <span className="text-neutral-300 dark:text-neutral-700">•</span>
-            <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
-              <Clock className="size-4 shrink-0 text-neutral-400" />
+            <span className="text-border">•</span>
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="size-4 shrink-0 text-muted-foreground" />
               <span>
                 {format(event.start, "h:mm a")} – {format(event.end, "h:mm a")}{" "}
                 ({durationLabel})
@@ -315,7 +330,7 @@ export function CalendarEventModal({
 
           {/* Linked Project & Task Navigation */}
           {event.data?.project && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200/80 bg-neutral-50/60 p-3 dark:border-neutral-800 dark:bg-neutral-800/40">
+            <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 <div
                   className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
@@ -326,10 +341,10 @@ export function CalendarEventModal({
                   <FolderGit2 className="size-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                    Linked Project
+                  <p className="text-[11px] font-medium text-muted-foreground">
+                    Linked project
                   </p>
-                  <p className="truncate text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                  <p className="truncate text-xs font-semibold text-foreground">
                     {event.data.project.name}
                   </p>
                 </div>
@@ -356,18 +371,18 @@ export function CalendarEventModal({
 
           {/* Video Conference / Google Meet Section */}
           {meetingUrl && (
-            <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 dark:border-orange-900/40 dark:bg-orange-950/20">
+            <div className="rounded-lg border bg-muted/40 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 dark:bg-orange-950 dark:text-orange-400">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                     <Video className="size-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                    <p className="text-xs font-semibold text-foreground">
                       Google Meet
                     </p>
                     <p
-                      className="truncate text-[11px] text-neutral-500"
+                      className="truncate text-[11px] text-muted-foreground"
                       title={meetingUrl}
                     >
                       {meetingUrl}
@@ -385,7 +400,7 @@ export function CalendarEventModal({
                   >
                     {copied ? (
                       <>
-                        <Check className="size-3 text-emerald-600" />
+                        <Check className="size-3 text-foreground" />
                         Copied
                       </>
                     ) : (
@@ -399,7 +414,7 @@ export function CalendarEventModal({
                     type="button"
                     size="sm"
                     onClick={handleJoinCall}
-                    className="h-8 cursor-pointer gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900"
+                    className="h-8 cursor-pointer gap-1.5"
                   >
                     <ExternalLink className="size-3.5" />
                     Join Call
@@ -412,60 +427,13 @@ export function CalendarEventModal({
           {/* Location & Room Details */}
           <CalendarEventLocationSection
             roomDetails={roomDetails}
+            roomEmail={roomEmail}
             location={location}
           />
 
-          {/* Organizer */}
-          {organizer && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Organizer
-              </label>
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200/80 bg-neutral-50/40 p-2.5 dark:border-neutral-800 dark:bg-neutral-800/40">
-                <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <Avatar className="size-7 shrink-0 text-[10px]">
-                    {organizer.avatar && (
-                      <AvatarImage
-                        src={organizer.avatar}
-                        alt={organizer.name}
-                      />
-                    )}
-                    <AvatarFallback className="bg-orange-500 text-[10px] font-bold text-white">
-                      {(organizer.name || organizer.email || "H")
-                        .split(" ")
-                        .map((s) => s[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium leading-tight text-neutral-900 dark:text-neutral-100">
-                      {organizer.name || organizer.email}
-                    </p>
-                    {organizer.email &&
-                      organizer.name &&
-                      organizer.email.toLowerCase() !==
-                        organizer.name.toLowerCase() && (
-                        <p className="mt-0.5 truncate text-[10px] leading-tight text-neutral-500 dark:text-neutral-400">
-                          {organizer.email}
-                        </p>
-                      )}
-                  </div>
-                </div>
-                <Badge
-                  variant="secondary"
-                  className="shrink-0 gap-1 text-[10px] font-medium"
-                >
-                  <ShieldCheck className="size-3 text-orange-600" /> Host
-                </Badge>
-              </div>
-            </div>
-          )}
-
           {/* Attendees List */}
           <CalendarEventAttendeesList
-            attendees={attendees}
+            attendees={people}
             organizer={organizer}
             attendeeFilter={attendeeFilter}
             onFilterChange={setAttendeeFilter}
@@ -475,10 +443,10 @@ export function CalendarEventModal({
           {/* Description / Agenda */}
           {description && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+              <label className="text-xs font-semibold text-foreground">
                 Agenda / Notes
               </label>
-              <div className="max-h-40 overflow-y-auto break-words rounded-lg border border-neutral-200/80 bg-neutral-50/40 p-3 dark:border-neutral-800 dark:bg-neutral-800/40">
+              <div className="max-h-40 overflow-y-auto break-words rounded-lg border bg-muted/40 p-3">
                 <HtmlDescriptionViewer html={description} />
               </div>
             </div>
@@ -486,7 +454,7 @@ export function CalendarEventModal({
         </div>
 
         {showCancelPrompt && isRecurring ? (
-          <div className="mt-4 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+          <div className="mt-4 border-t pt-3">
             <CalendarCancelPrompt
               isDeleting={isDeleting}
               cancelTarget={cancelTarget}
@@ -496,7 +464,7 @@ export function CalendarEventModal({
             />
           </div>
         ) : (
-          <DialogFooter className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3 sm:justify-between dark:border-neutral-800">
+          <DialogFooter className="mt-4 flex items-center justify-between border-t pt-3 sm:justify-between">
             <Button
               type="button"
               variant="ghost"
@@ -534,7 +502,7 @@ export function CalendarEventModal({
                   className="h-8 cursor-pointer gap-1.5 text-xs"
                 >
                   {copied ? (
-                    <Check className="size-3.5 text-emerald-600" />
+                    <Check className="size-3.5 text-foreground" />
                   ) : (
                     <Copy className="size-3.5" />
                   )}
@@ -545,7 +513,8 @@ export function CalendarEventModal({
                 type="button"
                 size="sm"
                 onClick={() => onOpenChange(false)}
-                className="h-8 cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900"
+                variant="secondary"
+                className="h-8 cursor-pointer"
               >
                 Close
               </Button>

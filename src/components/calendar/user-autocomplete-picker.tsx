@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useUserSearch } from "@/hooks/use-user-search";
+import { isFullEmail } from "@/lib/format-person-name";
 import type { Teammate } from "@/services/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +61,7 @@ export function UserAutocompletePicker({
   }, []);
 
   const isValidEmail = React.useMemo(() => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query.trim());
+    return isFullEmail(query.trim());
   }, [query]);
 
   const isAlreadySelected = (email: string) => {

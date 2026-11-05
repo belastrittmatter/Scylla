@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { user, type User } from "@/db/schema";
 import { eq, or, ilike } from "drizzle-orm";
 import { GoogleCalendarService } from "@/services/google-calendar";
+import { isFullEmail } from "@/lib/format-person-name";
 
 export interface Teammate {
   id: string;
@@ -67,6 +68,16 @@ export class UserService {
       );
       for (const du of directoryUsers) {
         const em = du.email.toLowerCase();
+        // Google answers fragments with a synthetic non-email entry; only real
+        // addresses may enter the list, and only when they match the query.
+        if (!isFullEmail(du.email)) continue;
+        if (
+          trimmed &&
+          !du.name.toLowerCase().includes(trimmed.toLowerCase()) &&
+          !em.includes(trimmed.toLowerCase())
+        ) {
+          continue;
+        }
         if (!seenEmails.has(em)) {
           seenEmails.add(em);
           results.push({
@@ -84,8 +95,8 @@ export class UserService {
       console.warn("Failed to search Google directory users:", gErr);
     }
 
-    // 3. If query contains "@", include it as a selectable option so user can check any email
-    if (trimmed.includes("@")) {
+    // 3. A complete email is selectable directly so the user can check any address
+    if (isFullEmail(trimmed)) {
       const lowerTrimmed = trimmed.toLowerCase();
       if (!seenEmails.has(lowerTrimmed)) {
         results.unshift({
