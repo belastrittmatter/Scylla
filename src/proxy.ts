@@ -8,6 +8,7 @@ const PROTECTED_PAGE_PREFIXES = [
   "/teams",
   "/tasks",
   "/settings",
+  "/account",
   "/support",
 ];
 
@@ -59,14 +60,22 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Redirect authenticated users away from sign-in / sign-up pages to /calendar
+  // 3. Redirect authenticated users away from sign-in / sign-up pages to /calendar.
+  // Verify the session first: an expired cookie must not trap users in a redirect loop.
   if (
     sessionCookie &&
     (pathname === "/auth/sign-in" ||
       pathname === "/auth/sign-up" ||
       pathname === "/sign-in")
   ) {
-    return NextResponse.redirect(new URL("/calendar", request.url));
+    try {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (session?.user) {
+        return NextResponse.redirect(new URL("/calendar", request.url));
+      }
+    } catch {
+      // If session verification fails, allow navigating to sign-in / sign-up
+    }
   }
 
   // 4. Redirect legacy /sign-in route to canonical /auth/sign-in entrypoint
