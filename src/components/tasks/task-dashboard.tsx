@@ -381,7 +381,7 @@ export function TaskDashboard({
 
   if (teams.length === 0) {
     return (
-      <div className="flex h-[calc(100svh-57px)] w-full flex-col items-center justify-center bg-neutral-100/40 p-6 dark:bg-neutral-950">
+      <div className="flex h-[calc(100svh-57px)] w-full flex-col items-center justify-center bg-neutral-100/40 p-6 dark:bg-background">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <div className="shadow-xs flex size-14 items-center justify-center rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
             <Users className="size-7 text-neutral-600 dark:text-neutral-400" />
@@ -413,7 +413,7 @@ export function TaskDashboard({
   }
 
   return (
-    <div className="flex h-[calc(100svh-57px)] w-full flex-col overflow-hidden bg-neutral-100/40 dark:bg-neutral-950">
+    <div className="flex h-[calc(100svh-57px)] w-full flex-col overflow-hidden bg-neutral-100/40 dark:bg-background">
       <WorkspaceNavHeader
         teams={teams}
         projects={teamProjects}
