@@ -45,8 +45,8 @@ export function TaskTableRow({
     <TableRow
       onClick={() => onSelectTask?.(task)}
       className={cn(
-        "cursor-pointer transition-colors hover:bg-muted/80 dark:hover:bg-neutral-800/50",
-        isDone && "bg-muted/30 opacity-80 dark:bg-card/30",
+        "cursor-pointer transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50",
+        isDone && "bg-neutral-50/30 opacity-80 dark:bg-neutral-900/30",
       )}
     >
       <TableCell className="max-w-[340px] py-3">
@@ -86,7 +86,7 @@ export function TaskTableRow({
             {task.status === "in_progress" ? (
               <Badge
                 variant="outline"
-                className="gap-1.5 border-neutral-200/80 bg-muted/70 px-2 py-0 text-[10px] font-medium text-neutral-700 dark:border-neutral-800 dark:bg-card/60 dark:text-neutral-300"
+                className="gap-1.5 border-neutral-200/80 bg-neutral-50/70 px-2 py-0 text-[10px] font-medium text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-300"
               >
                 <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
                 <span>
@@ -113,7 +113,7 @@ export function TaskTableRow({
               val && onUpdateStatus(task.id, val as TaskStatus)
             }
           >
-            <SelectTrigger className="h-8 w-full border border-neutral-200/80 bg-muted/70 text-xs font-medium hover:bg-muted/70 dark:border-neutral-700 dark:bg-muted/80 dark:hover:bg-neutral-700/70">
+            <SelectTrigger className="h-8 w-full border border-neutral-200/80 bg-neutral-50/70 text-xs font-medium hover:bg-neutral-100/70 dark:border-neutral-700 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/70">
               <SelectValue>
                 <span className="flex items-center gap-1.5 truncate">
                   <span

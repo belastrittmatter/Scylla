@@ -128,7 +128,7 @@ function TaskDrawerInner({
                 ? "Enter task details, priority, assignee, and target deadline."
                 : "Update task metadata, priority, assignee, and target deadline."}{" "}
               Press{" "}
-              <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-neutral-600 dark:bg-muted dark:text-neutral-300">
+              <kbd className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[10px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
                 ⌘+Enter
               </kbd>{" "}
               to save.

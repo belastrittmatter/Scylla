@@ -72,7 +72,7 @@ export function TaskDatePicker({
         <button
           type="button"
           onClick={() => onChange("")}
-          className="absolute right-2.5 rounded-full p-0.5 text-neutral-400 hover:bg-muted hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+          className="absolute right-2.5 rounded-full p-0.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
           title="Clear date"
         >
           <X className="size-3.5" />

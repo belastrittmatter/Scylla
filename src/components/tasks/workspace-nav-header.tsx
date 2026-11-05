@@ -42,7 +42,7 @@ export function WorkspaceNavHeader({
   const activeProject = projects.find((p) => p.id === selectedProjectId);
 
   return (
-    <div className="shadow-xs flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200/80 bg-card/90 px-6 py-3 backdrop-blur-md dark:border-neutral-800 dark:bg-card/90">
+    <div className="shadow-xs flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200/80 bg-white/90 px-6 py-3 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/90">
       <Breadcrumb className="flex flex-wrap items-center">
         <BreadcrumbList className="gap-3">
           <BreadcrumbItem>
@@ -74,7 +74,7 @@ export function WorkspaceNavHeader({
 
       <div className="flex items-center gap-3">
         {activeProject && (
-          <div className="flex items-center gap-1.5 rounded-md border border-neutral-200/80 bg-muted/70 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:border-neutral-800 dark:bg-card/60 dark:text-neutral-300">
+          <div className="flex items-center gap-1.5 rounded-md border border-neutral-200/80 bg-neutral-50/70 px-2.5 py-1 text-xs font-medium text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-300">
             <span
               className={`size-1.5 rounded-full ${
                 STATUS_DOTS[activeProject.status] || "bg-neutral-400"

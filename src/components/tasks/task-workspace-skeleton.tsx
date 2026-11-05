@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function TaskWorkspaceSkeleton() {
   return (
-    <div className="flex h-[calc(100svh-57px)] w-full flex-col bg-muted/50 dark:bg-background">
+    <div className="flex h-[calc(100svh-57px)] w-full flex-col bg-neutral-50/50 dark:bg-neutral-950">
       <div className="flex h-14 items-center justify-between border-b border-neutral-200/80 px-6 dark:border-neutral-800">
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-36" />

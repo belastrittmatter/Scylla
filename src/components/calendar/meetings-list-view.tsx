@@ -120,7 +120,7 @@ export function MeetingsListView({
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-y-auto bg-neutral-50/60 p-4 sm:p-6 dark:bg-background">
+    <div className="flex flex-1 flex-col overflow-y-auto bg-neutral-50/60 p-4 sm:p-6 dark:bg-neutral-950">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         {/* Header toolbar with filters and stats */}
         <div className="flex flex-col justify-between gap-3 border-b border-neutral-200/80 pb-4 sm:flex-row sm:items-center dark:border-neutral-800">
