@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { NextRequest } from "next/server";
@@ -85,12 +85,14 @@ describe("Proxy Authentication and Authorization", () => {
     expect(appSidebar).toContain('href="/calendar"');
     expect(appSidebar).not.toContain('href="/"');
 
-    const consentPage = readFileSync(
-      join(ROOT_DIR, "src/app/consent/page.tsx"),
-      "utf8",
-    );
-    expect(consentPage).toContain('router.push("/calendar")');
-    expect(consentPage).not.toContain('router.push("/")');
+    const consentFilePath = existsSync(
+      join(ROOT_DIR, "src/components/consent/use-consent-form.ts"),
+    )
+      ? join(ROOT_DIR, "src/components/consent/use-consent-form.ts")
+      : join(ROOT_DIR, "src/app/consent/page.tsx");
+    const consentContent = readFileSync(consentFilePath, "utf8");
+    expect(consentContent).toContain('router.push("/calendar")');
+    expect(consentContent).not.toContain('router.push("/")');
   });
 
   it("redirects unauthenticated access to /account/settings to /auth/sign-in", async () => {

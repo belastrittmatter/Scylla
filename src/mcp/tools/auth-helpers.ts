@@ -117,6 +117,49 @@ export async function resolveProject(
   return foundBySlug ?? null;
 }
 
+export class InsufficientScopeError extends Error {
+  readonly code = "insufficient_scope";
+  readonly requiredScope: string;
+
+  constructor(requiredScope: string, message?: string) {
+    super(
+      message ??
+        `Insufficient scope: required capability or scope '${requiredScope}' is missing.`,
+    );
+    this.name = "InsufficientScopeError";
+    this.requiredScope = requiredScope;
+  }
+}
+
+export function enforceToolScope(
+  ctx: McpToolContext,
+  requiredScope: string,
+): void {
+  ctx.assertScope(requiredScope);
+}
+
+export function verifyScope(ctx: McpToolContext, requiredScope: string) {
+  if (!ctx.hasScope(requiredScope)) {
+    return {
+      isError: true,
+      code: "insufficient_scope",
+      requiredScope,
+      structuredContent: {
+        code: "insufficient_scope",
+        required_scope: requiredScope,
+        message: `Access denied. Missing required capability or scope '${requiredScope}'.`,
+      },
+      content: [
+        {
+          type: "text" as const,
+          text: `Error [insufficient_scope]: Access denied. Missing required capability or scope '${requiredScope}'.`,
+        },
+      ],
+    };
+  }
+  return null;
+}
+
 export function formatToolSuccess(data: unknown) {
   return {
     content: [
@@ -129,6 +172,35 @@ export function formatToolSuccess(data: unknown) {
 }
 
 export function formatToolError(err: unknown) {
+  if (
+    err instanceof InsufficientScopeError ||
+    (err &&
+      typeof err === "object" &&
+      "code" in err &&
+      err.code === "insufficient_scope")
+  ) {
+    const requiredScope =
+      "requiredScope" in (err as Record<string, unknown>)
+        ? String((err as Record<string, unknown>).requiredScope)
+        : undefined;
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      isError: true,
+      code: "insufficient_scope",
+      ...(requiredScope ? { requiredScope } : {}),
+      structuredContent: {
+        code: "insufficient_scope",
+        ...(requiredScope ? { required_scope: requiredScope } : {}),
+        message,
+      },
+      content: [
+        {
+          type: "text" as const,
+          text: `Error [insufficient_scope]: ${message}`,
+        },
+      ],
+    };
+  }
   const message = err instanceof Error ? err.message : String(err);
   return {
     isError: true,

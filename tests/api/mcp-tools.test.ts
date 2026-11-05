@@ -63,7 +63,10 @@ describe("MCP Tools & Utilities Suite", () => {
   });
 
   it("registers all required MCP tools on the server", async () => {
-    const server = await createCalendarMcpServer({ sub: testUserId });
+    const server = await createCalendarMcpServer({
+      sub: testUserId,
+      scopes: ["*"],
+    });
     const registeredTools = getRegisteredTools(server);
 
     expect(registeredTools).toBeDefined();
@@ -90,7 +93,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("resolve_user tool", () => {
     it("resolves a user by nickname or partial name", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["resolve_user"];
 
       const res = await tool.handler({ query: "sarah", limit: 5 });
@@ -105,7 +111,10 @@ describe("MCP Tools & Utilities Suite", () => {
     }, 15000);
 
     it("handles queries with no matches gracefully", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["resolve_user"];
 
       const res = await tool.handler({
@@ -121,7 +130,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("find_common_meeting_slots tool with nickname resolution", () => {
     it("resolves nicknames in attendees list and computes conflict-free slots", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["find_common_meeting_slots"];
 
       const res = await tool.handler({
@@ -148,7 +160,10 @@ describe("MCP Tools & Utilities Suite", () => {
     }, 15000);
 
     it("deduplicates freeBusy and directory lookups across multiple attendees and preloads room busy intervals", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["find_common_meeting_slots"];
 
       const freeBusySpy = spyOn(GoogleCalendarService, "getFreeBusy");
@@ -182,7 +197,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("compare_schedules tool", () => {
     it("compares schedules and generates formatted Markdown card", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["compare_schedules"];
 
       const res = await tool.handler({
@@ -202,7 +220,10 @@ describe("MCP Tools & Utilities Suite", () => {
     }, 15000);
 
     it("returns error message when target nickname is unknown and not an email", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["compare_schedules"];
 
       const res = await tool.handler({
@@ -217,7 +238,10 @@ describe("MCP Tools & Utilities Suite", () => {
     }, 15000);
 
     it("incorporates roomId and suggestedTitle into schedule comparison and UI", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["compare_schedules"];
 
       const res = await tool.handler({
@@ -245,7 +269,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("create_shareable_booking_link tool", () => {
     it("generates a shareable booking link with slug and markdown link", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["create_shareable_booking_link"];
 
       const res = await tool.handler({
@@ -270,7 +297,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("book_meeting tool with smart attendee resolution", () => {
     it("resolves nickname attendees and books Google Calendar meeting", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["book_meeting"];
 
       const res = await tool.handler({
@@ -297,7 +327,10 @@ describe("MCP Tools & Utilities Suite", () => {
     }, 15000);
 
     it("links meeting to project and updates via reschedule_meeting tool", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tools = getRegisteredTools(server);
 
       // Ensure test team exists with unique name/slug
@@ -484,7 +517,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("get_my_agenda tool with Markdown agenda output", () => {
     it("returns Markdown agenda calendar", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["get_my_agenda"];
 
       const res = await tool.handler({
@@ -517,7 +553,10 @@ describe("MCP Tools & Utilities Suite", () => {
     });
 
     it("list_teams returns teams accessible to user", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const tool = getRegisteredTools(server)["list_teams"];
 
       const res = await tool.handler({});
@@ -531,7 +570,10 @@ describe("MCP Tools & Utilities Suite", () => {
     });
 
     it("create_project and list_projects manage team projects", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const createProjectTool = getRegisteredTools(server)["create_project"];
       const listProjectsTool = getRegisteredTools(server)["list_projects"];
 
@@ -561,7 +603,10 @@ describe("MCP Tools & Utilities Suite", () => {
     });
 
     it("create_task, list_tasks, update_task, and get_task_board lifecycle", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const createProjectTool = getRegisteredTools(server)["create_project"];
       const createTaskTool = getRegisteredTools(server)["create_task"];
       const listTasksTool = getRegisteredTools(server)["list_tasks"];
@@ -669,7 +714,10 @@ describe("MCP Tools & Utilities Suite", () => {
     });
 
     it("get_active_tasks, get_task_timeline, and time tracking parity in list_tasks and get_task_board", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const createProjectTool = getRegisteredTools(server)["create_project"];
       const createTaskTool = getRegisteredTools(server)["create_task"];
       const updateTaskTool = getRegisteredTools(server)["update_task"];
@@ -884,7 +932,10 @@ describe("MCP Tools & Utilities Suite", () => {
 
   describe("MCP Prompts & Workflow Suite", () => {
     it("registers book_meeting_flow prompt with conversational guidance", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const registeredPrompts = (
         server as unknown as {
           _registeredPrompts: Record<
@@ -914,7 +965,10 @@ describe("MCP Tools & Utilities Suite", () => {
     });
 
     it("registers create_task_flow prompt with project selection guidance", async () => {
-      const server = await createCalendarMcpServer({ sub: testUserId });
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
       const registeredPrompts = (
         server as unknown as {
           _registeredPrompts: Record<

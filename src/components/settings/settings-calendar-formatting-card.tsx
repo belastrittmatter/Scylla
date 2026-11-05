@@ -20,19 +20,15 @@ export function SettingsCalendarFormattingCard() {
   const { settings, updateSetting } = useCalendarSettings();
 
   return (
-    <Card className="w-full pb-0 text-start shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Clock className="size-4 text-muted-foreground" />
-            <CardTitle className="text-base font-semibold">
-              Date & Time Formatting
-            </CardTitle>
-          </div>
-          <CardDescription className="text-xs text-muted-foreground">
-            Configure time notation, week start day, and grid intervals.
-          </CardDescription>
-        </div>
+    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
+      <CardHeader className="gap-1.5 px-6">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold md:text-xl">
+          <Clock className="size-5 text-muted-foreground" />
+          Date & Time Formatting
+        </CardTitle>
+        <CardDescription className="text-xs text-muted-foreground md:text-sm">
+          Configure time notation, week start day, and grid intervals.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 px-6 pb-6">
         {/* Time Display Format */}

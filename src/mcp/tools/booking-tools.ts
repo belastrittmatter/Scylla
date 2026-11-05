@@ -8,7 +8,7 @@ import {
   rescheduleMeetingSchema,
   cancelMeetingSchema,
 } from "../schemas";
-import { resolveProject } from "./auth-helpers";
+import { resolveProject, verifyScope } from "./auth-helpers";
 import type { McpToolContext } from "../types";
 
 export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
@@ -33,6 +33,14 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       roomId,
       projectId,
     }) => {
+      const scopeErr = verifyScope(ctx, "calendar.events");
+      if (scopeErr) return scopeErr;
+
+      if (roomEmail || roomId) {
+        const roomScopeErr = verifyScope(ctx, "rooms.reservation");
+        if (roomScopeErr) return roomScopeErr;
+      }
+
       const token = await ctx.getAccessToken();
       if (!token) {
         return {
@@ -188,6 +196,14 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: rescheduleMeetingSchema,
     },
     async ({ eventId, newStart, newEnd, roomEmail, projectId }) => {
+      const scopeErr = verifyScope(ctx, "calendar.events");
+      if (scopeErr) return scopeErr;
+
+      if (roomEmail) {
+        const roomScopeErr = verifyScope(ctx, "rooms.reservation");
+        if (roomScopeErr) return roomScopeErr;
+      }
+
       const token = await ctx.getAccessToken();
       if (!token) {
         return {
@@ -279,6 +295,9 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       inputSchema: cancelMeetingSchema,
     },
     async ({ eventId, calendarId = "primary" }) => {
+      const scopeErr = verifyScope(ctx, "calendar.events");
+      if (scopeErr) return scopeErr;
+
       const token = await ctx.getAccessToken();
       if (!token) {
         return {

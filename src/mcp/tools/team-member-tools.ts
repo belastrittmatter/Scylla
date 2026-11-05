@@ -26,6 +26,7 @@ export function registerTeamMemberTools(
     },
     async ({ teamId, userId, email, role }) => {
       try {
+        ctx.assertScope("teams.manage");
         const currentUser = await ctx.getCurrentUser();
         const [team, resolved] = await Promise.all([
           resolveTeamAndVerifyAccess(teamId, currentUser.id, "admin"),
@@ -59,6 +60,7 @@ export function registerTeamMemberTools(
     },
     async ({ teamId, userId }) => {
       try {
+        ctx.assertScope("teams.manage");
         const currentUser = await ctx.getCurrentUser();
         const [team, targetUserId] = await Promise.all([
           resolveTeamAndVerifyAccess(teamId, currentUser.id, "admin"),
@@ -88,12 +90,18 @@ export function registerTeamMemberTools(
     },
     async ({ teamId, userId, role }) => {
       try {
+        ctx.assertScope("teams.manage");
         const currentUser = await ctx.getCurrentUser();
         const [team, targetUserId] = await Promise.all([
           resolveTeamAndVerifyAccess(teamId, currentUser.id, "admin"),
           resolveUserId(userId, currentUser.id, ctx),
         ]);
         if (!targetUserId) throw new Error(`User '${userId}' not found.`);
+        if (role === "owner" && team.ownerId !== currentUser.id) {
+          throw new Error(
+            "Permission denied: Only the team owner can assign the owner role.",
+          );
+        }
         const updated = await TeamService.updateMemberRole(
           team.id,
           targetUserId,

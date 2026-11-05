@@ -72,8 +72,14 @@ describe("MCP Task CRUD & Comments Suite", () => {
       creatorId: ownerId,
     });
 
-    const ownerServer = await createCalendarMcpServer({ sub: ownerId });
-    const strangerServer = await createCalendarMcpServer({ sub: strangerId });
+    const ownerServer = await createCalendarMcpServer({
+      sub: ownerId,
+      scopes: ["*"],
+    });
+    const strangerServer = await createCalendarMcpServer({
+      sub: strangerId,
+      scopes: ["*"],
+    });
     const ownerTools = getTools(ownerServer);
     const strangerTools = getTools(strangerServer);
 

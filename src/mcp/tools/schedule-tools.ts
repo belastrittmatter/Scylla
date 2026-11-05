@@ -15,6 +15,7 @@ import {
   findCommonMeetingSlotsSchema,
 } from "../schemas";
 import type { McpToolContext } from "../types";
+import { verifyScope } from "./auth-helpers";
 
 const ictDateFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Ho_Chi_Minh",
@@ -211,6 +212,9 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
       roomId,
       suggestedTitle,
     }) => {
+      const scopeErr = verifyScope(ctx, "calendar.readonly");
+      if (scopeErr) return scopeErr;
+
       const [token, currentUserProfile] = await Promise.all([
         ctx.getAccessToken(),
         ctx.getCurrentUser(),
@@ -455,6 +459,9 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
       suggestedTitle,
       suggestedAgenda,
     }) => {
+      const scopeErr = verifyScope(ctx, "calendar.readonly");
+      if (scopeErr) return scopeErr;
+
       const [token, currentUserProfile] = await Promise.all([
         ctx.getAccessToken(),
         ctx.getCurrentUser(),

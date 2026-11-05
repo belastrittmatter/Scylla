@@ -25,17 +25,15 @@ export function SettingsRestoreDefaultsCard() {
   };
 
   return (
-    <Card className="w-full pb-0 text-start shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4">
-        <div className="space-y-1">
-          <CardTitle className="text-base font-semibold">
-            Restore Defaults
-          </CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
-            Reset view mode, working hours, theme, and grid increments back to
-            default.
-          </CardDescription>
-        </div>
+    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
+      <CardHeader className="gap-1.5 px-6">
+        <CardTitle className="text-lg font-semibold md:text-xl">
+          Restore Defaults
+        </CardTitle>
+        <CardDescription className="text-xs text-muted-foreground md:text-sm">
+          Reset view mode, working hours, theme, and grid increments back to
+          default.
+        </CardDescription>
       </CardHeader>
       <CardFooter className="flex items-center justify-between rounded-b-xl border-t bg-sidebar !py-4 px-6 text-xs text-muted-foreground">
         <span>This action only resets local presentation preferences.</span>

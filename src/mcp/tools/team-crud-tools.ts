@@ -23,6 +23,7 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ name, slug, description }) => {
       try {
+        ctx.assertScope("teams.manage");
         const currentUser = await ctx.getCurrentUser();
         const team = await TeamService.createTeam({
           name,
@@ -49,6 +50,7 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ teamId }) => {
       try {
+        ctx.assertScope("teams.readonly");
         const currentUser = await ctx.getCurrentUser();
         const team = await resolveTeamAndVerifyAccess(teamId, currentUser.id);
         const projects = await ProjectService.listProjectsByTeam(team.id);
@@ -88,6 +90,7 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ teamId, name, slug, description }) => {
       try {
+        ctx.assertScope("teams.manage");
         const currentUser = await ctx.getCurrentUser();
         const team = await resolveTeamAndVerifyAccess(
           teamId,
@@ -117,6 +120,7 @@ export function registerTeamCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ teamId }) => {
       try {
+        ctx.assertScope("teams.delete");
         const currentUser = await ctx.getCurrentUser();
         const team = await resolveTeamAndVerifyAccess(
           teamId,

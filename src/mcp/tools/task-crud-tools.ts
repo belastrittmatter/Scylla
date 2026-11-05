@@ -23,6 +23,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ taskId }) => {
       try {
+        ctx.assertScope("tasks.readonly");
         const [currentUser, task] = await Promise.all([
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
@@ -47,6 +48,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ taskId }) => {
       try {
+        ctx.assertScope("tasks.delete");
         const [currentUser, task] = await Promise.all([
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
@@ -73,6 +75,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ taskId, content }) => {
       try {
+        ctx.assertScope("tasks.write");
         const [currentUser, task] = await Promise.all([
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
@@ -103,6 +106,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
     },
     async ({ taskId }) => {
       try {
+        ctx.assertScope("tasks.readonly");
         const [currentUser, task] = await Promise.all([
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
