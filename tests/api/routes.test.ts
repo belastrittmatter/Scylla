@@ -10,11 +10,39 @@ import {
   DELETE as cancelBookingHandler,
 } from "../../src/app/api/bookings/[id]/route";
 import { GET as getCalendarHandler } from "../../src/app/api/calendar/route";
+import { db } from "../../src/db";
+import { meetingRoom } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
 
 describe("REST API Route Handlers", () => {
   beforeAll(async () => {
     await seedDatabase();
+    const testRooms = [
+      {
+        name: "Room Alpha",
+        email: "routes-room-alpha@resource.calendar.google.com",
+        capacity: 4,
+        features: ["whiteboard", "video-conference"],
+        building: "HQ",
+      },
+      {
+        name: "Room Beta",
+        email: "routes-room-beta@resource.calendar.google.com",
+        capacity: 8,
+        features: ["whiteboard", "tv", "video-conference"],
+        building: "HQ",
+      },
+      {
+        name: "Boardroom Delta",
+        email: "routes-room-delta@resource.calendar.google.com",
+        capacity: 14,
+        features: ["projector", "video-conference", "whiteboard"],
+        building: "HQ",
+      },
+    ];
+    for (const r of testRooms) {
+      await db.insert(meetingRoom).values(r).onConflictDoNothing();
+    }
   });
 
   describe("GET /api/users/search", () => {

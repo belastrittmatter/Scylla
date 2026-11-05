@@ -89,8 +89,13 @@ describe("Server Actions Layer", () => {
     test("filters rooms by feature", async () => {
       const result = await getRoomsAction({ features: ["projector"] });
       expect(result.success).toBe(true);
-      expect(result.data!.length).toBe(1);
-      expect(result.data![0].name).toContain("Boardroom Delta");
+      expect(result.data!.length).toBeGreaterThanOrEqual(1);
+      expect(result.data!.every((r) => r.features.includes("projector"))).toBe(
+        true,
+      );
+      expect(result.data!.some((r) => r.name.includes("Boardroom Delta"))).toBe(
+        true,
+      );
     });
 
     test("returns error on invalid filter format", async () => {

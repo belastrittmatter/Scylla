@@ -51,7 +51,7 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
   const items = segments.map((seg, index) => {
     const path =
       rawSegments.length === 0
-        ? "/"
+        ? "/calendar"
         : "/" + segments.slice(0, index + 1).join("/");
     const isLast = index === segments.length - 1;
     const custom = customLabels[seg] || customLabels[decodeURIComponent(seg)];
@@ -104,7 +104,7 @@ export function ViewHeader({
             {/* Root item: Brand (Scylla) */}
             <BreadcrumbItem>
               <BreadcrumbLink
-                render={<Link href="/" />}
+                render={<Link href="/calendar" />}
                 className="text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
               >
                 {parent}

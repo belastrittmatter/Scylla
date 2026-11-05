@@ -1,16 +1,96 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
 import { auth } from "@/lib/auth";
 
+const ROOT_DIR = process.cwd();
+
 describe("Proxy Authentication and Authorization", () => {
-  it("redirects unauthenticated access to /timeline to /auth/sign-in", async () => {
-    const req = new NextRequest("http://localhost:3000/timeline");
+  it("redirects unauthenticated access to /calendar to /auth/sign-in", async () => {
+    const req = new NextRequest("http://localhost:3000/calendar");
     const res = await proxy(req);
 
     expect(res.status).toBe(307);
     const location = res.headers.get("location");
-    expect(location).toContain("/auth/sign-in?callbackUrl=%2Ftimeline");
+    expect(location).toContain("/auth/sign-in?callbackUrl=%2Fcalendar");
+  });
+
+  it("redirects authenticated users on /auth/sign-in, /auth/sign-up, and /sign-in to /calendar", async () => {
+    const originalGetSession = auth.api.getSession;
+    (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+      (async () =>
+        ({ user: { id: "user-1" } }) as Awaited<
+          ReturnType<typeof originalGetSession>
+        >) as typeof auth.api.getSession;
+
+    try {
+      for (const path of ["/auth/sign-in", "/auth/sign-up", "/sign-in"]) {
+        const req = new NextRequest(`http://localhost:3000${path}`, {
+          headers: {
+            cookie: "better-auth.session_token=valid-session-token",
+          },
+        });
+        const res = await proxy(req);
+
+        expect(res.status).toBe(307);
+        const location = res.headers.get("location");
+        expect(location).toBe("http://localhost:3000/calendar");
+      }
+    } finally {
+      (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+        originalGetSession;
+    }
+  });
+
+  it("redirects unauthenticated legacy /sign-in to canonical /auth/sign-in preserving query params", async () => {
+    const req = new NextRequest(
+      "http://localhost:3000/sign-in?callbackUrl=%2Ftasks",
+    );
+    const res = await proxy(req);
+
+    expect(res.status).toBe(307);
+    const location = res.headers.get("location");
+    expect(location).toBe(
+      "http://localhost:3000/auth/sign-in?callbackUrl=%2Ftasks",
+    );
+  });
+
+  it("routes in-app navigation and post-authentication redirects to /calendar instead of /", () => {
+    const authProvider = readFileSync(
+      join(ROOT_DIR, "src/components/auth-provider.tsx"),
+      "utf8",
+    );
+    expect(authProvider).toContain('redirectTo="/calendar"');
+    expect(authProvider).not.toContain('redirectTo="/"');
+
+    const authResult = readFileSync(
+      join(ROOT_DIR, "src/components/auth/auth-result.tsx"),
+      "utf8",
+    );
+    expect(authResult).toContain('result.redirectTo ?? "/calendar"');
+
+    const viewHeader = readFileSync(
+      join(ROOT_DIR, "src/components/layout/view-header.tsx"),
+      "utf8",
+    );
+    expect(viewHeader).toContain('render={<Link href="/calendar" />}');
+    expect(viewHeader).not.toContain('render={<Link href="/" />}');
+
+    const appSidebar = readFileSync(
+      join(ROOT_DIR, "src/components/layout/app-sidebar.tsx"),
+      "utf8",
+    );
+    expect(appSidebar).toContain('href="/calendar"');
+    expect(appSidebar).not.toContain('href="/"');
+
+    const consentPage = readFileSync(
+      join(ROOT_DIR, "src/app/consent/page.tsx"),
+      "utf8",
+    );
+    expect(consentPage).toContain('router.push("/calendar")');
+    expect(consentPage).not.toContain('router.push("/")');
   });
 
   it("redirects unauthenticated access to /account/settings to /auth/sign-in", async () => {
@@ -77,30 +157,5 @@ describe("Proxy Authentication and Authorization", () => {
 
     // Should proceed to sign-in page, not redirect to /
     expect(res.status).toBe(200);
-  });
-
-  it("redirects authenticated /auth/sign-in access to /calendar", async () => {
-    const originalGetSession = auth.api.getSession;
-    (auth.api as { getSession: typeof auth.api.getSession }).getSession =
-      (async () =>
-        ({ user: { id: "user-1" } }) as Awaited<
-          ReturnType<typeof originalGetSession>
-        >) as typeof auth.api.getSession;
-
-    try {
-      const req = new NextRequest("http://localhost:3000/auth/sign-in", {
-        headers: {
-          cookie: "better-auth.session_token=valid-token",
-        },
-      });
-      const res = await proxy(req);
-
-      expect(res.status).toBe(307);
-      const location = res.headers.get("location");
-      expect(location).toContain("/calendar");
-    } finally {
-      (auth.api as { getSession: typeof auth.api.getSession }).getSession =
-        originalGetSession;
-    }
   });
 });

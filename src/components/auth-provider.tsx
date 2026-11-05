@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { AuthProvider } from "@/components/auth/auth-provider";
-import { AuthUIProvider as DaveyplateAuthUIProvider } from "@daveyplate/better-auth-ui";
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { AuthUIProvider as DaveyplateAuthUIProvider } from "@daveyplate/better-auth-ui";
+import { AuthProvider } from "@/components/auth/auth-provider";
+import { authClient } from "@/lib/auth-client";
 
 export function AuthUIProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -22,7 +22,7 @@ export function AuthUIProvider({ children }: { children: React.ReactNode }) {
       authClient={authClient}
       Link={Link}
       navigate={navigate}
-      redirectTo="/"
+      redirectTo="/calendar"
       socialProviders={["google"]}
     >
       <DaveyplateAuthUIProvider
@@ -32,6 +32,15 @@ export function AuthUIProvider({ children }: { children: React.ReactNode }) {
         avatar={true}
         deleteUser={true}
         social={{ providers: ["google"] }}
+        replace={(href) => router.replace(href)}
+        redirectTo="/calendar"
+        onSessionChange={() => router.refresh()}
+        account={{
+          basePath: "",
+          viewPaths: {
+            SETTINGS: "settings",
+          },
+        }}
       >
         {children}
       </DaveyplateAuthUIProvider>
