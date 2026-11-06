@@ -105,21 +105,25 @@ export class TeamService {
   }
 
   public static async isTeamMember(
-    teamId: string,
+    teamIdOrSlug: string,
     userId: string,
   ): Promise<boolean> {
     const teamRecord = await db.query.team.findFirst({
-      where: eq(team.id, teamId),
-      columns: { ownerId: true },
+      where: or(eq(team.id, teamIdOrSlug), eq(team.slug, teamIdOrSlug)),
+      columns: { id: true, ownerId: true },
     });
     if (!teamRecord) return false;
     if (teamRecord.ownerId === userId) return true;
 
     const membership = await db.query.teamMember.findFirst({
-      where: and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)),
+      where: and(
+        eq(teamMember.teamId, teamRecord.id),
+        eq(teamMember.userId, userId),
+      ),
       columns: { id: true },
     });
-    return Boolean(membership);
+
+    return !!membership;
   }
 
   public static async listUserTeams(userId: string): Promise<Team[]> {

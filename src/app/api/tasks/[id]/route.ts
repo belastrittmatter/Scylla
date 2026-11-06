@@ -1,4 +1,5 @@
 import { TaskService } from "@/services/task/task-service";
+import { TeamService } from "@/services/team/team-service";
 import { UpdateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
 
@@ -6,11 +7,16 @@ interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
 }
 
-export async function GET(_req: Request, context: RouteParams) {
+export async function GET(req: Request, context: RouteParams) {
   try {
     const { id } = await context.params;
     if (!id) {
       return Response.json({ error: "Task ID is required" }, { status: 400 });
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const task = await TaskService.getTaskById(id);
@@ -18,6 +24,14 @@ export async function GET(_req: Request, context: RouteParams) {
       return Response.json(
         { error: `Task not found for id: ${id}` },
         { status: 404 },
+      );
+    }
+
+    const isMember = await TeamService.isTeamMember(task.teamId, callerId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
       );
     }
 
@@ -35,6 +49,27 @@ export async function PATCH(req: Request, context: RouteParams) {
     const { id } = await context.params;
     if (!id) {
       return Response.json({ error: "Task ID is required" }, { status: 400 });
+    }
+
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const task = await TaskService.getTaskById(id);
+    if (!task) {
+      return Response.json(
+        { error: `Task not found for id: ${id}` },
+        { status: 404 },
+      );
+    }
+
+    const isMember = await TeamService.isTeamMember(task.teamId, userId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
+      );
     }
 
     let body: unknown;
@@ -63,14 +98,13 @@ export async function PATCH(req: Request, context: RouteParams) {
           ? new Date(data.dueDate)
           : undefined;
 
-    const userId = await resolveUserId(req);
     const updated = await TaskService.updateTask(
       id,
       {
         ...data,
         dueDate,
       },
-      userId || undefined,
+      userId,
     );
 
     return Response.json(updated, { status: 200 });
@@ -84,11 +118,32 @@ export async function PATCH(req: Request, context: RouteParams) {
   }
 }
 
-export async function DELETE(_req: Request, context: RouteParams) {
+export async function DELETE(req: Request, context: RouteParams) {
   try {
     const { id } = await context.params;
     if (!id) {
       return Response.json({ error: "Task ID is required" }, { status: 400 });
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const task = await TaskService.getTaskById(id);
+    if (!task) {
+      return Response.json(
+        { error: `Task not found for id: ${id}` },
+        { status: 404 },
+      );
+    }
+
+    const isMember = await TeamService.isTeamMember(task.teamId, callerId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
+      );
     }
 
     await TaskService.deleteTask(id);

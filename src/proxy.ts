@@ -60,11 +60,12 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Redirect authenticated users away from sign-in / sign-up pages to /calendar.
+  // 3. Redirect authenticated users away from root marketing / sign-in / sign-up pages to /calendar.
   // Verify the session first: an expired cookie must not trap users in a redirect loop.
   if (
     sessionCookie &&
-    (pathname === "/auth/sign-in" ||
+    (pathname === "/" ||
+      pathname === "/auth/sign-in" ||
       pathname === "/auth/sign-up" ||
       pathname === "/sign-in")
   ) {
@@ -74,7 +75,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL("/calendar", request.url));
       }
     } catch {
-      // If session verification fails, allow navigating to sign-in / sign-up
+      // If session verification fails, allow navigating to landing page or sign-in / sign-up
     }
   }
 

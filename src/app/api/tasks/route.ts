@@ -1,4 +1,5 @@
 import { TaskService } from "@/services/task/task-service";
+import { TeamService } from "@/services/team/team-service";
 import { CreateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
 import type { TaskPriority, TaskStatus } from "@/services/task/task-types";
@@ -11,6 +12,27 @@ export async function GET(req: Request) {
       return Response.json(
         { error: "teamId parameter is required" },
         { status: 400 },
+      );
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const targetTeam = await TeamService.getTeamById(teamId);
+    if (!targetTeam) {
+      return Response.json(
+        { error: `Team with id "${teamId}" not found` },
+        { status: 404 },
+      );
+    }
+
+    const isMember = await TeamService.isTeamMember(teamId, callerId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
       );
     }
 
@@ -71,6 +93,22 @@ export async function POST(req: Request) {
       return Response.json(
         { error: "creatorId is required when unauthenticated" },
         { status: 400 },
+      );
+    }
+
+    const targetTeam = await TeamService.getTeamById(data.teamId);
+    if (!targetTeam) {
+      return Response.json(
+        { error: `Team with id "${data.teamId}" not found` },
+        { status: 404 },
+      );
+    }
+
+    const isMember = await TeamService.isTeamMember(data.teamId, creatorId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
       );
     }
 

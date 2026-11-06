@@ -307,6 +307,19 @@ describe("REST API Route Handlers", () => {
       const data = await res.json();
       expect(data.error).toBeDefined();
     });
+
+    test("returns 403 when authenticated user queries another user's agenda", async () => {
+      const req = new Request(
+        "http://localhost:3000/api/bookings/agenda?date=2026-10-19T00:00:00.000Z&userId=usr_alex_rivera",
+        {
+          headers: { "x-user-id": "usr_unauthorized_stranger" },
+        },
+      );
+      const res = await getAgendaHandler(req);
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toContain("Forbidden");
+    });
   });
 
   describe("POST /api/bookings and /api/bookings/[id] lifecycle", () => {
@@ -386,11 +399,52 @@ describe("REST API Route Handlers", () => {
     });
 
     test("PATCH /api/bookings/[id] updates booking time", async () => {
-      const req = new Request(
+      // Unauthenticated rejection (401)
+      const unauthReq = new Request(
         `http://localhost:3000/api/bookings/${createdBookingId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startTime: "2026-10-20T14:00:00.000Z",
+            endTime: "2026-10-20T15:00:00.000Z",
+          }),
+        },
+      );
+      const unauthRes = await rescheduleBookingHandler(unauthReq, {
+        params: Promise.resolve({ id: createdBookingId }),
+      });
+      expect(unauthRes.status).toBe(401);
+
+      // Unauthorized stranger rejection (403)
+      const strangerReq = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": "usr_unauthorized_stranger",
+          },
+          body: JSON.stringify({
+            startTime: "2026-10-20T14:00:00.000Z",
+            endTime: "2026-10-20T15:00:00.000Z",
+          }),
+        },
+      );
+      const strangerRes = await rescheduleBookingHandler(strangerReq, {
+        params: Promise.resolve({ id: createdBookingId }),
+      });
+      expect(strangerRes.status).toBe(403);
+
+      // Authorized organizer update (200)
+      const req = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": "usr_alex_rivera",
+          },
           body: JSON.stringify({
             startTime: "2026-10-20T14:00:00.000Z",
             endTime: "2026-10-20T15:00:00.000Z",
@@ -417,7 +471,10 @@ describe("REST API Route Handlers", () => {
         "http://localhost:3000/api/bookings/non-existent-id",
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": "usr_alex_rivera",
+          },
           body: JSON.stringify({
             startTime: "2026-10-20T14:00:00.000Z",
             endTime: "2026-10-20T15:00:00.000Z",
@@ -438,7 +495,10 @@ describe("REST API Route Handlers", () => {
         `http://localhost:3000/api/bookings/${createdBookingId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": "usr_alex_rivera",
+          },
           body: JSON.stringify({
             startTime: "2026-10-20T16:00:00.000Z",
             endTime: "2026-10-20T15:00:00.000Z",
@@ -455,10 +515,37 @@ describe("REST API Route Handlers", () => {
     });
 
     test("DELETE /api/bookings/[id] cancels booking and marks status cancelled", async () => {
+      // Unauthenticated rejection (401)
+      const unauthReq = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const unauthRes = await cancelBookingHandler(unauthReq, {
+        params: Promise.resolve({ id: createdBookingId }),
+      });
+      expect(unauthRes.status).toBe(401);
+
+      // Unauthorized stranger rejection (403)
+      const strangerReq = new Request(
+        `http://localhost:3000/api/bookings/${createdBookingId}`,
+        {
+          method: "DELETE",
+          headers: { "x-user-id": "usr_unauthorized_stranger" },
+        },
+      );
+      const strangerRes = await cancelBookingHandler(strangerReq, {
+        params: Promise.resolve({ id: createdBookingId }),
+      });
+      expect(strangerRes.status).toBe(403);
+
+      // Authorized organizer cancellation (200)
       const req = new Request(
         `http://localhost:3000/api/bookings/${createdBookingId}`,
         {
           method: "DELETE",
+          headers: { "x-user-id": "usr_alex_rivera" },
         },
       );
 
@@ -476,6 +563,7 @@ describe("REST API Route Handlers", () => {
         "http://localhost:3000/api/bookings/non-existent-id",
         {
           method: "DELETE",
+          headers: { "x-user-id": "usr_alex_rivera" },
         },
       );
 
@@ -492,7 +580,10 @@ describe("REST API Route Handlers", () => {
         `http://localhost:3000/api/bookings/${createdBookingId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": "usr_alex_rivera",
+          },
           body: JSON.stringify({
             startTime: "2026-10-20T16:00:00.000Z",
             endTime: "2026-10-20T17:00:00.000Z",

@@ -1,5 +1,6 @@
 import { BookingService } from "@/services/booking";
 import { ReschedulePayloadSchema } from "@/actions/schemas";
+import { resolveUserId } from "@/services/api-utils";
 
 interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
@@ -12,6 +13,28 @@ export async function PATCH(req: Request, context: RouteParams) {
       return Response.json(
         { error: "Booking ID is required" },
         { status: 400 },
+      );
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existing = await BookingService.getBookingById(id);
+    if (!existing) {
+      return Response.json(
+        { error: `Booking with ID ${id} not found` },
+        { status: 404 },
+      );
+    }
+
+    if (existing.organizerUserId !== callerId && existing.userId !== callerId) {
+      return Response.json(
+        {
+          error: "Forbidden: You are not authorized to reschedule this booking",
+        },
+        { status: 403 },
       );
     }
 
@@ -59,6 +82,26 @@ export async function DELETE(req: Request, context: RouteParams) {
       return Response.json(
         { error: "Booking ID is required" },
         { status: 400 },
+      );
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existing = await BookingService.getBookingById(id);
+    if (!existing) {
+      return Response.json(
+        { error: `Booking with ID ${id} not found` },
+        { status: 404 },
+      );
+    }
+
+    if (existing.organizerUserId !== callerId && existing.userId !== callerId) {
+      return Response.json(
+        { error: "Forbidden: You are not authorized to cancel this booking" },
+        { status: 403 },
       );
     }
 
