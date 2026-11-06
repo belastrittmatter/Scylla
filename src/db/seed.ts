@@ -35,6 +35,7 @@ export const defaultUsers = [
     name: "Alex Rivera",
     email: "alex@example.com",
     emailVerified: true,
+    role: "admin",
   },
   {
     id: "usr_test_user",
@@ -66,7 +67,12 @@ export async function seedDatabase() {
       .values(u)
       .onConflictDoUpdate({
         target: user.id,
-        set: { name: u.name, email: u.email, emailVerified: true },
+        set: {
+          name: u.name,
+          email: u.email,
+          emailVerified: true,
+          role: u.role || "member",
+        },
       });
   }
 

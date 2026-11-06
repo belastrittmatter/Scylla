@@ -1,6 +1,41 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { user } from "@/db/schema";
+import { resolveUserId } from "@/services/api-utils";
 import { RoomService } from "@/services/rooms";
 
-export async function POST(_req?: Request) {
+export async function POST(req?: Request) {
+  if (!req) {
+    return Response.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  const callerId = await resolveUserId(req);
+  if (!callerId) {
+    return Response.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  const userRecord = await db.query.user.findFirst({
+    where: eq(user.id, callerId),
+    columns: { role: true },
+  });
+
+  if (userRecord?.role !== "admin") {
+    return Response.json(
+      {
+        success: false,
+        error:
+          "Forbidden: Admin privileges required to synchronize meeting rooms",
+      },
+      { status: 403 },
+    );
+  }
+
   try {
     const rooms = await RoomService.syncRoomsFromGoogle();
     return Response.json(

@@ -8,6 +8,7 @@ import {
   rescheduleBookingAction,
   cancelBookingAction,
 } from "../../src/actions";
+import { resolveActionUserId } from "../../src/actions/auth-helper";
 import { db } from "../../src/db";
 import { meetingRoom } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
@@ -292,6 +293,25 @@ describe("Server Actions Layer", () => {
       const result = await cancelBookingAction("non_existent_id");
       expect(result.success).toBe(false);
       expect(result.error).toContain("not found");
+    });
+  });
+
+  describe("resolveActionUserId security hardening", () => {
+    test("fails closed when NODE_ENV and BUN_ENV are not development or test", async () => {
+      const env = process.env as Record<string, string | undefined>;
+      const origNodeEnv = env.NODE_ENV;
+      const origBunEnv = env.BUN_ENV;
+      try {
+        delete env.NODE_ENV;
+        delete env.BUN_ENV;
+        expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
+
+        env.NODE_ENV = "production";
+        expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
+      } finally {
+        env.NODE_ENV = origNodeEnv;
+        env.BUN_ENV = origBunEnv;
+      }
     });
   });
 });
