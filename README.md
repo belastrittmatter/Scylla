@@ -1,41 +1,73 @@
-# Next.js Server & Application
+<div align="center">
 
-Foundational Next.js application for MCP Standard Research Intern, configured with TypeScript strict mode, Tailwind CSS v4, shadcn/ui components, Prettier formatting with automated class sorting, and Husky + lint-staged pre-commit automation.
+<img src="public/images/screenshots/scylla-landing-page-overview.png" alt="Scylla - Team calendar, meeting rooms, and task tracking in one place" width="100%" />
+
+# Scylla
+
+**Team calendar, meeting rooms, and task tracking in one place — with built-in MCP support for AI agents.**
+
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.4-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![Bun](https://img.shields.io/badge/Bun-1.4+-black?style=flat&logo=bun)](https://bun.sh/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
+[![MCP Ready](https://img.shields.io/badge/MCP-Ready-f97316?style=flat&logo=anthropic)](https://modelcontextprotocol.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![License: MIT](LICENSE)](LICENSE)
+
+[Why Scylla](#why-scylla) • [Visual Tour](#visual-tour) • [Quickstart](#getting-started) • [Manage Everything with MCP](#ai-agents--mcp-manage-everything-from-your-editor)
+
+</div>
 
 ---
 
-## Tech Stack & Architecture
+## Why Scylla?
 
-- **Framework**: Next.js 16 (App Router in `src/app/`, React 19)
-- **Language**: TypeScript (strict mode, `@/*` mapped to `src/*`)
-- **Styling**: Tailwind CSS v4 with OKLCH CSS variables, design tokens, and dark mode support
-- **UI Components**: shadcn/ui (`components.json`) with Lucide icons (`lucide-react`), `clsx`, `tailwind-merge`, and `class-variance-authority`
-- **Code Quality & Formatting**:
-  - Prettier with `prettier-plugin-tailwindcss` for automated Tailwind class sorting
-  - ESLint 9 with Next.js rules enforcing project standards (`server/AGENTS.md`)
-- **Git Hooks & Pre-Commit**: Husky (`.husky/pre-commit`) running `lint-staged` automatically on staged files
+Coordinating work across a team is usually annoying because everything lives in different tabs:
+
+- **Calendar chaos**: Scheduling a quick sync with 3 or 4 teammates means opening multiple Google Calendar windows, eye-balling overlapping blocks, or sending 10 Slack messages back and forth just to find 30 minutes.
+- **Disconnected tasks**: Tasks live on a board (like Jira or Linear), but real time is spent in meetings and calendar blocks. Managers end up asking "what did everyone actually work on this week?" because the calendar and the task board never talk to each other.
+- **Meeting room scramble**: You finally find a time that works, but now you have to open another tool to find an empty room with a video screen or enough seats.
+- **AI agents locked out**: Tools like Claude and Cursor can write code and summarize docs, but they cannot check your calendar, book a room, or move your task to "Done" unless you leave your editor and click around by hand.
+
+**Scylla puts your calendar, team rooms, and project tasks on one screen.** You can see who is free, reserve a room that fits, attach meetings directly to the tasks people are working on, and let your AI agent do the busywork for you.
 
 ---
 
-## Directory Structure
+## Visual Tour
 
-```text
-server/
-├── src/
-│   ├── app/
-│   │   ├── globals.css      # Tailwind v4 theme, design tokens, and CSS variables
-│   │   ├── layout.tsx       # Root layout wrapper
-│   │   └── page.tsx         # Main entry page
-│   ├── components/
-│   │   └── ui/              # shadcn/ui primitives (button, card, badge)
-│   └── lib/
-│       └── utils.ts         # cn() utility helper (clsx + tailwind-merge)
-├── components.json          # shadcn/ui registry & alias configuration
-├── tsconfig.json            # TypeScript strict mode with @/* -> ./src/*
-├── eslint.config.mjs        # ESLint flat config
-├── next.config.ts           # Next.js compiler settings
-└── package.json             # Scripts & dependencies
-```
+### 1. Team Calendar & Timeline Grid
+
+See everyone's availability layered together, check meeting room occupancy, and drag to schedule new events.
+
+<div align="center">
+  <img src="public/images/screenshots/scylla-team-calendar-schedule-grid.png" alt="Scylla Team Calendar Dashboard and Visual Timeline Scheduling Grid" width="100%" />
+</div>
+
+### 2. Teams & Workspaces
+
+Group people into teams, assign member roles, and organize projects in one clean directory.
+
+<div align="center">
+  <img src="public/images/screenshots/scylla-team-workspaces-management.png" alt="Scylla Team Workspaces and Member Directory Management" width="100%" />
+</div>
+
+### 3. Task Boards Linked to Your Week
+
+Connect meetings to actual tasks with assignees, priorities, and deadlines. Managers can see exactly what progressed during the week without scheduling another status meeting.
+
+<div align="center">
+  <img src="public/images/screenshots/scylla-kanban-task-board-tracking.png" alt="Scylla Project Deliverables and Kanban Task Board Tracking" width="100%" />
+</div>
+
+---
+
+## What Scylla Does
+
+- **Find common free time**: Overlay teammate schedules to spot open slots without back-and-forth messages.
+- **Track weekly work**: Attach meetings directly to project tasks so everyone knows what was discussed and what was completed.
+- **Book the right room**: Filter meeting rooms by capacity and equipment (video screens, quiet pods, conference setups).
+- **Google Calendar sync**: Two-way sync keeps your Google Calendar events and Scylla bookings aligned.
+- **Public booking links**: Share personal or team `/book/[slug]` links so external guests can pick an open time.
 
 ---
 
@@ -44,93 +76,119 @@ server/
 ### Prerequisites
 
 - [Bun](https://bun.sh/) (v1.2+) or Node.js (v20+)
-- [Docker](https://www.docker.com/) & Docker Compose
+- [Docker](https://www.docker.com/) (for local PostgreSQL)
 
-### Quickstart (Local PostgreSQL & Database Setup)
+### 1. Clone & Set Up Environment
 
-1. **Configure Environment Variables**:
+```bash
+git clone https://github.com/belastrittmatter/Scylla.git
+cd Scylla
+cp .env.example .env
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+### 2. Start PostgreSQL & Push Database Schema
 
-2. **Start Local PostgreSQL**:
-   Spin up the local PostgreSQL container with healthchecks enabled:
+```bash
+# Start local Postgres in Docker
+bun run db:up
 
-   ```bash
-   make db-up
-   # Or using Bun:
-   bun run db:up
-   ```
+# Push schema tables
+bun run db:push
+```
 
-3. **Push Schema and Seed Initial Data**:
+Helpful database commands:
 
-   ```bash
-   bun run db:push
-   bun run db:seed
-   ```
+- `bun run db:up` — Start the database container
+- `bun run db:down` — Stop the container
+- `bun run db:studio` — Open the Drizzle visual database inspector
 
-   **Database Management Commands**:
-   - `make db-up` / `bun run db:up` — Start Postgres container in background (waits until healthy)
-   - `make db-down` / `bun run db:down` — Stop Postgres container
-   - `make db-logs` — Tail logs from the Postgres container
-   - `make db-reset` — Tear down database volume and restart clean container
+### 3. Seed Initial Data
 
-### 1. Install Dependencies
+Populate the database with default event types, working hours, and initial users:
 
-From the repository root or inside `server/`:
+```bash
+bun run db:seed
+```
+
+### 4. Run the App
 
 ```bash
 bun install
-```
-
-### 2. Start Development Server
-
-```bash
-# From repository root
 bun run dev
-
-# Or inside server directory
-cd server && bun run dev
 ```
 
-The application will be live at [http://localhost:3000](http://localhost:3000).
-
-### 3. Build for Production
-
-```bash
-bun run build
-```
-
-### 4. Sync Meeting Rooms from Google Workspace
-
-```bash
-# Trigger POST endpoint to fetch resources from Google Admin Directory & upsert into PostgreSQL
-curl -X POST http://localhost:3000/api/rooms/sync
-```
-
-_(For full setup details on Google OAuth scopes, directory permissions, and normalization rules, see the main [README.md](../README.md#meeting-room-synchronization-google-workspace))._
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Code Quality & Formatting
+## Google Workspace Room Sync
 
-### Run Prettier (Format check / write)
+If your company uses Google Workspace, you can pull your conference rooms straight into Scylla:
 
 ```bash
+curl -X POST http://localhost:3000/api/rooms/sync
+```
+
+_(Requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your `.env` file with Google Directory read permissions)._
+
+---
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, React 19)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4 & shadcn/ui primitives
+- **Database**: PostgreSQL 16 with Drizzle ORM
+- **Auth**: Better Auth (Google OAuth, email/password, and MCP agent auth)
+- **Runtime**: Bun
+
+---
+
+## Testing & Code Quality
+
+```bash
+# Run tests
+bun test
+
 # Check formatting
 bun run format:check
 
-# Format files & auto-sort Tailwind classes
+# Auto-format files
 bun run format
-```
 
-### Run Linter
-
-```bash
+# Run linter
 bun run lint
 ```
 
-### Pre-commit Automation
+---
 
-Husky automatically runs `lint-staged` upon `git commit`, running Prettier on all staged `.ts`, `.tsx`, `.css`, and `.json` files before any commit is accepted.
+## AI Agents & MCP: Manage Everything from Your Editor
+
+The best part of Scylla is that **you rarely need to open the browser to manage your schedule or tasks.**
+
+Scylla includes a built-in **Model Context Protocol (MCP)** server. When you connect it to **Claude Desktop**, **Cursor**, or any other MCP-enabled agent, your assistant can interact with your calendar and project boards directly.
+
+You can simply tell your agent:
+
+- **Schedule a meeting**:
+
+  > _"Find 30 minutes with Taylor and Riley tomorrow afternoon, book Room Alpha, and send the invite."_
+
+- **Create a task**:
+
+  > _"Add a high-priority task 'Fix OAuth token refresh' to the Core Platform project and assign it to me."_
+
+- **Update task progress**:
+
+  > _"Move task #104 to In Review and note that all unit tests are passing."_
+
+- **Check availability**:
+  > _"What meetings do I have on Thursday?"_ or _"Is the Orion conference room free at 2 PM?"_
+
+The agent talks to Scylla through MCP in the background: checking free/busy windows, picking the right room, and updating your tasks without you ever leaving your editor or chat window.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.

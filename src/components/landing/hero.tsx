@@ -72,7 +72,7 @@ export function LandingHero() {
               <div className="home-banner-dashboard relative z-1 rounded-t-[20px] overflow-hidden p-1 sm:p-2.5 !pb-0 border border-white/10 border-b-0 bg-gradient-to-b from-white/10 to-transparent glowing-border">
                 <img
                   className="rounded-t-[20px] w-full"
-                  src="/images/banner-dashboard.png"
+                  src="/images/calendar-dashboard-preview.png"
                   alt="Scylla Task & Calendar dashboard preview"
                 />
               </div>
