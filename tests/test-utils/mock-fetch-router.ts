@@ -55,7 +55,11 @@ export function setupMockFetchRouter() {
       return originalFetch(input, init);
     }
 
-    const req = new Request(urlStr, init);
+    const headers = new Headers(init?.headers);
+    if (!headers.has("x-user-id") && !headers.has("cookie")) {
+      headers.set("x-user-id", "usr_alex_rivera");
+    }
+    const req = new Request(urlStr, { ...init, headers });
 
     try {
       if (pathname === "/api/users/search") {

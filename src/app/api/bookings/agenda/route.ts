@@ -1,13 +1,13 @@
 import { BookingService } from "@/services/booking";
 import { GetAgendaParamsSchema } from "@/actions/schemas";
-import { auth } from "@/lib/auth";
+import { resolveUserId } from "@/services/api-utils";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const dateParam =
       url.searchParams.get("date") || url.searchParams.get("dateIso");
-    let userId = url.searchParams.get("userId") || undefined;
+    const queryUserId = url.searchParams.get("userId") || undefined;
 
     if (!dateParam) {
       return Response.json(
@@ -16,16 +16,28 @@ export async function GET(req: Request) {
       );
     }
 
-    if (!userId || userId === "me") {
-      try {
-        const session = await auth.api.getSession({ headers: req.headers });
-        userId = session?.user?.id;
-      } catch {
-        // ignore
+    // Resolve authenticated caller identity
+    const sessionUserId = await resolveUserId(req);
+
+    // If caller is authenticated, enforce that they cannot request another user's agenda
+    if (sessionUserId) {
+      if (
+        queryUserId &&
+        queryUserId !== "me" &&
+        queryUserId !== sessionUserId
+      ) {
+        return Response.json(
+          { error: "Forbidden: You cannot access another user's agenda" },
+          { status: 403 },
+        );
       }
     }
 
-    if (!userId) {
+    // Determine target user ID (session user, or explicit fallback when unauthenticated in test environment)
+    const targetUserId =
+      sessionUserId || (await resolveUserId(req, queryUserId));
+
+    if (!targetUserId) {
       return Response.json(
         { error: "User ID is required when unauthenticated" },
         { status: 400 },
@@ -34,7 +46,7 @@ export async function GET(req: Request) {
 
     const parseResult = GetAgendaParamsSchema.safeParse({
       dateIso: dateParam,
-      userId,
+      userId: targetUserId,
     });
 
     if (!parseResult.success) {
@@ -45,7 +57,7 @@ export async function GET(req: Request) {
     }
 
     const agenda = await BookingService.getAgenda(
-      userId,
+      targetUserId,
       parseResult.data.dateIso,
     );
     return Response.json(agenda, { status: 200 });
