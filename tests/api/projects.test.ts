@@ -41,7 +41,11 @@ describe("Projects REST API Endpoints", () => {
     const unauthReq = new Request("http://localhost:3000/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teamId, name: "Core Infrastructure", slug: projectSlug }),
+      body: JSON.stringify({
+        teamId,
+        name: "Core Infrastructure",
+        slug: projectSlug,
+      }),
     });
     const unauthRes = await createProjectHandler(unauthReq);
     expect(unauthRes.status).toBe(401);
@@ -53,7 +57,11 @@ describe("Projects REST API Endpoints", () => {
         "Content-Type": "application/json",
         "x-user-id": "usr_unauthorized_stranger",
       },
-      body: JSON.stringify({ teamId, name: "Core Infrastructure", slug: projectSlug }),
+      body: JSON.stringify({
+        teamId,
+        name: "Core Infrastructure",
+        slug: projectSlug,
+      }),
     });
     const strangerRes = await createProjectHandler(strangerReq);
     expect(strangerRes.status).toBe(403);

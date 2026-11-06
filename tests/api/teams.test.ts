@@ -79,14 +79,18 @@ describe("Teams REST API Endpoints", () => {
   test("GET /api/teams/[id] - retrieves team by id or slug", async () => {
     // Unauthenticated rejection
     const unauthReq = new Request("http://localhost:3000/api/teams");
-    const unauthRes = await getTeamHandler(unauthReq, { params: { id: createdTeamId } });
+    const unauthRes = await getTeamHandler(unauthReq, {
+      params: { id: createdTeamId },
+    });
     expect(unauthRes.status).toBe(401);
 
     // Non-member rejection (403)
     const strangerReq = new Request("http://localhost:3000/api/teams", {
       headers: { "x-user-id": "usr_unauthorized_stranger" },
     });
-    const strangerRes = await getTeamHandler(strangerReq, { params: { id: createdTeamId } });
+    const strangerRes = await getTeamHandler(strangerReq, {
+      params: { id: createdTeamId },
+    });
     expect(strangerRes.status).toBe(403);
 
     // Authorized member retrieval
@@ -110,10 +114,15 @@ describe("Teams REST API Endpoints", () => {
     // Non-admin rejection (403)
     const strangerReq = new Request("http://localhost:3000/api/teams", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-user-id": "usr_unauthorized_stranger" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": "usr_unauthorized_stranger",
+      },
       body: JSON.stringify({ name: "Hacked Team" }),
     });
-    const strangerRes = await updateTeamHandler(strangerReq, { params: { id: createdTeamId } });
+    const strangerRes = await updateTeamHandler(strangerReq, {
+      params: { id: createdTeamId },
+    });
     expect(strangerRes.status).toBe(403);
 
     // Authorized owner update
@@ -250,7 +259,9 @@ describe("Teams REST API Endpoints", () => {
       method: "DELETE",
       headers: { "x-user-id": "usr_unauthorized_stranger" },
     });
-    const strangerRes = await deleteTeamHandler(strangerReq, { params: { id: createdTeamId } });
+    const strangerRes = await deleteTeamHandler(strangerReq, {
+      params: { id: createdTeamId },
+    });
     expect(strangerRes.status).toBe(403);
 
     const req = new Request("http://localhost:3000/api/teams", {
@@ -263,7 +274,9 @@ describe("Teams REST API Endpoints", () => {
     const getReq = new Request("http://localhost:3000/api/teams", {
       headers: { "x-user-id": ownerUserId },
     });
-    const getRes = await getTeamHandler(getReq, { params: { id: createdTeamId } });
+    const getRes = await getTeamHandler(getReq, {
+      params: { id: createdTeamId },
+    });
     expect(getRes.status).toBe(404);
   });
 });

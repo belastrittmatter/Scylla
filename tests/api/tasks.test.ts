@@ -155,7 +155,9 @@ describe("Tasks REST API Endpoints", () => {
     const strangerReq = new Request("http://localhost:3000/api/tasks", {
       headers: { "x-user-id": "usr_unauthorized_stranger" },
     });
-    const strangerRes = await getTaskHandler(strangerReq, { params: { id: createdTaskId } });
+    const strangerRes = await getTaskHandler(strangerReq, {
+      params: { id: createdTaskId },
+    });
     expect(strangerRes.status).toBe(403);
 
     const req = new Request("http://localhost:3000/api/tasks", {
@@ -180,7 +182,9 @@ describe("Tasks REST API Endpoints", () => {
       },
       body: JSON.stringify({ status: "in_progress", priority: "urgent" }),
     });
-    const strangerRes = await updateTaskHandler(strangerReq, { params: { id: createdTaskId } });
+    const strangerRes = await updateTaskHandler(strangerReq, {
+      params: { id: createdTaskId },
+    });
     expect(strangerRes.status).toBe(403);
 
     const req = new Request("http://localhost:3000/api/tasks", {
@@ -221,7 +225,9 @@ describe("Tasks REST API Endpoints", () => {
       method: "DELETE",
       headers: { "x-user-id": "usr_unauthorized_stranger" },
     });
-    const strangerRes = await deleteTaskHandler(strangerReq, { params: { id: createdTaskId } });
+    const strangerRes = await deleteTaskHandler(strangerReq, {
+      params: { id: createdTaskId },
+    });
     expect(strangerRes.status).toBe(403);
 
     const req = new Request("http://localhost:3000/api/tasks", {
