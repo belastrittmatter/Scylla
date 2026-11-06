@@ -34,10 +34,45 @@ describe("Projects REST API Endpoints", () => {
     }
   });
 
+  const ownerUserId = "usr_alex_rivera";
+
   test("POST /api/projects - creates a project", async () => {
-    const req = new Request("http://localhost:3000/api/projects", {
+    // Unauthenticated rejection
+    const unauthReq = new Request("http://localhost:3000/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        teamId,
+        name: "Core Infrastructure",
+        slug: projectSlug,
+      }),
+    });
+    const unauthRes = await createProjectHandler(unauthReq);
+    expect(unauthRes.status).toBe(401);
+
+    // Non-admin stranger rejection (403)
+    const strangerReq = new Request("http://localhost:3000/api/projects", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": "usr_unauthorized_stranger",
+      },
+      body: JSON.stringify({
+        teamId,
+        name: "Core Infrastructure",
+        slug: projectSlug,
+      }),
+    });
+    const strangerRes = await createProjectHandler(strangerReq);
+    expect(strangerRes.status).toBe(403);
+
+    // Authorized owner
+    const req = new Request("http://localhost:3000/api/projects", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": ownerUserId,
+      },
       body: JSON.stringify({
         teamId,
         name: "Core Infrastructure",
@@ -58,7 +93,10 @@ describe("Projects REST API Endpoints", () => {
   test("POST /api/projects - returns 409 conflict when duplicate slug is used", async () => {
     const req = new Request("http://localhost:3000/api/projects", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": ownerUserId,
+      },
       body: JSON.stringify({
         teamId,
         name: "Duplicate Project",
@@ -75,7 +113,10 @@ describe("Projects REST API Endpoints", () => {
   test("POST /api/projects - returns 404 when teamId does not exist", async () => {
     const req = new Request("http://localhost:3000/api/projects", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": ownerUserId,
+      },
       body: JSON.stringify({
         teamId: "non-existent-team-id",
         name: "Test Project",
@@ -94,6 +135,7 @@ describe("Projects REST API Endpoints", () => {
   test("GET /api/projects?teamId=...&status=invalid - returns 400 for invalid status parameter", async () => {
     const req = new Request(
       `http://localhost:3000/api/projects?teamId=${teamId}&status=not_a_valid_status`,
+      { headers: { "x-user-id": ownerUserId } },
     );
     const res = await getProjectsHandler(req);
     expect(res.status).toBe(400);
@@ -102,8 +144,17 @@ describe("Projects REST API Endpoints", () => {
   });
 
   test("GET /api/projects?teamId=... - lists projects by team", async () => {
+    // Non-member cannot list projects of another team (403)
+    const strangerReq = new Request(
+      `http://localhost:3000/api/projects?teamId=${teamId}`,
+      { headers: { "x-user-id": "usr_unauthorized_stranger" } },
+    );
+    const strangerRes = await getProjectsHandler(strangerReq);
+    expect(strangerRes.status).toBe(403);
+
     const req = new Request(
       `http://localhost:3000/api/projects?teamId=${teamId}`,
+      { headers: { "x-user-id": ownerUserId } },
     );
     const res = await getProjectsHandler(req);
     expect(res.status).toBe(200);
@@ -123,6 +174,7 @@ describe("Projects REST API Endpoints", () => {
   test("GET /api/projects?teamId=...&slug=... - retrieves project by slug", async () => {
     const req = new Request(
       `http://localhost:3000/api/projects?teamId=${teamId}&slug=${projectSlug}`,
+      { headers: { "x-user-id": ownerUserId } },
     );
     const res = await getProjectsHandler(req);
     expect(res.status).toBe(200);
@@ -131,7 +183,18 @@ describe("Projects REST API Endpoints", () => {
   });
 
   test("GET /api/projects/[id] - retrieves project by id", async () => {
-    const req = new Request("http://localhost:3000/api/projects");
+    // Stranger rejection (403)
+    const strangerReq = new Request("http://localhost:3000/api/projects", {
+      headers: { "x-user-id": "usr_unauthorized_stranger" },
+    });
+    const strangerRes = await getProjectHandler(strangerReq, {
+      params: { id: createdProjectId },
+    });
+    expect(strangerRes.status).toBe(403);
+
+    const req = new Request("http://localhost:3000/api/projects", {
+      headers: { "x-user-id": ownerUserId },
+    });
     const res = await getProjectHandler(req, {
       params: { id: createdProjectId },
     });
@@ -141,9 +204,26 @@ describe("Projects REST API Endpoints", () => {
   });
 
   test("PATCH /api/projects/[id] - updates project attributes", async () => {
+    // Non-admin stranger rejection (403)
+    const strangerReq = new Request("http://localhost:3000/api/projects", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": "usr_unauthorized_stranger",
+      },
+      body: JSON.stringify({ name: "Hacked Project" }),
+    });
+    const strangerRes = await updateProjectHandler(strangerReq, {
+      params: { id: createdProjectId },
+    });
+    expect(strangerRes.status).toBe(403);
+
     const req = new Request("http://localhost:3000/api/projects", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": ownerUserId,
+      },
       body: JSON.stringify({
         name: "Updated Infrastructure",
         description: "Updated desc",
@@ -160,17 +240,31 @@ describe("Projects REST API Endpoints", () => {
   });
 
   test("DELETE /api/projects/[id] - deletes project", async () => {
+    // Non-admin stranger rejection (403)
+    const strangerReq = new Request("http://localhost:3000/api/projects", {
+      method: "DELETE",
+      headers: { "x-user-id": "usr_unauthorized_stranger" },
+    });
+    const strangerRes = await deleteProjectHandler(strangerReq, {
+      params: { id: createdProjectId },
+    });
+    expect(strangerRes.status).toBe(403);
+
     const req = new Request("http://localhost:3000/api/projects", {
       method: "DELETE",
+      headers: { "x-user-id": ownerUserId },
     });
     const res = await deleteProjectHandler(req, {
       params: { id: createdProjectId },
     });
     expect(res.status).toBe(200);
 
-    const getRes = await getProjectHandler(req, {
-      params: { id: createdProjectId },
-    });
+    const getRes = await getProjectHandler(
+      new Request("http://localhost:3000/api/projects", {
+        headers: { "x-user-id": ownerUserId },
+      }),
+      { params: { id: createdProjectId } },
+    );
     expect(getRes.status).toBe(404);
   });
 });

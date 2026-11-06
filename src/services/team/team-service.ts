@@ -104,6 +104,28 @@ export class TeamService {
     return membership?.role === "owner" || membership?.role === "admin";
   }
 
+  public static async isTeamMember(
+    teamIdOrSlug: string,
+    userId: string,
+  ): Promise<boolean> {
+    const teamRecord = await db.query.team.findFirst({
+      where: or(eq(team.id, teamIdOrSlug), eq(team.slug, teamIdOrSlug)),
+      columns: { id: true, ownerId: true },
+    });
+    if (!teamRecord) return false;
+    if (teamRecord.ownerId === userId) return true;
+
+    const membership = await db.query.teamMember.findFirst({
+      where: and(
+        eq(teamMember.teamId, teamRecord.id),
+        eq(teamMember.userId, userId),
+      ),
+      columns: { id: true },
+    });
+
+    return !!membership;
+  }
+
   public static async listUserTeams(userId: string): Promise<Team[]> {
     const memberships = await db
       .select({ teamId: teamMember.teamId })

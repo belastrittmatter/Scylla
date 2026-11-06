@@ -6,11 +6,24 @@ interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
 }
 
-export async function GET(_req: Request, context: RouteParams) {
+export async function GET(req: Request, context: RouteParams) {
   try {
     const { id: teamId } = await context.params;
     if (!teamId) {
       return Response.json({ error: "Team ID is required" }, { status: 400 });
+    }
+
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const isMember = await TeamService.isTeamMember(teamId, callerId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
+      );
     }
 
     const members = await TeamService.listTeamMembers(teamId);

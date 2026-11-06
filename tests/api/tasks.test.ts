@@ -131,8 +131,17 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("GET /api/tasks?teamId=... - lists tasks with filters", async () => {
+    // Stranger forbidden (403)
+    const strangerReq = new Request(
+      `http://localhost:3000/api/tasks?teamId=${teamId}&priority=high`,
+      { headers: { "x-user-id": "usr_unauthorized_stranger" } },
+    );
+    const strangerRes = await getTasksHandler(strangerReq);
+    expect(strangerRes.status).toBe(403);
+
     const req = new Request(
       `http://localhost:3000/api/tasks?teamId=${teamId}&priority=high`,
+      { headers: { "x-user-id": creatorUserId } },
     );
     const res = await getTasksHandler(req);
     expect(res.status).toBe(200);
@@ -142,7 +151,18 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("GET /api/tasks/[id] - retrieves task with relations", async () => {
-    const req = new Request("http://localhost:3000/api/tasks");
+    // Stranger forbidden (403)
+    const strangerReq = new Request("http://localhost:3000/api/tasks", {
+      headers: { "x-user-id": "usr_unauthorized_stranger" },
+    });
+    const strangerRes = await getTaskHandler(strangerReq, {
+      params: { id: createdTaskId },
+    });
+    expect(strangerRes.status).toBe(403);
+
+    const req = new Request("http://localhost:3000/api/tasks", {
+      headers: { "x-user-id": creatorUserId },
+    });
     const res = await getTaskHandler(req, { params: { id: createdTaskId } });
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -153,9 +173,26 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("PATCH /api/tasks/[id] - updates task status and priority", async () => {
+    // Stranger forbidden (403)
+    const strangerReq = new Request("http://localhost:3000/api/tasks", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": "usr_unauthorized_stranger",
+      },
+      body: JSON.stringify({ status: "in_progress", priority: "urgent" }),
+    });
+    const strangerRes = await updateTaskHandler(strangerReq, {
+      params: { id: createdTaskId },
+    });
+    expect(strangerRes.status).toBe(403);
+
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": creatorUserId,
+      },
       body: JSON.stringify({ status: "in_progress", priority: "urgent" }),
     });
 
@@ -169,7 +206,10 @@ describe("Tasks REST API Endpoints", () => {
   test("PATCH /api/tasks/[id] - rejects invalid dueDate format with 400", async () => {
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": creatorUserId,
+      },
       body: JSON.stringify({ dueDate: "invalid-date" }),
     });
 
@@ -180,13 +220,29 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("DELETE /api/tasks/[id] - deletes task", async () => {
+    // Stranger forbidden (403)
+    const strangerReq = new Request("http://localhost:3000/api/tasks", {
+      method: "DELETE",
+      headers: { "x-user-id": "usr_unauthorized_stranger" },
+    });
+    const strangerRes = await deleteTaskHandler(strangerReq, {
+      params: { id: createdTaskId },
+    });
+    expect(strangerRes.status).toBe(403);
+
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "DELETE",
+      headers: { "x-user-id": creatorUserId },
     });
     const res = await deleteTaskHandler(req, { params: { id: createdTaskId } });
     expect(res.status).toBe(200);
 
-    const getRes = await getTaskHandler(req, { params: { id: createdTaskId } });
+    const getRes = await getTaskHandler(
+      new Request("http://localhost:3000/api/tasks", {
+        headers: { "x-user-id": creatorUserId },
+      }),
+      { params: { id: createdTaskId } },
+    );
     expect(getRes.status).toBe(404);
   });
 });
