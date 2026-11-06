@@ -145,9 +145,33 @@ describe("REST API Route Handlers", () => {
   });
 
   describe("POST /api/rooms/sync", () => {
-    test("triggers room sync and returns success or error response", async () => {
+    test("rejects unauthenticated requests with 401", async () => {
       const req = new Request("http://localhost:3000/api/rooms/sync", {
         method: "POST",
+      });
+      const res = await syncRoomsHandler(req);
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.success).toBe(false);
+      expect(data.error).toBe("Unauthorized");
+    });
+
+    test("rejects non-admin callers with 403 Forbidden", async () => {
+      const req = new Request("http://localhost:3000/api/rooms/sync", {
+        method: "POST",
+        headers: { "x-user-id": "usr_test_user" },
+      });
+      const res = await syncRoomsHandler(req);
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.success).toBe(false);
+      expect(data.error).toContain("Admin privileges required");
+    });
+
+    test("allows admin callers to trigger room sync", async () => {
+      const req = new Request("http://localhost:3000/api/rooms/sync", {
+        method: "POST",
+        headers: { "x-user-id": "usr_alex_rivera" },
       });
       const res = await syncRoomsHandler(req);
       expect([200, 401, 403]).toContain(res.status);

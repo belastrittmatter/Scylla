@@ -2,7 +2,7 @@ import { TeamService } from "@/services/team/team-service";
 import { ProjectService } from "@/services/project/project-service";
 import type { TeamWithMembers } from "@/services/team/team-types";
 import type { Project } from "@/db/schema";
-import { db, user, project } from "@/db";
+import { db, user } from "@/db";
 import { eq } from "drizzle-orm";
 import type { McpToolContext } from "../types";
 
@@ -97,8 +97,23 @@ export async function resolveProject(
       ? ProjectService.getProjectBySlug(teamId, trimmed)
       : Promise.resolve(null),
   ]);
-  if (byId) return byId;
-  if (byTeamSlug) return byTeamSlug;
+  if (byId) {
+    if (userId) {
+      const isMember = await TeamService.isTeamMember(byId.teamId, userId);
+      if (!isMember) return null;
+    }
+    return byId;
+  }
+  if (byTeamSlug) {
+    if (userId) {
+      const isMember = await TeamService.isTeamMember(
+        byTeamSlug.teamId,
+        userId,
+      );
+      if (!isMember) return null;
+    }
+    return byTeamSlug;
+  }
 
   // 2. Try lookup across user's teams if userId is provided
   if (userId) {
@@ -110,11 +125,7 @@ export async function resolveProject(
     if (matched) return matched;
   }
 
-  // 4. Fallback search by slug across all projects
-  const foundBySlug = await db.query.project.findFirst({
-    where: eq(project.slug, trimmed),
-  });
-  return foundBySlug ?? null;
+  return null;
 }
 
 export class InsufficientScopeError extends Error {

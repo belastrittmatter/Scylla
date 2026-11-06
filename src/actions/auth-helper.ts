@@ -37,8 +37,7 @@ export async function resolveActionUserId(
   const isDevOrTest =
     process.env.NODE_ENV === "development" ||
     process.env.NODE_ENV === "test" ||
-    process.env.BUN_ENV === "test" ||
-    process.env.NODE_ENV === undefined;
+    process.env.BUN_ENV === "test";
 
   if (isDevOrTest) {
     if (explicitId && explicitId !== "me") return explicitId;

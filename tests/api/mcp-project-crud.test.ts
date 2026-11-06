@@ -153,4 +153,32 @@ describe("MCP Project CRUD Tools Suite", () => {
     });
     expect(verifyGet.isError).toBe(true);
   });
+
+  it("resolveProject does not resolve foreign projects by slug for non-member users", async () => {
+    const { resolveProject } = await import("@/mcp/tools/auth-helpers");
+    const uid = Math.random().toString(36).substring(2, 7);
+    const ownerTeam = await TeamService.createTeam({
+      ownerId,
+      name: `Owner Team ${uid}`,
+      slug: `owner-team-${uid}`,
+    });
+    const proj = await ProjectService.createProject({
+      teamId: ownerTeam.id,
+      name: `Private Project ${uid}`,
+      slug: `private-proj-${uid}`,
+    });
+
+    // Owner resolves successfully by slug
+    const resolvedByOwner = await resolveProject(proj.slug, ownerId);
+    expect(resolvedByOwner).toBeDefined();
+    expect(resolvedByOwner?.id).toBe(proj.id);
+
+    // Stranger cannot resolve owner's project by slug
+    const resolvedByStranger = await resolveProject(proj.slug, strangerId);
+    expect(resolvedByStranger).toBeNull();
+
+    // Clean up
+    await ProjectService.deleteProject(proj.id);
+    await TeamService.deleteTeam(ownerTeam.id);
+  });
 });
