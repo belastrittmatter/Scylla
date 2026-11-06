@@ -17,7 +17,7 @@ describe("Proxy Authentication and Authorization", () => {
     expect(location).toContain("/auth/sign-in?callbackUrl=%2Fcalendar");
   });
 
-  it("redirects authenticated users on /auth/sign-in, /auth/sign-up, and /sign-in to /calendar", async () => {
+  it("redirects authenticated users on /, /auth/sign-in, /auth/sign-up, and /sign-in to /calendar", async () => {
     const originalGetSession = auth.api.getSession;
     (auth.api as { getSession: typeof auth.api.getSession }).getSession =
       (async () =>
@@ -26,7 +26,7 @@ describe("Proxy Authentication and Authorization", () => {
         >) as typeof auth.api.getSession;
 
     try {
-      for (const path of ["/auth/sign-in", "/auth/sign-up", "/sign-in"]) {
+      for (const path of ["/", "/auth/sign-in", "/auth/sign-up", "/sign-in"]) {
         const req = new NextRequest(`http://localhost:3000${path}`, {
           headers: {
             cookie: "better-auth.session_token=valid-session-token",
@@ -159,5 +159,56 @@ describe("Proxy Authentication and Authorization", () => {
 
     // Should proceed to sign-in page, not redirect to /
     expect(res.status).toBe(200);
+  });
+
+  it("allows unauthenticated access to / without redirecting", async () => {
+    const req = new NextRequest("http://localhost:3000/");
+    const res = await proxy(req);
+
+    expect(res.status).toBe(200);
+  });
+
+  it("does not redirect to /calendar from / when session token is invalid or expired", async () => {
+    const originalGetSession = auth.api.getSession;
+    (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+      (async () => null) as unknown as typeof auth.api.getSession;
+
+    try {
+      const req = new NextRequest("http://localhost:3000/", {
+        headers: {
+          cookie: "better-auth.session_token=stale-or-invalid-token",
+        },
+      });
+      const res = await proxy(req);
+
+      // Should render landing page without redirect
+      expect(res.status).toBe(200);
+    } finally {
+      (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+        originalGetSession;
+    }
+  });
+
+  it("does not redirect to /calendar from / when session verification throws an error", async () => {
+    const originalGetSession = auth.api.getSession;
+    (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+      (async () => {
+        throw new Error("verification failed");
+      }) as unknown as typeof auth.api.getSession;
+
+    try {
+      const req = new NextRequest("http://localhost:3000/", {
+        headers: {
+          cookie: "better-auth.session_token=stale-or-invalid-token",
+        },
+      });
+      const res = await proxy(req);
+
+      // Should render landing page without redirect or error loop
+      expect(res.status).toBe(200);
+    } finally {
+      (auth.api as { getSession: typeof auth.api.getSession }).getSession =
+        originalGetSession;
+    }
   });
 });
