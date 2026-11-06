@@ -1,11 +1,13 @@
 import { ProjectService } from "@/services/project/project-service";
+import { TeamService } from "@/services/team/team-service";
 import { UpdateProjectSchema } from "@/services/api-schemas";
+import { resolveUserId } from "@/services/api-utils";
 
 interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
 }
 
-export async function GET(_req: Request, context: RouteParams) {
+export async function GET(req: Request, context: RouteParams) {
   try {
     const { id } = await context.params;
     if (!id) {
@@ -15,11 +17,24 @@ export async function GET(_req: Request, context: RouteParams) {
       );
     }
 
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const project = await ProjectService.getProjectById(id);
     if (!project) {
       return Response.json(
         { error: `Project not found for id: ${id}` },
         { status: 404 },
+      );
+    }
+
+    const isMember = await TeamService.isTeamMember(project.teamId, userId);
+    if (!isMember) {
+      return Response.json(
+        { error: "Forbidden: Not a member of this team" },
+        { status: 403 },
       );
     }
 
@@ -39,6 +54,30 @@ export async function PATCH(req: Request, context: RouteParams) {
       return Response.json(
         { error: "Project ID is required" },
         { status: 400 },
+      );
+    }
+
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const project = await ProjectService.getProjectById(id);
+    if (!project) {
+      return Response.json(
+        { error: `Project not found for id: ${id}` },
+        { status: 404 },
+      );
+    }
+
+    const isAuthorized = await TeamService.isTeamAdminOrOwner(
+      project.teamId,
+      userId,
+    );
+    if (!isAuthorized) {
+      return Response.json(
+        { error: "Forbidden: Only team owners and admins can update projects" },
+        { status: 403 },
       );
     }
 
@@ -72,13 +111,37 @@ export async function PATCH(req: Request, context: RouteParams) {
   }
 }
 
-export async function DELETE(_req: Request, context: RouteParams) {
+export async function DELETE(req: Request, context: RouteParams) {
   try {
     const { id } = await context.params;
     if (!id) {
       return Response.json(
         { error: "Project ID is required" },
         { status: 400 },
+      );
+    }
+
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const project = await ProjectService.getProjectById(id);
+    if (!project) {
+      return Response.json(
+        { error: `Project not found for id: ${id}` },
+        { status: 404 },
+      );
+    }
+
+    const isAuthorized = await TeamService.isTeamAdminOrOwner(
+      project.teamId,
+      userId,
+    );
+    if (!isAuthorized) {
+      return Response.json(
+        { error: "Forbidden: Only team owners and admins can delete projects" },
+        { status: 403 },
       );
     }
 
