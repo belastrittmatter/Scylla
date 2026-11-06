@@ -31,7 +31,9 @@ export async function PATCH(req: Request, context: RouteParams) {
 
     if (existing.organizerUserId !== callerId && existing.userId !== callerId) {
       return Response.json(
-        { error: "Forbidden: You are not authorized to reschedule this booking" },
+        {
+          error: "Forbidden: You are not authorized to reschedule this booking",
+        },
         { status: 403 },
       );
     }
