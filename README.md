@@ -1,22 +1,29 @@
-<div align="center">
+<p align="center">
+  <img src="public/images/screenshots/scylla-landing-page-overview.png" alt="Scylla - Team calendar, meeting rooms, and task tracking in one place" width="100%" />
+</p>
 
-<img src="public/images/screenshots/scylla-landing-page-overview.png" alt="Scylla - Team calendar, meeting rooms, and task tracking in one place" width="100%" />
+<h1 align="center">Scylla</h1>
 
-# Scylla
+<p align="center">
+  <strong>Team calendar, meeting rooms, and task tracking in one place — with built-in MCP support for AI agents.</strong>
+</p>
 
-**Team calendar, meeting rooms, and task tracking in one place — with built-in MCP support for AI agents.**
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16.4-black?style=flat&logo=next.js" alt="Next.js 16" /></a>
+  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4+-black?style=flat&logo=bun" alt="Bun" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue?style=flat&logo=typescript" alt="TypeScript" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat&logo=tailwind-css" alt="Tailwind CSS v4" /></a>
+  <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-Ready-f97316?style=flat&logo=anthropic" alt="MCP Ready" /></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql" alt="PostgreSQL" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT" /></a>
+</p>
 
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.4-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![Bun](https://img.shields.io/badge/Bun-1.4+-black?style=flat&logo=bun)](https://bun.sh/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
-[![MCP Ready](https://img.shields.io/badge/MCP-Ready-f97316?style=flat&logo=anthropic)](https://modelcontextprotocol.io/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
-[![License: MIT](LICENSE)](LICENSE)
-
-[Why Scylla](#why-scylla) • [Visual Tour](#visual-tour) • [Quickstart](#getting-started) • [Manage Everything with MCP](#ai-agents--mcp-manage-everything-from-your-editor)
-
-</div>
+<p align="center">
+  <a href="#why-scylla">Why Scylla</a> •
+  <a href="#visual-tour">Visual Tour</a> •
+  <a href="#getting-started">Quickstart</a> •
+  <a href="#ai-agents--mcp-manage-everything-from-your-editor">Manage Everything with MCP</a>
+</p>
 
 ---
 
