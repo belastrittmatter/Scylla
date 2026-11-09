@@ -39,11 +39,11 @@ async function verifyBookingAccess(
   }
   if (Array.isArray(b.attendees)) {
     const [u] = await db
-      .select({ email: user.email })
+      .select({ email: user.email, emailVerified: user.emailVerified })
       .from(user)
       .where(eq(user.id, sessionUserId))
       .limit(1);
-    if (u?.email) {
+    if (u?.email && u.emailVerified) {
       return b.attendees.some(
         (a) => a.email.toLowerCase() === u.email.toLowerCase(),
       );
@@ -144,7 +144,11 @@ export async function getAgendaAction(
       }
       targetUserId = sessionUserId;
     } else {
-      targetUserId = await resolveActionUserId(parseResult.data.userId);
+      const resolvedUserId = await resolveActionUserId(targetUserId);
+      if (targetUserId !== resolvedUserId) {
+        return { success: false, error: "Access denied" };
+      }
+      targetUserId = resolvedUserId;
     }
 
     const agenda = await BookingService.getAgenda(
