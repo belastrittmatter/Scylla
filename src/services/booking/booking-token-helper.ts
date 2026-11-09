@@ -20,16 +20,23 @@ export function normalizeAttendees(
   });
 }
 
+const SERIES_MARKER_REGEX = /<!--series:[a-zA-Z0-9_-]+-->/gi;
+const MAX_SANITIZATION_PASSES = 5;
+
 export function sanitizeBookingDescription(
   desc?: string | null,
 ): string | undefined {
   if (!desc) return undefined;
-  let prev = desc;
+  if (!desc.includes("<!--series:")) {
+    return desc.trim() || undefined;
+  }
   let out = desc;
-  do {
-    prev = out;
-    out = out.replace(/<!--series:[\s\S]*?-->/gi, "");
-  } while (out !== prev);
+  for (let i = 0; i < MAX_SANITIZATION_PASSES; i++) {
+    if (!out.includes("<!--series:")) break;
+    const next = out.replace(SERIES_MARKER_REGEX, "");
+    if (next === out) break;
+    out = next;
+  }
   return out.trim() || undefined;
 }
 
