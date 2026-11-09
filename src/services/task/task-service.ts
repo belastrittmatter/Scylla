@@ -63,6 +63,9 @@ export class TaskService {
       if (access === "forbidden") {
         throw new Error("Forbidden: Viewer role cannot create tasks");
       }
+      if (access === "not_member") {
+        throw new Error("Forbidden: Creator is not a member of this team");
+      }
     }
 
     if (validated.projectId) {
@@ -145,6 +148,9 @@ export class TaskService {
       const access = await TaskService.getWriteAccess(existing, currentUserId);
       if (access === "forbidden") {
         throw new Error("Forbidden: Viewer role cannot update tasks");
+      }
+      if (access === "not_member") {
+        throw new Error("Forbidden: User is not a member of this team");
       }
     }
 

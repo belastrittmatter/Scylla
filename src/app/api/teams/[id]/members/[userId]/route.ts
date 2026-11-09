@@ -52,10 +52,11 @@ export async function DELETE(req: Request, context: RouteParams) {
       (m) => m.userId === targetUserId,
     );
     const isTargetAdmin = targetMembership?.role === "admin";
+    const isTargetOwnerRole = targetMembership?.role === "owner";
 
-    if (isTargetAdmin && !isCallerOwner && !isSelf) {
+    if ((isTargetAdmin || isTargetOwnerRole) && !isCallerOwner && !isSelf) {
       return Response.json(
-        { error: "Forbidden: Admins cannot remove other admins" },
+        { error: "Forbidden: Admins cannot remove owners or other admins" },
         { status: 403 },
       );
     }

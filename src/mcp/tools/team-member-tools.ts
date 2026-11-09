@@ -78,12 +78,13 @@ export function registerTeamMemberTools(
           (m) => m.userId === targetUserId,
         );
         if (
-          targetMemberToRemove?.role === "admin" &&
+          (targetMemberToRemove?.role === "admin" ||
+            targetMemberToRemove?.role === "owner") &&
           team.ownerId !== currentUser.id &&
           targetUserId !== currentUser.id
         ) {
           throw new Error(
-            "Permission denied: Admins cannot remove other admins.",
+            "Permission denied: Admins cannot remove owners or other admins.",
           );
         }
         await TeamService.removeTeamMember(team.id, targetUserId);
@@ -123,12 +124,13 @@ export function registerTeamMemberTools(
           (m) => m.userId === targetUserId,
         );
         if (
-          targetMemberToUpdate?.role === "admin" &&
+          (targetMemberToUpdate?.role === "admin" ||
+            targetMemberToUpdate?.role === "owner") &&
           team.ownerId !== currentUser.id &&
           targetUserId !== currentUser.id
         ) {
           throw new Error(
-            "Permission denied: Admins cannot change the role of other admins.",
+            "Permission denied: Admins cannot change the role of owners or other admins.",
           );
         }
         const updated = await TeamService.updateMemberRole(
