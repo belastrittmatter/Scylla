@@ -106,4 +106,16 @@ describe("Task Server Actions with Core Domain Services", () => {
       listRes.data!.some((c) => c.content === "Automated test comment content"),
     ).toBe(true);
   });
+
+  test("createProjectAction validates repository name and integrates with unified createNewRepo", async () => {
+    const invalidRes = await createProjectAction({
+      teamId: testTeamId,
+      name: "Project With Invalid Repo",
+      createNewRepo: {
+        name: "invalid repo with spaces",
+      },
+    });
+    expect(invalidRes.success).toBe(false);
+    expect(invalidRes.error).toContain("spaces");
+  });
 });

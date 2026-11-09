@@ -13,6 +13,10 @@ interface KanbanColumnProps {
   title: string;
   badgeClass: string;
   tasks: TaskItem[];
+  draggedTask?: TaskItem | null;
+  isDropRestricted?: boolean;
+  onDragStartTask?: (task: TaskItem) => void;
+  onDragEndTask?: () => void;
   onSelectTask?: (task: TaskItem) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
   onMoveTask?: (
@@ -28,13 +32,39 @@ export function KanbanColumn({
   title,
   badgeClass,
   tasks,
+  draggedTask,
+  isDropRestricted,
+  onDragStartTask,
+  onDragEndTask,
   onSelectTask,
   onUpdateStatus,
   onMoveTask,
   onAddNewTask,
 }: KanbanColumnProps) {
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
+  const [hoveredCardId, setHoveredCardId] = React.useState<string | null>(null);
+  const [hoverPosition, setHoverPosition] = React.useState<
+    "top" | "bottom" | null
+  >(null);
+
+  // Global cleanup listener so drag state never gets stuck (e.g. if dropped on another column or window blur)
+  React.useEffect(() => {
+    const handleGlobalDragEnd = () => {
+      setIsDragOver(false);
+      setHoveredCardId(null);
+      setHoverPosition(null);
+    };
+
+    window.addEventListener("dragend", handleGlobalDragEnd);
+    window.addEventListener("drop", handleGlobalDragEnd);
+    window.addEventListener("mouseup", handleGlobalDragEnd);
+
+    return () => {
+      window.removeEventListener("dragend", handleGlobalDragEnd);
+      window.removeEventListener("drop", handleGlobalDragEnd);
+      window.removeEventListener("mouseup", handleGlobalDragEnd);
+    };
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -45,19 +75,20 @@ export function KanbanColumn({
     // Only reset if we left the column element
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
-      setDragOverIndex(null);
+      setHoveredCardId(null);
+      setHoverPosition(null);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    const targetIdx = dragOverIndex !== null ? dragOverIndex : tasks.length;
-    setDragOverIndex(null);
+    setHoveredCardId(null);
+    setHoverPosition(null);
     const taskId = e.dataTransfer.getData("text/plain");
     if (taskId) {
       if (onMoveTask) {
-        onMoveTask(taskId, id, targetIdx);
+        onMoveTask(taskId, id, tasks.length);
       } else {
         onUpdateStatus(taskId, id);
       }
@@ -72,7 +103,9 @@ export function KanbanColumn({
       className={cn(
         "group flex min-w-[280px] flex-1 flex-col rounded-xl border p-3.5 transition-colors",
         isDragOver
-          ? "border-primary/50 bg-primary/5 dark:bg-primary/10"
+          ? isDropRestricted
+            ? "border-rose-400/80 bg-rose-50/30 dark:border-rose-500/50 dark:bg-rose-950/20 cursor-not-allowed"
+            : "border-primary/50 bg-primary/5 dark:bg-primary/10"
           : "border-neutral-200/60 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/40",
       )}
     >
@@ -90,7 +123,7 @@ export function KanbanColumn({
           </Badge>
         </div>
 
-        {onAddNewTask && (
+        {onAddNewTask && id === "todo" && (
           <Button
             variant="ghost"
             size="icon-xs"
@@ -103,116 +136,187 @@ export function KanbanColumn({
         )}
       </div>
 
-      {/* Task Cards List */}
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
+      {/* Task Cards List - comfortably spaced */}
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-0.5">
         {tasks.map((task, idx) => (
-          <React.Fragment key={task.id}>
-            {/* Insertion drop indicator above card */}
-            {dragOverIndex === idx && (
-              <div className="bg-primary shadow-xs -my-1 h-1 animate-pulse rounded-full transition-all" />
-            )}
-
-            <div
-              draggable
-              className="cursor-grab select-none transition-transform active:cursor-grabbing"
-              onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", task.id);
-                e.dataTransfer.effectAllowed = "move";
-                if (window.getSelection) {
-                  window.getSelection()?.removeAllRanges();
-                }
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const rect = e.currentTarget.getBoundingClientRect();
-                const midY = rect.top + rect.height / 2;
-                const targetIdx = e.clientY < midY ? idx : idx + 1;
-                setDragOverIndex(targetIdx);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const rect = e.currentTarget.getBoundingClientRect();
-                const midY = rect.top + rect.height / 2;
-                const targetIdx = e.clientY < midY ? idx : idx + 1;
-                setDragOverIndex(null);
-                setIsDragOver(false);
-                const taskId = e.dataTransfer.getData("text/plain");
-                if (taskId) {
-                  if (onMoveTask) {
-                    onMoveTask(taskId, id, targetIdx);
-                  } else {
-                    onUpdateStatus(taskId, id);
-                  }
-                }
-              }}
-            >
-              <KanbanCard
-                task={task}
-                onSelectTask={onSelectTask}
-                onUpdateStatus={onUpdateStatus}
-              />
-            </div>
-          </React.Fragment>
-        ))}
-
-        {/* Insertion drop indicator at bottom of tasks */}
-        {dragOverIndex === tasks.length && tasks.length > 0 && (
-          <div className="bg-primary shadow-xs -my-1 h-1 animate-pulse rounded-full transition-all" />
-        )}
-
-        {/* Empty column state: large dashed box that transforms on hover into "+ Add task" */}
-        {tasks.length === 0 && onAddNewTask && (
-          <button
-            type="button"
-            onClick={() => onAddNewTask(id)}
+          <div
+            key={task.id}
+            draggable
+            className="relative cursor-grab select-none active:cursor-grabbing"
+            onDragStart={(e) => {
+              onDragStartTask?.(task);
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.dataTransfer.setData("text/plain", task.id);
+              e.dataTransfer.effectAllowed = "move";
+              try {
+                e.dataTransfer.setDragImage(
+                  e.currentTarget,
+                  e.clientX - rect.left,
+                  e.clientY - rect.top,
+                );
+              } catch {
+                // Ignore fallback
+              }
+              if (window.getSelection) {
+                window.getSelection()?.removeAllRanges();
+              }
+            }}
+            onDragEnd={() => {
+              onDragEndTask?.();
+              setHoveredCardId(null);
+              setHoverPosition(null);
+              setIsDragOver(false);
+            }}
             onDragOver={(e) => {
               e.preventDefault();
-              setDragOverIndex(0);
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              const pos = e.clientY < midY ? "top" : "bottom";
+              setHoveredCardId(task.id);
+              setHoverPosition(pos);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                if (hoveredCardId === task.id) {
+                  setHoveredCardId(null);
+                  setHoverPosition(null);
+                }
+              }
             }}
             onDrop={(e) => {
               e.preventDefault();
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              const targetIdx = e.clientY < midY ? idx : idx + 1;
+              setHoveredCardId(null);
+              setHoverPosition(null);
               setIsDragOver(false);
-              setDragOverIndex(null);
               const taskId = e.dataTransfer.getData("text/plain");
               if (taskId) {
                 if (onMoveTask) {
-                  onMoveTask(taskId, id, 0);
+                  onMoveTask(taskId, id, targetIdx);
                 } else {
                   onUpdateStatus(taskId, id);
                 }
               }
             }}
-            className="group/empty hover:border-primary/50 hover:bg-primary/5 hover:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/10 flex min-h-[104px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200/90 bg-white/40 p-4 text-center transition-all dark:border-neutral-800 dark:bg-neutral-900/30"
           >
-            {/* Resting state */}
-            <div className="flex flex-col items-center gap-1 group-hover/empty:hidden">
+            {/* Non-reflowing absolute drop indicator */}
+            {hoveredCardId === task.id && hoverPosition === "top" && (
+              <div className="absolute -top-1.5 left-1 right-1 h-1 rounded-full bg-primary shadow-xs z-30 pointer-events-none animate-pulse" />
+            )}
+            {hoveredCardId === task.id && hoverPosition === "bottom" && (
+              <div className="absolute -bottom-1.5 left-1 right-1 h-1 rounded-full bg-primary shadow-xs z-30 pointer-events-none animate-pulse" />
+            )}
+
+            <KanbanCard
+              task={task}
+              onSelectTask={onSelectTask}
+              onUpdateStatus={onUpdateStatus}
+            />
+          </div>
+        ))}
+
+        {/* Empty column state */}
+        {tasks.length === 0 &&
+          (id === "todo" && onAddNewTask ? (
+            <button
+              type="button"
+              onClick={() => onAddNewTask(id)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const taskId = e.dataTransfer.getData("text/plain");
+                if (taskId) {
+                  if (onMoveTask) {
+                    onMoveTask(taskId, id, 0);
+                  } else {
+                    onUpdateStatus(taskId, id);
+                  }
+                }
+              }}
+              className="group/empty hover:border-primary/50 hover:bg-primary/5 hover:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/10 flex min-h-[104px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-200/90 bg-white/40 p-4 text-center transition-all dark:border-neutral-800 dark:bg-neutral-900/30"
+            >
+              {/* Resting state */}
+              <div className="flex flex-col items-center gap-1 group-hover/empty:hidden">
+                <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
+                  No tasks
+                </span>
+                <span className="text-[11px] text-neutral-400/80 dark:text-neutral-500/80">
+                  Hover to add or drop task here
+                </span>
+              </div>
+              {/* Hover state */}
+              <div className="text-primary hidden flex-col items-center gap-1 group-hover/empty:flex">
+                <div className="bg-primary/10 flex size-7 items-center justify-center rounded-full">
+                  <Plus className="size-4" />
+                </div>
+                <span className="text-xs font-semibold">Add task</span>
+              </div>
+            </button>
+          ) : (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const taskId = e.dataTransfer.getData("text/plain");
+                if (taskId) {
+                  if (onMoveTask) {
+                    onMoveTask(taskId, id, 0);
+                  } else {
+                    onUpdateStatus(taskId, id);
+                  }
+                }
+              }}
+              className={cn(
+                "flex min-h-[104px] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-all",
+                isDragOver
+                  ? isDropRestricted
+                    ? "border-rose-400/80 bg-rose-50/30 dark:border-rose-500/50 dark:bg-rose-950/20"
+                    : "border-primary/50 bg-primary/5 dark:bg-primary/10"
+                  : "border-neutral-200/70 bg-white/30 dark:border-neutral-800/80 dark:bg-neutral-900/20",
+              )}
+            >
               <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
                 No tasks
               </span>
               <span className="text-[11px] text-neutral-400/80 dark:text-neutral-500/80">
-                Hover to add or drop task here
+                Drag tasks here
               </span>
             </div>
-            {/* Hover state */}
-            <div className="text-primary hidden flex-col items-center gap-1 group-hover/empty:flex">
-              <div className="bg-primary/10 flex size-7 items-center justify-center rounded-full">
-                <Plus className="size-4" />
-              </div>
-              <span className="text-xs font-semibold">Add task</span>
-            </div>
-          </button>
-        )}
+          ))}
 
-        {/* Column with tasks: Add Task Button below all tasks inside the scrollable list */}
-        {tasks.length > 0 && onAddNewTask && (
+        {/* Column with tasks: Add Task Button ONLY in To Do column */}
+        {tasks.length > 0 && onAddNewTask && id === "todo" && (
           <button
             type="button"
             onClick={() => onAddNewTask(id)}
             onDragOver={(e) => {
               e.preventDefault();
-              setDragOverIndex(tasks.length);
+              setIsDragOver(true);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+              const taskId = e.dataTransfer.getData("text/plain");
+              if (taskId) {
+                if (onMoveTask) {
+                  onMoveTask(taskId, id, tasks.length);
+                } else {
+                  onUpdateStatus(taskId, id);
+                }
+              }
             }}
             className={cn(
               "flex w-full cursor-pointer items-center justify-center rounded-xl border border-dashed font-medium transition-all duration-300 ease-in-out",

@@ -9,7 +9,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import {
   Select,
@@ -38,6 +38,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
     dueDateStr,
     estimatedMinutes,
     users,
+    isProjectLinkedToGithub,
     onTitleChange,
     onDescriptionChange,
     onStatusChange,
@@ -132,6 +133,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
           users={users}
           assigneeId={assigneeId}
           onAssigneeChange={onAssigneeChange}
+          isProjectLinkedToGithub={isProjectLinkedToGithub}
         />
       </Field>
 
@@ -148,32 +150,33 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
               id="task-estimate"
               type="number"
               min={0}
-              step={15}
-              value={estimatedMinutes || ""}
-              onChange={(e) =>
+              step={0.5}
+              value={estimatedMinutes ? estimatedMinutes / 60 : ""}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
                 onEstimatedMinutesChange(
-                  Math.max(0, parseInt(e.target.value, 10) || 0),
-                )
-              }
-              placeholder="e.g. 60"
+                  isNaN(val) || val <= 0 ? 0 : Math.round(val * 60),
+                );
+              }}
+              placeholder="e.g. 2"
               className="text-sm"
             />
             <InputGroupAddon align="inline-end">
-              <InputGroupText className="text-xs">mins</InputGroupText>
+              <InputGroupText className="text-xs">hours</InputGroupText>
             </InputGroupAddon>
           </InputGroup>
           <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-[11px]">
             <span>Presets:</span>
-            {[30, 60, 120, 240].map((mins) => (
+            {[1, 2, 4, 8].map((hrs) => (
               <Button
-                key={mins}
+                key={hrs}
                 type="button"
-                variant={estimatedMinutes === mins ? "default" : "outline"}
+                variant={estimatedMinutes === hrs * 60 ? "default" : "outline"}
                 size="xs"
-                onClick={() => onEstimatedMinutesChange(mins)}
+                onClick={() => onEstimatedMinutesChange(hrs * 60)}
                 className="h-5 px-1.5 text-[10px] font-medium"
               >
-                {mins < 60 ? `${mins}m` : `${mins / 60}h`}
+                {hrs}h
               </Button>
             ))}
           </div>
@@ -184,13 +187,11 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
         <FieldLabel htmlFor="task-description">
           Description / Acceptance Criteria
         </FieldLabel>
-        <Textarea
+        <MarkdownEditor
           id="task-description"
-          rows={4}
           value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Provide context, acceptance criteria or links..."
-          className="resize-none text-sm"
+          onChange={onDescriptionChange}
+          placeholder="Provide context, acceptance criteria or links (Markdown supported)..."
         />
       </Field>
     </FieldGroup>

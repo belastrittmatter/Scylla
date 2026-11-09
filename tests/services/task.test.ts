@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { inArray } from "drizzle-orm";
 import { db } from "../../src/db";
-import { user } from "../../src/db/schema";
+import { user, account } from "../../src/db/schema";
 import { TeamService } from "../../src/services/team/team-service";
 import { ProjectService } from "../../src/services/project/project-service";
 import { TaskService } from "../../src/services/task/task-service";
@@ -274,5 +274,91 @@ describe("TaskService Domain Logic", () => {
     // Clean up
     await TaskService.deleteTask(task.id);
     await db.delete(user).where(inArray(user.id, [testUser.id]));
+  });
+
+  test("blocks assigning task in GitHub project if assignee has not synced GitHub", async () => {
+    const [owner] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "Repo Lead",
+        email: `repo-lead-${Date.now()}@example.com`,
+      })
+      .returning();
+
+    const [unlinkedDev] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "Unlinked Dev",
+        email: `unlinked-dev-${Date.now()}@example.com`,
+      })
+      .returning();
+
+    const [linkedDev] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "Linked Dev",
+        email: `linked-dev-${Date.now()}@example.com`,
+      })
+      .returning();
+
+    await db.insert(account).values({
+      id: crypto.randomUUID(),
+      accountId: "github-linked-dev",
+      providerId: "github",
+      userId: linkedDev.id,
+    });
+
+    const testTeam = await TeamService.createTeam({
+      name: `Git Enforce Team ${Date.now()}`,
+      ownerId: owner.id,
+    });
+
+    const gitProject = await ProjectService.createProject({
+      name: "Git Project with Repo",
+      teamId: testTeam.id,
+      githubRepo: "octocat/git-enforce-test",
+    });
+
+    // 1. Should reject creating task with unlinkedDev
+    await expect(
+      TaskService.createTask({
+        title: "Test GitHub Assignee Gate",
+        teamId: testTeam.id,
+        projectId: gitProject.id,
+        creatorId: owner.id,
+        assigneeId: unlinkedDev.id,
+        status: "todo",
+        priority: "medium",
+      }),
+    ).rejects.toThrow("has not connected their GitHub account yet");
+
+    // 2. Should allow creating task with linkedDev
+    const validTask = await TaskService.createTask({
+      title: "Valid Task with Linked Dev",
+      teamId: testTeam.id,
+      projectId: gitProject.id,
+      creatorId: owner.id,
+      assigneeId: linkedDev.id,
+      status: "todo",
+      priority: "medium",
+    });
+    expect(validTask.id).toBeDefined();
+
+    // 3. Should reject updating task assignee to unlinkedDev
+    await expect(
+      TaskService.updateTask(validTask.id, {
+        assigneeId: unlinkedDev.id,
+      }),
+    ).rejects.toThrow("has not connected their GitHub account yet");
+
+    // Clean up
+    await TaskService.deleteTask(validTask.id);
+    await db.delete(account).where(inArray(account.userId, [linkedDev.id]));
+    await db
+      .delete(user)
+      .where(inArray(user.id, [owner.id, unlinkedDev.id, linkedDev.id]));
   });
 });

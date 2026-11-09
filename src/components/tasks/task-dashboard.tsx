@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Users, FolderKanban, Plus, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WorkspaceNavHeader } from "./workspace-nav-header";
@@ -19,6 +20,7 @@ import { filterTasks, createDraftTask, parseTimestampMs } from "./task-utils";
 import { useTaskWorkspaceRouting } from "./use-task-workspace-routing";
 import { useTeamAssignees } from "./use-team-assignees";
 import { useSession } from "@/lib/auth-client";
+import { validateTaskTransitionRule } from "@/services/task/task-rules";
 import {
   getWorkspaceDataAction,
   updateTaskStatusAction,
@@ -92,7 +94,37 @@ export function TaskDashboard({
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = React.useState(false);
   const [isCreateTeamOpen, setIsCreateTeamOpen] = React.useState(false);
+  const [isSyncingGithub, setIsSyncingGithub] = React.useState(false);
   const { data: session } = useSession();
+
+  const handleSyncGithub = async () => {
+    if (!selectedProjectId) return;
+    setIsSyncingGithub(true);
+    try {
+      const res = await fetch(
+        `/api/projects/${selectedProjectId}/github-sync`,
+        {
+          method: "POST",
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to sync GitHub issues");
+      } else {
+        toast.success(
+          `Successfully synchronized ${data.data?.totalIssues || 0} issues from ${data.data?.repository || "GitHub"}!`,
+        );
+        const fresh = await getWorkspaceDataAction();
+        if (fresh.success && fresh.data) {
+          setTasks(fresh.data.tasks);
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sync error");
+    } finally {
+      setIsSyncingGithub(false);
+    }
+  };
 
   const {
     selectedTeamId,
@@ -167,6 +199,24 @@ export function TaskDashboard({
     [projects, selectedTeamId],
   );
 
+  const activeProject = React.useMemo(
+    () => projects.find((p) => p.id === selectedProjectId) || null,
+    [projects, selectedProjectId],
+  );
+
+  const isProjectLinkedToGithub = Boolean(activeProject?.githubRepo?.trim());
+
+  const currentUserTeamRole = React.useMemo(() => {
+    if (!session?.user?.id || !selectedTeamId) return undefined;
+    const member = teamMembers.find(
+      (m) => m.teamId === selectedTeamId && m.userId === session.user.id,
+    );
+    if (member) return member.role;
+    const team = teams.find((t) => t.id === selectedTeamId);
+    if (team?.ownerId === session.user.id) return "owner";
+    return undefined;
+  }, [session, selectedTeamId, teamMembers, teams]);
+
   const filteredTasks = React.useMemo(() => {
     if (!selectedTeamId || !selectedProjectId) return [];
     const scoped = tasks.filter(
@@ -180,57 +230,100 @@ export function TaskDashboard({
     status: TaskStatus,
     targetIndex?: number,
   ) => {
-    setTasks((prev) => {
-      const taskIndex = prev.findIndex((t) => t.id === taskId);
-      if (taskIndex === -1) return prev;
-      const currentTask = prev[taskIndex];
+    const currentTask = tasks.find((t) => t.id === taskId);
+    if (!currentTask) return;
 
-      const now = new Date();
-      let totalSpentSeconds = currentTask.totalSpentSeconds || 0;
-      let activeSessionStartedAt = currentTask.activeSessionStartedAt;
-
-      if (status === "in_progress" && currentTask.status !== "in_progress") {
-        activeSessionStartedAt = now.toISOString();
-      } else if (
-        currentTask.status === "in_progress" &&
-        status !== "in_progress"
-      ) {
-        if (activeSessionStartedAt) {
-          const elapsed = Math.round(
-            (now.getTime() - parseTimestampMs(activeSessionStartedAt)) / 1000,
-          );
-          // Anti-spam filter: discard optimistic elapsed time if moved out in < 1 minute (60s)
-          if (elapsed >= 60) {
-            totalSpentSeconds += elapsed;
+    // Validate transition rules (Git workflow & permissions)
+    const ruleValidation = validateTaskTransitionRule({
+      task: currentTask,
+      targetStatus: status,
+      currentUser: session?.user
+        ? {
+            id: session.user.id,
+            name: session.user.name,
+            email: session.user.email,
           }
+        : null,
+      currentTeamRole: currentUserTeamRole,
+      isProjectLinkedToGithub,
+    });
+
+    if (!ruleValidation.allowed) {
+      toast.error(
+        ruleValidation.reason ||
+          "Cannot transition task status according to project rules.",
+      );
+      return;
+    }
+
+    const now = new Date();
+    let totalSpentSeconds = currentTask.totalSpentSeconds || 0;
+    let activeSessionStartedAt = currentTask.activeSessionStartedAt;
+
+    if (status === "in_progress" && currentTask.status !== "in_progress") {
+      activeSessionStartedAt = now.toISOString();
+    } else if (
+      currentTask.status === "in_progress" &&
+      status !== "in_progress"
+    ) {
+      if (activeSessionStartedAt) {
+        const elapsed = Math.round(
+          (now.getTime() - parseTimestampMs(activeSessionStartedAt)) / 1000,
+        );
+        // Anti-spam filter: discard optimistic elapsed time if moved out in < 1 minute (60s)
+        if (elapsed >= 60) {
+          totalSpentSeconds += elapsed;
         }
-        activeSessionStartedAt = null;
       }
+      activeSessionStartedAt = null;
+    }
 
-      const updatedTask: TaskItem = {
-        ...currentTask,
-        status,
-        totalSpentSeconds,
-        activeSessionStartedAt,
-        updatedAt: now,
-      };
+    // Auto-assign if claimed into in_progress
+    let nextAssigneeId = currentTask.assigneeId;
+    let nextAssignee = currentTask.assignee;
+    if (ruleValidation.autoAssignCurrentUserId && session?.user) {
+      nextAssigneeId = session.user.id;
+      const foundUser = users.find((u) => u.id === session.user.id);
+      if (foundUser) {
+        nextAssignee = foundUser;
+      }
+      updateTaskAction(taskId, { assigneeId: session.user.id }).catch(
+        console.error,
+      );
+    }
 
+    const updatedTask: TaskItem = {
+      ...currentTask,
+      status,
+      assigneeId: nextAssigneeId,
+      assignee: nextAssignee,
+      totalSpentSeconds,
+      activeSessionStartedAt,
+      updatedAt: now,
+    };
+
+    setTasks((prev) => {
       const withoutTask = prev.filter((t) => t.id !== taskId);
+      const isSameColumn = currentTask.status === status;
       const targetColumnTasks = withoutTask.filter((t) => t.status === status);
 
       let insertIndex = withoutTask.length;
-      if (
-        targetIndex !== undefined &&
-        targetIndex >= 0 &&
-        targetIndex < targetColumnTasks.length
-      ) {
-        const referenceTask = targetColumnTasks[targetIndex];
-        insertIndex = withoutTask.findIndex((t) => t.id === referenceTask.id);
-      } else if (
-        targetIndex !== undefined &&
-        targetIndex >= targetColumnTasks.length
-      ) {
-        if (targetColumnTasks.length > 0) {
+      if (targetIndex !== undefined) {
+        let adjustedIdx = targetIndex;
+        if (isSameColumn) {
+          const originalColTasks = prev.filter(
+            (t) => t.status === currentTask.status,
+          );
+          const origIdx = originalColTasks.findIndex((t) => t.id === taskId);
+          if (origIdx !== -1 && origIdx < targetIndex) {
+            adjustedIdx = Math.max(0, targetIndex - 1);
+          }
+        }
+
+        if (adjustedIdx >= 0 && adjustedIdx < targetColumnTasks.length) {
+          const referenceTask = targetColumnTasks[adjustedIdx];
+          insertIndex = withoutTask.findIndex((t) => t.id === referenceTask.id);
+        } else if (targetColumnTasks.length > 0) {
           const lastTask = targetColumnTasks[targetColumnTasks.length - 1];
           insertIndex = withoutTask.findIndex((t) => t.id === lastTask.id) + 1;
         }
@@ -241,7 +334,22 @@ export function TaskDashboard({
       return next;
     });
 
-    updateTaskStatusAction(taskId, status).catch(console.error);
+    updateTaskStatusAction(taskId, status)
+      .then((res) => {
+        if (!res.success) {
+          toast.error(res.error || "Failed to update task status");
+          // Revert optimistic update
+          setTasks((prev) =>
+            prev.map((t) => (t.id === taskId ? currentTask : t)),
+          );
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? currentTask : t)),
+        );
+      });
   };
 
   const handleUpdateStatus = (taskId: string, status: TaskStatus) => {
@@ -343,6 +451,14 @@ export function TaskDashboard({
         };
       }),
     );
+    setSelectedTask((prev) =>
+      prev && prev.id === item.id
+        ? {
+            ...prev,
+            ...item,
+          }
+        : prev,
+    );
     updateTaskAction(item.id, {
       ...item,
       dueDate: dueIso,
@@ -421,9 +537,14 @@ export function TaskDashboard({
         selectedProjectId={selectedProjectId}
         onSelectTeam={handleSelectTeam}
         onSelectProject={handleSelectProject}
+        onAddNewTask={
+          selectedProjectId ? () => handleAddNewTask("todo") : undefined
+        }
         onOpenCreateProject={
           selectedTeamId ? () => setIsCreateProjectOpen(true) : undefined
         }
+        onSyncGithub={handleSyncGithub}
+        isSyncingGithub={isSyncingGithub}
       />
 
       {!selectedTeamId ? (
@@ -684,6 +805,17 @@ export function TaskDashboard({
             {viewMode === "kanban" ? (
               <KanbanBoardView
                 tasks={filteredTasks}
+                currentUser={
+                  session?.user
+                    ? {
+                        id: session.user.id,
+                        name: session.user.name,
+                        email: session.user.email,
+                      }
+                    : null
+                }
+                currentTeamRole={currentUserTeamRole}
+                isProjectLinkedToGithub={isProjectLinkedToGithub}
                 onSelectTask={(task) => {
                   setSelectedTask(task);
                   setIsDrawerOpen(true);

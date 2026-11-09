@@ -12,19 +12,21 @@ export default function TeamsPage() {
   return (
     <div className="mx-auto min-h-screen max-w-7xl space-y-8 p-6 md:p-8">
       {/* Header section */}
-      <div className="flex flex-col gap-1 border-b border-neutral-200 pb-5 dark:border-neutral-800">
-        <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-            <Users className="size-4.5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-5 dark:border-neutral-800">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+              <Users className="size-4.5" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+              Teams
+            </h1>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-            Teams
-          </h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Manage your organization&apos;s workspaces, team memberships, and
+            access team-scoped projects.
+          </p>
         </div>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Manage your organization&apos;s workspaces, team memberships, and
-          access team-scoped projects.
-        </p>
       </div>
 
       {error && (
