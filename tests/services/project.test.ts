@@ -21,22 +21,25 @@ describe("ProjectService Domain Logic", () => {
       ownerId: testOwner.id,
     });
 
-    // Create project
+    // Create project with githubRepo
     const newProject = await ProjectService.createProject({
       name: "API Gateway Protocol",
       description: "Gateway router implementation",
       teamId: newTeam.id,
       color: "#3b82f6",
+      githubRepo: "belastrittmatter/Scylla",
     });
 
     expect(newProject.id).toBeDefined();
     expect(newProject.teamId).toBe(newTeam.id);
     expect(newProject.status).toBe("active");
     expect(newProject.slug).toBe("api-gateway-protocol");
+    expect(newProject.githubRepo).toBe("belastrittmatter/Scylla");
 
     // Fetch by ID & slug
     const byId = await ProjectService.getProjectById(newProject.id);
     expect(byId?.id).toBe(newProject.id);
+    expect(byId?.githubRepo).toBe("belastrittmatter/Scylla");
 
     const bySlug = await ProjectService.getProjectBySlug(
       newTeam.id,

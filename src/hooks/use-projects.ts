@@ -11,6 +11,7 @@ export interface ProjectItem {
   description: string | null;
   status: ProjectStatus;
   color: string | null;
+  githubRepo?: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -82,6 +83,12 @@ export function useProjects(teamId?: string) {
     description?: string;
     status?: ProjectStatus;
     color?: string;
+    githubRepo?: string | null;
+    createNewRepo?: {
+      name: string;
+      isPrivate?: boolean;
+      description?: string | null;
+    };
   }) => {
     const res = await fetch("/api/projects", {
       method: "POST",
@@ -105,6 +112,7 @@ export function useProjects(teamId?: string) {
       description?: string | null;
       status?: ProjectStatus;
       color?: string | null;
+      githubRepo?: string | null;
     },
   ) => {
     const res = await fetch(`/api/projects/${id}`, {
