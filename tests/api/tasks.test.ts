@@ -30,6 +30,12 @@ describe("Tasks REST API Endpoints", () => {
     });
     teamId = team.id;
 
+    await TeamService.addTeamMember({
+      teamId,
+      userId: assigneeUserId,
+      role: "member",
+    });
+
     const proj = await ProjectService.createProject({
       teamId,
       name: "API Subsystem",

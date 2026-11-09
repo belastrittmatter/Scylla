@@ -48,8 +48,18 @@ export async function POST(req: Request, context: RouteParams) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAuthorized = await TeamService.isTeamAdminOrOwner(teamId, callerId);
-    if (!isAuthorized) {
+    const targetTeam = await TeamService.getTeamById(teamId);
+    if (!targetTeam) {
+      return Response.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    const isCallerOwner = targetTeam.ownerId === callerId;
+    const callerMembership = targetTeam.members?.find(
+      (m) => m.userId === callerId,
+    );
+    const isCallerAdmin = callerMembership?.role === "admin";
+
+    if (!isCallerOwner && !isCallerAdmin) {
       return Response.json(
         { error: "Forbidden: Only team owners and admins can manage members" },
         { status: 403 },
@@ -74,11 +84,19 @@ export async function POST(req: Request, context: RouteParams) {
       );
     }
 
+    const requestedRole = parseResult.data.role ?? "member";
+    if (requestedRole === "owner" && !isCallerOwner) {
+      return Response.json(
+        { error: "Forbidden: Only team owners can assign the owner role" },
+        { status: 403 },
+      );
+    }
+
     const member = await TeamService.addTeamMember({
       teamId,
       userId: parseResult.data.userId,
       email: parseResult.data.email,
-      role: parseResult.data.role ?? "member",
+      role: requestedRole,
     });
     return Response.json(member, { status: 201 });
   } catch (err) {

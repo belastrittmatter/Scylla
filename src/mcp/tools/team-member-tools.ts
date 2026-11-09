@@ -35,6 +35,11 @@ export function registerTeamMemberTools(
             : Promise.resolve(undefined),
         ]);
         const resolvedEmail = resolved || email;
+        if (role === "owner" && team.ownerId !== currentUser.id) {
+          throw new Error(
+            "Permission denied: Only the team owner can assign the owner role.",
+          );
+        }
         const member = await TeamService.addTeamMember({
           teamId: team.id,
           userId,
@@ -69,6 +74,18 @@ export function registerTeamMemberTools(
         if (!targetUserId) throw new Error(`User '${userId}' not found.`);
         if (targetUserId === team.ownerId)
           throw new Error("Cannot remove the owner of the team.");
+        const targetMemberToRemove = team.members?.find(
+          (m) => m.userId === targetUserId,
+        );
+        if (
+          targetMemberToRemove?.role === "admin" &&
+          team.ownerId !== currentUser.id &&
+          targetUserId !== currentUser.id
+        ) {
+          throw new Error(
+            "Permission denied: Admins cannot remove other admins.",
+          );
+        }
         await TeamService.removeTeamMember(team.id, targetUserId);
         return formatToolSuccess({
           message: `Member removed from team '${team.name}' successfully`,
@@ -100,6 +117,18 @@ export function registerTeamMemberTools(
         if (role === "owner" && team.ownerId !== currentUser.id) {
           throw new Error(
             "Permission denied: Only the team owner can assign the owner role.",
+          );
+        }
+        const targetMemberToUpdate = team.members?.find(
+          (m) => m.userId === targetUserId,
+        );
+        if (
+          targetMemberToUpdate?.role === "admin" &&
+          team.ownerId !== currentUser.id &&
+          targetUserId !== currentUser.id
+        ) {
+          throw new Error(
+            "Permission denied: Admins cannot change the role of other admins.",
           );
         }
         const updated = await TeamService.updateMemberRole(

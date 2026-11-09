@@ -55,7 +55,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           TaskService.getTaskById(taskId),
         ]);
         const access = task
-          ? await TaskService.getDeleteAccess(task, currentUser.id)
+          ? await TaskService.getWriteAccess(task, currentUser.id)
           : "not_member";
         // Non-members see "not found" so task ids can't be probed.
         if (!task || access === "not_member") {
@@ -92,7 +92,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           TaskService.getTaskById(taskId),
         ]);
         if (!task) throw new Error(`Task '${taskId}' not found.`);
-        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id);
+        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id, "member");
 
         const comment = await TaskService.createTaskComment({
           taskId: task.id,

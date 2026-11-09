@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { eq } from "drizzle-orm";
 import { db } from "../../src/db";
-import { user } from "../../src/db/schema";
+import { team, user } from "../../src/db/schema";
 import { seedDefaultWorkspace } from "../../src/services/task-seed";
 import { TeamService } from "../../src/services/team/team-service";
 import { TaskService } from "../../src/services/task/task-service";
@@ -270,10 +270,14 @@ describe("Task Server Actions with Core Domain Services", () => {
       beforeAll(async () => {
         const shadow = await TeamService.createTeam({
           name: `Shadow Team ${Date.now()}`,
-          slug: foreignTeamId,
           ownerId: actingUserId,
         });
         shadowTeamId = shadow.id;
+        // createTeam rejects UUID-shaped slugs; write one directly to model a legacy row.
+        await db
+          .update(team)
+          .set({ slug: foreignTeamId })
+          .where(eq(team.id, shadowTeamId));
       });
 
       afterAll(async () => {

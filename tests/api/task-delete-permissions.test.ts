@@ -1,8 +1,8 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { DELETE as deleteTaskHandler } from "@/app/api/tasks/[id]/route";
 import { createCalendarMcpServer } from "@/app/api/mcp/route";
-import { db, user } from "@/db";
+import { db, task as taskTable, user } from "@/db";
 import { TaskService } from "@/services/task/task-service";
 import { TeamService } from "@/services/team/team-service";
 
@@ -98,7 +98,12 @@ describe("Task deletion authorization", () => {
   });
 
   test("viewer gets 403, even on a task they created", async () => {
-    const task = await newTask(ids.viewer);
+    // Viewers can't create tasks, so simulate one created before a demotion.
+    const task = await newTask();
+    await db
+      .update(taskTable)
+      .set({ creatorId: ids.viewer })
+      .where(eq(taskTable.id, task.id));
     expect((await del(task.id, ids.viewer)).status).toBe(403);
   });
 

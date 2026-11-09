@@ -26,12 +26,19 @@ import {
   sortTeamMembersByRole,
 } from "./team-helpers";
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export class TeamService {
   public static async createTeam(input: CreateTeamInput): Promise<Team> {
     const validated = CreateTeamSchema.parse(input);
     const slug = validated.slug
       ? slugify(validated.slug)
       : slugify(validated.name);
+
+    if (UUID_REGEX.test(slug)) {
+      throw new Error("Team slug cannot be formatted as a UUID");
+    }
 
     return await db.transaction(async (tx) => {
       const [newTeam] = await tx
@@ -102,16 +109,16 @@ export class TeamService {
   }
 
   /** Matches by team id only; resolve slugs with resolveTeamId first. */
-  public static async isTeamAdminOrOwner(
+  public static async getUserRole(
     teamId: string,
     userId: string,
-  ): Promise<boolean> {
+  ): Promise<TeamRole | null> {
     const teamRecord = await db.query.team.findFirst({
       where: eq(team.id, teamId),
       columns: { id: true, ownerId: true },
     });
-    if (!teamRecord) return false;
-    if (teamRecord.ownerId === userId) return true;
+    if (!teamRecord) return null;
+    if (teamRecord.ownerId === userId) return "owner";
 
     const membership = await db.query.teamMember.findFirst({
       where: and(
@@ -121,7 +128,16 @@ export class TeamService {
       columns: { role: true },
     });
 
-    return membership?.role === "owner" || membership?.role === "admin";
+    return (membership?.role as TeamRole) ?? null;
+  }
+
+  /** Matches by team id only; resolve slugs with resolveTeamId first. */
+  public static async isTeamAdminOrOwner(
+    teamId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const role = await TeamService.getUserRole(teamId, userId);
+    return role === "owner" || role === "admin";
   }
 
   /** Matches by team id only; resolve slugs with resolveTeamId first. */
@@ -129,22 +145,8 @@ export class TeamService {
     teamId: string,
     userId: string,
   ): Promise<boolean> {
-    const teamRecord = await db.query.team.findFirst({
-      where: eq(team.id, teamId),
-      columns: { id: true, ownerId: true },
-    });
-    if (!teamRecord) return false;
-    if (teamRecord.ownerId === userId) return true;
-
-    const membership = await db.query.teamMember.findFirst({
-      where: and(
-        eq(teamMember.teamId, teamRecord.id),
-        eq(teamMember.userId, userId),
-      ),
-      columns: { id: true },
-    });
-
-    return !!membership;
+    const role = await TeamService.getUserRole(teamId, userId);
+    return role !== null;
   }
 
   public static async listUserTeams(userId: string): Promise<Team[]> {
@@ -173,19 +175,11 @@ export class TeamService {
 
     if (!targetUserId && validated.email) {
       const emailLower = validated.email.toLowerCase();
-      let foundUser = await db.query.user.findFirst({
+      const foundUser = await db.query.user.findFirst({
         where: eq(user.email, emailLower),
       });
       if (!foundUser) {
-        const [newUser] = await db
-          .insert(user)
-          .values({
-            id: crypto.randomUUID(),
-            name: emailLower.split("@")[0],
-            email: emailLower,
-          })
-          .returning();
-        foundUser = newUser;
+        throw new Error(`User with email "${validated.email}" not found`);
       }
       targetUserId = foundUser.id;
     }
@@ -255,7 +249,13 @@ export class TeamService {
     const validated = UpdateTeamSchema.parse(input);
     const updateData: Partial<typeof team.$inferInsert> = {};
     if (validated.name !== undefined) updateData.name = validated.name;
-    if (validated.slug !== undefined) updateData.slug = slugify(validated.slug);
+    if (validated.slug !== undefined) {
+      const slugified = slugify(validated.slug);
+      if (UUID_REGEX.test(slugified)) {
+        throw new Error("Team slug cannot be formatted as a UUID");
+      }
+      updateData.slug = slugified;
+    }
     if (validated.description !== undefined)
       updateData.description = validated.description;
 

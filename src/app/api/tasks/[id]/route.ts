@@ -136,7 +136,7 @@ export async function DELETE(req: Request, context: RouteParams) {
 
     const task = await TaskService.getTaskById(id);
     const access = task
-      ? await TaskService.getDeleteAccess(task, callerId)
+      ? await TaskService.getWriteAccess(task, callerId)
       : "not_member";
     // Non-members get the same 404 as a missing task so ids can't be probed.
     if (access === "not_member") {

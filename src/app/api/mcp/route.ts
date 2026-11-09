@@ -78,13 +78,23 @@ const mcpAuthHandler = requireMcpAuth(
       }
     }
 
-    const resolvedScopes: string[] =
-      agentScopes ??
-      (Array.isArray(claims.scopes)
-        ? (claims.scopes as string[])
-        : typeof rawClaims.scope === "string"
-          ? rawClaims.scope.split(/[\s,]+/)
-          : []);
+    const tokenScopes: string[] = Array.isArray(claims.scopes)
+      ? (claims.scopes as string[])
+      : typeof rawClaims.scope === "string"
+        ? rawClaims.scope.split(/[\s,]+/).filter(Boolean)
+        : [];
+
+    let resolvedScopes: string[];
+    if (tokenScopes.length > 0) {
+      if (agentScopes) {
+        const consentSet = new Set(agentScopes);
+        resolvedScopes = tokenScopes.filter((s) => consentSet.has(s));
+      } else {
+        resolvedScopes = tokenScopes;
+      }
+    } else {
+      resolvedScopes = agentScopes ?? [];
+    }
 
     const authInfo: CalendarMcpAuthInfo = {
       sub: userId,
@@ -123,10 +133,15 @@ const handler = async (request: Request) => {
           agentId?: string;
           agent?: {
             id?: string;
+            status?: string;
             capabilityGrants?: { capability: string; status?: string }[];
           };
           user?: { id?: string };
         };
+
+        if (sessionObj.agent?.status === "revoked") {
+          return createRevokedTokenResponse(appUrl);
+        }
 
         const grants = sessionObj.agent?.capabilityGrants || [];
         const activeGrants = grants

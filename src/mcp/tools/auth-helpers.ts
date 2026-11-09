@@ -9,13 +9,15 @@ import type { McpToolContext } from "../types";
 export async function resolveTeamAndVerifyAccess(
   teamIdOrSlug: string,
   userId: string,
-  requiredRole?: "owner" | "admin" | "member",
+  requiredRole?: "owner" | "admin" | "member" | "viewer",
 ): Promise<TeamWithMembers> {
-  const [byId, bySlug] = await Promise.all([
-    TeamService.getTeamById(teamIdOrSlug),
-    TeamService.getTeamBySlug(teamIdOrSlug),
-  ]);
-  const matched = byId || bySlug;
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      teamIdOrSlug,
+    );
+  const matched = isUuid
+    ? await TeamService.getTeamById(teamIdOrSlug)
+    : await TeamService.getTeamBySlug(teamIdOrSlug);
 
   if (!matched) {
     throw new Error(`Team '${teamIdOrSlug}' not found.`);
@@ -43,6 +45,18 @@ export async function resolveTeamAndVerifyAccess(
     member?.role !== "owner"
   ) {
     throw new Error(`Permission denied: Team owner or admin role required.`);
+  }
+
+  if (
+    requiredRole === "member" &&
+    !isOwner &&
+    member?.role !== "admin" &&
+    member?.role !== "owner" &&
+    member?.role !== "member"
+  ) {
+    throw new Error(
+      `Permission denied: Member or higher role required, viewer is read-only.`,
+    );
   }
 
   return matched;
