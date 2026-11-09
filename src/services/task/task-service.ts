@@ -4,6 +4,8 @@ import {
   team,
   project,
   taskTimeSession,
+  account,
+  user,
   type Task,
   type TaskTimeSession,
 } from "@/db/schema";
@@ -70,6 +72,32 @@ export class TaskService {
       }
     }
 
+    // Enforce GitHub sync rule: If project is linked to GitHub, assignee must have linked GitHub account
+    if (projectRecord?.githubRepo?.trim() && validated.assigneeId) {
+      const [ghAcc] = await db
+        .select({ id: account.id })
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, validated.assigneeId),
+            eq(account.providerId, "github"),
+          ),
+        )
+        .limit(1);
+
+      if (!ghAcc) {
+        const [assigneeUser] = await db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, validated.assigneeId))
+          .limit(1);
+        const name = assigneeUser?.name || "The selected member";
+        throw new Error(
+          `Cannot assign task: ${name} has not connected their GitHub account yet. Members must connect GitHub in Settings to be assigned to this project.`,
+        );
+      }
+    }
+
     const position =
       validated.position !== undefined
         ? validated.position
@@ -91,6 +119,12 @@ export class TaskService {
         dueDate: validated.dueDate,
         position,
         estimatedMinutes: validated.estimatedMinutes ?? 60,
+        githubIssueNumber: validated.githubIssueNumber,
+        githubIssueUrl: validated.githubIssueUrl,
+        githubBranch: validated.githubBranch,
+        githubPrNumber: validated.githubPrNumber,
+        githubPrUrl: validated.githubPrUrl,
+        githubPrStatus: validated.githubPrStatus,
       })
       .returning();
 
@@ -179,6 +213,40 @@ export class TaskService {
     });
     if (!existing) throw new Error(`Task with id "${taskId}" not found`);
 
+    // Enforce GitHub sync rule on task update
+    if (validated.assigneeId) {
+      const targetProjectId = validated.projectId || existing.projectId;
+      if (targetProjectId) {
+        const proj = await db.query.project.findFirst({
+          where: eq(project.id, targetProjectId),
+        });
+        if (proj?.githubRepo?.trim()) {
+          const [ghAcc] = await db
+            .select({ id: account.id })
+            .from(account)
+            .where(
+              and(
+                eq(account.userId, validated.assigneeId),
+                eq(account.providerId, "github"),
+              ),
+            )
+            .limit(1);
+
+          if (!ghAcc) {
+            const [assigneeUser] = await db
+              .select({ name: user.name })
+              .from(user)
+              .where(eq(user.id, validated.assigneeId))
+              .limit(1);
+            const name = assigneeUser?.name || "The selected member";
+            throw new Error(
+              `Cannot assign task: ${name} has not connected their GitHub account yet. Members must connect GitHub in Settings to be assigned to this project.`,
+            );
+          }
+        }
+      }
+    }
+
     if (
       validated.status !== undefined &&
       validated.status !== existing.status
@@ -214,6 +282,18 @@ export class TaskService {
       updateData.position = validated.position;
     if (validated.estimatedMinutes !== undefined)
       updateData.estimatedMinutes = validated.estimatedMinutes;
+    if (validated.githubIssueNumber !== undefined)
+      updateData.githubIssueNumber = validated.githubIssueNumber;
+    if (validated.githubIssueUrl !== undefined)
+      updateData.githubIssueUrl = validated.githubIssueUrl;
+    if (validated.githubBranch !== undefined)
+      updateData.githubBranch = validated.githubBranch;
+    if (validated.githubPrNumber !== undefined)
+      updateData.githubPrNumber = validated.githubPrNumber;
+    if (validated.githubPrUrl !== undefined)
+      updateData.githubPrUrl = validated.githubPrUrl;
+    if (validated.githubPrStatus !== undefined)
+      updateData.githubPrStatus = validated.githubPrStatus;
 
     const [updated] = await db
       .update(task)
@@ -334,9 +414,9 @@ export class TaskService {
     return TaskWorkspaceService.getWorkspaceData(currentUserId);
   }
 
-  public static async getTaskComments(taskId: string) {
+  public static async getTaskComments(taskId: string, userId?: string) {
     const { TaskWorkspaceService } = await import("./task-workspace-service");
-    return TaskWorkspaceService.getTaskComments(taskId);
+    return TaskWorkspaceService.getTaskComments(taskId, userId);
   }
 
   public static async createTaskComment(payload: {

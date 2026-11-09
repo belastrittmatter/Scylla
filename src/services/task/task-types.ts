@@ -28,7 +28,7 @@ export const TaskDueDateSchema = z
 
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, "Task title cannot be empty").max(200),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(100000).optional(),
   status: TaskStatusSchema.default("todo"),
   priority: TaskPrioritySchema.default("medium"),
   teamId: z.string().min(1, "Team ID is required"),
@@ -38,12 +38,18 @@ export const CreateTaskSchema = z.object({
   dueDate: TaskDueDateSchema.nullable().optional(),
   position: z.number().int().nonnegative().optional(),
   estimatedMinutes: z.number().int().min(0).max(100000).nullable().optional(),
+  githubIssueNumber: z.number().int().positive().nullable().optional(),
+  githubIssueUrl: z.string().url().nullable().optional(),
+  githubBranch: z.string().nullable().optional(),
+  githubPrNumber: z.number().int().positive().nullable().optional(),
+  githubPrUrl: z.string().url().nullable().optional(),
+  githubPrStatus: z.string().nullable().optional(),
 });
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 
 export const UpdateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  description: z.string().max(5000).nullable().optional(),
+  description: z.string().max(100000).nullable().optional(),
   status: TaskStatusSchema.optional(),
   priority: TaskPrioritySchema.optional(),
   projectId: z.string().nullable().optional(),
@@ -51,6 +57,12 @@ export const UpdateTaskSchema = z.object({
   dueDate: TaskDueDateSchema.nullable().optional(),
   position: z.number().int().nonnegative().optional(),
   estimatedMinutes: z.number().int().min(0).max(100000).nullable().optional(),
+  githubIssueNumber: z.number().int().positive().nullable().optional(),
+  githubIssueUrl: z.string().url().nullable().optional(),
+  githubBranch: z.string().nullable().optional(),
+  githubPrNumber: z.number().int().positive().nullable().optional(),
+  githubPrUrl: z.string().url().nullable().optional(),
+  githubPrStatus: z.string().nullable().optional(),
 });
 export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;
 

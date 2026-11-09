@@ -74,7 +74,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["google"],
+      trustedProviders: ["google", "github"],
     },
   },
   socialProviders: {
@@ -91,6 +91,12 @@ export const auth = betterAuth({
       ],
       accessType: "offline",
       prompt: "consent",
+    },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || "dummy-github-client-id",
+      clientSecret:
+        process.env.GITHUB_CLIENT_SECRET || "dummy-github-client-secret",
+      scope: ["repo", "read:user", "user:email"],
     },
   },
   plugins: [

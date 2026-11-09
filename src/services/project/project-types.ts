@@ -19,6 +19,14 @@ export const CreateProjectSchema = z.object({
     .string()
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid hex color")
     .optional(),
+  githubRepo: z.string().max(200).nullable().optional(),
+  createNewRepo: z
+    .object({
+      name: z.string().min(1, "Repository name is required"),
+      isPrivate: z.boolean().default(true),
+      description: z.string().nullable().optional(),
+    })
+    .optional(),
 });
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 
@@ -32,6 +40,7 @@ export const UpdateProjectSchema = z.object({
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
     .nullable()
     .optional(),
+  githubRepo: z.string().max(200).nullable().optional(),
 });
 export type UpdateProjectInput = z.infer<typeof UpdateProjectSchema>;
 

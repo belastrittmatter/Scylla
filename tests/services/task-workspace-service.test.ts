@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { db } from "@/db";
 import { user, project, task } from "@/db/schema";
-import { inArray } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
 import { TeamService } from "@/services/team/team-service";
 import { TaskWorkspaceService } from "@/services/task/task-workspace-service";
 
@@ -118,4 +118,83 @@ describe("TaskWorkspaceService multi-tenant scoping", () => {
     },
     { timeout: 30000 },
   );
+
+  it("deduplicates comments when local comment matches mirrored GitHub comment", async () => {
+    const timestamp = Date.now();
+    const [testUser] = await db
+      .insert(user)
+      .values({
+        id: `usr_comment_dedup_${timestamp}`,
+        name: "Dedup User",
+        email: `dedup_${timestamp}@example.com`,
+      })
+      .returning();
+
+    const teamRecord = await TeamService.createTeam({
+      name: `Comment Team ${timestamp}`,
+      ownerId: testUser.id,
+    });
+
+    const [taskRecord] = await db
+      .insert(task)
+      .values({
+        title: "Comment Dedup Task",
+        teamId: teamRecord.id,
+        creatorId: testUser.id,
+        githubIssueNumber: 99,
+      })
+      .returning();
+
+    // Create a local comment in Scylla DB
+    const _localComment = await TaskWorkspaceService.createTaskComment({
+      taskId: taskRecord.id,
+      userId: testUser.id,
+      content: "@tuananhdo0308 ok",
+    });
+
+    // Mock GithubIntegrationService.getIssueComments returning the same content from GitHub
+    const { GithubIntegrationService } =
+      await import("@/services/github/github-integration-service");
+    const originalGetIssueComments = GithubIntegrationService.getIssueComments;
+
+    GithubIntegrationService.getIssueComments = async () => [
+      {
+        id: "gh-8888",
+        taskId: taskRecord.id,
+        userId: "gh-user-123",
+        content: "@tuananhdo0308 ok",
+        createdAt: new Date(Date.now() + 5000),
+        updatedAt: new Date(Date.now() + 5000),
+        source: "github" as const,
+        htmlUrl:
+          "https://github.com/octocat/Hello-World/issues/99#issuecomment-8888",
+        user: {
+          id: "gh-user-123",
+          name: "tuananhdo0308",
+          avatarUrl: "",
+          initials: "TU",
+        },
+      },
+    ];
+
+    try {
+      const mergedComments = await TaskWorkspaceService.getTaskComments(
+        taskRecord.id,
+        testUser.id,
+      );
+
+      // Must be deduplicated into exactly 1 comment, preserving local user identity and enriching with GitHub link
+      expect(mergedComments.length).toBe(1);
+      expect(mergedComments[0].content).toBe("@tuananhdo0308 ok");
+      expect(mergedComments[0].user?.name).toBe("Dedup User");
+      expect(mergedComments[0].htmlUrl).toBe(
+        "https://github.com/octocat/Hello-World/issues/99#issuecomment-8888",
+      );
+      expect(mergedComments[0].isSyncedToGithub).toBe(true);
+    } finally {
+      GithubIntegrationService.getIssueComments = originalGetIssueComments;
+      await TeamService.deleteTeam(teamRecord.id);
+      await db.delete(user).where(eq(user.id, testUser.id));
+    }
+  });
 });

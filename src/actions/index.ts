@@ -16,6 +16,7 @@ export {
   createTaskAction,
   getTaskCommentsAction,
   createTaskCommentAction,
+  createGithubRepositoryAction,
 } from "./task-actions";
 export type {
   WorkspaceData,

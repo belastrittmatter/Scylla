@@ -1,4 +1,6 @@
 import { auth } from "@/lib/auth";
+import { db, account, user } from "@/db";
+import { eq } from "drizzle-orm";
 
 export async function resolveUserId(
   req: Request,
@@ -12,17 +14,55 @@ export async function resolveUserId(
     // ignore session resolution errors
   }
 
+  if (!sessionUserId) {
+    try {
+      const { headers } = await import("next/headers");
+      const reqHeaders = await headers();
+      const session = await auth.api.getSession({ headers: reqHeaders });
+      sessionUserId = session?.user?.id;
+    } catch {
+      // ignore
+    }
+  }
+
   // Hard-bind to authenticated session user ID to prevent caller spoofing
   if (sessionUserId) {
     return sessionUserId;
   }
 
-  // In test environment only, permit test headers or explicit fallback when session is absent
+  // In test environment, strictly require session, x-user-id, or explicitId
   if (process.env.NODE_ENV === "test") {
     const testHeaderUser = req.headers.get("x-user-id");
     if (testHeaderUser) return testHeaderUser;
     if (explicitId && explicitId !== "me") {
       return explicitId;
+    }
+    return undefined;
+  }
+
+  // In development environment, permit test headers or fallback to dev user
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === undefined
+  ) {
+    const testHeaderUser = req.headers.get("x-user-id");
+    if (testHeaderUser) return testHeaderUser;
+    if (explicitId && explicitId !== "me") {
+      return explicitId;
+    }
+
+    try {
+      const [ghAccount] = await db
+        .select({ userId: account.userId })
+        .from(account)
+        .where(eq(account.providerId, "github"))
+        .limit(1);
+      if (ghAccount?.userId) return ghAccount.userId;
+
+      const [firstUser] = await db.select({ id: user.id }).from(user).limit(1);
+      if (firstUser?.id) return firstUser.id;
+    } catch {
+      // ignore db errors
     }
   }
 

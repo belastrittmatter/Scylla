@@ -3,8 +3,18 @@ import type { TaskUser } from "@/services/task/task-types";
 
 export type { TaskUser, Task, Project, Team, TaskComment };
 
-export interface TaskCommentItem extends TaskComment {
+export interface TaskCommentItem {
+  id: string;
+  taskId: string;
+  userId: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  githubCommentId?: string | null;
   user?: TaskUser | null;
+  source?: "local" | "github";
+  htmlUrl?: string;
+  isSyncedToGithub?: boolean;
 }
 
 export type TaskStatus =
@@ -72,6 +82,7 @@ export interface TaskDrawerFormProps {
   dueDateStr: string;
   estimatedMinutes: number;
   users: TaskUser[];
+  isProjectLinkedToGithub?: boolean;
   onTitleChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onStatusChange: (v: TaskStatus) => void;

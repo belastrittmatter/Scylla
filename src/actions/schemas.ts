@@ -120,6 +120,14 @@ export const CreateProjectPayloadSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
+  githubRepo: z.string().nullable().optional(),
+  createNewRepo: z
+    .object({
+      name: z.string().min(1, "Repository name is required"),
+      isPrivate: z.boolean().default(true),
+      description: z.string().nullable().optional(),
+    })
+    .optional(),
 });
 
 export const CreateTaskPayloadSchema = z.object({

@@ -257,6 +257,12 @@ export function createDraftTask(
     dueDate: null,
     position: 0,
     estimatedMinutes: 60,
+    githubIssueNumber: null,
+    githubIssueUrl: null,
+    githubBranch: null,
+    githubPrNumber: null,
+    githubPrUrl: null,
+    githubPrStatus: null,
     totalSpentSeconds: 0,
     activeSessionStartedAt:
       status === "in_progress" ? new Date().toISOString() : null,
@@ -306,4 +312,30 @@ export function filterTasks(
     }
     return true;
   });
+}
+
+/**
+ * Derives a clean, URL-safe username handle for a user (e.g. "tuananhdo0308").
+ */
+export function getUserHandle(user: {
+  name?: string | null;
+  email?: string | null;
+}): string {
+  if (user.email && user.email.includes("@")) {
+    const localPart = user.email
+      .split("@")[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "");
+    if (localPart) return localPart;
+  }
+  if (user.name) {
+    const ascii = user.name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "")
+      .replace(/[^a-z0-9_]/g, "");
+    if (ascii) return ascii;
+  }
+  return "user";
 }
