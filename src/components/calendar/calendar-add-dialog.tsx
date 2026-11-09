@@ -366,17 +366,12 @@ export function CalendarAddDialog({
 
       try {
         for (const slot of datesToSchedule) {
-          const seriesTag = seriesId ? `<!--series:${seriesId}-->` : "";
           const descText = description.trim();
-          const finalDescription = seriesTag
-            ? descText
-              ? `${descText}\n\n${seriesTag}`
-              : seriesTag
-            : descText || undefined;
 
           const booking = await apiClient.bookings.create({
             title: finalTitle,
-            description: finalDescription,
+            description: descText || undefined,
+            seriesId: seriesId || undefined,
             eventTypeId: selectedEventType?.id,
             roomId: roomToAssign,
             projectId: selectedProjectId || undefined,

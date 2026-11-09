@@ -51,6 +51,7 @@ export const CreateBookingPayloadSchema = z
   .object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
+    seriesId: z.string().optional(),
     eventTypeId: z.string().optional(),
     organizerUserId: z.string().min(1).optional(),
     roomId: z.string().optional(),
