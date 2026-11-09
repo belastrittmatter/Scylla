@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import type { TaskUser } from "./task-types";
 import { getUserAvatarColor } from "./task-utils";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ interface AssigneeSearchPickerProps {
   assigneeId: string;
   onAssigneeChange: (assigneeId: string) => void;
   disabled?: boolean;
+  isProjectLinkedToGithub?: boolean;
 }
 
 export function AssigneeSearchPicker({
@@ -25,6 +27,7 @@ export function AssigneeSearchPicker({
   assigneeId,
   onAssigneeChange,
   disabled = false,
+  isProjectLinkedToGithub = false,
 }: AssigneeSearchPickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -146,13 +149,25 @@ export function AssigneeSearchPicker({
 
           {filteredUsers.map((u) => {
             const isSelected = selectedUser?.id === u.id;
+            const isBlockedByGitRule =
+              isProjectLinkedToGithub && !u.githubConnected;
+
             return (
               <button
                 key={u.id}
                 type="button"
-                onClick={() => selectAssignee(u.id)}
+                disabled={isBlockedByGitRule}
+                onClick={() => !isBlockedByGitRule && selectAssignee(u.id)}
+                title={
+                  isBlockedByGitRule
+                    ? "User must connect GitHub account in Settings to be assigned to this project"
+                    : undefined
+                }
                 className={cn(
-                  "hover:bg-accent flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+                  "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+                  isBlockedByGitRule
+                    ? "cursor-not-allowed opacity-50 bg-muted/20"
+                    : "cursor-pointer hover:bg-accent",
                   isSelected && "bg-accent/60 font-medium",
                 )}
               >
@@ -164,9 +179,24 @@ export function AssigneeSearchPicker({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col truncate text-left">
-                    <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                      {u.name}
-                    </span>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        {u.name}
+                      </span>
+                      {isProjectLinkedToGithub &&
+                        (u.githubConnected ? (
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            @{u.githubUsername || "github"}
+                          </span>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="h-4 px-1 text-[9px] text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                          >
+                            No GitHub
+                          </Badge>
+                        ))}
+                    </div>
                     <span className="truncate text-[11px] text-neutral-500">
                       {u.role} &bull; {u.email}
                     </span>
