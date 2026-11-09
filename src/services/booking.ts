@@ -227,11 +227,18 @@ export class BookingService {
     const organizerToken = await getOrganizerToken(existing.organizerUserId);
 
     if (existing.gcalEventId) {
-      await GoogleCalendarService.deleteEvent(
-        existing.gcalEventId,
-        "primary",
-        organizerToken,
-      ).catch(() => {});
+      try {
+        await GoogleCalendarService.deleteEvent(
+          existing.gcalEventId,
+          "primary",
+          organizerToken,
+        );
+      } catch (err) {
+        console.warn(
+          "Failed to delete Google Calendar event during booking cancellation:",
+          err,
+        );
+      }
     }
 
     const [cancelled] = await db

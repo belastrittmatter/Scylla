@@ -32,13 +32,14 @@ export class EventTypeService {
   public static async createEventType(
     input: CreateEventTypeInput,
   ): Promise<EventType> {
-    const baseSlug = (input.slug || input.name || "meeting")
+    const normalizedSlug = (input.slug || input.name || "meeting")
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+    const baseSlug = normalizedSlug || "meeting";
 
-    let finalSlug = baseSlug || "meeting";
+    let finalSlug = baseSlug;
     let counter = 1;
     while (true) {
       const existing = await this.getEventTypeBySlug(finalSlug);

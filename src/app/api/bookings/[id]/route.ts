@@ -1,6 +1,7 @@
 import { BookingService } from "@/services/booking";
 import { ReschedulePayloadSchema } from "@/actions/schemas";
 import { resolveUserId } from "@/services/api-utils";
+import { z } from "zod";
 
 interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
@@ -107,11 +108,22 @@ export async function DELETE(req: Request, context: RouteParams) {
 
     const url = new URL(req.url);
     const allSeries = url.searchParams.get("allSeries") === "true";
-    let reason = url.searchParams.get("reason") || undefined;
+    const ReasonSchema = z.string().trim().min(1).max(500);
+    let rawReason: unknown = url.searchParams.get("reason") || undefined;
     try {
-      const body = await req.json();
-      if (body?.reason) reason = String(body.reason);
+      const body: unknown = await req.json();
+      if (body && typeof body === "object" && "reason" in body) {
+        rawReason = (body as { reason: unknown }).reason;
+      }
     } catch {}
+    const parsedReason = ReasonSchema.optional().safeParse(rawReason);
+    if (!parsedReason.success) {
+      return Response.json(
+        { error: "Invalid cancellation reason" },
+        { status: 400 },
+      );
+    }
+    const reason = parsedReason.data;
 
     if (allSeries) {
       const cancelled = await BookingService.cancelSeriesByBooking(id, reason);
