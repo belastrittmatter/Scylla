@@ -1,11 +1,16 @@
 import { UserService } from "@/services/user";
-import { auth } from "@/lib/auth";
+import { resolveUserId } from "@/services/api-utils";
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const url = new URL(req.url);
     const q = url.searchParams.get("q") ?? "";
     const limitParam = url.searchParams.get("limit");
@@ -19,30 +24,18 @@ export async function GET(req: Request) {
           { status: 400 },
         );
       }
-      limit = parsedLimit;
-    }
-
-    // Resolve current user session & Google OAuth token
-    let sessionUserId: string | undefined;
-    try {
-      const session = await auth.api.getSession({ headers: req.headers });
-      if (session?.user) {
-        sessionUserId = session.user.id;
-      }
-    } catch {
-      // Ignore session retrieval error
+      limit = Math.min(parsedLimit, 50);
     }
 
     let googleAccount = null;
-    if (sessionUserId) {
-      const accounts = await db
-        .select()
-        .from(account)
-        .where(eq(account.userId, sessionUserId));
-      googleAccount = accounts.find((a) => a.providerId === "google") || null;
-    }
+    const accounts = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, callerId));
+    googleAccount = accounts.find((a) => a.providerId === "google") || null;
 
     const users = await UserService.searchTeammates(q, limit, {
+      currentUserId: callerId,
       accountRecord: googleAccount || undefined,
       accessToken: googleAccount?.accessToken || undefined,
     });

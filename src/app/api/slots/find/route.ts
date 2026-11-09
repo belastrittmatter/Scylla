@@ -1,8 +1,14 @@
 import { SchedulerService } from "@/services/scheduler";
 import { FindSlotsParamsSchema } from "@/actions/schemas";
+import { resolveUserId } from "@/services/api-utils";
 
 export async function POST(req: Request) {
   try {
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     let body: unknown;
     try {
       body = await req.json();

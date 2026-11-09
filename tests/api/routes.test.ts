@@ -46,8 +46,18 @@ describe("REST API Route Handlers", () => {
   });
 
   describe("GET /api/users/search", () => {
+    test("rejects unauthenticated requests with 401", async () => {
+      const req = new Request("http://localhost:3000/api/users/search");
+      const res = await searchUsersHandler(req);
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe("Unauthorized");
+    });
+
     test("returns user list JSON for matching query", async () => {
-      const req = new Request("http://localhost:3000/api/users/search?q=alex");
+      const req = new Request("http://localhost:3000/api/users/search?q=alex", {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      });
       const res = await searchUsersHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -57,7 +67,9 @@ describe("REST API Route Handlers", () => {
     });
 
     test("returns user list when query param is omitted", async () => {
-      const req = new Request("http://localhost:3000/api/users/search");
+      const req = new Request("http://localhost:3000/api/users/search", {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      });
       const res = await searchUsersHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -66,7 +78,12 @@ describe("REST API Route Handlers", () => {
     });
 
     test("respects limit parameter", async () => {
-      const req = new Request("http://localhost:3000/api/users/search?limit=1");
+      const req = new Request(
+        "http://localhost:3000/api/users/search?limit=1",
+        {
+          headers: { "x-user-id": "usr_alex_rivera" },
+        },
+      );
       const res = await searchUsersHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -77,6 +94,9 @@ describe("REST API Route Handlers", () => {
     test("returns 400 for invalid limit parameter", async () => {
       const req = new Request(
         "http://localhost:3000/api/users/search?limit=abc",
+        {
+          headers: { "x-user-id": "usr_alex_rivera" },
+        },
       );
       const res = await searchUsersHandler(req);
       expect(res.status).toBe(400);
@@ -187,10 +207,31 @@ describe("REST API Route Handlers", () => {
   });
 
   describe("POST /api/slots/find", () => {
-    test("finds open slots for valid parameters", async () => {
+    test("rejects unauthenticated requests with 401", async () => {
       const req = new Request("http://localhost:3000/api/slots/find", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attendees: ["alex@company.com"],
+          durationMinutes: 30,
+          startDate: "2026-10-19T08:00:00.000Z",
+          endDate: "2026-10-19T18:00:00.000Z",
+        }),
+      });
+
+      const res = await findSlotsHandler(req);
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe("Unauthorized");
+    });
+
+    test("finds open slots for valid parameters", async () => {
+      const req = new Request("http://localhost:3000/api/slots/find", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": "usr_alex_rivera",
+        },
         body: JSON.stringify({
           attendees: ["alex@company.com"],
           durationMinutes: 30,
@@ -212,7 +253,10 @@ describe("REST API Route Handlers", () => {
     test("returns 400 when attendees list is empty", async () => {
       const req = new Request("http://localhost:3000/api/slots/find", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": "usr_alex_rivera",
+        },
         body: JSON.stringify({
           attendees: [],
           startDate: "2026-10-19T08:00:00.000Z",
@@ -229,7 +273,10 @@ describe("REST API Route Handlers", () => {
     test("returns 400 when startDate is after endDate", async () => {
       const req = new Request("http://localhost:3000/api/slots/find", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": "usr_alex_rivera",
+        },
         body: JSON.stringify({
           attendees: ["alex@company.com"],
           startDate: "2026-10-19T18:00:00.000Z",
@@ -246,7 +293,10 @@ describe("REST API Route Handlers", () => {
     test("returns 400 on malformed JSON payload", async () => {
       const req = new Request("http://localhost:3000/api/slots/find", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": "usr_alex_rivera",
+        },
         body: "invalid-json",
       });
 
