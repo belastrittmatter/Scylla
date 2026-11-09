@@ -22,3 +22,13 @@ describe("Sign-in is Google-only (#77)", () => {
     expect(html).not.toContain("/auth/sign-up");
   });
 });
+
+describe("Sign-up redirects to sign-in (#77)", () => {
+  it("forwards the query string", async () => {
+    const { default: SignUpPage } = await import("@/app/auth/sign-up/page");
+    const err = await SignUpPage({
+      searchParams: Promise.resolve({ redirectTo: "/consent", a: ["1", "2"] }),
+    }).catch((e: Error) => e.message);
+    expect(err).toBe("REDIRECT:/auth/sign-in?redirectTo=%2Fconsent&a=1&a=2");
+  });
+});

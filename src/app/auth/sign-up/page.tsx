@@ -1,25 +1,15 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import * as React from "react";
-import { SignUp } from "@/components/auth/sign-up";
-import { AuthUIProvider } from "@/components/auth-provider";
-import { AuthLayoutShell } from "@/components/auth/auth-layout-shell";
-import { Loader2 } from "lucide-react";
-
-export default function SignUpPage() {
-  return (
-    <AuthUIProvider>
-      <AuthLayoutShell subtitle="Create your Scylla account to get started">
-        <React.Suspense
-          fallback={
-            <div className="flex h-64 items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-orange-500" />
-            </div>
-          }
-        >
-          <SignUp />
-        </React.Suspense>
-      </AuthLayoutShell>
-    </AuthUIProvider>
-  );
+// Google sign-in creates the account on first use, so sign-up is the same flow (#77).
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    for (const v of [value ?? []].flat()) query.append(key, v);
+  }
+  const qs = query.toString();
+  redirect(qs ? `/auth/sign-in?${qs}` : "/auth/sign-in");
 }
