@@ -87,8 +87,8 @@ export class GCalFreeBusyService {
         const cal = data.calendars?.[email];
         if (cal?.errors?.length) {
           console.warn(
-            `Google Calendar freeBusy returned errors for ${email}:`,
-            cal.errors,
+            "Google Calendar freeBusy returned errors for an attendee calendar:",
+            (cal.errors as Array<{ reason?: string }>).map((e) => e.reason),
           );
         }
         entries[email] = (cal?.busy || []).map(

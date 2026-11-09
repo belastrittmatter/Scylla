@@ -142,7 +142,34 @@ export class GCalEventMutationService {
         resource: a.resource,
       }));
     } else if (payload.roomEmail) {
-      gcalPayload.attendees = [{ email: payload.roomEmail, resource: true }];
+      const existingRes = await GCalAuthService.fetchWithMock(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
+          calendarId,
+        )}/events/${encodeURIComponent(eventId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
+      if (!existingRes.ok) {
+        throw new Error(
+          `Google Calendar updateEvent failed to load attendees: ${await existingRes.text()}`,
+        );
+      }
+      const existing = (await existingRes.json()) as {
+        attendees?: Array<{
+          email: string;
+          displayName?: string;
+          resource?: boolean;
+        }>;
+      };
+      const humans = (existing.attendees || []).filter((a) => !a.resource);
+      gcalPayload.attendees = [
+        ...humans,
+        { email: payload.roomEmail, resource: true },
+      ];
     }
 
     const res = await GCalAuthService.fetchWithMock(

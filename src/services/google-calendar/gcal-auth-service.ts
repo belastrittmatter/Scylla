@@ -189,22 +189,6 @@ export class GCalAuthService {
       }
     }
 
-    try {
-      const googleAccount = await db
-        .select()
-        .from(account)
-        .where(eq(account.providerId, "google"))
-        .limit(1);
-
-      if (googleAccount.length > 0) {
-        const refreshed = await this.refreshAccountToken(googleAccount[0]);
-        if (refreshed) return refreshed;
-        return googleAccount[0].accessToken || null;
-      }
-    } catch (dbErr) {
-      console.warn("Could not retrieve Google account from DB:", dbErr);
-    }
-
     return null;
   }
 }

@@ -93,17 +93,15 @@ export class GCalDirectoryService {
           ).catch(() => null)
         : Promise.resolve(null),
       this.hasAdminApiPermission
-        ? GCalAuthService.fetchWithMock(adminUrl, { headers }).catch((res) => {
-            if (
-              res &&
-              typeof res === "object" &&
-              "status" in res &&
-              res.status === 403
-            ) {
-              this.hasAdminApiPermission = false;
-            }
-            return null;
-          })
+        ? GCalAuthService.fetchWithMock(adminUrl, { headers })
+            .then((res) => {
+              if (res.status === 403) {
+                this.hasAdminApiPermission = false;
+                return null;
+              }
+              return res;
+            })
+            .catch(() => null)
         : Promise.resolve(null),
     ]);
 
