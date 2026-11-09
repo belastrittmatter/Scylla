@@ -121,8 +121,9 @@ export function KanbanColumn({
     e.dataTransfer.setData("text/plain", task.id);
     e.dataTransfer.effectAllowed = "move";
 
+    let clone: HTMLElement | null = null;
     try {
-      const clone = e.currentTarget.cloneNode(true) as HTMLElement;
+      clone = e.currentTarget.cloneNode(true) as HTMLElement;
       clone.style.width = `${rect.width}px`;
       clone.style.height = `${rect.height}px`;
       clone.style.position = "fixed";
@@ -134,7 +135,7 @@ export function KanbanColumn({
       clone.style.opacity = "1";
       clone.style.zIndex = "-9999";
       clone.querySelectorAll("*").forEach((el) => {
-        if (el instanceof HTMLElement) {
+        if (el instanceof HTMLElement || el instanceof SVGElement) {
           el.style.animation = "none";
           el.style.transition = "none";
         }
@@ -145,11 +146,14 @@ export function KanbanColumn({
         e.clientX - rect.left,
         e.clientY - rect.top,
       );
-      requestAnimationFrame(() => {
-        clone.remove();
-      });
     } catch {
       // Browser fallback
+    } finally {
+      if (clone) {
+        requestAnimationFrame(() => {
+          clone?.remove();
+        });
+      }
     }
 
     if (window.getSelection) {

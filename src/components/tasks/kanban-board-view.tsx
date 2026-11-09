@@ -37,6 +37,40 @@ export function KanbanBoardView({
 }: KanbanBoardViewProps) {
   const [draggedTask, setDraggedTask] = React.useState<TaskItem | null>(null);
 
+  // Global drag cleanup listener: clears draggedTask on window dragend, drop, or mouseup
+  // preventing stuck isDragging states when cross-column drops remount elements.
+  React.useEffect(() => {
+    const handleGlobalDragEnd = () => {
+      setDraggedTask(null);
+    };
+
+    window.addEventListener("dragend", handleGlobalDragEnd);
+    window.addEventListener("drop", handleGlobalDragEnd);
+    window.addEventListener("mouseup", handleGlobalDragEnd);
+
+    return () => {
+      window.removeEventListener("dragend", handleGlobalDragEnd);
+      window.removeEventListener("drop", handleGlobalDragEnd);
+      window.removeEventListener("mouseup", handleGlobalDragEnd);
+    };
+  }, []);
+
+  const handleMoveTaskWithCleanup = React.useCallback(
+    (taskId: string, targetStatus: TaskStatus, targetIndex?: number) => {
+      setDraggedTask(null);
+      onMoveTask?.(taskId, targetStatus, targetIndex);
+    },
+    [onMoveTask],
+  );
+
+  const handleUpdateStatusWithCleanup = React.useCallback(
+    (taskId: string, status: TaskStatus) => {
+      setDraggedTask(null);
+      onUpdateStatus(taskId, status);
+    },
+    [onUpdateStatus],
+  );
+
   return (
     <div className="flex h-full flex-1 gap-4 overflow-x-auto p-6">
       {KANBAN_COLUMNS.map((col) => {
@@ -64,8 +98,8 @@ export function KanbanBoardView({
             onDragStartTask={setDraggedTask}
             onDragEndTask={() => setDraggedTask(null)}
             onSelectTask={onSelectTask}
-            onUpdateStatus={onUpdateStatus}
-            onMoveTask={onMoveTask}
+            onUpdateStatus={handleUpdateStatusWithCleanup}
+            onMoveTask={handleMoveTaskWithCleanup}
             onAddNewTask={onAddNewTask}
           />
         );

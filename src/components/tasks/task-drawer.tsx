@@ -20,14 +20,24 @@ interface TaskDrawerProps {
   task: TaskItem | null;
   isOpen: boolean;
   users: TaskUser[];
+  currentUser?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+  } | null;
+  currentTeamRole?: string | null;
   onClose: () => void;
-  onSaveTask: (updated: TaskItem) => void;
+  onSaveTask: (
+    updated: TaskItem,
+  ) => Promise<{ success: boolean; error?: string } | void> | void;
 }
 
 export function TaskDrawer({
   task,
   isOpen,
   users,
+  currentUser,
+  currentTeamRole,
   onClose,
   onSaveTask,
 }: TaskDrawerProps) {
@@ -39,6 +49,8 @@ export function TaskDrawer({
       task={task}
       isOpen={isOpen}
       users={users}
+      currentUser={currentUser}
+      currentTeamRole={currentTeamRole}
       onClose={onClose}
       onSaveTask={onSaveTask}
     />
@@ -49,6 +61,8 @@ function TaskDrawerInner({
   task,
   isOpen,
   users,
+  currentUser,
+  currentTeamRole,
   onClose,
   onSaveTask,
 }: TaskDrawerProps & { task: TaskItem }) {
@@ -74,7 +88,7 @@ function TaskDrawerInner({
     task.estimatedMinutes ?? 60,
   );
 
-  const handleSave = (shouldClose: boolean = false) => {
+  const handleSave = async (shouldClose: boolean = false) => {
     if (!title.trim()) return;
 
     const matchedAssignee =
@@ -95,7 +109,12 @@ function TaskDrawerInner({
       updatedAt: new Date(),
     };
 
-    onSaveTask(updated);
+    const res = await onSaveTask(updated);
+    if (res && !res.success) {
+      toast.error(res.error || "Failed to save task");
+      return;
+    }
+
     toast.success(isDraft ? "Task created!" : "Changes saved!");
 
     if (shouldClose || isDraft) {
@@ -168,6 +187,8 @@ function TaskDrawerInner({
               task={task}
               isDraft={isDraft}
               users={users}
+              currentUser={currentUser}
+              currentTeamRole={currentTeamRole}
               assigneeId={assigneeId}
               status={status}
               priority={priority}

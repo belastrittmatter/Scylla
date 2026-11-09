@@ -287,8 +287,25 @@ export function TaskDashboard({
       if (foundUser) {
         nextAssignee = foundUser;
       }
-      updateTaskAction(taskId, { assigneeId: session.user.id }).catch(
-        console.error,
+      updateTaskAction(taskId, { assigneeId: session.user.id }).then(
+        (assignRes) => {
+          if (!assignRes.success) {
+            toast.error(
+              assignRes.error || "Failed to auto-assign task to current user.",
+            );
+            setTasks((prev) =>
+              prev.map((t) =>
+                t.id === taskId
+                  ? {
+                      ...t,
+                      assigneeId: currentTask.assigneeId,
+                      assignee: currentTask.assignee,
+                    }
+                  : t,
+              ),
+            );
+          }
+        },
       );
     }
 
@@ -338,16 +355,34 @@ export function TaskDashboard({
       .then((res) => {
         if (!res.success) {
           toast.error(res.error || "Failed to update task status");
-          // Revert optimistic update
+          // Revert optimistic update only for changed fields
           setTasks((prev) =>
-            prev.map((t) => (t.id === taskId ? currentTask : t)),
+            prev.map((t) =>
+              t.id === taskId
+                ? {
+                    ...t,
+                    status: currentTask.status,
+                    totalSpentSeconds: currentTask.totalSpentSeconds,
+                    activeSessionStartedAt: currentTask.activeSessionStartedAt,
+                  }
+                : t,
+            ),
           );
         }
       })
       .catch((err) => {
         console.error(err);
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? currentTask : t)),
+          prev.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  status: currentTask.status,
+                  totalSpentSeconds: currentTask.totalSpentSeconds,
+                  activeSessionStartedAt: currentTask.activeSessionStartedAt,
+                }
+              : t,
+          ),
         );
       });
   };
@@ -391,7 +426,9 @@ export function TaskDashboard({
     setIsDrawerOpen(true);
   };
 
-  const handleSaveTask = async (item: TaskItem) => {
+  const handleSaveTask = async (
+    item: TaskItem,
+  ): Promise<{ success: boolean; error?: string }> => {
     const dueIso = item.dueDate ? new Date(item.dueDate).toISOString() : null;
     if (item.id.startsWith("draft-")) {
       const res = await createTaskAction({
@@ -401,23 +438,26 @@ export function TaskDashboard({
         dueDate: dueIso,
         estimatedMinutes: item.estimatedMinutes ?? 60,
       });
-      if (res?.success && res.data) {
-        const proj = projects.find((p) => p.id === res.data?.projectId) || null;
-        setTasks((prev) => [
-          {
-            ...res.data!,
-            assignee: item.assignee,
-            creator: null,
-            project: proj,
-            totalSpentSeconds: 0,
-            activeSessionStartedAt:
-              item.status === "in_progress" ? new Date().toISOString() : null,
-          },
-          ...prev,
-        ]);
+      if (!res?.success || !res.data) {
+        return { success: false, error: res?.error || "Failed to create task" };
       }
-      return;
+      const proj = projects.find((p) => p.id === res.data?.projectId) || null;
+      setTasks((prev) => [
+        {
+          ...res.data!,
+          assignee: item.assignee,
+          creator: null,
+          project: proj,
+          totalSpentSeconds: 0,
+          activeSessionStartedAt:
+            item.status === "in_progress" ? new Date().toISOString() : null,
+        },
+        ...prev,
+      ]);
+      return { success: true };
     }
+
+    const previousTask = tasks.find((t) => t.id === item.id);
 
     setTasks((prev) =>
       prev.map((t) => {
@@ -459,11 +499,23 @@ export function TaskDashboard({
           }
         : prev,
     );
-    updateTaskAction(item.id, {
+
+    const res = await updateTaskAction(item.id, {
       ...item,
       dueDate: dueIso,
       estimatedMinutes: item.estimatedMinutes ?? 60,
-    }).catch(console.error);
+    });
+
+    if (!res?.success) {
+      if (previousTask) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === item.id ? previousTask : t)),
+        );
+        setSelectedTask((prev) => (prev?.id === item.id ? previousTask : prev));
+      }
+      return { success: false, error: res?.error || "Failed to update task" };
+    }
+    return { success: true };
   };
 
   const handleCreatedProject = (p: Project) => {
@@ -842,6 +894,16 @@ export function TaskDashboard({
         task={selectedTask}
         isOpen={isDrawerOpen}
         users={drawerUsers}
+        currentUser={
+          session?.user
+            ? {
+                id: session.user.id,
+                name: session.user.name,
+                email: session.user.email,
+              }
+            : null
+        }
+        currentTeamRole={currentUserTeamRole}
         onClose={() => setIsDrawerOpen(false)}
         onSaveTask={handleSaveTask}
       />

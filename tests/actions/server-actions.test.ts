@@ -8,6 +8,7 @@ import {
   rescheduleBookingAction,
   cancelBookingAction,
 } from "../../src/actions";
+import { resolveActionUserId } from "../../src/actions/auth-helper";
 import { db } from "../../src/db";
 import { meetingRoom } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
@@ -109,29 +110,18 @@ describe("Server Actions Layer", () => {
   describe("findSlotsAction", () => {
     test("finds available slots for valid parameters", async () => {
       const now = new Date();
-      const nextDate = new Date(now);
-      nextDate.setDate(now.getDate() + ((2 + 7 - now.getDay()) % 7 || 7) + 7);
-      const startWindow = new Date(
-        nextDate.getFullYear(),
-        nextDate.getMonth(),
-        nextDate.getDate(),
-        10,
-        0,
-        0,
-      );
-      const endWindow = new Date(
-        nextDate.getFullYear(),
-        nextDate.getMonth(),
-        nextDate.getDate(),
-        16,
-        0,
-        0,
-      );
+      // Pick next Monday at 09:00 UTC
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+      nextMonday.setUTCHours(9, 0, 0, 0);
+
+      const endWindow = new Date(nextMonday);
+      endWindow.setUTCHours(12, 0, 0, 0);
 
       const result = await findSlotsAction({
         attendees: ["alex@example.com"],
         durationMinutes: 30,
-        startDate: startWindow.toISOString(),
+        startDate: nextMonday.toISOString(),
         endDate: endWindow.toISOString(),
       });
 
@@ -303,6 +293,25 @@ describe("Server Actions Layer", () => {
       const result = await cancelBookingAction("non_existent_id");
       expect(result.success).toBe(false);
       expect(result.error).toContain("not found");
+    });
+  });
+
+  describe("resolveActionUserId security hardening", () => {
+    test("fails closed when NODE_ENV and BUN_ENV are not development or test", async () => {
+      const env = process.env as Record<string, string | undefined>;
+      const origNodeEnv = env.NODE_ENV;
+      const origBunEnv = env.BUN_ENV;
+      try {
+        delete env.NODE_ENV;
+        delete env.BUN_ENV;
+        await expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
+
+        env.NODE_ENV = "production";
+        await expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
+      } finally {
+        env.NODE_ENV = origNodeEnv;
+        env.BUN_ENV = origBunEnv;
+      }
     });
   });
 });

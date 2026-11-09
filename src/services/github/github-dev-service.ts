@@ -6,6 +6,7 @@ import {
   type TaskDevelopmentInfo,
   generateBranchName,
   isPrLinkedToIssue,
+  mapGitHubPrState,
 } from "./github-dev-utils";
 
 export class GithubDevService {
@@ -121,18 +122,11 @@ export class GithubDevService {
               }>;
               if (Array.isArray(branchPulls) && branchPulls.length > 0) {
                 const match = branchPulls[0];
-                const state = match.merged_at
-                  ? "merged"
-                  : match.draft
-                    ? "draft"
-                    : match.state === "closed"
-                      ? "closed"
-                      : "open";
                 pullRequest = {
                   number: match.number,
                   url: match.html_url,
                   title: match.title,
-                  state,
+                  state: mapGitHubPrState(match),
                 };
               }
             }
@@ -176,18 +170,15 @@ export class GithubDevService {
                 );
                 if (crossRef?.source?.issue) {
                   const prItem = crossRef.source.issue;
-                  const state = prItem.pull_request?.merged_at
-                    ? "merged"
-                    : prItem.draft
-                      ? "draft"
-                      : prItem.state === "closed"
-                        ? "closed"
-                        : "open";
                   pullRequest = {
                     number: prItem.number,
                     url: prItem.html_url,
                     title: prItem.title,
-                    state,
+                    state: mapGitHubPrState({
+                      merged_at: prItem.pull_request?.merged_at,
+                      draft: prItem.draft,
+                      state: prItem.state,
+                    }),
                   };
                 }
               }
@@ -229,19 +220,15 @@ export class GithubDevService {
                   ),
                 );
                 if (matchedPr) {
-                  const state = matchedPr.pull_request?.merged_at
-                    ? "merged"
-                    : matchedPr.draft
-                      ? "draft"
-                      : matchedPr.state === "closed"
-                        ? "closed"
-                        : "open";
-
                   pullRequest = {
                     number: matchedPr.number,
                     url: matchedPr.html_url,
                     title: matchedPr.title,
-                    state,
+                    state: mapGitHubPrState({
+                      merged_at: matchedPr.pull_request?.merged_at,
+                      draft: matchedPr.draft,
+                      state: matchedPr.state,
+                    }),
                   };
                 }
               }
@@ -253,6 +240,16 @@ export class GithubDevService {
 
         // 4. Synchronize PR status to task database
         if (pullRequest) {
+          if (pullRequest.state === "merged" && taskRecord.status !== "done") {
+            const { TaskService } =
+              await import("@/services/task/task-service");
+            await TaskService.updateTask(
+              taskId,
+              { status: "done" },
+              targetUserId,
+            ).catch(console.warn);
+          }
+
           await db
             .update(task)
             .set({
@@ -277,17 +274,19 @@ export class GithubDevService {
       }
     }
 
+    const checkoutCommand = branch
+      ? isBranchOnRemote
+        ? `git checkout ${branch}`
+        : `git checkout -b ${branch}`
+      : `git checkout -b ${suggestedBranch}`;
+
     return {
       issueNumber: taskRecord.githubIssueNumber,
       issueUrl: taskRecord.githubIssueUrl,
       branch,
       isBranchOnRemote,
       suggestedBranch,
-      checkoutCommand: branch
-        ? isBranchOnRemote
-          ? `git checkout ${branch}`
-          : `git checkout -b ${branch}`
-        : `git checkout -b ${suggestedBranch}`,
+      checkoutCommand,
       repository: repo,
       pullRequest,
     };

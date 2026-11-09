@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ExternalLink, RefreshCw, Plus } from "lucide-react";
 import type { TaskItem } from "./task-types";
 import type { TaskDevelopmentInfo } from "@/services/github/github-integration-service";
+import { copyToClipboard } from "@/lib/clipboard";
 import { TaskGithubBranchSection } from "./task-github-branch-section";
 import { TaskGithubPrSection } from "./task-github-pr-section";
 
@@ -27,6 +28,46 @@ export function TaskGithubDevelopmentCard({
   const [isCreatingIssue, setIsCreatingIssue] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const syncTaskFromDevInfo = React.useCallback(
+    (info: TaskDevelopmentInfo) => {
+      let hasChanges = false;
+      let nextStatus = task.status;
+      let nextPrNumber = task.githubPrNumber;
+      let nextPrUrl = task.githubPrUrl;
+      let nextPrStatus = task.githubPrStatus;
+
+      if (info.pullRequest) {
+        if (info.pullRequest.state === "merged" && task.status !== "done") {
+          nextStatus = "done";
+          hasChanges = true;
+        }
+        if (task.githubPrNumber !== info.pullRequest.number) {
+          nextPrNumber = info.pullRequest.number;
+          hasChanges = true;
+        }
+        if (task.githubPrUrl !== info.pullRequest.url) {
+          nextPrUrl = info.pullRequest.url;
+          hasChanges = true;
+        }
+        if (task.githubPrStatus !== info.pullRequest.state) {
+          nextPrStatus = info.pullRequest.state;
+          hasChanges = true;
+        }
+      }
+
+      if (hasChanges) {
+        onTaskUpdated?.({
+          ...task,
+          status: nextStatus,
+          githubPrNumber: nextPrNumber,
+          githubPrUrl: nextPrUrl,
+          githubPrStatus: nextPrStatus,
+        });
+      }
+    },
+    [task, onTaskUpdated],
+  );
+
   const fetchDevInfo = async () => {
     setIsLoading(true);
     try {
@@ -35,6 +76,7 @@ export function TaskGithubDevelopmentCard({
         const json = await res.json();
         if (json.success && json.data) {
           setDevInfo(json.data);
+          syncTaskFromDevInfo(json.data);
         }
       }
     } catch {
@@ -53,6 +95,7 @@ export function TaskGithubDevelopmentCard({
           const json = await res.json();
           if (json.success && json.data) {
             setDevInfo(json.data);
+            syncTaskFromDevInfo(json.data);
           }
         }
       } catch {
@@ -64,15 +107,15 @@ export function TaskGithubDevelopmentCard({
     return () => {
       ignore = true;
     };
-  }, [task.id]);
+  }, [task.id, syncTaskFromDevInfo]);
 
   const handleCopyCommand = async (cmd: string) => {
-    try {
-      await navigator.clipboard.writeText(cmd);
+    const ok = await copyToClipboard(cmd);
+    if (ok) {
       setCopied(true);
       toast.success("Copied checkout command to clipboard!");
       setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } else {
       toast.error("Failed to copy command");
     }
   };

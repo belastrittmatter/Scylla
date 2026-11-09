@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { db, task, project, teamMember } from "@/db";
 import { TaskService } from "@/services/task/task-service";
 import { ProjectService } from "@/services/project/project-service";
+import { checkTaskTransitionAllowed } from "@/services/task/task-rules-server";
 import type { Task, Project, TaskComment } from "@/db/schema";
 import type { TaskCommentItem } from "@/components/tasks/task-types";
 import type {
@@ -166,6 +167,22 @@ export async function updateTaskAction(
         : undefined;
 
     const userId = await resolveActionUserId().catch(() => null);
+
+    if (parsedData.status) {
+      const ruleCheck = await checkTaskTransitionAllowed(
+        idParse.data,
+        parsedData.status,
+        userId,
+      );
+      if (!ruleCheck.allowed) {
+        return {
+          success: false,
+          error:
+            ruleCheck.reason || "Transition not permitted by workflow rules",
+        };
+      }
+    }
+
     const updated = await TaskService.updateTask(
       idParse.data,
       { ...parsedData, dueDate },
