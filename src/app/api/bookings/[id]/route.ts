@@ -107,9 +107,14 @@ export async function DELETE(req: Request, context: RouteParams) {
 
     const url = new URL(req.url);
     const allSeries = url.searchParams.get("allSeries") === "true";
+    let reason = url.searchParams.get("reason") || undefined;
+    try {
+      const body = await req.json();
+      if (body?.reason) reason = String(body.reason);
+    } catch {}
 
     if (allSeries) {
-      const cancelled = await BookingService.cancelSeriesByBooking(id);
+      const cancelled = await BookingService.cancelSeriesByBooking(id, reason);
       if (cancelled.length === 0) {
         return Response.json(
           { error: `Booking with ID ${id} not found` },
@@ -122,7 +127,7 @@ export async function DELETE(req: Request, context: RouteParams) {
       );
     }
 
-    const cancelled = await BookingService.cancel(id);
+    const cancelled = await BookingService.cancel(id, reason);
     return Response.json(cancelled, { status: 200 });
   } catch (err) {
     const message =
