@@ -24,7 +24,13 @@ export function sanitizeBookingDescription(
   desc?: string | null,
 ): string | undefined {
   if (!desc) return undefined;
-  return desc.replace(/<!--series:.*?-->/gi, "").trim();
+  let prev = desc;
+  let out = desc;
+  do {
+    prev = out;
+    out = out.replace(/<!--series:[\s\S]*?-->/gi, "");
+  } while (out !== prev);
+  return out.trim() || undefined;
 }
 
 export async function getOrganizerToken(

@@ -132,7 +132,7 @@ describe("Issue #95 Series Cancellation Isolation", () => {
 
     try {
       // Attacker attempts to cancel victim's booking directly
-      expect(
+      await expect(
         BookingService.cancelSeriesByBooking(
           victimBooking.id,
           undefined,

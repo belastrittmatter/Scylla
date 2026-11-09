@@ -283,6 +283,7 @@ export class MeetingInviteService {
             endTime: endDate,
             roomId: invite.roomId || undefined,
             attendees,
+            sanitizeDescription: true,
           },
           tx,
         );
