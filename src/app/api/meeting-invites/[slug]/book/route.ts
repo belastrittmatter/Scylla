@@ -54,7 +54,7 @@ export async function POST(req: Request, context: RouteParams) {
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Failed to book meeting" },
-      { status: 500 },
+      { status: 400 },
     );
   }
 }

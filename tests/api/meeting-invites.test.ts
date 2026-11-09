@@ -8,42 +8,32 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
   let testRoomId: string;
 
   beforeAll(async () => {
-    // Ensure an organizer user exists
-    const users = await db.select().from(user).limit(1);
-    if (users.length > 0) {
-      organizerUserId = users[0].id;
-    } else {
-      const [u] = await db
-        .insert(user)
-        .values({
-          id: `org-${Date.now()}`,
-          name: "Organizer Test",
-          email: `organizer-${Date.now()}@example.com`,
-          emailVerified: true,
-        })
-        .returning();
-      organizerUserId = u.id;
-    }
+    // Ensure an isolated organizer user exists for this test suite
+    const [u] = await db
+      .insert(user)
+      .values({
+        id: `org-invite-${Date.now()}`,
+        name: "Organizer Test",
+        email: `org-invite-${Date.now()}@example.com`,
+        emailVerified: true,
+      })
+      .returning();
+    organizerUserId = u.id;
 
-    // Ensure a test room exists
-    const rooms = await db.select().from(meetingRoom).limit(1);
-    if (rooms.length > 0) {
-      testRoomId = rooms[0].id;
-    } else {
-      const [r] = await db
-        .insert(meetingRoom)
-        .values({
-          name: "Test Room Alpha",
-          email: `test-room-${Date.now()}@example.com`,
-          capacity: 10,
-          building: "Building A",
-          floor: "3",
-          features: ["video", "tv"],
-          equipment: ["display"],
-        })
-        .returning();
-      testRoomId = r.id;
-    }
+    // Ensure an isolated test room exists for this test suite
+    const [r] = await db
+      .insert(meetingRoom)
+      .values({
+        name: `Test Room Alpha ${Date.now()}`,
+        email: `test-room-${Date.now()}@example.com`,
+        capacity: 10,
+        building: "Building A",
+        floor: "3",
+        features: ["video", "tv"],
+        equipment: ["display"],
+      })
+      .returning();
+    testRoomId = r.id;
   });
 
   it("creates a meeting invite with physical room and access restriction", async () => {

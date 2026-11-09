@@ -1,11 +1,13 @@
+import { randomBytes } from "node:crypto";
 import { db } from "@/db";
 import {
   meetingInvite,
   user,
   meetingRoom,
+  booking,
   type MeetingInvite,
 } from "@/db/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, and, gte, lte, or } from "drizzle-orm";
 import { SchedulerService, type TimeSlot } from "./scheduler";
 import { BookingService } from "./booking";
 
@@ -40,7 +42,7 @@ export class MeetingInviteService {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 30);
-    const randomSuffix = Math.random().toString(36).substring(2, 7);
+    const randomSuffix = randomBytes(4).toString("hex");
     return `${base || "meet"}-${randomSuffix}`;
   }
 
@@ -107,25 +109,21 @@ export class MeetingInviteService {
 
     const members = inv.memberEmails.map((email) => {
       const u = userByEmail.get(email.toLowerCase());
-      if (u) {
-        return { id: u.id, name: u.name, email: u.email, image: u.image };
-      }
-      return { id: email, name: email.split("@")[0], email, image: null };
+      return u
+        ? { id: u.id, name: u.name, email: u.email, image: u.image }
+        : { id: email, name: email.split("@")[0], email, image: null };
     });
 
-    return {
-      invite: inv,
-      organizer: organizer
-        ? {
-            id: organizer.id,
-            name: organizer.name,
-            email: organizer.email,
-            image: organizer.image,
-          }
-        : null,
-      room,
-      members,
-    };
+    const organizerProfile = organizer
+      ? {
+          id: organizer.id,
+          name: organizer.name,
+          email: organizer.email,
+          image: organizer.image,
+        }
+      : null;
+
+    return { invite: inv, organizer: organizerProfile, room, members };
   }
 
   public static async listInvitesByOrganizer(organizerUserId: string) {
@@ -194,6 +192,30 @@ export class MeetingInviteService {
 
     const { invite, organizer } = details;
 
+    if (invite.bookingId) {
+      throw new Error("This meeting invitation has already been booked");
+    }
+
+    const startDate = new Date(input.startTime);
+    const endDate = new Date(input.endTime);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new Error("Invalid start or end time format");
+    }
+    if (startDate >= endDate) {
+      throw new Error("Start time must be before end time");
+    }
+    if (startDate.getTime() < Date.now()) {
+      throw new Error("Meeting cannot be booked in the past");
+    }
+
+    const durationMinutes =
+      (endDate.getTime() - startDate.getTime()) / (60 * 1000);
+    if (Math.round(durationMinutes) !== invite.duration) {
+      throw new Error(
+        `Requested booking duration (${durationMinutes}m) must match the invite duration (${invite.duration}m)`,
+      );
+    }
+
     if (
       invite.isRestricted &&
       invite.allowedEmails &&
@@ -209,19 +231,36 @@ export class MeetingInviteService {
       }
     }
 
-    const attendees = Array.from(
-      new Set([
-        ...(organizer?.email ? [organizer.email.toLowerCase()] : []),
-        ...invite.memberEmails.map((e) => e.toLowerCase()),
-        input.guestEmail.trim().toLowerCase(),
-      ]),
-    ).map((email) => ({
-      email,
-      name:
-        email === input.guestEmail.toLowerCase()
-          ? input.guestName.trim()
-          : undefined,
-    }));
+    // Verify no conflicting confirmed booking exists for organizer or room
+    const conflictBookings = await db
+      .select({ id: booking.id })
+      .from(booking)
+      .where(
+        and(
+          eq(booking.status, "confirmed"),
+          lte(booking.startTime, endDate),
+          gte(booking.endTime, startDate),
+          or(
+            eq(booking.organizerUserId, invite.organizerUserId),
+            eq(booking.userId, invite.organizerUserId),
+            invite.roomId ? eq(booking.roomId, invite.roomId) : undefined,
+          ),
+        ),
+      )
+      .limit(1);
+
+    if (conflictBookings.length > 0) {
+      throw new Error("The selected time slot is no longer available.");
+    }
+
+    const attendees = [
+      ...(organizer?.email ? [{ email: organizer.email.toLowerCase() }] : []),
+      ...invite.memberEmails.map((e) => ({ email: e.toLowerCase() })),
+      {
+        email: input.guestEmail.trim().toLowerCase(),
+        name: input.guestName.trim(),
+      },
+    ];
 
     const description = [
       invite.description,
@@ -242,10 +281,10 @@ export class MeetingInviteService {
       attendees,
     });
 
-    // Link booking to invite
+    // Link booking to invite and deactivate it to prevent reuse
     await db
       .update(meetingInvite)
-      .set({ bookingId: createdBooking.id })
+      .set({ bookingId: createdBooking.id, isActive: false })
       .where(eq(meetingInvite.id, invite.id));
 
     return {

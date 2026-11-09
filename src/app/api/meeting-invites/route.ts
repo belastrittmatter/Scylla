@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { resolveUserId } from "@/services/api-utils";
 import { MeetingInviteService } from "@/services/meeting-invite";
 
 interface CreateMeetingInviteBody {
@@ -15,6 +15,14 @@ interface CreateMeetingInviteBody {
 
 export async function POST(req: Request) {
   try {
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json(
+        { error: "Unauthorized: session required to create meeting invites" },
+        { status: 401 },
+      );
+    }
+
     let body: CreateMeetingInviteBody;
     try {
       body = (await req.json()) as CreateMeetingInviteBody;
@@ -32,23 +40,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Resolve current user / organizer
-    let organizerUserId = body.organizerUserId;
-    try {
-      const session = await auth.api.getSession({ headers: req.headers });
-      if (session?.user?.id) {
-        organizerUserId = session.user.id;
-      }
-    } catch {
-      // ignore
-    }
-
-    if (!organizerUserId) {
-      return Response.json(
-        { error: "Unauthorized: organizer user ID required" },
-        { status: 401 },
-      );
-    }
+    // Always bind organizerUserId strictly to callerId to prevent impersonation
+    const organizerUserId = callerId;
 
     const memberEmails: string[] = Array.isArray(body.memberEmails)
       ? body.memberEmails
@@ -95,20 +88,12 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    let sessionUserId: string | undefined;
-    try {
-      const session = await auth.api.getSession({ headers: req.headers });
-      sessionUserId = session?.user?.id;
-    } catch {
-      // ignore
-    }
-
-    if (!sessionUserId) {
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const invites =
-      await MeetingInviteService.listInvitesByOrganizer(sessionUserId);
+    const invites = await MeetingInviteService.listInvitesByOrganizer(callerId);
     return Response.json(invites, { status: 200 });
   } catch (err) {
     return Response.json(
