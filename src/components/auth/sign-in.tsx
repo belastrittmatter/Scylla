@@ -350,17 +350,17 @@ export function SignIn({
           )}
         </div>
 
-        <div className="mt-4 flex w-full flex-col items-center gap-3">
-          {emailAndPassword?.enabled && emailAndPassword?.forgotPassword && (
-            <Link
-              href={`${basePaths.auth}/${viewPaths.auth.forgotPassword}`}
-              className="self-center text-sm underline-offset-4 hover:underline"
-            >
-              {localization.auth.forgotPasswordLink}
-            </Link>
-          )}
+        {emailAndPassword?.enabled && (
+          <div className="mt-4 flex w-full flex-col items-center gap-3">
+            {emailAndPassword?.forgotPassword && (
+              <Link
+                href={`${basePaths.auth}/${viewPaths.auth.forgotPassword}`}
+                className="self-center text-sm underline-offset-4 hover:underline"
+              >
+                {localization.auth.forgotPasswordLink}
+              </Link>
+            )}
 
-          {emailAndPassword?.enabled && (
             <FieldDescription className="text-center">
               {localization.auth.needToCreateAnAccount}{" "}
               <Link
@@ -370,8 +370,8 @@ export function SignIn({
                 {localization.auth.signUp}
               </Link>
             </FieldDescription>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
