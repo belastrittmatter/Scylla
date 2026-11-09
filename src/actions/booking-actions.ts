@@ -1,6 +1,9 @@
 "use server";
 
 import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { user, booking } from "@/db/schema";
 import { UserService, type Teammate } from "@/services/user";
 import { RoomService, type RoomFilter } from "@/services/rooms";
 import {
@@ -13,7 +16,7 @@ import {
   type CreateBookingPayload,
   type ReschedulePayload,
 } from "@/services/booking";
-import type { MeetingRoom, Booking } from "@/db/schema";
+import type { MeetingRoom, Booking as BookingRecord } from "@/db/schema";
 import {
   RoomFilterSchema,
   FindSlotsParamsSchema,
@@ -21,12 +24,39 @@ import {
   CreateBookingPayloadSchema,
   ReschedulePayloadSchema,
 } from "./schemas";
-import { getSessionUserId, type ActionResult } from "./auth-helper";
+import {
+  resolveActionUserId,
+  getSessionUserId,
+  type ActionResult,
+} from "./auth-helper";
+
+async function verifyBookingAccess(
+  b: BookingRecord,
+  sessionUserId: string,
+): Promise<boolean> {
+  if (b.organizerUserId === sessionUserId || b.userId === sessionUserId) {
+    return true;
+  }
+  if (Array.isArray(b.attendees)) {
+    const [u] = await db
+      .select({ email: user.email })
+      .from(user)
+      .where(eq(user.id, sessionUserId))
+      .limit(1);
+    if (u?.email) {
+      return b.attendees.some(
+        (a) => a.email.toLowerCase() === u.email.toLowerCase(),
+      );
+    }
+  }
+  return false;
+}
 
 export async function searchTeammatesAction(
   query: string = "",
 ): Promise<ActionResult<Teammate[]>> {
   try {
+    await resolveActionUserId();
     const parseResult = z.string().safeParse(query);
     if (!parseResult.success) {
       return {
@@ -48,6 +78,7 @@ export async function getRoomsAction(
   filter?: RoomFilter,
 ): Promise<ActionResult<MeetingRoom[]>> {
   try {
+    await resolveActionUserId();
     const parseResult = RoomFilterSchema.safeParse(filter);
     if (!parseResult.success) {
       return {
@@ -70,6 +101,7 @@ export async function findSlotsAction(
   params: FindSlotsParams,
 ): Promise<ActionResult<TimeSlot[]>> {
   try {
+    await resolveActionUserId();
     const parseResult = FindSlotsParamsSchema.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -91,7 +123,7 @@ export async function findSlotsAction(
 export async function getAgendaAction(
   dateIso: string,
   userId?: string,
-): Promise<ActionResult<Booking[]>> {
+): Promise<ActionResult<BookingRecord[]>> {
   try {
     const parseResult = GetAgendaParamsSchema.safeParse({ dateIso, userId });
     if (!parseResult.success) {
@@ -103,14 +135,16 @@ export async function getAgendaAction(
 
     let targetUserId = parseResult.data.userId;
     if (!targetUserId) {
-      targetUserId = (await getSessionUserId()) ?? undefined;
-    }
-
-    if (!targetUserId) {
-      return {
-        success: false,
-        error: "User ID is required when unauthenticated",
-      };
+      const sessionUserId = await getSessionUserId();
+      if (!sessionUserId) {
+        return {
+          success: false,
+          error: "User ID is required when unauthenticated",
+        };
+      }
+      targetUserId = sessionUserId;
+    } else {
+      targetUserId = await resolveActionUserId(parseResult.data.userId);
     }
 
     const agenda = await BookingService.getAgenda(
@@ -128,7 +162,7 @@ export async function getAgendaAction(
 
 export async function createBookingAction(
   payload: CreateBookingPayload,
-): Promise<ActionResult<Booking>> {
+): Promise<ActionResult<BookingRecord>> {
   try {
     const parseResult = CreateBookingPayloadSchema.safeParse(payload);
     if (!parseResult.success) {
@@ -139,23 +173,13 @@ export async function createBookingAction(
     }
 
     const data = parseResult.data;
-    let organizerUserId = data.organizerUserId;
-    if (!organizerUserId) {
-      organizerUserId = (await getSessionUserId()) ?? undefined;
-    }
+    const sessionUserId = await resolveActionUserId(data.organizerUserId);
 
-    if (!organizerUserId) {
-      return {
-        success: false,
-        error: "Organizer user ID is required when unauthenticated",
-      };
-    }
-
-    const booking = await BookingService.createBooking({
+    const bookingResult = await BookingService.createBooking({
       ...data,
-      organizerUserId,
+      organizerUserId: sessionUserId,
     });
-    return { success: true, data: booking };
+    return { success: true, data: bookingResult };
   } catch (err) {
     return {
       success: false,
@@ -167,7 +191,7 @@ export async function createBookingAction(
 export async function rescheduleBookingAction(
   id: string,
   payload: ReschedulePayload,
-): Promise<ActionResult<Booking>> {
+): Promise<ActionResult<BookingRecord>> {
   try {
     const idParse = z.string().min(1, "Booking ID is required").safeParse(id);
     if (!idParse.success) {
@@ -185,11 +209,28 @@ export async function rescheduleBookingAction(
       };
     }
 
-    const booking = await BookingService.reschedule(
+    const sessionUserId = await resolveActionUserId();
+
+    const [existingBooking] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, idParse.data))
+      .limit(1);
+
+    if (!existingBooking) {
+      return { success: false, error: "Booking not found" };
+    }
+
+    const hasAccess = await verifyBookingAccess(existingBooking, sessionUserId);
+    if (!hasAccess) {
+      return { success: false, error: "Access denied" };
+    }
+
+    const updated = await BookingService.reschedule(
       idParse.data,
       parseResult.data,
     );
-    return { success: true, data: booking };
+    return { success: true, data: updated };
   } catch (err) {
     return {
       success: false,
@@ -201,7 +242,7 @@ export async function rescheduleBookingAction(
 
 export async function cancelBookingAction(
   id: string,
-): Promise<ActionResult<Booking>> {
+): Promise<ActionResult<BookingRecord>> {
   try {
     const idParse = z.string().min(1, "Booking ID is required").safeParse(id);
     if (!idParse.success) {
@@ -210,8 +251,26 @@ export async function cancelBookingAction(
         error: idParse.error.issues.map((i) => i.message).join(", "),
       };
     }
-    const booking = await BookingService.cancel(idParse.data);
-    return { success: true, data: booking };
+
+    const sessionUserId = await resolveActionUserId();
+
+    const [existingBooking] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, idParse.data))
+      .limit(1);
+
+    if (!existingBooking) {
+      return { success: false, error: "Booking not found" };
+    }
+
+    const hasAccess = await verifyBookingAccess(existingBooking, sessionUserId);
+    if (!hasAccess) {
+      return { success: false, error: "Access denied" };
+    }
+
+    const cancelled = await BookingService.cancel(idParse.data);
+    return { success: true, data: cancelled };
   } catch (err) {
     return {
       success: false,

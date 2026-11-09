@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { TaskService } from "@/services/task/task-service";
 import { ProjectService } from "@/services/project/project-service";
+import { TeamService } from "@/services/team/team-service";
 import type { Task, Project, TaskComment } from "@/db/schema";
 import type {
   WorkspaceData,
@@ -55,11 +56,23 @@ export async function updateTaskStatusAction(
         error: statusParse.error.issues.map((i) => i.message).join(", "),
       };
 
-    const userId = await resolveActionUserId().catch(() => null);
+    const userId = await resolveActionUserId();
+    const existingTask = await TaskService.getTaskById(idParse.data);
+    if (!existingTask) {
+      return { success: false, error: "Task not found" };
+    }
+    const isMember = await TeamService.isTeamMember(
+      existingTask.teamId,
+      userId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
+
     const updated = await TaskService.updateTask(
       idParse.data,
       { status: statusParse.data.status },
-      userId ?? undefined,
+      userId,
     );
     return { success: true, data: updated };
   } catch (err) {
@@ -97,11 +110,23 @@ export async function updateTaskAction(
         ? null
         : undefined;
 
-    const userId = await resolveActionUserId().catch(() => null);
+    const userId = await resolveActionUserId();
+    const existingTask = await TaskService.getTaskById(idParse.data);
+    if (!existingTask) {
+      return { success: false, error: "Task not found" };
+    }
+    const isMember = await TeamService.isTeamMember(
+      existingTask.teamId,
+      userId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
+
     const updated = await TaskService.updateTask(
       idParse.data,
       { ...parsedData, dueDate },
-      userId ?? undefined,
+      userId,
     );
     return { success: true, data: updated };
   } catch (err) {
@@ -122,6 +147,15 @@ export async function createProjectAction(
         success: false,
         error: parseResult.error.issues.map((i) => i.message).join(", "),
       };
+
+    const userId = await resolveActionUserId();
+    const isMember = await TeamService.isTeamMember(
+      parseResult.data.teamId,
+      userId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
 
     const created = await ProjectService.createProject({
       name: parseResult.data.name,
@@ -151,6 +185,14 @@ export async function createTaskAction(
       };
 
     const creatorId = await resolveActionUserId();
+    const isMember = await TeamService.isTeamMember(
+      parseResult.data.teamId,
+      creatorId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
+
     const parsedData = parseResult.data;
     const dueDate = parsedData.dueDate
       ? new Date(parsedData.dueDate)
@@ -184,6 +226,19 @@ export async function getTaskCommentsAction(
 ): Promise<ActionResult<Array<TaskComment & { user: TaskUser | null }>>> {
   try {
     if (!taskId) return { success: false, error: "Task ID is required" };
+    const userId = await resolveActionUserId();
+    const existingTask = await TaskService.getTaskById(taskId);
+    if (!existingTask) {
+      return { success: false, error: "Task not found" };
+    }
+    const isMember = await TeamService.isTeamMember(
+      existingTask.teamId,
+      userId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
+
     const comments = await TaskService.getTaskComments(taskId);
     return { success: true, data: comments };
   } catch (err) {
@@ -208,6 +263,18 @@ export async function createTaskCommentAction(payload: {
       };
 
     const userId = await resolveActionUserId();
+    const existingTask = await TaskService.getTaskById(parseResult.data.taskId);
+    if (!existingTask) {
+      return { success: false, error: "Task not found" };
+    }
+    const isMember = await TeamService.isTeamMember(
+      existingTask.teamId,
+      userId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
+
     const comment = await TaskService.createTaskComment({
       taskId: parseResult.data.taskId,
       userId,

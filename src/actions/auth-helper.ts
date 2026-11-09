@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export interface ActionResult<T = unknown> {
   success: boolean;
@@ -41,6 +42,12 @@ export async function resolveActionUserId(
 
   if (isDevOrTest) {
     if (explicitId && explicitId !== "me") return explicitId;
+    const [primaryUser] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, "usr_alex_rivera"))
+      .limit(1);
+    if (primaryUser) return primaryUser.id;
     const [firstUser] = await db.select({ id: user.id }).from(user).limit(1);
     return firstUser?.id || "usr-primary";
   }

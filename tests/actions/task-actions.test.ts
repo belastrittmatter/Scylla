@@ -1,6 +1,11 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { eq } from "drizzle-orm";
+import { db } from "../../src/db";
+import { user } from "../../src/db/schema";
 import { seedDefaultWorkspace } from "../../src/services/task-seed";
 import { TeamService } from "../../src/services/team/team-service";
+import { TaskService } from "../../src/services/task/task-service";
+import { resolveActionUserId } from "../../src/actions/auth-helper";
 import {
   getWorkspaceDataAction,
   createTaskAction,
@@ -17,13 +22,12 @@ describe("Task Server Actions with Core Domain Services", () => {
   let testTaskId: string;
 
   beforeAll(async () => {
-    await seedDefaultWorkspace();
-    const ws = await getWorkspaceDataAction();
-    const ownerId = ws.data!.teams[0].ownerId;
+    const actingUserId = await resolveActionUserId();
+    await seedDefaultWorkspace(actingUserId);
     const tempTeam = await TeamService.createTeam({
       name: `Action Test Team ${Date.now()}`,
       slug: `action-test-team-${Date.now()}`,
-      ownerId,
+      ownerId: actingUserId,
     });
     testTeamId = tempTeam.id;
   });
@@ -105,5 +109,96 @@ describe("Task Server Actions with Core Domain Services", () => {
     expect(
       listRes.data!.some((c) => c.content === "Automated test comment content"),
     ).toBe(true);
+  });
+
+  describe("Security: Workspace and Team Authorization Guards (#93)", () => {
+    let foreignTeamId: string;
+    let foreignTaskId: string;
+    let foreignUserId: string;
+
+    beforeAll(async () => {
+      const [foreignUser] = await db
+        .insert(user)
+        .values({
+          id: `usr_foreign_${Date.now()}`,
+          name: "Foreign User",
+          email: `foreign-${Date.now()}@example.com`,
+        })
+        .returning();
+      foreignUserId = foreignUser.id;
+
+      const fTeam = await TeamService.createTeam({
+        name: `Foreign Team ${Date.now()}`,
+        slug: `foreign-team-${Date.now()}`,
+        ownerId: foreignUserId,
+      });
+      foreignTeamId = fTeam.id;
+
+      const fTask = await TaskService.createTask({
+        title: "Foreign Secret Task",
+        teamId: foreignTeamId,
+        creatorId: foreignUserId,
+        status: "todo",
+        priority: "medium",
+      });
+      foreignTaskId = fTask.id;
+    });
+
+    afterAll(async () => {
+      if (foreignTeamId) {
+        await TeamService.deleteTeam(foreignTeamId);
+      }
+      if (foreignUserId) {
+        await db.delete(user).where(eq(user.id, foreignUserId));
+      }
+    });
+
+    test("createProjectAction rejects non-members", async () => {
+      const res = await createProjectAction({
+        teamId: foreignTeamId,
+        name: "Unauthorized Project",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
+
+    test("createTaskAction rejects non-members", async () => {
+      const res = await createTaskAction({
+        teamId: foreignTeamId,
+        title: "Unauthorized Task",
+        status: "todo",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
+
+    test("updateTaskAction rejects non-members", async () => {
+      const res = await updateTaskAction(foreignTaskId, {
+        title: "Hacked Task Title",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
+
+    test("updateTaskStatusAction rejects non-members", async () => {
+      const res = await updateTaskStatusAction(foreignTaskId, "done");
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
+
+    test("getTaskCommentsAction rejects non-members", async () => {
+      const res = await getTaskCommentsAction(foreignTaskId);
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
+
+    test("createTaskCommentAction rejects non-members", async () => {
+      const res = await createTaskCommentAction({
+        taskId: foreignTaskId,
+        content: "Unauthorized comment",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
   });
 });

@@ -294,6 +294,37 @@ describe("Server Actions Layer", () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain("not found");
     });
+
+    test("rescheduleBookingAction and cancelBookingAction reject non-organizer / non-attendee callers", async () => {
+      const { user: userTable } = await import("../../src/db/schema");
+      const [fUser] = await db
+        .insert(userTable)
+        .values({
+          id: `usr_forg_${Date.now()}`,
+          name: "Foreign Organizer",
+          email: `forg-${Date.now()}@example.com`,
+        })
+        .returning();
+
+      const { BookingService } = await import("../../src/services/booking");
+      const foreignBooking = await BookingService.createBooking({
+        organizerUserId: fUser.id,
+        title: "Foreign Secret Meeting",
+        startTime: "2026-11-20T10:00:00.000Z",
+        endTime: "2026-11-20T10:30:00.000Z",
+      });
+
+      const rescheduleRes = await rescheduleBookingAction(foreignBooking.id, {
+        startTime: "2026-11-20T11:00:00.000Z",
+        endTime: "2026-11-20T11:30:00.000Z",
+      });
+      expect(rescheduleRes.success).toBe(false);
+      expect(rescheduleRes.error).toMatch(/Access denied|Unauthorized/i);
+
+      const cancelRes = await cancelBookingAction(foreignBooking.id);
+      expect(cancelRes.success).toBe(false);
+      expect(cancelRes.error).toMatch(/Access denied|Unauthorized/i);
+    });
   });
 
   describe("resolveActionUserId security hardening", () => {
