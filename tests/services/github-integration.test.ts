@@ -796,6 +796,12 @@ describe("GithubIntegrationService (Jira-grade Git Linking)", () => {
       init?: RequestInit,
     ) => {
       const urlStr = url.toString();
+      if (urlStr.includes("/issues/123/assignees") && init?.method === "POST") {
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       if (urlStr.includes("/issues/123") && init?.method === "PATCH") {
         lastPatchBody = JSON.parse(init.body as string);
         return new Response(JSON.stringify({ ok: true }), {
