@@ -110,9 +110,11 @@ describe("Server Actions Layer", () => {
   describe("findSlotsAction", () => {
     test("finds available slots for valid parameters", async () => {
       const now = new Date();
-      // Pick next Monday at 09:00 UTC
+      // Pick next Monday at 09:00 UTC using UTC date accessors to prevent race conditions with tests mutating process.env.TZ
       const nextMonday = new Date(now);
-      nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+      nextMonday.setUTCDate(
+        now.getUTCDate() + ((1 + 7 - now.getUTCDay()) % 7 || 7),
+      );
       nextMonday.setUTCHours(9, 0, 0, 0);
 
       const endWindow = new Date(nextMonday);
