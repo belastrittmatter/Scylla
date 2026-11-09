@@ -9,8 +9,30 @@ import { isUniqueConstraintError, resolveUserId } from "@/services/api-utils";
 
 export async function GET(req: Request) {
   try {
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const url = new URL(req.url);
     const teamId = url.searchParams.get("teamId");
+
+    if (teamId) {
+      const targetTeam = await TeamService.getTeamById(teamId);
+      if (!targetTeam) {
+        return Response.json(
+          { error: `Team with id "${teamId}" not found` },
+          { status: 404 },
+        );
+      }
+      const isMember = await TeamService.isTeamMember(teamId, userId);
+      if (!isMember) {
+        return Response.json(
+          { error: "Forbidden: Not a member of this team" },
+          { status: 403 },
+        );
+      }
+    }
 
     const slug = url.searchParams.get("slug");
     if (slug) {
@@ -48,11 +70,6 @@ export async function GET(req: Request) {
       return Response.json(projects, { status: 200 });
     }
 
-    const userId = await resolveUserId(req);
-    if (!userId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const userTeams = await TeamService.listUserTeams(userId);
     const teamIds = userTeams.map((t) => t.id);
     if (teamIds.length === 0) {
@@ -74,6 +91,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     let body: unknown;
     try {
       body = await req.json();
@@ -92,20 +114,27 @@ export async function POST(req: Request) {
       );
     }
 
-    const userId = await resolveUserId(req);
+    const targetTeam = await TeamService.getTeamById(parseResult.data.teamId);
+    if (!targetTeam) {
+      return Response.json(
+        { error: `Team with id "${parseResult.data.teamId}" not found` },
+        { status: 404 },
+      );
+    }
+
+    const isAuthorized = await TeamService.isTeamAdminOrOwner(
+      parseResult.data.teamId,
+      userId,
+    );
+    if (!isAuthorized) {
+      return Response.json(
+        { error: "Forbidden: Only team owners and admins can create projects" },
+        { status: 403 },
+      );
+    }
 
     let targetGithubRepo = parseResult.data.githubRepo?.trim() || null;
     if (parseResult.data.createNewRepo) {
-      if (!userId) {
-        return Response.json(
-          {
-            error:
-              "Unauthorized: Active user session required to create GitHub repository",
-          },
-          { status: 401 },
-        );
-      }
-
       const { validateGithubRepoName } =
         await import("@/lib/github-validation");
       const validation = validateGithubRepoName(
@@ -141,15 +170,13 @@ export async function POST(req: Request) {
 
     if (newProject.githubRepo?.trim()) {
       try {
-        if (userId) {
-          const { GithubIntegrationService } =
-            await import("@/services/github/github-integration-service");
-          await GithubIntegrationService.inviteTeamCollaborators(
-            newProject.teamId,
-            newProject.githubRepo.trim(),
-            userId,
-          );
-        }
+        const { GithubIntegrationService } =
+          await import("@/services/github/github-integration-service");
+        await GithubIntegrationService.inviteTeamCollaborators(
+          newProject.teamId,
+          newProject.githubRepo.trim(),
+          userId,
+        );
       } catch (inviteErr) {
         console.warn(
           "Failed to auto-invite team collaborators to GitHub repo:",
