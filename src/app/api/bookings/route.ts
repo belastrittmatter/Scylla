@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     }
 
     if (!organizerUserId && process.env.NODE_ENV === "test") {
-      organizerUserId = req.headers.get("x-user-id") || data.organizerUserId;
+      organizerUserId = data.organizerUserId;
     }
 
     if (!organizerUserId) {

@@ -126,6 +126,22 @@ describe("Issue #99 Authorization & Hardening", () => {
       })
       .returning();
 
+    // 0. The x-user-id header is never a source of identity
+    const reqHeaderOnly = new Request("http://localhost:3000/api/bookings", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-user-id": organizer.id,
+      },
+      body: JSON.stringify({
+        title: "Header-only identity",
+        startTime: new Date(Date.now() + 3600000).toISOString(),
+        endTime: new Date(Date.now() + 7200000).toISOString(),
+        attendees: [{ email: "guest@example.com", name: "Guest" }],
+      }),
+    });
+    expect((await createBookingHandler(reqHeaderOnly)).status).toBe(401);
+
     // 1. Rejects foreign project where organizer is not a team member
     const reqForeignProject = new Request(
       "http://localhost:3000/api/bookings",
@@ -133,13 +149,13 @@ describe("Issue #99 Authorization & Hardening", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-user-id": organizer.id,
         },
         body: JSON.stringify({
           title: "Meeting with foreign project",
           startTime: new Date(Date.now() + 3600000).toISOString(),
           endTime: new Date(Date.now() + 7200000).toISOString(),
           attendees: [{ email: "guest@example.com", name: "Guest" }],
+          organizerUserId: organizer.id,
           projectId: foreignProject.id,
         }),
       },
@@ -152,13 +168,13 @@ describe("Issue #99 Authorization & Hardening", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-user-id": organizer.id,
       },
       body: JSON.stringify({
         title: "Meeting with fake room",
         startTime: new Date(Date.now() + 3600000).toISOString(),
         endTime: new Date(Date.now() + 7200000).toISOString(),
         attendees: [{ email: "guest@example.com", name: "Guest" }],
+        organizerUserId: organizer.id,
         roomId: "room_non_existent_uuid",
       }),
     });
@@ -172,13 +188,13 @@ describe("Issue #99 Authorization & Hardening", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-user-id": organizer.id,
         },
         body: JSON.stringify({
           title: "Meeting with foreign event type",
           startTime: new Date(Date.now() + 3600000).toISOString(),
           endTime: new Date(Date.now() + 7200000).toISOString(),
           attendees: [{ email: "guest@example.com", name: "Guest" }],
+          organizerUserId: organizer.id,
           eventTypeId: foreignEventType.id,
         }),
       },
