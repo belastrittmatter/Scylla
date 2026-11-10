@@ -1,20 +1,14 @@
 "use client";
 
 import * as React from "react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-} from "@/components/ui/drawer";
+import { format } from "date-fns";
+import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { dueDateToInput, inputToDueDate } from "./task-utils";
-import { TaskDrawerForm } from "./task-drawer-form";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { TaskCommentSection } from "./task-comment-section";
+import { TaskDrawerSidebar } from "./task-drawer-sidebar";
+import { TaskDrawerHeader } from "./task-drawer-header";
 import { TaskDrawerDeleteButton } from "./task-drawer-delete-button";
-import { TaskGithubDevelopmentCard } from "./task-github-development-card";
 import type {
   TaskItem,
   TaskPriority,
@@ -53,6 +47,9 @@ function TaskDrawerInner({
   readOnly,
 }: TaskDrawerProps & { task: TaskItem }) {
   const isDraft = task.id.startsWith("draft-");
+  const isLinkedWithGithub = Boolean(
+    task.githubIssueNumber || task.project?.githubRepo,
+  );
   const [title, setTitle] = React.useState(task.title);
   const [description, setDescription] = React.useState(task.description || "");
   const [status, setStatus] = React.useState<TaskStatus>(
@@ -65,15 +62,14 @@ function TaskDrawerInner({
     task.assigneeId || "unassigned",
   );
   const [dueDateStr, setDueDateStr] = React.useState(
-    dueDateToInput(task.dueDate),
+    task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "",
   );
   const [estimatedMinutes, setEstimatedMinutes] = React.useState<number>(
     task.estimatedMinutes ?? 60,
   );
-
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (shouldClose: boolean = false) => {
     if (readOnly || !title.trim() || isSaving) return;
 
     const matchedAssignee =
@@ -89,14 +85,17 @@ function TaskDrawerInner({
       priority,
       assigneeId: assigneeId === "unassigned" ? null : assigneeId,
       assignee: matchedAssignee,
-      dueDate: inputToDueDate(dueDateStr),
+      dueDate: dueDateStr ? new Date(`${dueDateStr}T18:00:00Z`) : null,
       estimatedMinutes,
       updatedAt: new Date(),
     };
 
     setIsSaving(true);
     try {
-      if (await onSaveTask(updated)) onClose();
+      const ok = await onSaveTask(updated);
+      if (ok && (shouldClose || isDraft)) {
+        onClose();
+      }
     } finally {
       setIsSaving(false);
     }
@@ -105,7 +104,7 @@ function TaskDrawerInner({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
-      void handleSave();
+      void handleSave(false);
     }
   };
 
@@ -118,88 +117,122 @@ function TaskDrawerInner({
     >
       <DrawerContent
         onKeyDown={handleKeyDown}
-        className="flex h-full w-full flex-col sm:max-w-md"
+        className="flex h-full w-full flex-col data-[swipe-axis=x]:sm:[--drawer-content-width:46rem] data-[swipe-axis=x]:md:[--drawer-content-width:58rem] data-[swipe-axis=x]:lg:[--drawer-content-width:70rem] data-[swipe-axis=x]:xl:[--drawer-content-width:80rem] max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl"
       >
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-6">
-          <DrawerHeader className="border-b border-border p-0 pb-3 text-left">
-            <DrawerTitle className="text-lg font-semibold text-foreground">
-              {isDraft ? "Create Task" : "Task Details"}
-            </DrawerTitle>
-            <DrawerDescription className="text-xs text-muted-foreground">
-              {isDraft
-                ? "Enter task details, priority, assignee, and target deadline."
-                : "Update task metadata, priority, assignee, and target deadline."}{" "}
-              Press{" "}
-              <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-muted-foreground">
-                ⌘+Enter
-              </kbd>{" "}
-              to save.
-            </DrawerDescription>
-          </DrawerHeader>
+        {/* Main Content Area */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5 md:p-7 space-y-6">
+          {/* Header */}
+          <TaskDrawerHeader
+            task={task}
+            title={title}
+            status={status}
+            isDraft={isDraft}
+            isLinkedWithGithub={isLinkedWithGithub}
+            onTitleChange={setTitle}
+            onClose={onClose}
+          />
 
-          <fieldset disabled={readOnly} className="contents">
-            <TaskDrawerForm
-              title={title}
-              description={description}
+          {/* Main 2-Column Body */}
+          <div className="flex flex-col lg:flex-row gap-7 items-start">
+            {/* Left Primary Column: Description & Comments */}
+            <div className="flex-1 w-full min-w-0 space-y-6">
+              {/* Description Markdown Editor */}
+              <div className="space-y-1.5">
+                <MarkdownEditor
+                  id="task-description"
+                  value={description}
+                  onChange={setDescription}
+                  minRows={10}
+                  minHeightClassName="min-h-[260px]"
+                  placeholder="Add a detailed description, acceptance criteria, checklists (- [ ]), tables, or notes (Markdown supported)..."
+                />
+              </div>
+
+              {/* Discussion & Comment Thread */}
+              {!isDraft && (
+                <div className="pt-2">
+                  <TaskCommentSection
+                    taskId={task.id}
+                    users={users}
+                    task={task}
+                    readOnly={readOnly}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Properties Sidebar (Status, Priority, Assignee, Estimate, GitHub Dev) */}
+            <TaskDrawerSidebar
+              task={task}
+              isDraft={isDraft}
+              users={users}
+              assigneeId={assigneeId}
               status={status}
               priority={priority}
-              assigneeId={assigneeId}
               dueDateStr={dueDateStr}
               estimatedMinutes={estimatedMinutes}
-              users={users}
-              onTitleChange={setTitle}
-              onDescriptionChange={setDescription}
+              isLinkedWithGithub={isLinkedWithGithub}
+              onAssigneeChange={setAssigneeId}
               onStatusChange={setStatus}
               onPriorityChange={setPriority}
-              onAssigneeChange={setAssigneeId}
               onDueDateChange={setDueDateStr}
               onEstimatedMinutesChange={setEstimatedMinutes}
+              onTaskUpdated={(updated) => {
+                setStatus(updated.status as TaskStatus);
+                void onSaveTask(updated);
+              }}
             />
-          </fieldset>
-
-          {/* GitHub Development Card: Branch & PR Linking */}
-          {!isDraft &&
-            Boolean(task.project?.githubRepo || task.githubIssueNumber) && (
-              <TaskGithubDevelopmentCard
-                task={task}
-                onTaskUpdated={(updated) => {
-                  if (updated.status) setStatus(updated.status as TaskStatus);
-                  void onSaveTask(updated);
-                }}
-              />
-            )}
-
-          {!isDraft && (
-            <TaskCommentSection taskId={task.id} readOnly={readOnly} />
-          )}
+          </div>
         </div>
 
-        <DrawerFooter className="flex shrink-0 flex-row justify-end gap-2 border-t border-border p-4">
-          {!isDraft && onDeleteTask && (
-            <TaskDrawerDeleteButton
-              title={task.title}
-              onDelete={onDeleteTask}
-              onDeleted={onClose}
-            />
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-            className="text-sm"
-          >
-            Cancel
-          </Button>
-          {!readOnly && (
+        {/* Sticky Footer */}
+        <DrawerFooter className="flex shrink-0 flex-row items-center justify-between gap-2 border-t border-neutral-200/80 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md px-6 py-3.5">
+          <div className="text-xs text-neutral-500 dark:text-neutral-400 hidden sm:block">
+            Press{" "}
+            <kbd className="rounded bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 font-mono text-[11px] text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+              ⌘+Enter
+            </kbd>{" "}
+            to save changes without closing
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            {!isDraft && onDeleteTask && (
+              <TaskDrawerDeleteButton
+                title={task.title}
+                onDelete={onDeleteTask}
+                onDeleted={onClose}
+              />
+            )}
             <Button
+              variant="outline"
               size="sm"
-              onClick={() => void handleSave()}
-              disabled={!title.trim() || isSaving}
-              className="text-sm"
+              onClick={onClose}
+              className="text-xs h-8 px-3 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
-              {isDraft ? "Create Task" : "Save Changes"}
+              {isDraft ? "Cancel" : "Close"}
             </Button>
-          )}
+            {!isDraft && !readOnly && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleSave(true)}
+                disabled={!title.trim() || isSaving}
+                className="text-xs h-8 px-3 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                Save & Close
+              </Button>
+            )}
+            {!readOnly && (
+              <Button
+                size="sm"
+                onClick={() => void handleSave(isDraft)}
+                disabled={!title.trim() || isSaving}
+                className="text-xs h-8 px-4 font-medium"
+              >
+                {isDraft ? "Create Task" : "Save Changes"}
+              </Button>
+            )}
+          </div>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

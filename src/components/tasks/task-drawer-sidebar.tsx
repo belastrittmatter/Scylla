@@ -20,7 +20,6 @@ import {
 import { TaskDatePicker } from "./task-date-picker";
 import { AssigneeSearchPicker } from "./assignee-search-picker";
 import { TaskGithubDevelopmentCard } from "./task-github-development-card";
-import { validateTaskTransitionRule } from "@/services/task/task-rules";
 import {
   TASK_FORM_STATUSES,
   TASK_FORM_PRIORITIES,
@@ -34,12 +33,6 @@ export interface TaskDrawerSidebarProps {
   task: TaskItem;
   isDraft: boolean;
   users: TaskUser[];
-  currentUser?: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-  } | null;
-  currentTeamRole?: string | null;
   assigneeId: string;
   status: TaskStatus;
   priority: TaskPriority;
@@ -58,8 +51,6 @@ export function TaskDrawerSidebar({
   task,
   isDraft,
   users,
-  currentUser,
-  currentTeamRole,
   assigneeId,
   status,
   priority,
@@ -115,37 +106,18 @@ export function TaskDrawerSidebar({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {TASK_FORM_STATUSES.map((item) => {
-              const ruleCheck =
-                isDraft || item.value === task.status
-                  ? { allowed: true }
-                  : validateTaskTransitionRule({
-                      task,
-                      targetStatus: item.value,
-                      currentUser,
-                      currentTeamRole,
-                      isProjectLinkedToGithub: isLinkedWithGithub,
-                    });
-
-              return (
-                <SelectItem
-                  key={item.value}
-                  value={item.value}
-                  disabled={!ruleCheck.allowed}
-                  className="text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`size-2 rounded-full ${item.dot}`} />
-                    <span>{item.label}</span>
-                    {!ruleCheck.allowed && (
-                      <span className="text-[10px] text-muted-foreground italic ml-1">
-                        (restricted)
-                      </span>
-                    )}
-                  </div>
-                </SelectItem>
-              );
-            })}
+            {TASK_FORM_STATUSES.map((item) => (
+              <SelectItem
+                key={item.value}
+                value={item.value}
+                className="text-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`size-2 rounded-full ${item.dot}`} />
+                  <span>{item.label}</span>
+                </div>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
