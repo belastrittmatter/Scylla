@@ -94,7 +94,7 @@ export async function findSlotsAction(
   params: FindSlotsParams,
 ): Promise<ActionResult<TimeSlot[]>> {
   try {
-    await resolveActionUserId();
+    const userId = await resolveActionUserId();
     const parseResult = FindSlotsParamsSchema.safeParse(params);
     if (!parseResult.success) {
       return {
@@ -102,7 +102,11 @@ export async function findSlotsAction(
         error: parseResult.error.issues.map((i) => i.message).join(", "),
       };
     }
-    const slots = await SchedulerService.findSlots(parseResult.data);
+    // Google free/busy is only read with the caller's own credentials, as in POST /api/slots/find.
+    const slots = await SchedulerService.findSlots({
+      ...parseResult.data,
+      ...(await googleOptionsFor(userId)),
+    });
     return { success: true, data: slots };
   } catch (err) {
     return {
