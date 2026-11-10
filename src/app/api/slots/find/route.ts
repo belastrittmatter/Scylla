@@ -46,15 +46,14 @@ export async function POST(req: Request) {
       for (const t of teammates) allowedUserIds.add(t.userId);
     }
 
-    const requestedAttendees = parseResult.data.attendees.map((a) =>
-      a.toLowerCase(),
-    );
+    const trimmedAttendees = parseResult.data.attendees.map((a) => a.trim());
+    const requestedAttendees = trimmedAttendees.map((a) => a.toLowerCase());
     const matchedUsers = await db
       .select({ id: user.id, email: user.email })
       .from(user)
       .where(
         or(
-          inArray(user.id, parseResult.data.attendees),
+          inArray(user.id, trimmedAttendees),
           inArray(user.email, requestedAttendees),
         ),
       );

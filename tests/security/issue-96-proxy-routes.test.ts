@@ -12,7 +12,7 @@ import {
   POST as createEventTypeHandler,
 } from "@/app/api/event-types/route";
 import { db } from "@/db";
-import { eventType } from "@/db/schema";
+import { eventType, user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 describe("Security Issue #96: Proxy and Route Session Hardening", () => {
@@ -161,4 +161,54 @@ describe("Security Issue #96: Proxy and Route Session Hardening", () => {
       await db.delete(eventType).where(eq(eventType.id, data.id));
     }
   });
+});
+
+it("POST /api/slots/find rejects cross-tenant user query even with leading spaces in attendees", async () => {
+  // usr_alex_rivera belongs to team-alpha. We create a foreign user in a separate team.
+  const foreignUser = await db
+    .insert(user)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Foreign User",
+      email: `foreign-${Date.now()}@other.com`,
+    })
+    .returning();
+
+  try {
+    const res = await findSlotsHandler(
+      new Request("http://localhost:3000/api/slots/find", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": "usr_alex_rivera",
+        },
+        body: JSON.stringify({
+          attendees: [`  ${foreignUser[0].email}  `],
+          startDate: "2026-10-19T08:00:00.000Z",
+          endDate: "2026-10-19T18:00:00.000Z",
+        }),
+      }),
+    );
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toContain("Forbidden");
+  } finally {
+    await db.delete(user).where(eq(user.id, foreignUser[0].id));
+  }
+});
+
+it("GET /api/calendar/busy rejects spoofed room email suffix", async () => {
+  const res = await getBusyHandler(
+    new Request(
+      "http://localhost:3000/api/calendar/busy?emails=x+resource.calendar.google.com@evil.com",
+      {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      },
+    ),
+  );
+  expect(res.status).toBe(200);
+  const data = await res.json();
+  // evil domain should not be recognized as a valid room
+  const evilEntry = data.calendars?.["x+resource.calendar.google.com@evil.com"];
+  expect(evilEntry).toBeUndefined();
 });

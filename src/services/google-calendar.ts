@@ -826,11 +826,22 @@ export class GoogleCalendarService {
                 : undefined,
           };
 
+    const accountRec = options.accountRecord as
+      { id?: string; userId?: string } | undefined;
     const accountKey =
-      (options.accountRecord as { id?: string })?.id ||
+      accountRec?.userId ||
+      accountRec?.id ||
       (options.accessToken
         ? `token:${options.accessToken.slice(-16)}`
-        : "global");
+        : "user:anonymous");
+
+    // Evict expired entries periodically to prevent memory leak
+    const now = Date.now();
+    for (const [key, entry] of this.cachedUsersByAccount.entries()) {
+      if (entry.expiresAt <= now) {
+        this.cachedUsersByAccount.delete(key);
+      }
+    }
 
     const cached = this.cachedUsersByAccount.get(accountKey);
     if (cached && Date.now() < cached.expiresAt && cached.data.length > 0) {

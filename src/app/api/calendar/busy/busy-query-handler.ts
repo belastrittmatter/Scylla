@@ -2,34 +2,13 @@ import { GoogleCalendarService } from "@/services/google-calendar";
 import { db } from "@/db";
 import { account, booking, meetingRoom, user, teamMember } from "@/db/schema";
 import { eq, inArray, and, lte, gte, or } from "drizzle-orm";
+import type {
+  BusyInterval,
+  CalendarBusyInfo,
+  BusyEventItem,
+} from "./busy-types";
 
-export interface BusyInterval {
-  start: string;
-  end: string;
-  source?: "google" | "db";
-}
-
-export interface CalendarBusyInfo {
-  name: string;
-  email: string;
-  type: "user" | "room";
-  busy: BusyInterval[];
-}
-
-export interface BusyEventItem {
-  id: string;
-  title: string;
-  description: string;
-  start: string;
-  end: string;
-  color: string;
-  attendee: {
-    name: string;
-    email: string;
-    type: "user" | "room";
-  };
-  source: "google" | "db";
-}
+export type { BusyInterval, CalendarBusyInfo, BusyEventItem };
 
 const PALETTE = [
   "#e11d48",
@@ -60,14 +39,6 @@ export async function handleBusyQuery(params: {
   const timeMax = params.timeMax || defaultMax;
   const startDate = new Date(timeMin);
   const endDate = new Date(timeMax);
-
-  if (
-    isNaN(startDate.getTime()) ||
-    isNaN(endDate.getTime()) ||
-    startDate >= endDate
-  ) {
-    throw new Error("Invalid time range: timeMin must be before timeMax");
-  }
 
   if (
     isNaN(startDate.getTime()) ||
@@ -171,7 +142,7 @@ export async function handleBusyQuery(params: {
       if (
         trimmed &&
         (targetEmails.has(trimmed) ||
-          trimmed.includes("resource.calendar.google.com"))
+          trimmed.endsWith("@resource.calendar.google.com"))
       ) {
         targetEmails.add(trimmed);
       }
@@ -187,7 +158,7 @@ export async function handleBusyQuery(params: {
       email: em,
       type:
         meta?.type ||
-        (em.includes("resource.calendar.google.com") ? "room" : "user"),
+        (em.endsWith("@resource.calendar.google.com") ? "room" : "user"),
       busy: [],
     };
   }

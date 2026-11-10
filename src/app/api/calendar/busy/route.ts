@@ -63,12 +63,12 @@ export async function GET(req: Request) {
   } catch (err) {
     const isBadInput =
       err instanceof Error && err.message.includes("Invalid time range");
+    if (isBadInput) {
+      return Response.json({ error: (err as Error).message }, { status: 400 });
+    }
     return Response.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Failed to fetch busy schedules",
-      },
-      { status: isBadInput ? 400 : 500 },
+      { error: "Failed to fetch busy schedules" },
+      { status: 500 },
     );
   }
 }
@@ -115,12 +115,12 @@ export async function POST(req: Request) {
   } catch (err) {
     const isBadInput =
       err instanceof Error && err.message.includes("Invalid time range");
+    if (isBadInput) {
+      return Response.json({ error: (err as Error).message }, { status: 400 });
+    }
     return Response.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Failed to fetch busy schedules",
-      },
-      { status: isBadInput ? 400 : 500 },
+      { error: "Failed to fetch busy schedules" },
+      { status: 500 },
     );
   }
 }
