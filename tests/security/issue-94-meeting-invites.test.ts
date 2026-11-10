@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, beforeAll, afterAll } from "bun:test";
 import { POST as createInviteHandler } from "@/app/api/meeting-invites/route";
 import { GET as getInviteHandler } from "@/app/api/meeting-invites/[slug]/route";
 import { MeetingInviteService } from "@/services/meeting-invite";
@@ -7,13 +7,33 @@ import { user, meetingInvite, booking } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 describe("Security Issue #94: Meeting Invites Hardening", () => {
+  let testOrganizerId: string;
+
+  beforeAll(async () => {
+    testOrganizerId = `test-org-${Date.now()}`;
+    await db.insert(user).values({
+      id: testOrganizerId,
+      name: "Test Organizer 94",
+      email: `test-org-94-${Date.now()}@example.com`,
+    });
+  });
+
+  afterAll(async () => {
+    if (testOrganizerId) {
+      await db
+        .delete(meetingInvite)
+        .where(eq(meetingInvite.organizerUserId, testOrganizerId));
+      await db.delete(user).where(eq(user.id, testOrganizerId));
+    }
+  });
+
   it("POST /api/meeting-invites rejects unauthenticated requests with 401", async () => {
     const req = new Request("http://localhost:3000/api/meeting-invites", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: "Impersonated Meeting",
-        organizerUserId: "usr_alex_rivera",
+        organizerUserId: testOrganizerId,
       }),
     });
 
@@ -25,7 +45,7 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     const invite = await MeetingInviteService.createInvite({
       title: "Confidential Strategy Session",
       duration: 30,
-      organizerUserId: "usr_alex_rivera",
+      organizerUserId: testOrganizerId,
       memberEmails: ["internal-secret@company.com"],
       isRestricted: true,
       allowedEmails: ["vip-client@confidential.com"],
@@ -51,7 +71,7 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     const invite = await MeetingInviteService.createInvite({
       title: "Strict 30m Sync",
       duration: 30,
-      organizerUserId: "usr_alex_rivera",
+      organizerUserId: testOrganizerId,
       memberEmails: [],
     });
 
@@ -80,7 +100,7 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     const invite = await MeetingInviteService.createInvite({
       title: "Future Only Meeting",
       duration: 30,
-      organizerUserId: "usr_alex_rivera",
+      organizerUserId: testOrganizerId,
       memberEmails: [],
     });
 
@@ -102,19 +122,10 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
   });
 
   it("bookSlot prevents re-booking an already booked invite", async () => {
-    const [testOrg] = await db
-      .insert(user)
-      .values({
-        id: `org-test-${Date.now()}`,
-        name: "Test Org",
-        email: `org-${Date.now()}@example.com`,
-      })
-      .returning();
-
     const invite = await MeetingInviteService.createInvite({
       title: "Single Use Coffee Chat",
       duration: 30,
-      organizerUserId: testOrg.id,
+      organizerUserId: testOrganizerId,
       memberEmails: [],
     });
 
@@ -154,6 +165,5 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     if (firstBooking.booking?.id) {
       await db.delete(booking).where(eq(booking.id, firstBooking.booking.id));
     }
-    await db.delete(user).where(eq(user.id, testOrg.id));
   });
 });

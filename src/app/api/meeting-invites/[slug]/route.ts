@@ -1,4 +1,7 @@
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteService,
+  toPublicInviteDetails,
+} from "@/services/meeting-invite";
 
 interface RouteParams {
   params: Promise<{ slug: string }> | { slug: string };
@@ -22,35 +25,7 @@ export async function GET(_req: Request, context: RouteParams) {
       );
     }
 
-    // Public sanitized projection: do not leak participant whitelist or private email addresses
-    const publicProjection = {
-      invite: {
-        id: details.invite.id,
-        slug: details.invite.slug,
-        title: details.invite.title,
-        description: details.invite.description,
-        duration: details.invite.duration,
-        locationType: details.invite.locationType,
-        roomId: details.invite.roomId,
-        isActive: details.invite.isActive,
-        isRestricted: details.invite.isRestricted,
-      },
-      organizer: details.organizer
-        ? {
-            id: details.organizer.id,
-            name: details.organizer.name,
-            image: details.organizer.image,
-          }
-        : null,
-      room: details.room,
-      members: details.members.map((m) => ({
-        id: m.id,
-        name: m.name,
-        image: m.image,
-      })),
-    };
-
-    return Response.json(publicProjection, { status: 200 });
+    return Response.json(toPublicInviteDetails(details), { status: 200 });
   } catch (err) {
     return Response.json(
       {

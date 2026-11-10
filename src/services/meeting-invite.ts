@@ -7,30 +7,20 @@ import {
   booking,
   type MeetingInvite,
 } from "@/db/schema";
-import { eq, desc, inArray, and, gte, lte, or } from "drizzle-orm";
+import { eq, desc, inArray, and, gte, lte, or, isNull } from "drizzle-orm";
 import { SchedulerService, type TimeSlot } from "./scheduler";
 import { BookingService } from "./booking";
+import {
+  type CreateMeetingInviteInput,
+  type BookMeetingInviteInput,
+  type InviteDetails,
+  toPublicInviteDetails,
+} from "./meeting-invite/meeting-invite-types";
 
-export interface CreateMeetingInviteInput {
-  title: string;
-  description?: string;
-  duration?: number;
-  organizerUserId: string;
-  memberEmails: string[];
-  locationType?: "meet" | "room";
-  roomId?: string;
-  isRestricted?: boolean;
-  allowedEmails?: string[];
-}
+import { getAvailableSlotsForInvite } from "./meeting-invite/meeting-invite-slots";
 
-export interface BookMeetingInviteInput {
-  slug: string;
-  guestName: string;
-  guestEmail: string;
-  startTime: string; // ISO string
-  endTime: string; // ISO string
-  notes?: string;
-}
+export type { CreateMeetingInviteInput, BookMeetingInviteInput, InviteDetails };
+export { toPublicInviteDetails };
 
 export class MeetingInviteService {
   /**
@@ -143,45 +133,7 @@ export class MeetingInviteService {
     if (!details || !details.invite.isActive) {
       throw new Error("Meeting invite not found or inactive");
     }
-
-    const { invite, organizer } = details;
-    const allAttendees = new Set<string>();
-    if (organizer?.email) allAttendees.add(organizer.email.toLowerCase());
-    for (const email of invite.memberEmails) {
-      allAttendees.add(email.toLowerCase());
-    }
-
-    // Compute a search window around the requested date
-    const baseDate = new Date(`${dateStr}T12:00:00.000Z`);
-    const startDate = new Date(
-      baseDate.getTime() - 24 * 3600 * 1000,
-    ).toISOString();
-    const endDate = new Date(
-      baseDate.getTime() + 24 * 3600 * 1000,
-    ).toISOString();
-
-    const slots = await SchedulerService.findSlots({
-      attendees: Array.from(allAttendees),
-      durationMinutes: invite.duration,
-      startDate,
-      endDate,
-      roomId: invite.roomId || undefined,
-      timeZone,
-    });
-
-    const dateFormatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-
-    // Return only available slots that match the requested date in the specified timeZone
-    return slots.filter((s) => {
-      if (!s.available) return false;
-      const slotDate = dateFormatter.format(new Date(s.start));
-      return slotDate === dateStr;
-    });
+    return getAvailableSlotsForInvite(details, dateStr, timeZone);
   }
 
   public static async bookSlot(input: BookMeetingInviteInput) {
@@ -271,25 +223,58 @@ export class MeetingInviteService {
       .filter(Boolean)
       .join("\n");
 
-    const createdBooking = await BookingService.createBooking({
-      title: `${invite.title} - ${input.guestName}`,
-      description,
-      organizerUserId: invite.organizerUserId,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      roomId: invite.roomId || undefined,
-      attendees,
-    });
-
-    // Link booking to invite and deactivate it to prevent reuse
-    await db
+    // Atomically claim the invite and deactivate it to prevent concurrent double-booking
+    const [claimedInvite] = await db
       .update(meetingInvite)
-      .set({ bookingId: createdBooking.id, isActive: false })
-      .where(eq(meetingInvite.id, invite.id));
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(meetingInvite.id, invite.id),
+          eq(meetingInvite.isActive, true),
+          isNull(meetingInvite.bookingId),
+        ),
+      )
+      .returning();
+
+    if (!claimedInvite) {
+      throw new Error(
+        "This meeting invitation has already been booked or is no longer active",
+      );
+    }
+
+    let createdBooking;
+    try {
+      createdBooking = await BookingService.createBooking({
+        title: `${invite.title} - ${input.guestName}`,
+        description,
+        organizerUserId: invite.organizerUserId,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        roomId: invite.roomId || undefined,
+        attendees,
+      });
+
+      await db
+        .update(meetingInvite)
+        .set({ bookingId: createdBooking.id })
+        .where(eq(meetingInvite.id, invite.id));
+    } catch (createErr) {
+      await db
+        .update(meetingInvite)
+        .set({ isActive: true })
+        .where(
+          and(eq(meetingInvite.id, invite.id), isNull(meetingInvite.bookingId)),
+        );
+      throw createErr;
+    }
 
     return {
       booking: createdBooking,
-      invite,
+      invite: {
+        ...invite,
+        bookingId: createdBooking.id,
+        isActive: false,
+      },
     };
   }
 }

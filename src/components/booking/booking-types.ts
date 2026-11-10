@@ -32,7 +32,7 @@ export interface InviteData {
   description?: string | null;
   duration: number;
   organizerUserId: string;
-  memberEmails: string[];
+  memberEmails?: string[];
   locationType: "meet" | "room" | string;
   roomId?: string | null;
   isActive: boolean;
