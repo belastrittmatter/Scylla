@@ -57,6 +57,8 @@ export class BookingService {
    */
   public static async createBooking(
     payload: CreateBookingPayload,
+    // Pass a transaction to make the insert part of the caller's conflict check.
+    executor: Pick<typeof db, "insert"> = db,
   ): Promise<Booking> {
     const start = new Date(payload.startTime);
     const end = new Date(payload.endTime);
@@ -129,7 +131,7 @@ export class BookingService {
 
     try {
       // 2. Persist booking to database
-      const [newBooking] = await db
+      const [newBooking] = await executor
         .insert(booking)
         .values({
           title: payload.title,

@@ -5,11 +5,13 @@ import {
   user,
   meetingRoom,
   booking,
+  type Booking,
   type MeetingInvite,
 } from "@/db/schema";
-import { eq, desc, inArray, and, gte, lte, or, isNull } from "drizzle-orm";
-import { SchedulerService, type TimeSlot } from "./scheduler";
+import { eq, desc, inArray, and, lt, gt, or, sql } from "drizzle-orm";
+import type { TimeSlot } from "./scheduler";
 import { BookingService } from "./booking";
+import { GoogleCalendarService } from "./google-calendar";
 import {
   type CreateMeetingInviteInput,
   type BookMeetingInviteInput,
@@ -18,7 +20,10 @@ import {
   toPublicInviteDetails,
 } from "./meeting-invite/meeting-invite-types";
 
-import { getAvailableSlotsForInvite } from "./meeting-invite/meeting-invite-slots";
+import {
+  findInviteSlots,
+  getAvailableSlotsForInvite,
+} from "./meeting-invite/meeting-invite-slots";
 
 export type { CreateMeetingInviteInput, BookMeetingInviteInput, InviteDetails };
 export { toPublicInviteDetails, MeetingInviteError };
@@ -148,13 +153,6 @@ export class MeetingInviteService {
 
     const { invite, organizer } = details;
 
-    if (invite.bookingId) {
-      throw new MeetingInviteError(
-        "This meeting invitation has already been booked",
-        409,
-      );
-    }
-
     const startDate = new Date(input.startTime);
     const endDate = new Date(input.endTime);
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
@@ -192,30 +190,25 @@ export class MeetingInviteService {
       }
     }
 
-    // Verify no conflicting confirmed booking exists for organizer or room
-    const conflictBookings = await db
-      .select({ id: booking.id })
-      .from(booking)
-      .where(
-        and(
-          eq(booking.status, "confirmed"),
-          lte(booking.startTime, endDate),
-          gte(booking.endTime, startDate),
-          or(
-            eq(booking.organizerUserId, invite.organizerUserId),
-            eq(booking.userId, invite.organizerUserId),
-            invite.roomId ? eq(booking.roomId, invite.roomId) : undefined,
-          ),
-        ),
-      )
-      .limit(1);
-
-    if (conflictBookings.length > 0) {
-      throw new MeetingInviteError(
+    const slotUnavailable = () =>
+      new MeetingInviteError(
         "The selected time slot is no longer available.",
         409,
       );
-    }
+
+    // Only accept a slot the invite actually offers (same computation as the slots endpoint).
+    const offered = await findInviteSlots(
+      details,
+      startDate,
+      endDate,
+      input.timeZone,
+    );
+    const isOffered = offered.some(
+      (s) =>
+        new Date(s.start).getTime() === startDate.getTime() &&
+        new Date(s.end).getTime() === endDate.getTime(),
+    );
+    if (!isOffered) throw slotUnavailable();
 
     const attendees = [
       ...(organizer?.email ? [{ email: organizer.email.toLowerCase() }] : []),
@@ -235,61 +228,79 @@ export class MeetingInviteService {
       .filter(Boolean)
       .join("\n");
 
-    // Atomically claim the invite and deactivate it to prevent concurrent double-booking
-    const [claimedInvite] = await db
-      .update(meetingInvite)
-      .set({ isActive: false })
-      .where(
-        and(
-          eq(meetingInvite.id, invite.id),
-          eq(meetingInvite.isActive, true),
-          isNull(meetingInvite.bookingId),
-        ),
-      )
-      .returning();
-
-    if (!claimedInvite) {
-      throw new MeetingInviteError(
-        "This meeting invitation has already been booked or is no longer active",
-        409,
-      );
-    }
-
-    let createdBooking;
+    // Shareable links stay reusable: each booking must take a free offered slot,
+    // and the conflict check + insert run under a per-organizer (and per-room)
+    // lock so concurrent requests across invites cannot double-book.
+    let createdBooking: Booking | undefined;
+    let result: Booking;
     try {
-      createdBooking = await BookingService.createBooking({
-        title: `${invite.title} - ${input.guestName}`,
-        description,
-        organizerUserId: invite.organizerUserId,
-        startTime: input.startTime,
-        endTime: input.endTime,
-        roomId: invite.roomId || undefined,
-        attendees,
-      });
-
-      await db
-        .update(meetingInvite)
-        .set({ bookingId: createdBooking.id })
-        .where(eq(meetingInvite.id, invite.id));
-    } catch (createErr) {
-      await db
-        .update(meetingInvite)
-        .set({ isActive: true })
-        .where(
-          and(eq(meetingInvite.id, invite.id), isNull(meetingInvite.bookingId)),
+      result = await db.transaction(async (tx) => {
+        // Bound the wait: waiters hold a pool connection the lock holder may need.
+        await tx.execute(sql`SET LOCAL lock_timeout = '10s'`);
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(hashtext(${`organizer:${invite.organizerUserId}`}))`,
         );
-      throw createErr;
+        if (invite.roomId) {
+          await tx.execute(
+            sql`SELECT pg_advisory_xact_lock(hashtext(${`room:${invite.roomId}`}))`,
+          );
+        }
+
+        const conflicts = await tx
+          .select({ id: booking.id })
+          .from(booking)
+          .where(
+            and(
+              eq(booking.status, "confirmed"),
+              lt(booking.startTime, endDate),
+              gt(booking.endTime, startDate),
+              or(
+                eq(booking.organizerUserId, invite.organizerUserId),
+                eq(booking.userId, invite.organizerUserId),
+                invite.roomId ? eq(booking.roomId, invite.roomId) : undefined,
+              ),
+            ),
+          )
+          .limit(1);
+        if (conflicts.length > 0) throw slotUnavailable();
+
+        createdBooking = await BookingService.createBooking(
+          {
+            title: `${invite.title} - ${input.guestName}`,
+            description,
+            organizerUserId: invite.organizerUserId,
+            startTime: startDate,
+            endTime: endDate,
+            roomId: invite.roomId || undefined,
+            attendees,
+          },
+          tx,
+        );
+        return createdBooking;
+      });
+    } catch (err) {
+      // Booking row rolled back (e.g. commit failed): don't leave a live calendar event.
+      if (createdBooking?.gcalEventId) {
+        await GoogleCalendarService.deleteEvent(
+          createdBooking.gcalEventId,
+        ).catch(() => {});
+      }
+      const code =
+        (err as { code?: string }).code ??
+        (err as { cause?: { code?: string } }).cause?.code;
+      if (code === "55P03") throw slotUnavailable(); // lock_timeout
+      throw err;
     }
 
     // Public endpoint: confirmation fields only, never attendee or allow-list emails.
     return {
       booking: {
-        id: createdBooking.id,
-        title: createdBooking.title,
-        startTime: createdBooking.startTime,
-        endTime: createdBooking.endTime,
-        meetingUrl: createdBooking.meetingUrl,
-        status: createdBooking.status,
+        id: result.id,
+        title: result.title,
+        startTime: result.startTime,
+        endTime: result.endTime,
+        meetingUrl: result.meetingUrl,
+        status: result.status,
       },
       invite: toPublicInviteDetails(details).invite,
     };

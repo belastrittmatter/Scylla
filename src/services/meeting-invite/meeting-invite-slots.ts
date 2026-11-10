@@ -1,9 +1,14 @@
 import { SchedulerService, type TimeSlot } from "@/services/scheduler";
 import type { InviteDetails } from "@/services/meeting-invite/meeting-invite-types";
 
-export async function getAvailableSlotsForInvite(
+/**
+ * Free slots the invite offers inside [start, end]: organizer and member
+ * working hours, Google free/busy and confirmed DB bookings.
+ */
+export async function findInviteSlots(
   details: InviteDetails,
-  dateStr: string,
+  start: Date,
+  end: Date,
   timeZone = "Asia/Ho_Chi_Minh",
 ): Promise<TimeSlot[]> {
   const { invite, organizer } = details;
@@ -13,20 +18,29 @@ export async function getAvailableSlotsForInvite(
     allAttendees.add(email.toLowerCase());
   }
 
-  const baseDate = new Date(`${dateStr}T12:00:00.000Z`);
-  const startDate = new Date(
-    baseDate.getTime() - 24 * 3600 * 1000,
-  ).toISOString();
-  const endDate = new Date(baseDate.getTime() + 24 * 3600 * 1000).toISOString();
-
   const slots = await SchedulerService.findSlots({
     attendees: Array.from(allAttendees),
     durationMinutes: invite.duration,
-    startDate,
-    endDate,
+    startDate: start,
+    endDate: end,
     roomId: invite.roomId || undefined,
     timeZone,
   });
+  return slots.filter((s) => s.available);
+}
+
+export async function getAvailableSlotsForInvite(
+  details: InviteDetails,
+  dateStr: string,
+  timeZone = "Asia/Ho_Chi_Minh",
+): Promise<TimeSlot[]> {
+  const baseDate = new Date(`${dateStr}T12:00:00.000Z`);
+  const slots = await findInviteSlots(
+    details,
+    new Date(baseDate.getTime() - 24 * 3600 * 1000),
+    new Date(baseDate.getTime() + 24 * 3600 * 1000),
+    timeZone,
+  );
 
   const dateFormatter = new Intl.DateTimeFormat("en-CA", {
     timeZone,
@@ -36,7 +50,6 @@ export async function getAvailableSlotsForInvite(
   });
 
   return slots.filter((s) => {
-    if (!s.available) return false;
     const slotDate = dateFormatter.format(new Date(s.start));
     return slotDate === dateStr;
   });

@@ -28,6 +28,7 @@ export interface BookMeetingInviteInput {
   startTime: string; // ISO string
   endTime: string; // ISO string
   notes?: string;
+  timeZone?: string; // guest zone used when the slots were listed
 }
 
 export interface InvitePerson {

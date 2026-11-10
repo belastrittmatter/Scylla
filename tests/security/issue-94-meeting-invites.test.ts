@@ -268,4 +268,107 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
       }),
     ).rejects.toThrow("past");
   });
+
+  it("bookSlot rejects a time the invite does not offer", async () => {
+    const invite = await createSecretInvite({ isRestricted: false });
+    const [slot] = await offeredSlots(invite.slug);
+    // 7 minutes past an offered slot start: right length, but never offered
+    const start = new Date(new Date(slot.start).getTime() + 7 * 60 * 1000);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+    const res = await bookRequest(invite.slug, {
+      guestName: "Off Grid",
+      guestEmail: "off@example.com",
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+    });
+    expect(res.status).toBe(409);
+
+    const rows = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.organizerUserId, testOrganizerId));
+    expect(rows).toHaveLength(0);
+  });
+
+  it("allows back-to-back bookings and rejects overlapping ones across invites", async () => {
+    const a = await createSecretInvite({ isRestricted: false });
+    const b = await createSecretInvite({ isRestricted: false });
+    const slots = await offeredSlots(a.slug);
+    const first = slots[0];
+    const adjacent = slots.find((s) => s.start === first.end)!;
+    expect(adjacent).toBeDefined();
+
+    const guest = { guestName: "G", guestEmail: "g@example.com" };
+    await MeetingInviteService.bookSlot({
+      slug: a.slug,
+      ...guest,
+      startTime: first.start,
+      endTime: first.end,
+    });
+    await MeetingInviteService.bookSlot({
+      slug: b.slug,
+      ...guest,
+      startTime: adjacent.start,
+      endTime: adjacent.end,
+    });
+
+    const overlap = await bookRequest(b.slug, {
+      ...guest,
+      startTime: first.start,
+      endTime: first.end,
+    });
+    expect(overlap.status).toBe(409);
+  });
+
+  it("keeps shareable links reusable for different slots", async () => {
+    const invite = await createSecretInvite({ isRestricted: false });
+    const slots = await offeredSlots(invite.slug);
+    const guest = { guestName: "G", guestEmail: "g@example.com" };
+
+    await MeetingInviteService.bookSlot({
+      slug: invite.slug,
+      ...guest,
+      startTime: slots[0].start,
+      endTime: slots[0].end,
+    });
+    const second = await MeetingInviteService.bookSlot({
+      slug: invite.slug,
+      ...guest,
+      startTime: slots[3].start,
+      endTime: slots[3].end,
+    });
+    expect(second.booking.id).toBeDefined();
+
+    const [row] = await db
+      .select()
+      .from(meetingInvite)
+      .where(eq(meetingInvite.id, invite.id));
+    expect(row.isActive).toBe(true);
+  });
+
+  it("concurrent bookings of the same slot across invites: exactly one wins", async () => {
+    const a = await createSecretInvite({ isRestricted: false });
+    const b = await createSecretInvite({ isRestricted: false });
+    const [slot] = await offeredSlots(a.slug);
+    const guest = {
+      guestName: "G",
+      guestEmail: "g@example.com",
+      startTime: slot.start,
+      endTime: slot.end,
+    };
+
+    const results = await Promise.allSettled([
+      MeetingInviteService.bookSlot({ slug: a.slug, ...guest }),
+      MeetingInviteService.bookSlot({ slug: b.slug, ...guest }),
+      MeetingInviteService.bookSlot({ slug: a.slug, ...guest }),
+    ]);
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const rows = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.organizerUserId, testOrganizerId));
+    expect(rows).toHaveLength(1);
+  });
 });
