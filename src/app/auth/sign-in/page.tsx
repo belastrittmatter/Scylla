@@ -86,12 +86,12 @@ export default function SignInPage() {
           </p>
         </div>
 
-        <aside
-          aria-hidden
-          className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900"
-        >
+        <aside className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900">
           {/* Light: soft orange wash. Dark: a neutral white lift; orange over near-black reads brown. */}
-          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:bg-[radial-gradient(90%_60%_at_50%_0%,rgb(255_255_255/0.13),transparent_75%)]" />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:bg-[radial-gradient(90%_60%_at_50%_0%,rgb(255_255_255/0.13),transparent_75%)]"
+          />
           <div className="relative mx-auto flex h-full max-w-md flex-col justify-center py-16">
             <p className="text-2xl leading-snug font-semibold tracking-tight">
               Your team&apos;s calendars, tasks and agents.{" "}

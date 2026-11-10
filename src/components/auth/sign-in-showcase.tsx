@@ -3,7 +3,9 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const SCENE_MS = 10_000;
+const SCENE_MS = 6_000;
+/** Vignette delays were authored for a 10s scene; scale them with SCENE_MS so nothing is clipped. */
+const SCALE = SCENE_MS / 10_000;
 
 /** One-shot tw-animate-css entrance starting `at` seconds into the scene; reduced motion shows the end state. */
 function In({
@@ -21,7 +23,7 @@ function In({
         "animate-in fade-in fill-mode-both block duration-300 motion-reduce:animate-none",
         className,
       )}
-      style={{ animationDelay: `${at}s` }}
+      style={{ animationDelay: `${(at * SCALE).toFixed(2)}s` }}
     >
       {children}
     </span>
@@ -283,43 +285,57 @@ const SCENES = [
 /** Feature tour: story-style progress tabs over a vignette; each scene remounts so its animations start from 0. */
 export function SignInShowcase({ className }: { className?: string }) {
   const [index, setIndex] = React.useState(0);
+  const [restart, setRestart] = React.useState(0);
 
+  // Every selection or tick gives the scene a full autoplay cycle.
   React.useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(
+    const id = window.setTimeout(
       () => setIndex((i) => (i + 1) % SCENES.length),
       SCENE_MS,
     );
-    return () => window.clearInterval(id);
-  }, []);
+    return () => window.clearTimeout(id);
+  }, [index, restart]);
 
   const { Scene } = SCENES[index];
   return (
-    <div aria-hidden className={className}>
+    <div className={className}>
       <div className="mb-5 grid grid-cols-4 gap-3 text-[13px]">
         {SCENES.map((scene, i) => (
-          <div
+          <button
+            type="button"
             key={scene.title}
-            className={
+            aria-pressed={i === index}
+            onClick={() => {
+              setIndex(i);
+              setRestart((value) => value + 1);
+            }}
+            className={cn(
+              "cursor-pointer text-left",
               i === index
                 ? "text-foreground font-medium"
-                : "text-muted-foreground"
-            }
+                : "text-muted-foreground",
+            )}
           >
             <div className="bg-foreground/10 mb-2.5 h-0.5 overflow-hidden rounded-full">
               {i < index && <div className="bg-foreground/40 h-full" />}
               {i === index && (
                 <div
-                  key={index}
-                  className="animate-in slide-in-from-left-full bg-primary h-full duration-[10s] ease-linear motion-reduce:animate-none"
+                  key={`${index}-${restart}`}
+                  className="animate-in slide-in-from-left-full bg-primary h-full ease-linear motion-reduce:animate-none"
+                  style={{ animationDuration: `${SCENE_MS}ms` }}
                 />
               )}
             </div>
             {scene.title}
-          </div>
+          </button>
         ))}
       </div>
-      <div key={index} className="animate-in fade-in duration-500">
+      <div
+        aria-hidden
+        key={`${index}-${restart}`}
+        className="animate-in fade-in duration-500"
+      >
         <Scene />
       </div>
     </div>
