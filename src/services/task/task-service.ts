@@ -2,6 +2,7 @@ import { db } from "@/db";
 import {
   task,
   team,
+  teamMember,
   project,
   taskTimeSession,
   type Task,
@@ -27,6 +28,10 @@ import {
   type TaskWithRelations,
   type TaskStatus,
 } from "./task-types";
+import { canDeleteTask } from "./task-permissions";
+
+/** `not_member` must be reported like a missing task so ids can't be probed. */
+export type TaskDeleteAccess = "allowed" | "forbidden" | "not_member";
 
 export const MIN_TASK_SESSION_DURATION_SECONDS = 60; // 1 minute (< 1 minute is considered accidental drag)
 
@@ -303,6 +308,32 @@ export class TaskService {
       .from(taskTimeSession)
       .where(eq(taskTimeSession.taskId, taskId))
       .orderBy(desc(taskTimeSession.startedAt));
+  }
+
+  public static async getDeleteAccess(
+    target: Pick<Task, "teamId">,
+    userId: string,
+  ): Promise<TaskDeleteAccess> {
+    const [teamRecord, membership] = await Promise.all([
+      db.query.team.findFirst({
+        where: eq(team.id, target.teamId),
+        columns: { ownerId: true },
+      }),
+      db.query.teamMember.findFirst({
+        where: and(
+          eq(teamMember.teamId, target.teamId),
+          eq(teamMember.userId, userId),
+        ),
+        columns: { role: true },
+      }),
+    ]);
+    const isTeamOwner = teamRecord?.ownerId === userId;
+    if (!isTeamOwner && !membership) return "not_member";
+    const allowed = canDeleteTask({
+      role: membership?.role,
+      isTeamOwner,
+    });
+    return allowed ? "allowed" : "forbidden";
   }
 
   public static async deleteTask(taskId: string): Promise<boolean> {

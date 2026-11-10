@@ -1,7 +1,10 @@
+import { z } from "zod";
 import { TaskService } from "@/services/task/task-service";
 import { TeamService } from "@/services/team/team-service";
 import { UpdateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
+
+const TaskIdSchema = z.string().trim().min(1).max(128);
 
 interface RouteParams {
   params: Promise<{ id: string }> | { id: string };
@@ -120,38 +123,42 @@ export async function PATCH(req: Request, context: RouteParams) {
 
 export async function DELETE(req: Request, context: RouteParams) {
   try {
-    const { id } = await context.params;
-    if (!id) {
-      return Response.json({ error: "Task ID is required" }, { status: 400 });
-    }
-
     const callerId = await resolveUserId(req);
     if (!callerId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const task = await TaskService.getTaskById(id);
-    if (!task) {
-      return Response.json(
-        { error: `Task not found for id: ${id}` },
-        { status: 404 },
-      );
+    const parsedId = TaskIdSchema.safeParse((await context.params).id);
+    if (!parsedId.success) {
+      return Response.json({ error: "Invalid task ID" }, { status: 400 });
     }
+    const id = parsedId.data;
 
-    const isMember = await TeamService.isTeamMember(task.teamId, callerId);
-    if (!isMember) {
+    const task = await TaskService.getTaskById(id);
+    const access = task
+      ? await TaskService.getDeleteAccess(task, callerId)
+      : "not_member";
+    // Non-members get the same 404 as a missing task so ids can't be probed.
+    if (access === "not_member") {
+      return Response.json({ error: "Task not found" }, { status: 404 });
+    }
+    if (access === "forbidden") {
       return Response.json(
-        { error: "Forbidden: Not a member of this team" },
+        {
+          error:
+            "Permission denied: only team members (not viewers) can delete tasks",
+        },
         { status: 403 },
       );
     }
 
-    await TaskService.deleteTask(id);
+    const deleted = await TaskService.deleteTask(id);
+    if (!deleted) {
+      return Response.json({ error: "Task not found" }, { status: 404 });
+    }
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to delete task" },
-      { status: 500 },
-    );
+    console.error("[DELETE /api/tasks/:id] failed", err);
+    return Response.json({ error: "Failed to delete task" }, { status: 500 });
   }
 }

@@ -85,6 +85,14 @@ export const apiClient = {
     },
   },
 
+  tasks: {
+    /** Maps to: DELETE /api/tasks/[id] (throws the route's error message). */
+    delete: async (id: string): Promise<{ success: boolean }> =>
+      request<{ success: boolean }>(`/api/tasks/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+  },
+
   rooms: {
     /**
      * List physical meeting rooms with optional filters.
