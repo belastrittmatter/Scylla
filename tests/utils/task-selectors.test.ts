@@ -3,7 +3,7 @@ import {
   getDeadlineBucket,
   groupTasksForList,
   hideClosedTasks,
-  makeCanDeleteTask,
+  makeCanEditTask,
   selectScopedTasks,
 } from "../../src/components/tasks/task-selectors";
 import type { TaskItem, Team } from "../../src/components/tasks/task-types";
@@ -129,7 +129,7 @@ describe("groupTasksForList", () => {
   });
 });
 
-describe("makeCanDeleteTask (client mirror of the server rule)", () => {
+describe("makeCanEditTask (client mirror of the server rule)", () => {
   const teams = [{ id: "t1", ownerId: "boss" }] as Team[];
   const members = [
     { id: "m1", teamId: "t1", userId: "ann", role: "member" },
@@ -140,7 +140,7 @@ describe("makeCanDeleteTask (client mirror of the server rule)", () => {
     ({ id: "x", teamId: "t1", creatorId }) as TaskItem;
 
   test("applies owner/admin/member/viewer rules per task team", () => {
-    const can = (userId?: string) => makeCanDeleteTask(teams, members, userId);
+    const can = (userId?: string) => makeCanEditTask(teams, members, userId);
     expect(can("boss")(task("ann"))).toBe(true);
     expect(can("ada")(task("ann"))).toBe(true);
     expect(can("ann")(task("ann"))).toBe(true);
@@ -148,5 +148,11 @@ describe("makeCanDeleteTask (client mirror of the server rule)", () => {
     expect(can("vic")(task("vic"))).toBe(false);
     expect(can(undefined)(task("ann"))).toBe(false);
     expect(can("ann")({ ...task("ann"), teamId: "other" })).toBe(false);
+  });
+
+  test("gates creating in a team (viewers cannot create)", () => {
+    const can = (userId: string) => makeCanEditTask(teams, members, userId);
+    expect(can("ann")({ teamId: "t1" })).toBe(true);
+    expect(can("vic")({ teamId: "t1" })).toBe(false);
   });
 });

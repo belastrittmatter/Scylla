@@ -23,8 +23,8 @@ interface TaskTableViewProps {
   showAssignee: boolean;
   /** Enables row checkboxes and the bulk delete bar. */
   onDeleteTasks?: (ids: string[]) => Promise<boolean>;
-  /** Only tasks passing this can be selected for bulk delete. */
-  canDeleteTask?: (task: TaskItem) => boolean;
+  /** Only tasks passing this can change status or be selected for bulk delete. */
+  canEditTask?: (task: TaskItem) => boolean;
 }
 
 /** One dense table; collapsible group header rows carry the counts. */
@@ -33,11 +33,11 @@ export function TaskTableView({
   groupBy,
   getContextLabel,
   onDeleteTasks,
-  canDeleteTask = () => true,
+  canEditTask = () => true,
+  onUpdateStatus,
   ...rowProps
 }: TaskTableViewProps) {
-  const selectable = (t: TaskItem) =>
-    Boolean(onDeleteTasks) && canDeleteTask(t);
+  const selectable = (t: TaskItem) => Boolean(onDeleteTasks) && canEditTask(t);
   const groups = React.useMemo(
     () => groupTasksForList(tasks, groupBy),
     [tasks, groupBy],
@@ -119,6 +119,9 @@ export function TaskTableView({
                         onDeleteTasks
                           ? (id) => toggleTasks([id], !selected.has(id))
                           : undefined
+                      }
+                      onUpdateStatus={
+                        canEditTask(task) ? onUpdateStatus : undefined
                       }
                       {...rowProps}
                     />

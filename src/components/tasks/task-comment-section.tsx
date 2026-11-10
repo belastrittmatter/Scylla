@@ -12,9 +12,14 @@ import { getUserAvatarColor } from "./task-utils";
 
 interface TaskCommentSectionProps {
   taskId: string;
+  /** Hides the comment input (viewers). */
+  readOnly?: boolean;
 }
 
-export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
+export function TaskCommentSection({
+  taskId,
+  readOnly,
+}: TaskCommentSectionProps) {
   const [comments, setComments] = React.useState<TaskCommentItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [newComment, setNewComment] = React.useState("");
@@ -103,39 +108,41 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
       )}
 
       {/* Input box */}
-      <form onSubmit={handleAddComment} className="mt-1 flex flex-col gap-2">
-        <Textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment or status update..."
-          rows={2}
-          className="min-h-16 resize-none text-xs"
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              handleAddComment();
-            }
-          }}
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Press ⌘+Enter to comment
-          </span>
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!newComment.trim() || isSubmitting}
-            className="h-7 px-3 text-xs"
-          >
-            {isSubmitting ? (
-              <Loader2 className="mr-1 size-3 animate-spin" />
-            ) : (
-              <Send className="mr-1 size-3" />
-            )}
-            Comment
-          </Button>
-        </div>
-      </form>
+      {!readOnly && (
+        <form onSubmit={handleAddComment} className="mt-1 flex flex-col gap-2">
+          <Textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Write a comment or status update..."
+            rows={2}
+            className="min-h-16 resize-none text-xs"
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                handleAddComment();
+              }
+            }}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Press ⌘+Enter to comment
+            </span>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!newComment.trim() || isSubmitting}
+              className="h-7 px-3 text-xs"
+            >
+              {isSubmitting ? (
+                <Loader2 className="mr-1 size-3 animate-spin" />
+              ) : (
+                <Send className="mr-1 size-3" />
+              )}
+              Comment
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

@@ -30,7 +30,8 @@ import type { TaskItem, TaskStatus } from "./task-types";
 interface TaskTableRowProps {
   task: TaskItem;
   onSelectTask: (task: TaskItem) => void;
-  onUpdateStatus: (taskId: string, status: TaskStatus) => void;
+  /** Omitted renders the status read-only. */
+  onUpdateStatus?: (taskId: string, status: TaskStatus) => void;
   contextLabel?: string | null;
   showAssignee: boolean;
   /** Selection is enabled only when a toggle handler is given. */
@@ -83,30 +84,36 @@ export function TaskTableRow({
         </TableCell>
       )}
       <TableCell className="w-0" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={`Status: ${status.label}`}
-              />
-            }
-          >
+        {onUpdateStatus ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`Status: ${status.label}`}
+                />
+              }
+            >
+              <StatusIcon status={task.status as TaskStatus} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {TASK_FORM_STATUSES.map((s) => (
+                <DropdownMenuItem
+                  key={s.value}
+                  onClick={() => onUpdateStatus(task.id, s.value)}
+                >
+                  <StatusIcon status={s.value} />
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <span aria-label={`Status: ${status.label}`} className="flex px-1">
             <StatusIcon status={task.status as TaskStatus} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {TASK_FORM_STATUSES.map((s) => (
-              <DropdownMenuItem
-                key={s.value}
-                onClick={() => onUpdateStatus(task.id, s.value)}
-              >
-                <StatusIcon status={s.value} />
-                {s.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </span>
+        )}
       </TableCell>
 
       <TableCell className="w-full max-w-0">

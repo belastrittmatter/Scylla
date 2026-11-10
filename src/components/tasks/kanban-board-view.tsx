@@ -14,8 +14,8 @@ interface KanbanBoardViewProps {
   onSelectTask?: (task: TaskItem) => void;
   onUpdateStatus?: MoveTask;
   onDeleteTask?: (id: string) => Promise<boolean>;
-  /** Hides Delete on cards the user may not delete. */
-  canDeleteTask?: (task: TaskItem) => boolean;
+  /** Hides Delete, status and drag on cards the user may not edit. */
+  canEditTask?: (task: TaskItem) => boolean;
   onAddNewTask?: (status: TaskStatus) => void;
   readOnly?: boolean;
   getContextLabel?: (task: TaskItem) => string | null;
@@ -31,7 +31,7 @@ export function KanbanBoardView({
   onSelectTask,
   onUpdateStatus,
   onDeleteTask,
-  canDeleteTask,
+  canEditTask,
   onAddNewTask,
   readOnly,
   getContextLabel,
@@ -56,7 +56,7 @@ export function KanbanBoardView({
           onSelectTask={onSelectTask}
           onUpdateStatus={onUpdateStatus}
           onDeleteTask={onDeleteTask}
-          canDeleteTask={canDeleteTask}
+          canEditTask={canEditTask}
           onAddNewTask={onAddNewTask}
           readOnly={readOnly}
           getContextLabel={getContextLabel}

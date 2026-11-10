@@ -43,7 +43,8 @@ interface TaskHeaderBarProps {
   filterDefs: TaskFilterDef[];
   viewMode: TaskViewMode;
   onViewModeChange: (mode: TaskViewMode) => void;
-  onNewTask: () => void;
+  /** Omitted when the user may not create tasks here. */
+  onNewTask?: () => void;
 }
 
 /** The /tasks controls, rendered into the global ViewHeader (one bar). */
@@ -122,10 +123,12 @@ export function TaskHeaderBar({
             ))}
           </TabsList>
         </Tabs>
-        <Button onClick={onNewTask} aria-label="New task">
-          <Plus />
-          <span className="hidden xl:inline">New task</span>
-        </Button>
+        {onNewTask && (
+          <Button onClick={onNewTask} aria-label="New task">
+            <Plus />
+            <span className="hidden xl:inline">New task</span>
+          </Button>
+        )}
       </div>
     </HeaderSlot>
   );
