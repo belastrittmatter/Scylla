@@ -8,6 +8,8 @@ export interface TaskUser {
   avatarUrl?: string;
   initials?: string;
   role: string;
+  githubConnected?: boolean;
+  githubUsername?: string | null;
 }
 
 export interface WorkspaceTeamMember {

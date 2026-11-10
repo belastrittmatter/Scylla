@@ -79,7 +79,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["google"],
+      trustedProviders: ["google", "github"],
       // #111: team invites create unverified placeholder users (team-service addTeamMember);
       // Google must be able to claim them. Safe only while no password sign-up exists.
       requireLocalEmailVerified: false,
@@ -99,6 +99,12 @@ export const auth = betterAuth({
       ],
       accessType: "offline",
       prompt: "consent",
+    },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || "dummy-github-client-id",
+      clientSecret:
+        process.env.GITHUB_CLIENT_SECRET || "dummy-github-client-secret",
+      scope: ["repo", "read:user", "user:email"],
     },
   },
   plugins: [

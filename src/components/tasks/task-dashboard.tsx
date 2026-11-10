@@ -18,6 +18,7 @@ import { useTaskWorkspaceRouting } from "./use-task-workspace-routing";
 import { useTeamAssignees } from "./use-team-assignees";
 import { useTeams } from "@/hooks/use-teams";
 import { useScopedTasks } from "./use-scoped-tasks";
+import { useProjectGithubAutoSync } from "./use-project-github-auto-sync";
 import { makeCanEditTask } from "./task-selectors";
 import { INITIAL_TASK_FILTERS } from "./task-types";
 import type { TaskFilters, TaskStatus, Team } from "./task-types";
@@ -47,6 +48,9 @@ export function TaskDashboard() {
   const projectId = project?.id ?? "";
   const userId = session?.user?.id;
   const canEdit = makeCanEditTask(teams, teamMembers, userId);
+
+  // Automatically sync GitHub issues when entering a project linked to GitHub
+  useProjectGithubAutoSync({ project, setTasks });
 
   const [filters, setFilters] =
     React.useState<TaskFilters>(INITIAL_TASK_FILTERS);

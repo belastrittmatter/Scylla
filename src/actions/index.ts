@@ -13,10 +13,14 @@ export {
   updateTaskStatusAction,
   updateTaskAction,
   createProjectAction,
+} from "./task-actions";
+export {
   createTaskAction,
   getTaskCommentsAction,
   createTaskCommentAction,
-} from "./task-actions";
+  deleteTaskAction,
+} from "./task-crud-actions";
+export { createGithubRepositoryAction } from "./project-github-action";
 export type {
   WorkspaceData,
   TaskUser,

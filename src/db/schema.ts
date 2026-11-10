@@ -738,6 +738,7 @@ export const project = pgTable(
       .references(() => team.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("active"), // "planning" | "active" | "paused" | "completed" | "archived"
     color: text("color"),
+    githubRepo: text("github_repo"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -775,6 +776,12 @@ export const task = pgTable(
     dueDate: timestamp("due_date"),
     position: integer("position").default(0).notNull(),
     estimatedMinutes: integer("estimated_minutes").default(60),
+    githubIssueNumber: integer("github_issue_number"),
+    githubIssueUrl: text("github_issue_url"),
+    githubBranch: text("github_branch"),
+    githubPrNumber: integer("github_pr_number"),
+    githubPrUrl: text("github_pr_url"),
+    githubPrStatus: text("github_pr_status"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -803,6 +810,7 @@ export const taskComment = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
+    githubCommentId: text("github_comment_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

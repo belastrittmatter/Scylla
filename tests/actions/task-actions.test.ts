@@ -122,7 +122,10 @@ describe("Task Server Actions with Core Domain Services", () => {
     const listRes = await getTaskCommentsAction(testTaskId);
     expect(listRes.success).toBe(true);
     expect(
-      listRes.data!.some((c) => c.content === "Automated test comment content"),
+      listRes.data!.some(
+        (c: { content: string }) =>
+          c.content === "Automated test comment content",
+      ),
     ).toBe(true);
   });
 

@@ -13,6 +13,7 @@ import {
 } from "./task-utils";
 import { KanbanCardMenu } from "./kanban-card-menu";
 import { KanbanCardTime } from "./kanban-card-time";
+import { KanbanCardGithubBadges } from "./kanban-card-github-badges";
 import { StatusIcon } from "./task-status-icon";
 
 interface KanbanCardProps {
@@ -107,6 +108,9 @@ export function KanbanCard({
           {task.title}
         </button>
       </h4>
+
+      {/* GitHub Linked Info (Issue, Branch, PR) */}
+      <KanbanCardGithubBadges task={task} />
 
       {(priority || task.dueDate || running) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
