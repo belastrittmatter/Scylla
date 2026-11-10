@@ -1,6 +1,7 @@
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { SchedulerService } from "@/services/scheduler";
-import { auth } from "@/lib/auth";
+import { resolveUserId } from "@/services/api-utils";
+import { UserService } from "@/services/user";
 import { db } from "@/db";
 import {
   account,
@@ -72,57 +73,55 @@ export async function GET(req: Request) {
     const requestedUserId = url.searchParams.get("userId") || undefined;
     const attendeeEmailsParam = url.searchParams.get("attendeeEmails");
 
-    let sessionUserId: string | undefined;
-    let sessionUserEmail: string | undefined;
-
-    try {
-      const session = await auth.api.getSession({ headers: req.headers });
-      if (session?.user) {
-        sessionUserId = session.user.id;
-        sessionUserEmail = session.user.email;
-      }
-    } catch {
-      // Ignore session retrieval error if unauthenticated
+    const effectiveUserId = await resolveUserId(req, requestedUserId);
+    if (!effectiveUserId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const effectiveUserId =
-      sessionUserId ||
-      (process.env.NODE_ENV === "test" ? requestedUserId : undefined);
-    const activeUserId = requestedUserId || sessionUserId;
+    // Another user's working hours are visible only to their teammates.
+    if (
+      requestedUserId &&
+      requestedUserId !== effectiveUserId &&
+      !(await UserService.getTeammateIds(effectiveUserId)).includes(
+        requestedUserId,
+      )
+    ) {
+      return Response.json({ error: "Access denied" }, { status: 403 });
+    }
+    const activeUserId = requestedUserId || effectiveUserId;
 
     // Resolve user's schedule, Google account OAuth credentials, and DB catalog/bookings in parallel
-    const [scheduleInfo, googleAccount, dbData] = await Promise.all([
-      SchedulerService.getUserSchedule(activeUserId || sessionUserEmail),
+    const [scheduleInfo, googleAccount, dbData, [caller]] = await Promise.all([
+      SchedulerService.getUserSchedule(activeUserId),
       (async () => {
-        let acct = null;
-        if (effectiveUserId) {
-          const accounts = await db
-            .select()
-            .from(account)
-            .where(eq(account.userId, effectiveUserId));
-          acct = accounts.find((a) => a.providerId === "google") || null;
-        }
-        return acct;
+        const accounts = await db
+          .select()
+          .from(account)
+          .where(eq(account.userId, effectiveUserId));
+        return accounts.find((a) => a.providerId === "google") || null;
       })(),
       Promise.all([
         db.select().from(meetingRoom),
         db.select().from(user),
-        effectiveUserId
-          ? db
-              .select()
-              .from(booking)
-              .where(
-                or(
-                  eq(booking.organizerUserId, effectiveUserId),
-                  eq(booking.userId, effectiveUserId),
-                ),
-              )
-          : Promise.resolve([]),
+        db
+          .select()
+          .from(booking)
+          .where(
+            or(
+              eq(booking.organizerUserId, effectiveUserId),
+              eq(booking.userId, effectiveUserId),
+            ),
+          ),
       ]).catch((dbErr) => {
         console.warn("Failed to fetch DB bookings for calendar:", dbErr);
         return null;
       }),
+      db
+        .select({ email: user.email })
+        .from(user)
+        .where(eq(user.id, effectiveUserId))
+        .limit(1),
     ]);
+    const sessionUserEmail = caller?.email;
 
     const isOfficeOrWorkingLocation = (
       summary?: string,
@@ -761,13 +760,9 @@ export async function GET(req: Request) {
       },
     );
   } catch (err) {
+    console.error("GET /api/calendar failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch calendar events",
-      },
+      { error: "Failed to fetch calendar events" },
       { status: 500 },
     );
   }

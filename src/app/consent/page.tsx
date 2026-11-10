@@ -17,16 +17,18 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import { ConsentBrandHeader } from "@/components/consent/consent-brand-header";
 import { ConsentSignInRequired } from "@/components/consent/consent-sign-in-required";
 import { ConsentScopeList } from "@/components/consent/consent-scope-list";
+import { ConsentClientInfo } from "@/components/consent/consent-client-info";
 import { useConsentForm } from "@/components/consent/use-consent-form";
 
 function ConsentContent() {
   const searchParams = useSearchParams();
   const { data: session, isPending: isSessionPending } = useSession();
 
-  const clientId = searchParams.get("client_id") || "Unknown Client";
+  const clientId = searchParams.get("client_id") || "";
   const requestedScopeParam = searchParams.get("scope") || "";
 
   const {
+    client,
     selectedScopes,
     isLoading,
     error,
@@ -87,20 +89,7 @@ function ConsentContent() {
         </CardHeader>
 
         <CardContent className="space-y-5 px-6 py-5 text-xs">
-          <div className="border-border bg-muted/30 rounded-xl border p-3.5 text-xs leading-relaxed">
-            <p className="text-foreground">
-              The external AI client{" "}
-              <Badge
-                variant="secondary"
-                className="bg-background border-border text-foreground border px-1.5 py-0.5 font-mono text-[11px]"
-              >
-                {clientId}
-              </Badge>{" "}
-              is requesting access to interact with your Scylla workspace and
-              tools. You can fine-tune exactly which capabilities this client is
-              permitted to execute.
-            </p>
-          </div>
+          <ConsentClientInfo client={client} />
 
           <ConsentScopeList
             selectedScopes={selectedScopes}

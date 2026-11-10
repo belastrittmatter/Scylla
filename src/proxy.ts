@@ -44,18 +44,16 @@ export async function proxy(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
-  if (isProtectedApi && !sessionCookie) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader) {
-      try {
-        const session = await auth.api.getSession({ headers: request.headers });
-        if (!session) {
-          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-      } catch {
+  if (isProtectedApi) {
+    if (!sessionCookie && !request.headers.get("authorization")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    try {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session?.user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-    } else {
+    } catch {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }

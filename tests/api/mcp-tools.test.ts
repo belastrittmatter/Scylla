@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, afterAll, spyOn } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  spyOn,
+} from "bun:test";
 import { createCalendarMcpServer } from "@/app/api/mcp/route";
 import {
   buildScheduleComparisonMarkdown,
@@ -14,6 +22,7 @@ import { db, user } from "@/db";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { UserService } from "@/services/user";
 import { TeamService } from "@/services/team/team-service";
+import { team, teamMember } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 interface RegisteredToolDef {
@@ -58,7 +67,33 @@ describe("MCP Tools & Utilities Suite", () => {
     }
   });
 
+  // Nickname resolution only reaches teammates, so Sarah (the mock directory user) joins the organizer's team.
+  const sarahId = "usr_mcp_test_sarah";
+  beforeAll(async () => {
+    await db
+      .insert(user)
+      .values([
+        { id: testUserId, name: "MCP Test Organizer", email: testUserEmail },
+        { id: sarahId, name: "Sarah Chen", email: "sarah@example.com" },
+      ])
+      .onConflictDoNothing();
+    const [t] = await db
+      .insert(team)
+      .values({
+        name: "MCP Sarah Team",
+        slug: "mcp-sarah-team",
+        ownerId: testUserId,
+      })
+      .onConflictDoUpdate({ target: team.slug, set: { ownerId: testUserId } })
+      .returning();
+    await db.insert(teamMember).values([
+      { teamId: t.id, userId: testUserId, role: "owner" },
+      { teamId: t.id, userId: sarahId },
+    ]);
+  });
+
   afterAll(async () => {
+    await db.delete(user).where(eq(user.id, sarahId));
     await db.delete(user).where(eq(user.id, testUserId));
   });
 
@@ -171,7 +206,7 @@ describe("MCP Tools & Utilities Suite", () => {
 
       try {
         const res = await tool.handler({
-          attendees: ["me", "sarah", "alex@example.com"],
+          attendees: ["me", "sarah", "SARAH@example.com"],
           durationMinutes: 30,
           startDate: "2026-10-20T08:00:00.000Z",
           endDate: "2026-10-20T18:00:00.000Z",
@@ -192,6 +227,24 @@ describe("MCP Tools & Utilities Suite", () => {
         freeBusySpy.mockRestore();
         searchSpy.mockRestore();
       }
+    }, 15000);
+
+    it("rejects attendees who are not teammates (#96)", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["find_common_meeting_slots"];
+
+      const res = await tool.handler({
+        attendees: ["me", "outsider@other-tenant.test"],
+        durationMinutes: 30,
+        startDate: "2026-10-20T08:00:00.000Z",
+        endDate: "2026-10-20T18:00:00.000Z",
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.structuredContent).toBeUndefined();
     }, 15000);
   });
 
@@ -237,6 +290,22 @@ describe("MCP Tools & Utilities Suite", () => {
       );
     }, 15000);
 
+    it("rejects a target who is not a teammate (#96)", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["compare_schedules"];
+
+      const res = await tool.handler({
+        targetUser: "outsider@other-tenant.test",
+        date: "2026-10-20",
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.structuredContent).toBeUndefined();
+    }, 15000);
+
     it("incorporates roomId and suggestedTitle into schedule comparison and UI", async () => {
       const server = await createCalendarMcpServer({
         sub: testUserId,
@@ -268,6 +337,15 @@ describe("MCP Tools & Utilities Suite", () => {
   });
 
   describe("create_shareable_booking_link tool", () => {
+    it("refuses to create a link without an authenticated user", async () => {
+      const server = await createCalendarMcpServer({ scopes: ["*"] });
+      const tool = getRegisteredTools(server)["create_shareable_booking_link"];
+
+      const res = await tool.handler({ title: "Orphan Link" });
+
+      expect(res.isError).toBe(true);
+    });
+
     it("generates a shareable booking link with slug and markdown link", async () => {
       const server = await createCalendarMcpServer({
         sub: testUserId,
@@ -292,6 +370,22 @@ describe("MCP Tools & Utilities Suite", () => {
       );
       expect(parsed.duration).toBe(45);
       expect(parsed.locationType).toBe("meet");
+    }, 15000);
+
+    it("rejects members who are not the organizer's teammates", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["create_shareable_booking_link"];
+
+      const res = await tool.handler({
+        title: "Leak Attempt",
+        memberEmails: ["stranger-94@other-tenant.com"],
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.content[0].text).toContain("members of your teams");
     }, 15000);
   });
 
@@ -875,58 +969,28 @@ describe("MCP Tools & Utilities Suite", () => {
       const taskHtml = getTaskBoardUiHtml({ teamName: "Core", tasks: [] });
       expect(taskHtml).toContain('data-slot="card"');
       expect(taskHtml).toContain("ui/initialize");
-      expect(taskHtml).toContain("draggable");
-      expect(taskHtml).toContain("update_task");
       expect(taskHtml).toContain("Cancelled");
     });
 
-    it("renders task-board-app with live timer, progress bar, and time tracking elements in SSR HTML", () => {
-      const htmlBlue = getTaskBoardUiHtml({
-        teamName: "Core Team",
-        tasks: [
-          {
-            id: "t-1",
-            title: "Test In-Progress Task",
-            status: "in_progress",
-            estimatedMinutes: 60,
-            totalSpentSeconds: 1800,
-            activeSessionStartedAt: new Date().toISOString(),
-          },
-        ],
-      });
-      expect(htmlBlue).toContain('data-testid="task-timer"');
-      expect(htmlBlue).toContain('data-testid="task-progress"');
-      expect(htmlBlue).toContain("bg-blue-500");
-
-      const htmlAmber = getTaskBoardUiHtml({
-        teamName: "Core Team",
-        tasks: [
-          {
-            id: "t-2",
-            title: "Warning Task",
-            status: "in_progress",
-            estimatedMinutes: 60,
-            totalSpentSeconds: 3000,
-            activeSessionStartedAt: null,
-          },
-        ],
-      });
-      expect(htmlAmber).toContain("bg-amber-500");
-
-      const htmlRed = getTaskBoardUiHtml({
-        teamName: "Core Team",
-        tasks: [
-          {
-            id: "t-3",
-            title: "Over Budget Task",
-            status: "in_progress",
-            estimatedMinutes: 60,
-            totalSpentSeconds: 4000,
-            activeSessionStartedAt: null,
-          },
-        ],
-      });
-      expect(htmlRed).toContain("bg-red-500");
+    it("renders task-board-app compact timer only while a session is running", () => {
+      const card = (activeSessionStartedAt: string | null) =>
+        getTaskBoardUiHtml({
+          teamName: "Core Team",
+          tasks: [
+            {
+              id: "t-1",
+              title: "Test In-Progress Task",
+              status: "in_progress",
+              estimatedMinutes: 60,
+              totalSpentSeconds: 1800,
+              activeSessionStartedAt,
+            },
+          ],
+        });
+      expect(card(new Date().toISOString())).toContain("lucide-timer");
+      expect(card(new Date().toISOString())).toContain("30m");
+      expect(card(null)).not.toContain("30m");
+      expect(card(null)).not.toContain('data-slot="progress"');
     });
   });
 

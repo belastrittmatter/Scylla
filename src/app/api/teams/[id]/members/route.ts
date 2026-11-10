@@ -1,5 +1,6 @@
 import { TeamService } from "@/services/team/team-service";
 import { AddTeamMemberSchema } from "@/services/api-schemas";
+import { hasTeamRole } from "@/services/team/team-types";
 import { resolveUserId } from "@/services/api-utils";
 
 interface RouteParams {
@@ -48,8 +49,8 @@ export async function POST(req: Request, context: RouteParams) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAuthorized = await TeamService.isTeamAdminOrOwner(teamId, callerId);
-    if (!isAuthorized) {
+    const callerRole = await TeamService.getUserRole(teamId, callerId);
+    if (!hasTeamRole(callerRole, "admin")) {
       return Response.json(
         { error: "Forbidden: Only team owners and admins can manage members" },
         { status: 403 },
@@ -74,11 +75,19 @@ export async function POST(req: Request, context: RouteParams) {
       );
     }
 
+    const requestedRole = parseResult.data.role ?? "member";
+    if (requestedRole === "owner" && callerRole !== "owner") {
+      return Response.json(
+        { error: "Forbidden: Only team owners can assign the owner role" },
+        { status: 403 },
+      );
+    }
+
     const member = await TeamService.addTeamMember({
       teamId,
       userId: parseResult.data.userId,
       email: parseResult.data.email,
-      role: parseResult.data.role ?? "member",
+      role: requestedRole,
     });
     return Response.json(member, { status: 201 });
   } catch (err) {

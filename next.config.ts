@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async redirects() {
+    // Google sign-in creates the account on first use, so sign-up is the same flow (#77). Query strings carry over.
+    return [
+      {
+        source: "/auth/sign-up",
+        destination: "/auth/sign-in",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

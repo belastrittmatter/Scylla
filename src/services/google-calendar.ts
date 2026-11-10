@@ -8,6 +8,7 @@
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createHash } from "crypto";
 import { CalendarEventTracker } from "@/utils/calendar-event-tracker";
 import {
   isGoogleApiUrl,
@@ -155,10 +156,10 @@ export class GoogleCalendarService {
     data: ResourceRoom[];
     expiresAt: number;
   } | null = null;
-  private static cachedUsers: {
-    data: DirectoryUser[];
-    expiresAt: number;
-  } | null = null;
+  private static cachedUsersByAccount = new Map<
+    string,
+    { data: DirectoryUser[]; expiresAt: number }
+  >();
   private static hasAdminApiPermission: boolean = true;
 
   /**
@@ -166,7 +167,7 @@ export class GoogleCalendarService {
    */
   public static clearCache(): void {
     this.cachedRooms = null;
-    this.cachedUsers = null;
+    this.cachedUsersByAccount.clear();
   }
 
   /**
@@ -816,16 +817,6 @@ export class GoogleCalendarService {
       return filtered;
     };
 
-    if (
-      this.cachedUsers &&
-      Date.now() < this.cachedUsers.expiresAt &&
-      this.cachedUsers.data.length > 0
-    ) {
-      const cachedMatches = filterUsers(this.cachedUsers.data);
-      if (!q || cachedMatches.length > 0) {
-        return cachedMatches;
-      }
-    }
     const options =
       typeof accessTokenOrOptions === "object" && accessTokenOrOptions !== null
         ? accessTokenOrOptions
@@ -835,6 +826,32 @@ export class GoogleCalendarService {
                 ? accessTokenOrOptions
                 : undefined,
           };
+
+    const accountRec = options.accountRecord as
+      { id?: string; userId?: string } | undefined;
+    const accountKey = accountRec?.userId
+      ? `user:${accountRec.userId}`
+      : accountRec?.id
+        ? `account:${accountRec.id}`
+        : options.accessToken
+          ? `token:${createHash("sha256").update(options.accessToken).digest("hex")}`
+          : "anonymous";
+
+    // Evict expired entries periodically to prevent memory leak
+    const now = Date.now();
+    for (const [key, entry] of this.cachedUsersByAccount.entries()) {
+      if (entry.expiresAt <= now) {
+        this.cachedUsersByAccount.delete(key);
+      }
+    }
+
+    const cached = this.cachedUsersByAccount.get(accountKey);
+    if (cached && Date.now() < cached.expiresAt && cached.data.length > 0) {
+      const cachedMatches = filterUsers(cached.data);
+      if (!q || cachedMatches.length > 0) {
+        return cachedMatches;
+      }
+    }
 
     const token = options.accountRecord
       ? await this.refreshAccountToken(
@@ -1058,9 +1075,10 @@ export class GoogleCalendarService {
 
     const allUsers = Array.from(userMap.values());
     let combined = allUsers;
-    if (this.cachedUsers && Date.now() < this.cachedUsers.expiresAt) {
+    const existingCache = this.cachedUsersByAccount.get(accountKey);
+    if (existingCache && Date.now() < existingCache.expiresAt) {
       const mergedMap = new Map<string, DirectoryUser>();
-      for (const u of this.cachedUsers.data) {
+      for (const u of existingCache.data) {
         mergedMap.set(u.email.toLowerCase(), u);
       }
       for (const u of allUsers) {
@@ -1069,7 +1087,10 @@ export class GoogleCalendarService {
       combined = Array.from(mergedMap.values());
     }
     if (combined.length > 0) {
-      this.cachedUsers = { data: combined, expiresAt: Date.now() + 180_000 };
+      this.cachedUsersByAccount.set(accountKey, {
+        data: combined,
+        expiresAt: Date.now() + 180_000,
+      });
     }
 
     return filterUsers(combined);

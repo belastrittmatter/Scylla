@@ -1,12 +1,13 @@
 import { db } from "@/db";
 import {
+  account,
   eventType,
   schedule,
   user,
   booking,
   type EventType,
 } from "@/db/schema";
-import { asc, eq, and, gte, lte } from "drizzle-orm";
+import { asc, eq, and, gte, lte, inArray, or, sql } from "drizzle-orm";
 import { GoogleCalendarService } from "./google-calendar";
 import { RoomService } from "./rooms";
 
@@ -20,8 +21,21 @@ export interface FindSlotsParams {
   beforeBuffer?: number;
   afterBuffer?: number;
   timeZone?: string;
+  /** Caller's own Google credentials; without them Google free/busy is skipped. */
   accessToken?: string;
+  accountRecord?: typeof account.$inferSelect;
   prefetchedBusy?: Array<{ start: string | number; end: string | number }>;
+}
+
+/**
+ * SQL predicate: the booking's attendee list contains one of `emails` (case-insensitive).
+ */
+export function bookingHasAttendee(emails: string[]) {
+  const lower = emails.map((e) => e.toLowerCase());
+  return sql`exists (select 1 from jsonb_array_elements(${booking.attendees}) a where lower(a->>'email') in (${sql.join(
+    lower.map((e) => sql`${e}`),
+    sql`, `,
+  )}))`;
 }
 
 export interface TimeSlot {
@@ -266,8 +280,8 @@ export class SchedulerService {
               userId: dbUser.id,
               schedule: {
                 email: resolvedEmail,
-                timeZone:
-                  params.timeZone || scheds[0].timeZone || "Asia/Ho_Chi_Minh",
+                // Working hours are in the attendee's own zone, never the caller's.
+                timeZone: scheds[0].timeZone,
                 workingHours: scheds[0].workingHours || DEFAULT_WORKING_HOURS,
               },
             };
@@ -323,23 +337,45 @@ export class SchedulerService {
         calendarQueryEmails.push(roomEmail);
       }
 
+      const hasCallerCredentials = Boolean(
+        params.accessToken || params.accountRecord,
+      );
+      // Only bookings touching these attendees or the room; never other tenants' calendars.
+      const bookingScope = or(
+        attendeeUserIds.length > 0
+          ? inArray(booking.organizerUserId, attendeeUserIds)
+          : undefined,
+        params.roomId ? eq(booking.roomId, params.roomId) : undefined,
+        attendeeEmails.length > 0
+          ? bookingHasAttendee(attendeeEmails)
+          : undefined,
+      );
+
       const [gcalFreeBusy, existingBookings] = await Promise.all([
-        GoogleCalendarService.getFreeBusy(
-          calendarQueryEmails,
-          startWindow,
-          endWindow,
-          params.accessToken ? { accessToken: params.accessToken } : undefined,
-        ),
-        db
-          .select()
-          .from(booking)
-          .where(
-            and(
-              eq(booking.status, "confirmed"),
-              gte(booking.endTime, startWindow),
-              lte(booking.startTime, endWindow),
-            ),
-          ),
+        hasCallerCredentials
+          ? GoogleCalendarService.getFreeBusy(
+              calendarQueryEmails,
+              startWindow,
+              endWindow,
+              {
+                accessToken: params.accessToken,
+                accountRecord: params.accountRecord,
+              },
+            )
+          : Promise.resolve({} as Record<string, never>),
+        bookingScope
+          ? db
+              .select()
+              .from(booking)
+              .where(
+                and(
+                  eq(booking.status, "confirmed"),
+                  gte(booking.endTime, startWindow),
+                  lte(booking.startTime, endWindow),
+                  bookingScope,
+                ),
+              )
+          : Promise.resolve([]),
       ]);
 
       for (const email of calendarQueryEmails) {
@@ -354,20 +390,10 @@ export class SchedulerService {
       }
 
       for (const b of existingBookings) {
-        const isRoomConflict = Boolean(
-          params.roomId && b.roomId === params.roomId,
-        );
-        const isOrganizerConflict = attendeeUserIds.includes(b.organizerUserId);
-        const isAttendeeConflict = (b.attendees || []).some((att) =>
-          attendeeEmails.includes(att.email.toLowerCase()),
-        );
-
-        if (isRoomConflict || isOrganizerConflict || isAttendeeConflict) {
-          const bStart = b.startTime.getTime();
-          const bEnd = b.endTime.getTime();
-          if (bEnd > bStart) {
-            busyIntervals.push({ start: bStart, end: bEnd });
-          }
+        const bStart = b.startTime.getTime();
+        const bEnd = b.endTime.getTime();
+        if (bEnd > bStart) {
+          busyIntervals.push({ start: bStart, end: bEnd });
         }
       }
     }

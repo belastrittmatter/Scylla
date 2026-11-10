@@ -2,14 +2,45 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { RoomService } from "@/services/rooms";
 import { db, booking } from "@/db";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { BookingQueryService } from "@/services/booking/booking-query-service";
+import { BookingService } from "@/services/booking";
 import {
   bookMeetingSchema,
   rescheduleMeetingSchema,
   cancelMeetingSchema,
 } from "../schemas";
 import { resolveProject, verifyScope } from "./auth-helpers";
+import {
+  getOrganizerToken,
+  sanitizeBookingDescription,
+} from "@/services/booking/booking-token-helper";
 import type { McpToolContext } from "../types";
+
+// Same rule as the REST routes and Server Actions (organizer or calendar owner).
+async function findOwnedBooking(eventId: string, userId: string | undefined) {
+  const existing = await BookingQueryService.getBookingById(eventId);
+  if (existing && (!userId || !BookingService.canModify(existing, userId))) {
+    return {
+      forbidden: {
+        isError: true as const,
+        content: [
+          {
+            type: "text" as const,
+            text: "Forbidden: Only the meeting organizer or calendar owner may modify this booking",
+          },
+        ],
+      },
+    };
+  }
+  if (!existing) return { gcalId: eventId, token: undefined };
+  // A stored booking lives on the organizer's calendar under its gcalEventId, like the REST routes.
+  return {
+    existing,
+    gcalId: existing.gcalEventId ?? eventId,
+    token: await getOrganizerToken(existing.organizerUserId),
+  };
+}
 
 export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
   // 1. Tool: book_meeting
@@ -39,6 +70,21 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       if (roomEmail || roomId) {
         const roomScopeErr = verifyScope(ctx, "rooms.reservation");
         if (roomScopeErr) return roomScopeErr;
+      }
+
+      let cleanDescription: string | undefined;
+      try {
+        cleanDescription = sanitizeBookingDescription(description);
+      } catch (err) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: err instanceof Error ? err.message : String(err),
+            },
+          ],
+        };
       }
 
       const token = await ctx.getAccessToken();
@@ -88,7 +134,7 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         event = await GoogleCalendarService.createEvent(
           {
             summary: meetingSummary,
-            description,
+            description: cleanDescription,
             start,
             end,
             attendees: resolvedAttendees,
@@ -141,7 +187,7 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
           await db.insert(booking).values({
             organizerUserId: ctx.userId,
             title: meetingSummary,
-            description: description || null,
+            description: cleanDescription || null,
             startTime: new Date(start),
             endTime: new Date(end),
             status: "confirmed",
@@ -217,19 +263,27 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
+      const {
+        existing,
+        forbidden,
+        gcalId,
+        token: organizerToken,
+      } = await findOwnedBooking(eventId, ctx.userId);
+      if (forbidden) return forbidden;
+
       // Resolve optional linked project and update Google Calendar event in parallel
       const [linkedProject, updated] = await Promise.all([
         projectId !== undefined
           ? resolveProject(projectId, ctx.userId)
           : Promise.resolve(undefined),
         GoogleCalendarService.updateEvent(
-          eventId,
+          gcalId,
           {
             start: newStart,
             end: newEnd,
             roomEmail,
           },
-          token,
+          organizerToken ?? token,
         ),
       ]);
       const finalProjectId =
@@ -249,16 +303,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         if (finalProjectId !== undefined) {
           updateValues.projectId = finalProjectId;
         }
-        await db
-          .update(booking)
-          .set(updateValues)
-          .where(
-            or(
-              eq(booking.id, eventId),
-              eq(booking.googleEventId, eventId),
-              eq(booking.gcalEventId, eventId),
-            ),
-          );
+        if (existing) {
+          await db
+            .update(booking)
+            .set(updateValues)
+            .where(eq(booking.id, existing.id));
+        }
       } catch (dbErr) {
         console.warn("Could not sync reschedule to DB:", dbErr);
       }
@@ -311,24 +361,28 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
+      const {
+        existing,
+        forbidden,
+        gcalId,
+        token: organizerToken,
+      } = await findOwnedBooking(eventId, ctx.userId);
+      if (forbidden) return forbidden;
+
       const result = await GoogleCalendarService.deleteEvent(
-        eventId,
+        gcalId,
         calendarId,
-        token,
+        organizerToken ?? token,
       );
 
       // Update DB record status if present
       try {
-        await db
-          .update(booking)
-          .set({ status: "cancelled", updatedAt: new Date() })
-          .where(
-            or(
-              eq(booking.id, eventId),
-              eq(booking.googleEventId, eventId),
-              eq(booking.gcalEventId, eventId),
-            ),
-          );
+        if (existing) {
+          await db
+            .update(booking)
+            .set({ status: "cancelled", updatedAt: new Date() })
+            .where(eq(booking.id, existing.id));
+        }
       } catch (dbErr) {
         console.warn("Could not sync cancellation to DB:", dbErr);
       }

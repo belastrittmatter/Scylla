@@ -13,33 +13,31 @@ describe("Domain Services", () => {
   });
 
   describe("UserService", () => {
-    test("searchTeammates finds users in database by name or email", async () => {
-      const alexResults = await UserService.searchTeammates("Alex");
+    const caller = { currentUserId: "usr_alex_rivera" };
+
+    test("searchTeammates finds the caller's teammates by name and accepts full emails", async () => {
+      const alexResults = await UserService.searchTeammates("Alex", 20, caller);
       expect(alexResults.length).toBeGreaterThan(0);
       expect(alexResults[0].name).toContain("Alex");
 
-      const emailResults =
-        await UserService.searchTeammates("user1@example.com");
+      const emailResults = await UserService.searchTeammates(
+        "user1@example.com",
+        20,
+        caller,
+      );
       expect(emailResults.length).toBe(1);
       expect(emailResults[0].email).toBe("user1@example.com");
     });
 
-    test("searchTeammates falls back to Google Directory when DB has no matches", async () => {
-      const dirResults = await UserService.searchTeammates("Sarah");
-      expect(dirResults.length).toBeGreaterThan(0);
-      expect(dirResults[0].name).toContain("Sarah");
-      expect(dirResults[0].email).toContain("sarah@example.com");
-    });
-
-    test("searchTeammates includes Google Directory users even when DB has users", async () => {
-      const results = await UserService.searchTeammates("Sarah");
+    test("searchTeammates never surfaces Google Directory users outside the caller's teams", async () => {
+      const results = await UserService.searchTeammates("Sarah", 20, caller);
       expect(results.some((u) => u.email.includes("sarah@example.com"))).toBe(
-        true,
+        false,
       );
     });
 
     test("searchTeammates respects limit parameter", async () => {
-      const results = await UserService.searchTeammates("", 1);
+      const results = await UserService.searchTeammates("", 1, caller);
       expect(results.length).toBeLessThanOrEqual(1);
     });
   });
@@ -318,7 +316,8 @@ describe("Domain Services", () => {
 
       const booking1 = await BookingService.createBooking({
         title: "Daily Standup Day 1",
-        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        description: "Sprint sync",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 70 * 3600 * 1000),
         endTime: new Date(now.getTime() + 70 * 3600 * 1000 + 15 * 60 * 1000),
@@ -326,13 +325,17 @@ describe("Domain Services", () => {
 
       const booking2 = await BookingService.createBooking({
         title: "Daily Standup Day 2",
-        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        description: "Sprint sync",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 94 * 3600 * 1000),
         endTime: new Date(now.getTime() + 94 * 3600 * 1000 + 15 * 60 * 1000),
       });
 
-      const cancelled = await BookingService.cancelSeries(seriesId);
+      const cancelled = await BookingService.cancelSeries({
+        seriesId,
+        callerId: "usr_alex_rivera",
+      });
       expect(cancelled.length).toBe(2);
       expect(cancelled.every((b) => b.status === "cancelled")).toBe(true);
 
@@ -348,7 +351,8 @@ describe("Domain Services", () => {
 
       const bookingA = await BookingService.createBooking({
         title: "Weekly Review Week 1",
-        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        description: "Weekly progress",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 100 * 3600 * 1000),
         endTime: new Date(now.getTime() + 100 * 3600 * 1000 + 30 * 60 * 1000),
@@ -356,14 +360,18 @@ describe("Domain Services", () => {
 
       const bookingB = await BookingService.createBooking({
         title: "Weekly Review Week 2",
-        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        description: "Weekly progress",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 168 * 3600 * 1000),
         endTime: new Date(now.getTime() + 168 * 3600 * 1000 + 30 * 60 * 1000),
       });
 
       // Cancel the entire series by passing bookingA's ID
-      const result = await BookingService.cancelSeriesByBooking(bookingA.id);
+      const result = await BookingService.cancelSeriesByBooking({
+        bookingId: bookingA.id,
+        callerId: "usr_alex_rivera",
+      });
       expect(result.length).toBe(2);
 
       const checkA = await BookingService.getBookingById(bookingA.id);

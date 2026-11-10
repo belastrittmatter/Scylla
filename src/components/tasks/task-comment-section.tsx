@@ -12,9 +12,14 @@ import { getUserAvatarColor } from "./task-utils";
 
 interface TaskCommentSectionProps {
   taskId: string;
+  /** Hides the comment input (viewers). */
+  readOnly?: boolean;
 }
 
-export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
+export function TaskCommentSection({
+  taskId,
+  readOnly,
+}: TaskCommentSectionProps) {
   const [comments, setComments] = React.useState<TaskCommentItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [newComment, setNewComment] = React.useState("");
@@ -51,21 +56,21 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
   };
 
   return (
-    <div className="mt-4 flex flex-col gap-3 border-t border-neutral-100 pt-4 dark:border-neutral-800">
-      <div className="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-        <MessageSquare className="size-4 text-neutral-500" />
+    <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <MessageSquare className="size-4 text-muted-foreground" />
         <span>Activity & Discussion</span>
-        <span className="text-xs font-normal text-neutral-400">
+        <span className="text-xs font-normal text-muted-foreground">
           ({comments.length})
         </span>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-4 text-neutral-400">
+        <div className="flex items-center justify-center py-4 text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
         </div>
       ) : comments.length === 0 ? (
-        <p className="py-2 text-xs text-neutral-400">
+        <p className="py-2 text-xs text-muted-foreground">
           No comments yet. Leave a note or update for your team.
         </p>
       ) : (
@@ -75,24 +80,24 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
             const avatarColor = getUserAvatarColor(author);
             return (
               <div key={c.id} className="flex items-start gap-2.5 text-xs">
-                <Avatar className="mt-0.5 size-6 border border-neutral-200 text-[10px] dark:border-neutral-700">
+                <Avatar className="mt-0.5 size-6 border border-border text-xs">
                   <AvatarImage src={c.user?.avatarUrl || ""} alt={author} />
                   <AvatarFallback className={avatarColor}>
                     {c.user?.initials || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 rounded-lg bg-neutral-50 p-2.5 dark:bg-neutral-800/60">
+                <div className="flex-1 rounded-lg bg-muted p-2.5">
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                    <span className="font-semibold text-foreground">
                       {author}
                     </span>
-                    <span className="text-[10px] text-neutral-400">
+                    <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(c.createdAt), {
                         addSuffix: true,
                       })}
                     </span>
                   </div>
-                  <p className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300">
+                  <p className="whitespace-pre-wrap text-foreground">
                     {c.content}
                   </p>
                 </div>
@@ -103,39 +108,41 @@ export function TaskCommentSection({ taskId }: TaskCommentSectionProps) {
       )}
 
       {/* Input box */}
-      <form onSubmit={handleAddComment} className="mt-1 flex flex-col gap-2">
-        <Textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment or status update..."
-          rows={2}
-          className="min-h-[60px] resize-none text-xs"
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              handleAddComment();
-            }
-          }}
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-neutral-400">
-            Press ⌘+Enter to comment
-          </span>
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!newComment.trim() || isSubmitting}
-            className="h-7 px-3 text-xs"
-          >
-            {isSubmitting ? (
-              <Loader2 className="mr-1 size-3 animate-spin" />
-            ) : (
-              <Send className="mr-1 size-3" />
-            )}
-            Comment
-          </Button>
-        </div>
-      </form>
+      {!readOnly && (
+        <form onSubmit={handleAddComment} className="mt-1 flex flex-col gap-2">
+          <Textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Write a comment or status update..."
+            rows={2}
+            className="min-h-16 resize-none text-xs"
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                handleAddComment();
+              }
+            }}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Press ⌘+Enter to comment
+            </span>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!newComment.trim() || isSubmitting}
+              className="h-7 px-3 text-xs"
+            >
+              {isSubmitting ? (
+                <Loader2 className="mr-1 size-3 animate-spin" />
+              ) : (
+                <Send className="mr-1 size-3" />
+              )}
+              Comment
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

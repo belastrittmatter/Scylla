@@ -49,7 +49,7 @@ export function TaskDatePicker({
                 !value && "text-muted-foreground",
               )}
             >
-              <CalendarIcon className="mr-2 size-4 shrink-0 text-neutral-500" />
+              <CalendarIcon className="mr-2 size-4 shrink-0 text-muted-foreground" />
               {dateObj ? format(dateObj, "PPP") : "Pick target deadline"}
             </Button>
           }
@@ -72,7 +72,7 @@ export function TaskDatePicker({
         <button
           type="button"
           onClick={() => onChange("")}
-          className="absolute right-2.5 rounded-full p-0.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+          className="absolute right-2.5 rounded-full p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
           title="Clear date"
         >
           <X className="size-3.5" />
