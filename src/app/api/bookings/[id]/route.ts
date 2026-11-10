@@ -134,6 +134,9 @@ export async function DELETE(req: Request, context: RouteParams) {
     if (message.includes("not found")) {
       return Response.json({ error: message }, { status: 404 });
     }
+    if (message.startsWith("Forbidden")) {
+      return Response.json({ error: message }, { status: 403 });
+    }
     return Response.json({ error: message }, { status: 500 });
   }
 }

@@ -39,6 +39,11 @@ export function sanitizeBookingDescription(
   }
   // Strip any remaining or malformed/nested series comment patterns
   out = out.replace(/<!--\s*series:[\s\S]*?-->/gi, "");
+  if (out.includes("<!--series:") || SERIES_MARKER_REGEX.test(out)) {
+    throw new Error(
+      "Invalid booking description: contains unsanitizable series tag",
+    );
+  }
   return out.trim() || undefined;
 }
 

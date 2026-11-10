@@ -332,6 +332,15 @@ test("C2: literal backslash, percent, and underscore in seriesId do not cancel o
     );
     expect(cancelledTricky.length).toBe(0);
 
+    // Unescaped, `%` would match "_normal_" and cancel the target.
+    const suffix = legitimateSeriesId.split("_").pop();
+    const cancelledInteriorPercent = await BookingService.cancelSeries(
+      `series_legit%${suffix}`,
+      "test interior percent",
+      testUser.id,
+    );
+    expect(cancelledInteriorPercent.length).toBe(0);
+
     // Verify the booking is still confirmed
     const [reloaded] = await db
       .select()
