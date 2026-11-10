@@ -308,8 +308,11 @@ describe("Server Actions Layer", () => {
       expect(result.error).toContain("not found");
     });
 
-    test("rescheduleBookingAction and cancelBookingAction reject non-organizer / non-attendee callers", async () => {
-      const { user: userTable } = await import("../../src/db/schema");
+    test("rescheduleBookingAction and cancelBookingAction reject callers who are not organizer or owner", async () => {
+      const { user: userTable, booking: bookingTable } =
+        await import("../../src/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const { BookingService } = await import("../../src/services/booking");
       const [fUser] = await db
         .insert(userTable)
         .values({
@@ -318,25 +321,35 @@ describe("Server Actions Layer", () => {
           email: `forg-${Date.now()}@example.com`,
         })
         .returning();
+      let foreignBookingId: string | undefined;
+      try {
+        const foreignBooking = await BookingService.createBooking({
+          organizerUserId: fUser.id,
+          title: "Foreign Secret Meeting",
+          startTime: "2026-11-20T10:00:00.000Z",
+          endTime: "2026-11-20T10:30:00.000Z",
+        });
+        foreignBookingId = foreignBooking.id;
 
-      const { BookingService } = await import("../../src/services/booking");
-      const foreignBooking = await BookingService.createBooking({
-        organizerUserId: fUser.id,
-        title: "Foreign Secret Meeting",
-        startTime: "2026-11-20T10:00:00.000Z",
-        endTime: "2026-11-20T10:30:00.000Z",
-      });
+        const rescheduleRes = await rescheduleBookingAction(foreignBooking.id, {
+          startTime: "2026-11-20T11:00:00.000Z",
+          endTime: "2026-11-20T11:30:00.000Z",
+        });
+        expect(rescheduleRes).toEqual({
+          success: false,
+          error: "Access denied",
+        });
 
-      const rescheduleRes = await rescheduleBookingAction(foreignBooking.id, {
-        startTime: "2026-11-20T11:00:00.000Z",
-        endTime: "2026-11-20T11:30:00.000Z",
-      });
-      expect(rescheduleRes.success).toBe(false);
-      expect(rescheduleRes.error).toMatch(/Access denied|Unauthorized/i);
-
-      const cancelRes = await cancelBookingAction(foreignBooking.id);
-      expect(cancelRes.success).toBe(false);
-      expect(cancelRes.error).toMatch(/Access denied|Unauthorized/i);
+        const cancelRes = await cancelBookingAction(foreignBooking.id);
+        expect(cancelRes).toEqual({ success: false, error: "Access denied" });
+      } finally {
+        if (foreignBookingId) {
+          await db
+            .delete(bookingTable)
+            .where(eq(bookingTable.id, foreignBookingId));
+        }
+        await db.delete(userTable).where(eq(userTable.id, fUser.id));
+      }
     });
   });
 });

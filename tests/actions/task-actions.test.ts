@@ -173,8 +173,7 @@ describe("Task Server Actions with Core Domain Services", () => {
         teamId: foreignTeamId,
         name: "Unauthorized Project",
       });
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+      expect(res).toEqual({ success: false, error: "Access denied" });
     });
 
     test("createTaskAction rejects non-members", async () => {
@@ -183,28 +182,24 @@ describe("Task Server Actions with Core Domain Services", () => {
         title: "Unauthorized Task",
         status: "todo",
       });
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+      expect(res).toEqual({ success: false, error: "Access denied" });
     });
 
     test("updateTaskAction rejects non-members", async () => {
       const res = await updateTaskAction(foreignTaskId, {
         title: "Hacked Task Title",
       });
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+      expect(res).toEqual({ success: false, error: "Access denied" });
     });
 
     test("updateTaskStatusAction rejects non-members", async () => {
       const res = await updateTaskStatusAction(foreignTaskId, "done");
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+      expect(res).toEqual({ success: false, error: "Access denied" });
     });
 
     test("getTaskCommentsAction rejects non-members", async () => {
       const res = await getTaskCommentsAction(foreignTaskId);
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+      expect(res).toEqual({ success: false, error: "Access denied" });
     });
 
     test("createTaskCommentAction rejects non-members", async () => {
@@ -212,8 +207,7 @@ describe("Task Server Actions with Core Domain Services", () => {
         taskId: foreignTaskId,
         content: "Unauthorized comment",
       });
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/Access denied|Unauthorized/i);
+      expect(res).toEqual({ success: false, error: "Access denied" });
     });
 
     test("createTaskAction rejects an assignee outside the team", async () => {
@@ -248,6 +242,26 @@ describe("Task Server Actions with Core Domain Services", () => {
       const cleared = await updateTaskAction(testTaskId, { assigneeId: null });
       expect(cleared.success).toBe(true);
       expect(cleared.data!.assigneeId).toBeNull();
+    });
+
+    test("update actions fail closed without a session and leave the task untouched", async () => {
+      session.mockRestore();
+      try {
+        const before = await TaskService.getTaskById(testTaskId);
+        const update = await updateTaskAction(testTaskId, { title: "Anon" });
+        const status = await updateTaskStatusAction(testTaskId, "done");
+        for (const res of [update, status]) {
+          expect(res).toEqual({
+            success: false,
+            error: "Unauthorized: Active user session required",
+          });
+        }
+        const after = await TaskService.getTaskById(testTaskId);
+        expect(after!.title).toBe(before!.title);
+        expect(after!.status).toBe(before!.status);
+      } finally {
+        session = mockSessionUser(actingUserId);
+      }
     });
 
     describe("team slug that equals another team's id", () => {
