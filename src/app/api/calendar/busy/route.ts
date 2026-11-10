@@ -1,6 +1,7 @@
 import { resolveUserId } from "@/services/api-utils";
 import { z } from "zod";
 import {
+  BusyQueryError,
   handleBusyQuery,
   type BusyInterval,
   type CalendarBusyInfo,
@@ -9,63 +10,45 @@ import {
 
 export type { BusyInterval, CalendarBusyInfo, BusyEventItem };
 
+const MAX_LIST_ITEMS = 50;
+
+// Accepts an array or a comma-separated string; at most MAX_LIST_ITEMS entries.
+const listParam = z
+  .union([z.array(z.string()), z.string().transform((v) => v.split(","))])
+  .transform((list) => list.map((v) => v.trim()).filter(Boolean))
+  .pipe(z.array(z.string()).max(MAX_LIST_ITEMS))
+  .optional();
+
 const BusyQuerySchema = z.object({
-  emails: z.union([z.array(z.string()), z.string()]).optional(),
-  roomIds: z.union([z.array(z.string()), z.string()]).optional(),
-  userIds: z.union([z.array(z.string()), z.string()]).optional(),
+  emails: listParam,
+  roomIds: listParam,
+  userIds: listParam,
   timeMin: z.string().optional(),
   timeMax: z.string().optional(),
 });
 
-export async function GET(req: Request) {
+async function respond(req: Request, input: unknown) {
   try {
     const callerId = await resolveUserId(req);
     if (!callerId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const url = new URL(req.url);
-    const emailsParam = url.searchParams.get("emails");
-    const roomIdsParam = url.searchParams.get("roomIds");
-    const userIdsParam = url.searchParams.get("userIds");
-    const timeMin = url.searchParams.get("timeMin") || undefined;
-    const timeMax = url.searchParams.get("timeMax") || undefined;
+    const parseResult = BusyQuerySchema.safeParse(input);
+    if (!parseResult.success) {
+      return Response.json(
+        { error: "Invalid busy query parameters" },
+        { status: 400 },
+      );
+    }
 
-    const emails = emailsParam
-      ? emailsParam
-          .split(",")
-          .map((e) => e.trim())
-          .filter(Boolean)
-      : [];
-    const roomIds = roomIdsParam
-      ? roomIdsParam
-          .split(",")
-          .map((r) => r.trim())
-          .filter(Boolean)
-      : [];
-    const userIds = userIdsParam
-      ? userIdsParam
-          .split(",")
-          .map((u) => u.trim())
-          .filter(Boolean)
-      : [];
-
-    const result = await handleBusyQuery({
-      callerId,
-      emails,
-      roomIds,
-      userIds,
-      timeMin,
-      timeMax,
-    });
-
+    const result = await handleBusyQuery({ callerId, ...parseResult.data });
     return Response.json(result, { status: 200 });
   } catch (err) {
-    const isBadInput =
-      err instanceof Error && err.message.includes("Invalid time range");
-    if (isBadInput) {
-      return Response.json({ error: (err as Error).message }, { status: 400 });
+    if (err instanceof BusyQueryError) {
+      return Response.json({ error: err.message }, { status: 400 });
     }
+    console.error("Busy query failed:", err);
     return Response.json(
       { error: "Failed to fetch busy schedules" },
       { status: 500 },
@@ -73,54 +56,17 @@ export async function GET(req: Request) {
   }
 }
 
+export async function GET(req: Request) {
+  const params = new URL(req.url).searchParams;
+  return respond(req, {
+    emails: params.get("emails") || undefined,
+    roomIds: params.get("roomIds") || undefined,
+    userIds: params.get("userIds") || undefined,
+    timeMin: params.get("timeMin") || undefined,
+    timeMax: params.get("timeMax") || undefined,
+  });
+}
+
 export async function POST(req: Request) {
-  try {
-    const callerId = await resolveUserId(req);
-    if (!callerId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rawBody = await req.json().catch(() => ({}));
-    const parseResult = BusyQuerySchema.safeParse(rawBody);
-    if (!parseResult.success) {
-      return Response.json(
-        { error: "Invalid busy query body parameters" },
-        { status: 400 },
-      );
-    }
-    const { emails, roomIds, userIds, timeMin, timeMax } = parseResult.data;
-
-    const result = await handleBusyQuery({
-      callerId,
-      emails: Array.isArray(emails)
-        ? emails
-        : typeof emails === "string"
-          ? emails.split(",")
-          : [],
-      roomIds: Array.isArray(roomIds)
-        ? roomIds
-        : typeof roomIds === "string"
-          ? roomIds.split(",")
-          : [],
-      userIds: Array.isArray(userIds)
-        ? userIds
-        : typeof userIds === "string"
-          ? userIds.split(",")
-          : [],
-      timeMin,
-      timeMax,
-    });
-
-    return Response.json(result, { status: 200 });
-  } catch (err) {
-    const isBadInput =
-      err instanceof Error && err.message.includes("Invalid time range");
-    if (isBadInput) {
-      return Response.json({ error: (err as Error).message }, { status: 400 });
-    }
-    return Response.json(
-      { error: "Failed to fetch busy schedules" },
-      { status: 500 },
-    );
-  }
+  return respond(req, await req.json().catch(() => ({})));
 }

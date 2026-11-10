@@ -425,4 +425,86 @@ describe("Security Issue #96: tenant scoping", () => {
       }
     });
   });
+
+  describe("busy query", () => {
+    afterEach(() => mock.restore());
+    const busy = (body: unknown) =>
+      postBusyHandler(
+        asCaller("/api/calendar/busy", {
+          method: "POST",
+          body: JSON.stringify(body),
+        }),
+      );
+
+    it("includes bookings where the teammate is only an attendee", async () => {
+      const [b] = await db
+        .insert(booking)
+        .values({
+          title: `${tag} attendee only`,
+          organizerUserId: outsiderId,
+          startTime: new Date("2026-10-21T02:00:00.000Z"),
+          endTime: new Date("2026-10-21T03:00:00.000Z"),
+          attendees: [{ email: teammateEmail }],
+        })
+        .returning();
+      try {
+        const res = await busy({
+          userIds: [teammateId],
+          timeMin: "2026-10-21T00:00:00.000Z",
+          timeMax: "2026-10-22T00:00:00.000Z",
+        });
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.calendars[teammateEmail].busy).toContainEqual(
+          expect.objectContaining({
+            start: "2026-10-21T02:00:00.000Z",
+            source: "db",
+          }),
+        );
+      } finally {
+        await db.delete(booking).where(eq(booking.id, b.id));
+      }
+    });
+
+    it("never returns calendars for other-tenant users", async () => {
+      const res = await busy({
+        userIds: [outsiderId],
+        emails: [outsiderEmail],
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.calendars[outsiderEmail]).toBeUndefined();
+    });
+
+    it("caps the number of requested ids and emails", async () => {
+      const many = Array.from({ length: 51 }, (_, i) => `id${i}`);
+      for (const key of ["userIds", "roomIds", "emails"]) {
+        const res = await busy({ [key]: many });
+        expect(res.status).toBe(400);
+      }
+      const getRes = await getBusyHandler(
+        asCaller(`/api/calendar/busy?userIds=${many.join(",")}`),
+      );
+      expect(getRes.status).toBe(400);
+    });
+
+    it("rejects time ranges longer than 62 days", async () => {
+      const res = await busy({
+        timeMin: "2026-01-01T00:00:00.000Z",
+        timeMax: "2026-03-15T00:00:00.000Z",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("logs and hides unexpected failures", async () => {
+      const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+      spyOn(UserService, "getTeammateIds").mockRejectedValue(
+        new Error("pg boom detail"),
+      );
+      const res = await busy({ userIds: [teammateId] });
+      expect(res.status).toBe(500);
+      expect(JSON.stringify(await res.json())).not.toContain("pg boom");
+      expect(errorSpy).toHaveBeenCalled();
+    });
+  });
 });

@@ -1,6 +1,8 @@
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { db } from "@/db";
-import { account, booking, meetingRoom, user, teamMember } from "@/db/schema";
+import { UserService } from "@/services/user";
+import { bookingHasAttendee } from "@/services/scheduler";
+import { account, booking, meetingRoom, user } from "@/db/schema";
 import { eq, inArray, and, lte, gte, or } from "drizzle-orm";
 import type {
   BusyInterval,
@@ -20,6 +22,11 @@ const PALETTE = [
   "#db2777",
   "#4f46e5",
 ];
+
+const MAX_RANGE_MS = 62 * 24 * 60 * 60 * 1000;
+
+/** Invalid caller input; routes map it to a 400. */
+export class BusyQueryError extends Error {}
 
 export async function handleBusyQuery(params: {
   callerId: string;
@@ -45,7 +52,12 @@ export async function handleBusyQuery(params: {
     isNaN(endDate.getTime()) ||
     startDate >= endDate
   ) {
-    throw new Error("Invalid time range: timeMin must be before timeMax");
+    throw new BusyQueryError(
+      "Invalid time range: timeMin must be before timeMax",
+    );
+  }
+  if (endDate.getTime() - startDate.getTime() > MAX_RANGE_MS) {
+    throw new BusyQueryError("Invalid time range: at most 62 days");
   }
 
   // 1. Resolve caller's Google OAuth account
@@ -56,20 +68,9 @@ export async function handleBusyQuery(params: {
   const googleAccount = accounts.find((a) => a.providerId === "google") || null;
 
   // 2. Determine allowed teammate user IDs to prevent cross-tenant lookup
-  const userMemberships = await db
-    .select({ teamId: teamMember.teamId })
-    .from(teamMember)
-    .where(eq(teamMember.userId, params.callerId));
-  const teamIds = userMemberships.map((m) => m.teamId);
-
-  const allowedUserIds = new Set<string>([params.callerId]);
-  if (teamIds.length > 0) {
-    const teammates = await db
-      .select({ userId: teamMember.userId })
-      .from(teamMember)
-      .where(inArray(teamMember.teamId, teamIds));
-    for (const t of teammates) allowedUserIds.add(t.userId);
-  }
+  const allowedUserIds = new Set(
+    await UserService.getTeammateIds(params.callerId),
+  );
 
   // Filter requested userIds to authorized teammate IDs only
   const requestedUserIds = (params.userIds || []).filter((uid) =>
@@ -187,6 +188,10 @@ export async function handleBusyQuery(params: {
             inArray(booking.organizerUserId, allowedUserArray),
             foundRoomIds.length > 0
               ? inArray(booking.roomId, foundRoomIds)
+              : undefined,
+            // Authorized targets only, so bookings they attend are their own busy time.
+            allEmailList.length > 0
+              ? bookingHasAttendee(allEmailList)
               : undefined,
           ),
         ),
