@@ -9,6 +9,8 @@ export interface UseUserSearchOptions {
   limit?: number;
   debounceMs?: number;
   enabled?: boolean;
+  /** Append a placeholder row for an unknown full-email query (default true). */
+  emailFallback?: boolean;
 }
 
 export interface UseUserSearchResult {
@@ -25,6 +27,7 @@ export function useUserSearch({
   limit = 8,
   debounceMs = 200,
   enabled = true,
+  emailFallback = true,
 }: UseUserSearchOptions = {}): UseUserSearchResult {
   const [query, setQueryState] = React.useState("");
   const [results, setResults] = React.useState<Teammate[]>([]);
@@ -87,6 +90,7 @@ export function useUserSearch({
             : [];
 
         if (
+          emailFallback &&
           isFullEmail(trimmed) &&
           !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())
         ) {
@@ -126,7 +130,7 @@ export function useUserSearch({
       active = false;
       clearTimeout(timer);
     };
-  }, [query, limit, debounceMs, enabled, filterKnown]);
+  }, [query, limit, debounceMs, enabled, emailFallback, filterKnown]);
 
   const clear = React.useCallback(() => {
     setQueryState("");
