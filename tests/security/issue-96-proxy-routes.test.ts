@@ -25,6 +25,7 @@ import { booking, eventType, team, teamMember, user } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { UserService } from "@/services/user";
 import { GoogleCalendarService } from "@/services/google-calendar";
+import { SchedulerService } from "@/services/scheduler";
 
 describe("Security Issue #96: Proxy and Route Session Hardening", () => {
   it("proxy blocks forged session cookie on protected API routes with 401", async () => {
@@ -382,6 +383,45 @@ describe("Security Issue #96: tenant scoping", () => {
         await db
           .delete(booking)
           .where(inArray(booking.id, [blocking.id, unrelated.id]));
+      }
+    });
+  });
+
+  describe("error responses", () => {
+    afterEach(() => mock.restore());
+    const secret = "pg relation user leaked connection string";
+
+    it("users/search, slots/find and event-types hide internal error text", async () => {
+      spyOn(console, "error").mockImplementation(() => {});
+      spyOn(UserService, "searchTeammates").mockRejectedValue(
+        new Error(secret),
+      );
+      spyOn(SchedulerService, "findSlots").mockRejectedValue(new Error(secret));
+      spyOn(SchedulerService, "createEventType").mockRejectedValue(
+        new Error(secret),
+      );
+      const responses = await Promise.all([
+        searchUsersHandler(asCaller(`/api/users/search?q=${tag}`)),
+        findSlotsHandler(
+          asCaller("/api/slots/find", {
+            method: "POST",
+            body: JSON.stringify({
+              attendees: [teammateEmail],
+              startDate: "2026-10-20T02:00:00.000Z",
+              endDate: "2026-10-20T04:00:00.000Z",
+            }),
+          }),
+        ),
+        createEventTypeHandler(
+          asCaller("/api/event-types", {
+            method: "POST",
+            body: JSON.stringify({ name: "x" }),
+          }),
+        ),
+      ]);
+      for (const res of responses) {
+        expect(res.status).toBe(500);
+        expect(JSON.stringify(await res.json())).not.toContain(secret);
       }
     });
   });

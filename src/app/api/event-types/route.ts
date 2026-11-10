@@ -49,11 +49,9 @@ export async function GET(req: Request) {
 
     return Response.json(items, { status: 200 });
   } catch (err) {
+    console.error("GET /api/event-types failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Failed to fetch event types",
-      },
+      { error: "Failed to fetch event types" },
       { status: 500 },
     );
   }
@@ -117,11 +115,9 @@ export async function POST(req: Request) {
 
     return Response.json(created, { status: 201 });
   } catch (err) {
+    console.error("POST /api/event-types failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Failed to create event type",
-      },
+      { error: "Failed to create event type" },
       { status: 500 },
     );
   }

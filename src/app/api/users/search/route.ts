@@ -41,9 +41,7 @@ export async function GET(req: Request) {
     });
     return Response.json(users, { status: 200 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to search users" },
-      { status: 500 },
-    );
+    console.error("GET /api/users/search failed:", err);
+    return Response.json({ error: "Failed to search users" }, { status: 500 });
   }
 }

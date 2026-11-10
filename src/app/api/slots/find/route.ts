@@ -79,9 +79,7 @@ export async function POST(req: Request) {
     });
     return Response.json(slots, { status: 200 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to find slots" },
-      { status: 500 },
-    );
+    console.error("POST /api/slots/find failed:", err);
+    return Response.json({ error: "Failed to find slots" }, { status: 500 });
   }
 }

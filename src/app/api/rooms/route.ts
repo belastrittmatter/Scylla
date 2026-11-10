@@ -62,9 +62,7 @@ export async function GET(req: Request) {
     });
     return Response.json(rooms, { status: 200 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch rooms" },
-      { status: 500 },
-    );
+    console.error("GET /api/rooms failed:", err);
+    return Response.json({ error: "Failed to fetch rooms" }, { status: 500 });
   }
 }

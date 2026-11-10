@@ -761,13 +761,9 @@ export async function GET(req: Request) {
       },
     );
   } catch (err) {
+    console.error("GET /api/calendar failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch calendar events",
-      },
+      { error: "Failed to fetch calendar events" },
       { status: 500 },
     );
   }
