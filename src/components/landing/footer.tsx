@@ -25,11 +25,6 @@ const FOOTER_COLUMNS: FooterColumn[] = [
         href: "/tasks",
         isDashboardLink: true,
       },
-      {
-        label: "Projects & Backlogs",
-        href: "/projects",
-        isDashboardLink: true,
-      },
       { label: "Multi-Person Teams", href: "/teams", isDashboardLink: true },
     ],
   },

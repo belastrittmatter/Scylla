@@ -1,48 +1,22 @@
-"use client";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { TeamsView } from "@/components/teams/teams-view";
+import { getCurrentUserId, loadTeamSummaries } from "@/lib/team-pages";
+import { TeamsPageSkeleton } from "@/components/teams/teams-page-skeleton";
 
-import * as React from "react";
-import { useTeams } from "@/hooks/use-teams";
-import { TeamList } from "@/components/teams";
-import { Users } from "lucide-react";
+export const metadata = { title: "Teams | Scylla MCP" };
 
+// cacheComponents: request-time data must render inside a Suspense boundary.
 export default function TeamsPage() {
-  const { teams, isLoading, error, createTeam, updateTeam, deleteTeam } =
-    useTeams();
-
   return (
-    <div className="mx-auto min-h-screen max-w-7xl space-y-8 p-6 md:p-8">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-5 dark:border-neutral-800">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-              <Users className="size-4.5" />
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Teams
-            </h1>
-          </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Manage your organization&apos;s workspaces, team memberships, and
-            access team-scoped projects.
-          </p>
-        </div>
-      </div>
-
-      {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
-      {/* Main team content */}
-      <TeamList
-        teams={teams}
-        isLoading={isLoading}
-        onCreateTeam={createTeam}
-        onUpdateTeam={updateTeam}
-        onDeleteTeam={deleteTeam}
-      />
-    </div>
+    <Suspense fallback={<TeamsPageSkeleton />}>
+      <TeamsContent />
+    </Suspense>
   );
+}
+
+async function TeamsContent() {
+  const userId = await getCurrentUserId();
+  if (!userId) redirect("/auth/sign-in");
+  return <TeamsView initialTeams={await loadTeamSummaries(userId)} />;
 }

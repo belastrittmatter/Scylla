@@ -32,10 +32,8 @@ import { useSession } from "@/lib/auth-client";
 import type { EventType, MeetingRoom } from "@/db/schema";
 import type { CalendarEvent } from "@/components/reui/event-calendar/event-calendar-types";
 import type { CustomEventData } from "@/mock-data/calendar-events";
-import {
-  UserAutocompletePicker,
-  type SelectedAttendee,
-} from "./user-autocomplete-picker";
+import type { SelectedAttendee } from "./calendar-attendee-types";
+import { CalendarAttendeePicker } from "./calendar-attendee-picker";
 import {
   CalendarProjectPicker,
   type ProjectOption,
@@ -368,24 +366,18 @@ export function CalendarAddDialog({
 
       try {
         for (const slot of datesToSchedule) {
-          const seriesTag = seriesId ? `<!--series:${seriesId}-->` : "";
           const descText = description.trim();
-          const finalDescription = seriesTag
-            ? descText
-              ? `${descText}\n\n${seriesTag}`
-              : seriesTag
-            : descText || undefined;
 
           const booking = await apiClient.bookings.create({
             title: finalTitle,
-            description: finalDescription,
+            description: descText || undefined,
+            seriesId: seriesId || undefined,
             eventTypeId: selectedEventType?.id,
             roomId: roomToAssign,
             projectId: selectedProjectId || undefined,
             startTime: slot.start,
             endTime: slot.end,
             attendees: attendees.length > 0 ? attendees : undefined,
-            organizerUserId: session?.user?.id || "usr_alex_rivera",
           });
 
           createdBookings.push(booking);
@@ -474,9 +466,7 @@ export function CalendarAddDialog({
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           {/* Title with Team Prefix */}
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-              Title
-            </Label>
+            <Label className="text-xs font-medium text-foreground">Title</Label>
             <InputGroup className="h-9">
               {selectedProject?.teamName && (
                 <InputGroupAddon
@@ -500,7 +490,7 @@ export function CalendarAddDialog({
           {/* Template & Project Picker Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+              <Label className="text-xs font-medium text-muted-foreground">
                 Template
               </Label>
               <Select
@@ -532,7 +522,7 @@ export function CalendarAddDialog({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+              <Label className="text-xs font-medium text-muted-foreground">
                 Project
               </Label>
               <CalendarProjectPicker
@@ -575,10 +565,10 @@ export function CalendarAddDialog({
 
           {/* Invite Colleagues */}
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+            <Label className="text-xs font-medium text-foreground">
               Attendees
             </Label>
-            <UserAutocompletePicker
+            <CalendarAttendeePicker
               value={selectedAttendees}
               onChange={setSelectedAttendees}
               placeholder="Add attendees..."
@@ -587,9 +577,7 @@ export function CalendarAddDialog({
 
           {/* Agenda / Notes */}
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-              Notes
-            </Label>
+            <Label className="text-xs font-medium text-foreground">Notes</Label>
             <Textarea
               rows={2}
               placeholder="Add notes..."

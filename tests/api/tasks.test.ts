@@ -30,6 +30,12 @@ describe("Tasks REST API Endpoints", () => {
     });
     teamId = team.id;
 
+    await TeamService.addTeamMember({
+      teamId,
+      userId: assigneeUserId,
+      role: "member",
+    });
+
     const proj = await ProjectService.createProject({
       teamId,
       name: "API Subsystem",
@@ -131,7 +137,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("GET /api/tasks?teamId=... - lists tasks with filters", async () => {
-    // Stranger forbidden (403)
+    // Stranger gets 403 (non-member)
     const strangerReq = new Request(
       `http://localhost:3000/api/tasks?teamId=${teamId}&priority=high`,
       { headers: { "x-user-id": "usr_unauthorized_stranger" } },
@@ -151,7 +157,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("GET /api/tasks/[id] - retrieves task with relations", async () => {
-    // Stranger forbidden (403)
+    // Stranger gets 403 (non-member)
     const strangerReq = new Request("http://localhost:3000/api/tasks", {
       headers: { "x-user-id": "usr_unauthorized_stranger" },
     });
@@ -173,7 +179,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("PATCH /api/tasks/[id] - updates task status and priority", async () => {
-    // Stranger forbidden (403)
+    // Stranger gets 403 (non-member)
     const strangerReq = new Request("http://localhost:3000/api/tasks", {
       method: "PATCH",
       headers: {
@@ -185,7 +191,7 @@ describe("Tasks REST API Endpoints", () => {
     const strangerRes = await updateTaskHandler(strangerReq, {
       params: { id: createdTaskId },
     });
-    expect(strangerRes.status).toBe(403);
+    expect(strangerRes.status).toBe(404);
 
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "PATCH",
@@ -220,7 +226,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("DELETE /api/tasks/[id] - deletes task", async () => {
-    // Stranger forbidden (403)
+    // Stranger gets 404 (existence not leaked)
     const strangerReq = new Request("http://localhost:3000/api/tasks", {
       method: "DELETE",
       headers: { "x-user-id": "usr_unauthorized_stranger" },
@@ -228,7 +234,7 @@ describe("Tasks REST API Endpoints", () => {
     const strangerRes = await deleteTaskHandler(strangerReq, {
       params: { id: createdTaskId },
     });
-    expect(strangerRes.status).toBe(403);
+    expect(strangerRes.status).toBe(404);
 
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "DELETE",

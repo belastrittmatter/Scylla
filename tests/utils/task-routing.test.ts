@@ -2,8 +2,13 @@ import { describe, expect, test } from "bun:test";
 import {
   findTeamBySlugOrId,
   findProjectBySlugOrId,
-  buildTaskWorkspaceUrl,
+  buildTasksUrl,
+  deriveTaskWorkspaceRoute,
 } from "../../src/components/tasks/use-task-workspace-routing";
+import {
+  parseTaskViewMode,
+  resolveTaskViewMode,
+} from "../../src/components/tasks/task-view-mode";
 import type { Team, Project } from "../../src/components/tasks/task-types";
 
 describe("Task Workspace Slug Routing Utilities", () => {
@@ -105,23 +110,156 @@ describe("Task Workspace Slug Routing Utilities", () => {
     });
   });
 
-  describe("buildTaskWorkspaceUrl", () => {
-    test("builds team-level task URL when project is not specified", () => {
-      expect(buildTaskWorkspaceUrl("engineering-core")).toBe(
-        "/tasks/engineering-core",
-      );
+  describe("buildTasksUrl", () => {
+    test("me scope is the bare /tasks route", () => {
+      expect(buildTasksUrl({ scope: "me", team: "x" })).toBe("/tasks");
     });
 
-    test("builds team-level task URL when project is 'all'", () => {
-      expect(buildTaskWorkspaceUrl("engineering-core", "all")).toBe(
-        "/tasks/engineering-core",
+    test("team scope carries team and optional project", () => {
+      expect(buildTasksUrl({ scope: "team", team: "engineering-core" })).toBe(
+        "/tasks?scope=team&team=engineering-core",
       );
+      expect(
+        buildTasksUrl({
+          scope: "team",
+          team: "engineering-core",
+          project: "mobile-app",
+        }),
+      ).toBe("/tasks?scope=team&team=engineering-core&project=mobile-app");
+    });
+  });
+
+  describe("view param", () => {
+    test("buildTasksUrl keeps the view for every scope", () => {
+      expect(buildTasksUrl({ scope: "me", view: "board" })).toBe(
+        "/tasks?view=board",
+      );
+      expect(
+        buildTasksUrl({
+          scope: "team",
+          team: "engineering-core",
+          project: "mobile-app",
+          view: "timeline",
+        }),
+      ).toBe(
+        "/tasks?scope=team&team=engineering-core&project=mobile-app&view=timeline",
+      );
+      expect(buildTasksUrl({ scope: "me", view: null })).toBe("/tasks");
     });
 
-    test("builds scoped project task URL when project slug is provided", () => {
-      expect(buildTaskWorkspaceUrl("engineering-core", "mobile-app")).toBe(
-        "/tasks/engineering-core/mobile-app",
+    test("deriveTaskWorkspaceRoute reads a valid view and ignores junk", () => {
+      const derive = (query: string) =>
+        deriveTaskWorkspaceRoute({
+          pathname: "/tasks",
+          searchParams: new URLSearchParams(query),
+          teams: mockTeams,
+          projects: mockProjects,
+        }).view;
+      expect(derive("view=board")).toBe("board");
+      expect(derive("scope=team&team=product-design&view=timeline")).toBe(
+        "timeline",
       );
+      expect(derive("scope=team&view=list")).toBe("list");
+      expect(derive("view=gantt")).toBeUndefined();
+      expect(derive("")).toBeUndefined();
+    });
+
+    test("resolveTaskViewMode: URL, then stored choice, then scope default", () => {
+      expect(resolveTaskViewMode("team", undefined, undefined)).toBe("board");
+      expect(resolveTaskViewMode("me", undefined, undefined)).toBe("list");
+      expect(resolveTaskViewMode("team", undefined, "list")).toBe("list");
+      expect(resolveTaskViewMode("me", "timeline", "list")).toBe("timeline");
+    });
+
+    test("parseTaskViewMode accepts only known modes", () => {
+      expect(parseTaskViewMode("list")).toBe("list");
+      expect(parseTaskViewMode("Board")).toBeUndefined();
+      expect(parseTaskViewMode(null)).toBeUndefined();
+    });
+  });
+
+  describe("deriveTaskWorkspaceRoute", () => {
+    const derive = (pathname: string, query = "") =>
+      deriveTaskWorkspaceRoute({
+        pathname,
+        searchParams: new URLSearchParams(query),
+        teams: mockTeams,
+        projects: mockProjects,
+      });
+    const ids = (r: ReturnType<typeof derive>) => [
+      r.scope,
+      r.team?.id ?? null,
+      r.project?.id ?? null,
+    ];
+
+    test("/tasks resolves to me with no team selection", () => {
+      expect(ids(derive("/tasks"))).toEqual(["me", null, null]);
+    });
+
+    test("scope=team with team and project slugs", () => {
+      expect(
+        ids(
+          derive(
+            "/tasks",
+            "scope=team&team=engineering-core&project=mobile-app",
+          ),
+        ),
+      ).toEqual(["team", "team-eng-1", "proj-mobile-2"]);
+    });
+
+    test("scope=team without project means all projects of the team", () => {
+      expect(ids(derive("/tasks", "scope=team&team=product-design"))).toEqual([
+        "team",
+        "team-design-2",
+        null,
+      ]);
+    });
+
+    test("scope=team without a valid team falls back to the first team", () => {
+      expect(ids(derive("/tasks", "scope=team&team=nope"))).toEqual([
+        "team",
+        "team-eng-1",
+        null,
+      ]);
+    });
+
+    test("removed scope=all resolves to me and keeps the view", () => {
+      expect(ids(derive("/tasks", "scope=all"))).toEqual(["me", null, null]);
+      expect(
+        ids(derive("/tasks", "scope=all&team=product-design&view=board")),
+      ).toEqual(["me", null, null]);
+      expect(derive("/tasks", "scope=all&view=board").view).toBe("board");
+    });
+
+    test("legacy /tasks/<team>/<project> path resolves to team scope", () => {
+      expect(ids(derive("/tasks/engineering-core/mobile-app"))).toEqual([
+        "team",
+        "team-eng-1",
+        "proj-mobile-2",
+      ]);
+      expect(ids(derive("/tasks/engineering-core"))).toEqual([
+        "team",
+        "team-eng-1",
+        null,
+      ]);
+    });
+
+    test("legacy ?teamId=&projectId= query resolves to team scope", () => {
+      expect(
+        ids(derive("/tasks", "teamId=team-eng-1&projectId=proj-bridge-1")),
+      ).toEqual(["team", "team-eng-1", "proj-bridge-1"]);
+    });
+
+    test("unknown scope value falls back to me", () => {
+      expect(ids(derive("/tasks", "scope=bogus"))).toEqual(["me", null, null]);
+    });
+
+    test("a project from another team is ignored", () => {
+      expect(
+        ids(
+          derive("/tasks", "scope=team&team=product-design&project=mobile-app"),
+        ),
+      ).toEqual(["team", "team-design-2", null]);
     });
   });
 });

@@ -1,11 +1,16 @@
 import { RoomService, type RoomFilter } from "@/services/rooms";
-import { auth } from "@/lib/auth";
+import { resolveUserId } from "@/services/api-utils";
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(req: Request) {
   try {
+    const callerId = await resolveUserId(req);
+    if (!callerId) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const url = new URL(req.url);
     const minCapacityParam = url.searchParams.get("minCapacity");
     const building = url.searchParams.get("building") || undefined;
@@ -36,25 +41,12 @@ export async function GET(req: Request) {
       building,
     };
 
-    // Resolve current user session & Google OAuth token
-    let sessionUserId: string | undefined;
-    try {
-      const session = await auth.api.getSession({ headers: req.headers });
-      if (session?.user) {
-        sessionUserId = session.user.id;
-      }
-    } catch {
-      // Ignore session retrieval error
-    }
-
-    let googleAccount = null;
-    if (sessionUserId) {
-      const accounts = await db
-        .select()
-        .from(account)
-        .where(eq(account.userId, sessionUserId));
-      googleAccount = accounts.find((a) => a.providerId === "google") || null;
-    }
+    const accounts = await db
+      .select()
+      .from(account)
+      .where(eq(account.userId, callerId));
+    const googleAccount =
+      accounts.find((a) => a.providerId === "google") || null;
 
     const rooms = await RoomService.listRooms(filter, {
       accountRecord: googleAccount || undefined,
@@ -62,9 +54,7 @@ export async function GET(req: Request) {
     });
     return Response.json(rooms, { status: 200 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch rooms" },
-      { status: 500 },
-    );
+    console.error("GET /api/rooms failed:", err);
+    return Response.json({ error: "Failed to fetch rooms" }, { status: 500 });
   }
 }

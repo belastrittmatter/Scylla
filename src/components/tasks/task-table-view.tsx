@@ -1,158 +1,172 @@
 "use client";
 
 import * as React from "react";
-import { ArrowUpDown } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ChevronDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { TaskBulkActionBar } from "./task-bulk-action-bar";
 import { TaskTableRow } from "./task-table-row";
+import { groupTasksForList } from "./task-selectors";
 import type { TaskItem, TaskStatus } from "./task-types";
-
-type SortField = "title" | "status" | "priority" | "assignee" | "dueDate";
-type SortDirection = "asc" | "desc";
 
 interface TaskTableViewProps {
   tasks: TaskItem[];
-  onSelectTask?: (task: TaskItem) => void;
+  /** Deadline buckets (Me/All) or workflow status (Team). */
+  groupBy: "deadline" | "status";
+  onSelectTask: (task: TaskItem) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
+  /** Muted "Team · Project" shown after the title; omit for none. */
+  getContextLabel?: (task: TaskItem) => string | null;
+  showAssignee: boolean;
+  /** Enables row checkboxes and the bulk delete bar. */
+  onDeleteTasks?: (ids: string[]) => Promise<boolean>;
+  /** Only tasks passing this can change status or be selected for bulk delete. */
+  canEditTask?: (task: TaskItem) => boolean;
 }
 
+/** One dense table; collapsible group header rows carry the counts. */
 export function TaskTableView({
   tasks,
-  onSelectTask,
+  groupBy,
+  getContextLabel,
+  onDeleteTasks,
+  canEditTask = () => true,
   onUpdateStatus,
+  ...rowProps
 }: TaskTableViewProps) {
-  const [sortField, setSortField] = React.useState<SortField>("dueDate");
-  const [sortDirection, setSortDirection] =
-    React.useState<SortDirection>("asc");
-
-  const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  const sortedTasks = React.useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case "title":
-          comparison = a.title.localeCompare(b.title);
-          break;
-        case "status":
-          comparison = a.status.localeCompare(b.status);
-          break;
-        case "priority": {
-          const pOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-          comparison =
-            (pOrder[b.priority as keyof typeof pOrder] || 0) -
-            (pOrder[a.priority as keyof typeof pOrder] || 0);
-          break;
-        }
-        case "assignee":
-          comparison = (a.assignee?.name || "").localeCompare(
-            b.assignee?.name || "",
-          );
-          break;
-        case "dueDate": {
-          const timeA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-          const timeB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
-          comparison = timeA - timeB;
-          break;
-        }
-      }
-      return sortDirection === "asc" ? comparison : -comparison;
+  const selectable = (t: TaskItem) => Boolean(onDeleteTasks) && canEditTask(t);
+  const groups = React.useMemo(
+    () => groupTasksForList(tasks, groupBy),
+    [tasks, groupBy],
+  );
+  const [collapsed, setCollapsed] = React.useState<Set<string>>(
+    () => new Set(),
+  );
+  const toggle = (id: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
     });
-  }, [tasks, sortField, sortDirection]);
+  const [picked, setPicked] = React.useState<Set<string>>(() => new Set());
+  // Derived so ids of tasks that disappeared never count (and drop out on the next toggle).
+  const selected = new Set(
+    tasks.filter((t) => picked.has(t.id) && selectable(t)).map((t) => t.id),
+  );
+  const toggleTasks = (ids: string[], on: boolean) => {
+    const next = new Set(selected);
+    ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+    setPicked(next);
+  };
+  const columnCount = (rowProps.showAssignee ? 5 : 4) + (onDeleteTasks ? 1 : 0);
 
   return (
-    <div className="h-full w-full overflow-auto p-6">
-      <div className="shadow-xs overflow-hidden rounded-xl border border-neutral-200/80 bg-white dark:border-neutral-800 dark:bg-neutral-900/90">
-        <Table>
-          <TableHeader className="bg-neutral-50/80 dark:bg-neutral-800/60">
-            <TableRow>
-              <TableHead
-                className="cursor-pointer py-3.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200"
-                onClick={() => toggleSort("title")}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Task Title</span>
-                  <ArrowUpDown className="size-3.5 text-neutral-400" />
-                </div>
-              </TableHead>
-
-              <TableHead
-                className="w-[140px] cursor-pointer py-3.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200"
-                onClick={() => toggleSort("status")}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Status</span>
-                  <ArrowUpDown className="size-3.5 text-neutral-400" />
-                </div>
-              </TableHead>
-
-              <TableHead
-                className="w-[110px] cursor-pointer py-3.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200"
-                onClick={() => toggleSort("priority")}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Priority</span>
-                  <ArrowUpDown className="size-3.5 text-neutral-400" />
-                </div>
-              </TableHead>
-
-              <TableHead
-                className="w-[160px] cursor-pointer py-3.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200"
-                onClick={() => toggleSort("assignee")}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>Assignee</span>
-                  <ArrowUpDown className="size-3.5 text-neutral-400" />
-                </div>
-              </TableHead>
-
-              <TableHead
-                className="w-[140px] cursor-pointer py-3.5 text-right text-sm font-semibold text-neutral-800 dark:text-neutral-200"
-                onClick={() => toggleSort("dueDate")}
-              >
-                <div className="flex items-center justify-end gap-1.5">
-                  <span>Deadline</span>
-                  <ArrowUpDown className="size-3.5 text-neutral-400" />
-                </div>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {sortedTasks.map((task) => (
-              <TaskTableRow
-                key={task.id}
-                task={task}
-                onSelectTask={onSelectTask}
-                onUpdateStatus={onUpdateStatus}
-              />
-            ))}
-
-            {sortedTasks.length === 0 && (
-              <TableRow>
-                <td
-                  colSpan={5}
-                  className="h-32 text-center text-sm text-neutral-400"
-                >
-                  No tasks matching the selected filters.
-                </td>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="bg-background h-full overflow-auto">
+      <Table>
+        <TableBody>
+          {groups.map((g) => {
+            const isOpen = !collapsed.has(g.id);
+            return (
+              <React.Fragment key={g.id}>
+                <TableRow className="group/row bg-muted/50 hover:bg-muted/50">
+                  <TableCell colSpan={columnCount} className="py-1">
+                    <div className="flex items-center gap-2">
+                      {g.tasks.some(selectable) && (
+                        <GroupCheckbox
+                          label={g.label}
+                          ids={g.tasks.filter(selectable).map((t) => t.id)}
+                          selected={selected}
+                          anySelected={selected.size > 0}
+                          onToggle={toggleTasks}
+                        />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-expanded={isOpen}
+                        onClick={() => toggle(g.id)}
+                        className={cn(g.destructive && "text-destructive")}
+                      >
+                        <ChevronDown
+                          className={cn(
+                            "transition-transform",
+                            !isOpen && "-rotate-90",
+                          )}
+                        />
+                        {g.label}
+                        <Badge
+                          variant={g.destructive ? "destructive" : "secondary"}
+                        >
+                          {g.tasks.length}
+                        </Badge>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                {isOpen &&
+                  g.tasks.map((task) => (
+                    <TaskTableRow
+                      key={task.id}
+                      task={task}
+                      contextLabel={getContextLabel?.(task)}
+                      selected={selected.has(task.id)}
+                      anySelected={selected.size > 0}
+                      selectable={selectable(task)}
+                      onToggleSelect={
+                        onDeleteTasks
+                          ? (id) => toggleTasks([id], !selected.has(id))
+                          : undefined
+                      }
+                      onUpdateStatus={
+                        canEditTask(task) ? onUpdateStatus : undefined
+                      }
+                      {...rowProps}
+                    />
+                  ))}
+              </React.Fragment>
+            );
+          })}
+        </TableBody>
+      </Table>
+      {onDeleteTasks && selected.size > 0 && (
+        <TaskBulkActionBar
+          count={selected.size}
+          onDelete={() => onDeleteTasks([...selected])}
+          onClear={() => setPicked(new Set())}
+        />
+      )}
     </div>
+  );
+}
+
+/** Tri-state select-all for one group header. */
+function GroupCheckbox({
+  label,
+  ids,
+  selected,
+  anySelected,
+  onToggle,
+}: {
+  label: string;
+  ids: string[];
+  selected: ReadonlySet<string>;
+  anySelected: boolean;
+  onToggle: (ids: string[], on: boolean) => void;
+}) {
+  const count = ids.filter((id) => selected.has(id)).length;
+  return (
+    <Checkbox
+      checked={count > 0 && count === ids.length}
+      indeterminate={count > 0 && count < ids.length}
+      onCheckedChange={(on) => onToggle(ids, on)}
+      aria-label={`Select all in ${label}`}
+      className={cn(
+        "opacity-0 focus-visible:opacity-100 group-hover/row:opacity-100",
+        anySelected && "opacity-100",
+      )}
+    />
   );
 }

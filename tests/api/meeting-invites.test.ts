@@ -1,49 +1,63 @@
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { MeetingInviteService } from "@/services/meeting-invite";
 import { db } from "@/db";
-import { user, meetingRoom } from "@/db/schema";
+import { user, meetingRoom, meetingInvite, booking } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+/** First slot the invite actually offers, at least a week ahead. */
+async function firstOfferedSlot(slug: string) {
+  for (let d = 7; d < 21; d++) {
+    const date = new Date(Date.now() + d * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const [slot] = await MeetingInviteService.getAvailableSlots(slug, date);
+    if (slot) return slot;
+  }
+  throw new Error("no offered slot found");
+}
 
 describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
   let organizerUserId: string;
   let testRoomId: string;
 
   beforeAll(async () => {
-    // Ensure an organizer user exists
-    const users = await db.select().from(user).limit(1);
-    if (users.length > 0) {
-      organizerUserId = users[0].id;
-    } else {
-      const [u] = await db
-        .insert(user)
-        .values({
-          id: `org-${Date.now()}`,
-          name: "Organizer Test",
-          email: `organizer-${Date.now()}@example.com`,
-          emailVerified: true,
-        })
-        .returning();
-      organizerUserId = u.id;
-    }
+    // Ensure an isolated organizer user exists for this test suite
+    const [u] = await db
+      .insert(user)
+      .values({
+        id: `org-invite-${Date.now()}`,
+        name: "Organizer Test",
+        email: `org-invite-${Date.now()}@example.com`,
+        emailVerified: true,
+      })
+      .returning();
+    organizerUserId = u.id;
 
-    // Ensure a test room exists
-    const rooms = await db.select().from(meetingRoom).limit(1);
-    if (rooms.length > 0) {
-      testRoomId = rooms[0].id;
-    } else {
-      const [r] = await db
-        .insert(meetingRoom)
-        .values({
-          name: "Test Room Alpha",
-          email: `test-room-${Date.now()}@example.com`,
-          capacity: 10,
-          building: "Building A",
-          floor: "3",
-          features: ["video", "tv"],
-          equipment: ["display"],
-        })
-        .returning();
-      testRoomId = r.id;
-    }
+    // Ensure an isolated test room exists for this test suite
+    const [r] = await db
+      .insert(meetingRoom)
+      .values({
+        name: `Test Room Alpha ${Date.now()}`,
+        email: `test-room-${Date.now()}@example.com`,
+        capacity: 10,
+        building: "Building A",
+        floor: "3",
+        features: ["video", "tv"],
+        equipment: ["display"],
+      })
+      .returning();
+    testRoomId = r.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(booking)
+      .where(eq(booking.organizerUserId, organizerUserId));
+    await db
+      .delete(meetingInvite)
+      .where(eq(meetingInvite.organizerUserId, organizerUserId));
+    await db.delete(meetingRoom).where(eq(meetingRoom.id, testRoomId));
+    await db.delete(user).where(eq(user.id, organizerUserId));
   });
 
   it("creates a meeting invite with physical room and access restriction", async () => {
@@ -52,7 +66,7 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
       description: "Discussing quarterly UI architecture",
       duration: 30,
       organizerUserId,
-      memberEmails: ["colleague@example.com"],
+      memberEmails: [],
       locationType: "room",
       roomId: testRoomId,
       isRestricted: true,
@@ -129,11 +143,9 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
       allowedEmails: ["key.partner@acme.corp"],
     });
 
-    const now = new Date();
-    const startTime = new Date(now.getTime() + 48 * 3600 * 1000).toISOString();
-    const endTime = new Date(
-      now.getTime() + 48 * 3600 * 1000 + 30 * 60 * 1000,
-    ).toISOString();
+    const { start: startTime, end: endTime } = await firstOfferedSlot(
+      invite.slug,
+    );
 
     const result = await MeetingInviteService.bookSlot({
       slug: invite.slug,
@@ -146,7 +158,11 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
 
     expect(result).toBeDefined();
     expect(result.booking).toBeDefined();
-    expect(result.booking.roomId).toBe(testRoomId);
+    const [row] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, result.booking.id));
+    expect(row.roomId).toBe(testRoomId);
     expect(result.booking.title).toContain("Alice Partner");
   });
 
@@ -161,11 +177,9 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
       allowedEmails: [],
     });
 
-    const now = new Date();
-    const startTime = new Date(now.getTime() + 72 * 3600 * 1000).toISOString();
-    const endTime = new Date(
-      now.getTime() + 72 * 3600 * 1000 + 15 * 60 * 1000,
-    ).toISOString();
+    const { start: startTime, end: endTime } = await firstOfferedSlot(
+      invite.slug,
+    );
 
     const result = await MeetingInviteService.bookSlot({
       slug: invite.slug,

@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import {
   searchTeammatesAction,
   getRoomsAction,
@@ -8,14 +8,18 @@ import {
   rescheduleBookingAction,
   cancelBookingAction,
 } from "../../src/actions";
-import { resolveActionUserId } from "../../src/actions/auth-helper";
+import { mockSessionUser } from "../test-utils/mock-session";
 import { db } from "../../src/db";
 import { meetingRoom } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
 
 describe("Server Actions Layer", () => {
+  let session: ReturnType<typeof mockSessionUser>;
+  afterAll(() => session?.mockRestore());
+
   beforeAll(async () => {
     await seedDatabase();
+    session = mockSessionUser("usr_alex_rivera");
     const testRooms = [
       {
         name: "Room Alpha",
@@ -110,9 +114,11 @@ describe("Server Actions Layer", () => {
   describe("findSlotsAction", () => {
     test("finds available slots for valid parameters", async () => {
       const now = new Date();
-      // Pick next Monday at 09:00 UTC
+      // Pick next Monday at 09:00 UTC using UTC date accessors to prevent race conditions with tests mutating process.env.TZ
       const nextMonday = new Date(now);
-      nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7 || 7));
+      nextMonday.setUTCDate(
+        now.getUTCDate() + ((1 + 7 - now.getUTCDay()) % 7 || 7),
+      );
       nextMonday.setUTCHours(9, 0, 0, 0);
 
       const endWindow = new Date(nextMonday);
@@ -174,10 +180,14 @@ describe("Server Actions Layer", () => {
       expect(result.error).toBeDefined();
     });
 
-    test("returns error when userId is missing and no session present", async () => {
+    test("defaults to the session user when userId is omitted", async () => {
       const result = await getAgendaAction("2026-10-20");
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.success).toBe(true);
+    });
+
+    test("rejects another user's agenda", async () => {
+      const result = await getAgendaAction("2026-10-20", "usr_test_user");
+      expect(result).toEqual({ success: false, error: "Access denied" });
     });
   });
 
@@ -238,14 +248,17 @@ describe("Server Actions Layer", () => {
         true,
       );
 
-      const agendaAttendee = await getAgendaAction(
-        "2026-10-20",
-        "usr_test_user",
-      );
-      expect(agendaAttendee.success).toBe(true);
-      expect(agendaAttendee.data!.some((b) => b.id === createdBookingId)).toBe(
-        true,
-      );
+      const attendeeSession = mockSessionUser("usr_test_user");
+      try {
+        const agendaAttendee = await getAgendaAction("2026-10-20");
+        expect(agendaAttendee.success).toBe(true);
+        expect(
+          agendaAttendee.data!.some((b) => b.id === createdBookingId),
+        ).toBe(true);
+      } finally {
+        attendeeSession.mockRestore();
+        session = mockSessionUser("usr_alex_rivera");
+      }
     });
 
     test("rescheduleBookingAction updates booking time", async () => {
@@ -294,23 +307,48 @@ describe("Server Actions Layer", () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain("not found");
     });
-  });
 
-  describe("resolveActionUserId security hardening", () => {
-    test("fails closed when NODE_ENV and BUN_ENV are not development or test", async () => {
-      const env = process.env as Record<string, string | undefined>;
-      const origNodeEnv = env.NODE_ENV;
-      const origBunEnv = env.BUN_ENV;
+    test("rescheduleBookingAction and cancelBookingAction reject callers who are not organizer or owner", async () => {
+      const { user: userTable, booking: bookingTable } =
+        await import("../../src/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const { BookingService } = await import("../../src/services/booking");
+      const [fUser] = await db
+        .insert(userTable)
+        .values({
+          id: `usr_forg_${Date.now()}`,
+          name: "Foreign Organizer",
+          email: `forg-${Date.now()}@example.com`,
+        })
+        .returning();
+      let foreignBookingId: string | undefined;
       try {
-        delete env.NODE_ENV;
-        delete env.BUN_ENV;
-        await expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
+        const foreignBooking = await BookingService.createBooking({
+          organizerUserId: fUser.id,
+          title: "Foreign Secret Meeting",
+          startTime: "2026-11-20T10:00:00.000Z",
+          endTime: "2026-11-20T10:30:00.000Z",
+        });
+        foreignBookingId = foreignBooking.id;
 
-        env.NODE_ENV = "production";
-        await expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
+        const rescheduleRes = await rescheduleBookingAction(foreignBooking.id, {
+          startTime: "2026-11-20T11:00:00.000Z",
+          endTime: "2026-11-20T11:30:00.000Z",
+        });
+        expect(rescheduleRes).toEqual({
+          success: false,
+          error: "Access denied",
+        });
+
+        const cancelRes = await cancelBookingAction(foreignBooking.id);
+        expect(cancelRes).toEqual({ success: false, error: "Access denied" });
       } finally {
-        env.NODE_ENV = origNodeEnv;
-        env.BUN_ENV = origBunEnv;
+        if (foreignBookingId) {
+          await db
+            .delete(bookingTable)
+            .where(eq(bookingTable.id, foreignBookingId));
+        }
+        await db.delete(userTable).where(eq(userTable.id, fUser.id));
       }
     });
   });

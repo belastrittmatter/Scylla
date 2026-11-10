@@ -9,7 +9,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group";
-import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import {
   Select,
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TaskDatePicker } from "./task-date-picker";
-import { AssigneeSearchPicker } from "./assignee-search-picker";
+import { AssigneeCombobox } from "./assignee-combobox";
 import {
   TASK_FORM_STATUSES,
   TASK_FORM_PRIORITIES,
@@ -38,7 +38,6 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
     dueDateStr,
     estimatedMinutes,
     users,
-    isProjectLinkedToGithub,
     onTitleChange,
     onDescriptionChange,
     onStatusChange,
@@ -74,7 +73,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
               <SelectValue>
                 <span className="flex items-center gap-2">
                   <span
-                    className={`size-2 rounded-full ${curStatus?.dot || "bg-neutral-400"}`}
+                    className={`size-2 rounded-full ${curStatus?.dot || "bg-muted-foreground"}`}
                   />
                   <span>{curStatus?.label || status}</span>
                 </span>
@@ -129,11 +128,10 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
 
       <Field>
         <FieldLabel>Assignee</FieldLabel>
-        <AssigneeSearchPicker
+        <AssigneeCombobox
           users={users}
           assigneeId={assigneeId}
           onAssigneeChange={onAssigneeChange}
-          isProjectLinkedToGithub={isProjectLinkedToGithub}
         />
       </Field>
 
@@ -150,33 +148,32 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
               id="task-estimate"
               type="number"
               min={0}
-              step={0.5}
-              value={estimatedMinutes ? estimatedMinutes / 60 : ""}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
+              step={15}
+              value={estimatedMinutes || ""}
+              onChange={(e) =>
                 onEstimatedMinutesChange(
-                  isNaN(val) || val <= 0 ? 0 : Math.round(val * 60),
-                );
-              }}
-              placeholder="e.g. 2"
+                  Math.max(0, parseInt(e.target.value, 10) || 0),
+                )
+              }
+              placeholder="e.g. 60"
               className="text-sm"
             />
             <InputGroupAddon align="inline-end">
-              <InputGroupText className="text-xs">hours</InputGroupText>
+              <InputGroupText className="text-xs">mins</InputGroupText>
             </InputGroupAddon>
           </InputGroup>
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-[11px]">
+          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
             <span>Presets:</span>
-            {[1, 2, 4, 8].map((hrs) => (
+            {[30, 60, 120, 240].map((mins) => (
               <Button
-                key={hrs}
+                key={mins}
                 type="button"
-                variant={estimatedMinutes === hrs * 60 ? "default" : "outline"}
+                variant={estimatedMinutes === mins ? "default" : "outline"}
                 size="xs"
-                onClick={() => onEstimatedMinutesChange(hrs * 60)}
-                className="h-5 px-1.5 text-[10px] font-medium"
+                onClick={() => onEstimatedMinutesChange(mins)}
+                className="h-5 px-1.5 text-xs font-medium"
               >
-                {hrs}h
+                {mins < 60 ? `${mins}m` : `${mins / 60}h`}
               </Button>
             ))}
           </div>
@@ -187,11 +184,13 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
         <FieldLabel htmlFor="task-description">
           Description / Acceptance Criteria
         </FieldLabel>
-        <MarkdownEditor
+        <Textarea
           id="task-description"
+          rows={4}
           value={description}
-          onChange={onDescriptionChange}
-          placeholder="Provide context, acceptance criteria or links (Markdown supported)..."
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="Provide context, acceptance criteria or links..."
+          className="resize-none text-sm"
         />
       </Field>
     </FieldGroup>

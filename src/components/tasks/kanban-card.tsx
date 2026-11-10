@@ -1,180 +1,136 @@
 "use client";
 
 import * as React from "react";
+import { format } from "date-fns";
+import { CalendarClock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, AlertCircle, Clock, Check } from "lucide-react";
-import type { TaskItem, TaskPriority, TaskStatus } from "./task-types";
+import { cn } from "@/lib/utils";
+import type { TaskItem, TaskStatus } from "./task-types";
 import {
   getDeadlineStatus,
-  getPriorityBadge,
+  getQuietPriority,
   getUserAvatarColor,
-  parseTimestampMs,
 } from "./task-utils";
-import { KanbanCardHeader } from "./kanban-card-header";
-import { KanbanCardTags } from "./kanban-card-tags";
-import { KanbanCardTracking } from "./kanban-card-tracking";
-import { cn } from "@/lib/utils";
+import { KanbanCardMenu } from "./kanban-card-menu";
+import { KanbanCardTime } from "./kanban-card-time";
+import { StatusIcon } from "./task-status-icon";
 
 interface KanbanCardProps {
   task: TaskItem;
-  isDragging?: boolean;
   onSelectTask?: (task: TaskItem) => void;
-  onUpdateStatus: (taskId: string, status: TaskStatus) => void;
+  onUpdateStatus?: (taskId: string, status: TaskStatus) => void;
+  onDeleteTask?: (id: string) => Promise<boolean>;
+  contextLabel?: string | null;
+  showAssignee?: boolean;
+  isDragging?: boolean;
 }
+
+// Keeps menu/dialog clicks (portals bubble through React) away from the card's onClick.
+const stop = { onClick: (e: React.SyntheticEvent) => e.stopPropagation() };
+// Nearest draggable wins: cancelling here stops a press-and-drag on ⋯ from dragging the card.
+const noDrag = {
+  draggable: true,
+  onDragStart: (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  },
+};
 
 export function KanbanCard({
   task,
-  isDragging = false,
   onSelectTask,
   onUpdateStatus,
+  onDeleteTask,
+  contextLabel,
+  showAssignee = true,
+  isDragging,
 }: KanbanCardProps) {
-  const isDone = task.status === "done";
-  const deadline = getDeadlineStatus(task.dueDate, isDone);
-  const priorityInfo = getPriorityBadge(task.priority as TaskPriority);
-  const avatarColor = getUserAvatarColor(task.assignee?.name || "");
-  const isLinkedWithGithub = Boolean(
-    task.project?.githubRepo?.trim() || task.githubIssueUrl,
-  );
-
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [now, setNow] = React.useState(() => Date.now());
-
-  // Issue #74 fix: pause 1s interval re-renders during active drag
-  React.useEffect(() => {
-    if (task.status !== "in_progress" || isDragging) return;
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [task.status, isDragging]);
-
-  const activeElapsed =
-    task.status === "in_progress" && task.activeSessionStartedAt
-      ? Math.max(
-          0,
-          Math.floor(
-            (now - parseTimestampMs(task.activeSessionStartedAt)) / 1000,
-          ),
-        )
-      : 0;
-  const totalElapsed = (task.totalSpentSeconds || 0) + activeElapsed;
-  const estMinutes = task.estimatedMinutes ?? 60;
-  const estimatedSeconds = Math.max(60, estMinutes * 60);
-  const progressPercent = Math.min(
-    100,
-    Math.round((totalElapsed / estimatedSeconds) * 100),
-  );
-  const isOvertime = totalElapsed > estimatedSeconds;
-
-  const hasTags =
-    !isCollapsed &&
-    Boolean(
-      (isLinkedWithGithub && (task.githubBranch || task.githubPrNumber)) ||
-      (task.estimatedMinutes !== undefined && task.estimatedMinutes !== null),
-    );
+  const isClosed = task.status === "done" || task.status === "cancelled";
+  const deadline = getDeadlineStatus(task.dueDate, isClosed);
+  const isDueToday = deadline.variant === "warning";
+  const priority = getQuietPriority(task.priority, isClosed);
+  const running = task.status === "in_progress" && task.activeSessionStartedAt;
+  const dateLabel =
+    deadline.isOverdue && task.dueDate
+      ? format(new Date(task.dueDate), "MMM d")
+      : deadline.label;
+  const hasMenu = Boolean(onUpdateStatus || onDeleteTask);
+  const assignee = showAssignee ? task.assignee : null;
 
   return (
     <div
       onClick={() => onSelectTask?.(task)}
       className={cn(
-        "group relative flex flex-col gap-2.5 rounded-xl border p-3.5 select-none transition-all duration-150 cursor-pointer shadow-xs",
-        "hover:border-neutral-300 hover:shadow-sm dark:hover:border-neutral-700",
-        isDone
-          ? "border-neutral-200/60 bg-neutral-50/60 opacity-80 dark:border-neutral-800/60 dark:bg-neutral-900/40"
-          : "border-neutral-200/80 bg-white dark:border-neutral-800 dark:bg-neutral-900",
+        "group relative select-none rounded-lg border bg-card p-3 transition-colors hover:border-foreground/25 hover:bg-accent/30",
+        isDragging && "shadow-md",
       )}
     >
-      <KanbanCardHeader
-        priorityBadgeClass={priorityInfo.badgeClass}
-        priorityLabel={priorityInfo.label}
-        isLinkedWithGithub={isLinkedWithGithub}
-        githubIssueNumber={task.githubIssueNumber}
-        githubIssueUrl={task.githubIssueUrl}
-        isCollapsed={isCollapsed}
-        onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
-        taskId={task.id}
-        onUpdateStatus={onUpdateStatus}
-      />
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <StatusIcon status={task.status as TaskStatus} />
+        <span className="min-w-0 flex-1 truncate">{contextLabel}</span>
+        <div className="grid shrink-0 place-items-center" {...stop} {...noDrag}>
+          {assignee && (
+            <Avatar
+              title={assignee.name}
+              className={cn(
+                "size-5 [grid-area:1/1]",
+                hasMenu && "group-hover:opacity-0",
+              )}
+            >
+              <AvatarImage src={assignee.avatarUrl} alt={assignee.name} />
+              <AvatarFallback
+                className={cn("text-[10px]", getUserAvatarColor(assignee.name))}
+              >
+                {assignee.initials || "U"}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          {hasMenu && (
+            <KanbanCardMenu
+              task={task}
+              onUpdateStatus={onUpdateStatus}
+              onDeleteTask={onDeleteTask}
+            />
+          )}
+        </div>
+      </div>
 
-      {/* Title */}
-      <div className="flex items-start gap-2">
-        {isDone && (
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-        )}
-        <h4
+      <h4 className="mt-1.5 text-sm font-medium leading-snug">
+        {/* Real button for keyboard access; its click bubbles to the card handler. */}
+        <button
+          type="button"
           className={cn(
-            "text-[13px] font-medium leading-snug",
-            isCollapsed ? "truncate" : "line-clamp-2",
-            isDone
-              ? "text-neutral-400 line-through dark:text-neutral-500"
-              : "text-neutral-900 dark:text-neutral-100",
+            "line-clamp-2 w-full text-left focus-visible:outline-2 focus-visible:outline-ring",
+            isClosed ? "text-muted-foreground" : "text-foreground",
           )}
         >
           {task.title}
-        </h4>
-      </div>
+        </button>
+      </h4>
 
-      {hasTags && (
-        <KanbanCardTags task={task} isLinkedWithGithub={isLinkedWithGithub} />
-      )}
-
-      <KanbanCardTracking
-        status={task.status as TaskStatus}
-        isCollapsed={isCollapsed}
-        totalElapsed={totalElapsed}
-        estimatedSeconds={estimatedSeconds}
-        estimatedMinutes={task.estimatedMinutes}
-        totalSpentSeconds={task.totalSpentSeconds}
-        progressPercent={progressPercent}
-        isOvertime={isOvertime}
-        isDragging={isDragging}
-      />
-
-      {/* Footer: Assignee & Deadline Status */}
-      <div className="flex items-center justify-between border-t border-neutral-100/90 pt-2.5 dark:border-neutral-800/80">
-        <div className="flex items-center gap-2 min-w-0">
-          {task.assignee ? (
-            <>
-              <Avatar className="size-5 border border-neutral-200 text-[10px] dark:border-neutral-700">
-                <AvatarImage
-                  src={task.assignee.avatarUrl}
-                  alt={task.assignee.name}
-                />
-                <AvatarFallback className={avatarColor}>
-                  {task.assignee.initials || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="max-w-[120px] truncate text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                {task.assignee.name}
-              </span>
-            </>
-          ) : (
-            <span className="text-xs italic text-neutral-400">Unassigned</span>
+      {(priority || task.dueDate || running) && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
+          {priority && (
+            <span className={priority.className}>{priority.label}</span>
           )}
+          {task.dueDate && (
+            <span
+              className={cn(
+                "flex items-center gap-1",
+                deadline.isOverdue
+                  ? "text-destructive"
+                  : isDueToday
+                    ? "text-primary"
+                    : "text-muted-foreground",
+              )}
+            >
+              <CalendarClock className="size-3" />
+              {dateLabel}
+            </span>
+          )}
+          <KanbanCardTime task={task} />
         </div>
-
-        {task.dueDate && (
-          <div
-            className={cn(
-              "flex items-center gap-1 text-[11px] font-medium shrink-0",
-              deadline.isOverdue
-                ? "text-rose-600 dark:text-rose-400"
-                : deadline.variant === "warning"
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-neutral-500 dark:text-neutral-400",
-            )}
-          >
-            {isDone ? (
-              <Check className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            ) : deadline.isOverdue ? (
-              <AlertCircle className="size-3.5 shrink-0" />
-            ) : (
-              <Clock className="size-3.5 shrink-0" />
-            )}
-            <span>{deadline.label}</span>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

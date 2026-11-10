@@ -43,7 +43,8 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
   server.registerTool(
     "delete_task",
     {
-      description: "Delete a task by task ID (requires team access).",
+      description:
+        "Delete a task by task ID (team members only; viewers cannot delete).",
       inputSchema: deleteTaskSchema,
     },
     async ({ taskId }) => {
@@ -53,10 +54,9 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
         ]);
-        if (!task) throw new Error(`Task '${taskId}' not found.`);
-        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id);
-
-        await TaskService.deleteTask(task.id);
+        if (!task || !(await TaskService.deleteTask(task.id, currentUser.id))) {
+          throw new Error(`Task '${taskId}' not found.`);
+        }
         return formatToolSuccess({
           message: `Task '${task.title}' deleted successfully`,
           taskId: task.id,
@@ -81,7 +81,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           TaskService.getTaskById(taskId),
         ]);
         if (!task) throw new Error(`Task '${taskId}' not found.`);
-        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id);
+        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id, "member");
 
         const comment = await TaskService.createTaskComment({
           taskId: task.id,
