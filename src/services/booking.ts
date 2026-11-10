@@ -24,6 +24,7 @@ export interface CreateBookingPayload {
   title: string;
   description?: string;
   seriesId?: string;
+  /** @deprecated Ignored: descriptions are always stripped of series markers. */
   sanitizeDescription?: boolean;
   eventTypeId?: string;
   organizerUserId: string;
@@ -93,15 +94,12 @@ export class BookingService {
 
     const roomEmail = room?.email;
 
-    let finalDescription = payload.description;
+    const cleanDesc = sanitizeBookingDescription(payload.description);
+    let finalDescription = cleanDesc;
     if (payload.seriesId) {
-      const cleanDesc = sanitizeBookingDescription(payload.description);
       finalDescription = cleanDesc
         ? `${cleanDesc}\n\n<!--series:${payload.seriesId}-->`
         : `<!--series:${payload.seriesId}-->`;
-    } else if (payload.sanitizeDescription) {
-      finalDescription =
-        sanitizeBookingDescription(payload.description) || undefined;
     }
 
     const gcalEvent = await GoogleCalendarService.createEvent(

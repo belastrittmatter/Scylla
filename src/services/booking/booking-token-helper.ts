@@ -20,26 +20,25 @@ export function normalizeAttendees(
   });
 }
 
-const SERIES_MARKER_REGEX = /<!--series:[a-zA-Z0-9_-]+-->/gi;
+// Matches only marker-shaped comments (bounded charset), so user text after a
+// malformed "<!--series:" is never swallowed up to some later "-->".
+const SERIES_MARKER_REGEX = /<!--\s*series:\s*[a-zA-Z0-9_-]*\s*-->/gi;
+// What the series reader (cancelSeries / calendar views) would parse.
+const READABLE_SERIES_MARKER = /<!--series:[a-zA-Z0-9_-]+-->/i;
 const MAX_SANITIZATION_PASSES = 5;
 
 export function sanitizeBookingDescription(
   desc?: string | null,
 ): string | undefined {
   if (!desc) return undefined;
-  if (!desc.includes("<!--series:")) {
-    return desc.trim() || undefined;
-  }
   let out = desc;
+  // Repeat because removing an inner marker can join an outer one.
   for (let i = 0; i < MAX_SANITIZATION_PASSES; i++) {
-    if (!out.includes("<!--series:")) break;
     const next = out.replace(SERIES_MARKER_REGEX, "");
     if (next === out) break;
     out = next;
   }
-  // Strip any remaining or malformed/nested series comment patterns
-  out = out.replace(/<!--\s*series:[\s\S]*?-->/gi, "");
-  if (out.includes("<!--series:") || SERIES_MARKER_REGEX.test(out)) {
+  if (READABLE_SERIES_MARKER.test(out)) {
     throw new Error(
       "Invalid booking description: contains unsanitizable series tag",
     );

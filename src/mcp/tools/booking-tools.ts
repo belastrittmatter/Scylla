@@ -9,6 +9,7 @@ import {
   cancelMeetingSchema,
 } from "../schemas";
 import { resolveProject, verifyScope } from "./auth-helpers";
+import { sanitizeBookingDescription } from "@/services/booking/booking-token-helper";
 import type { McpToolContext } from "../types";
 
 export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
@@ -39,6 +40,21 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
       if (roomEmail || roomId) {
         const roomScopeErr = verifyScope(ctx, "rooms.reservation");
         if (roomScopeErr) return roomScopeErr;
+      }
+
+      let cleanDescription: string | undefined;
+      try {
+        cleanDescription = sanitizeBookingDescription(description);
+      } catch (err) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: err instanceof Error ? err.message : String(err),
+            },
+          ],
+        };
       }
 
       const token = await ctx.getAccessToken();
@@ -88,7 +104,7 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         event = await GoogleCalendarService.createEvent(
           {
             summary: meetingSummary,
-            description,
+            description: cleanDescription,
             start,
             end,
             attendees: resolvedAttendees,
@@ -141,7 +157,7 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
           await db.insert(booking).values({
             organizerUserId: ctx.userId,
             title: meetingSummary,
-            description: description || null,
+            description: cleanDescription || null,
             startTime: new Date(start),
             endTime: new Date(end),
             status: "confirmed",

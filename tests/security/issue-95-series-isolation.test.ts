@@ -4,6 +4,8 @@ import { user, booking } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { BookingService } from "@/services/booking";
 import { GoogleCalendarService } from "@/services/google-calendar";
+import { sanitizeBookingDescription } from "@/services/booking/booking-token-helper";
+import { createCalendarMcpServer } from "@/app/api/mcp/route";
 
 describe("Issue #95 Series Cancellation Isolation", () => {
   test("C1: cancelling series does not cancel other users' bookings with matching series tag", async () => {
@@ -237,14 +239,13 @@ describe("Issue #95 Series Cancellation Isolation", () => {
     const now = Date.now();
 
     try {
-      // 1. createBooking with sanitizeDescription: true strips embedded series tags
+      // 1. createBooking strips (by default) embedded series tags
       const created = await BookingService.createBooking({
         title: "User Created Booking",
         description: "Malicious note <!--series:injected_uuid_123-->",
         organizerUserId: organizer.id,
         startTime: new Date(now + 3600000),
         endTime: new Date(now + 7200000),
-        sanitizeDescription: true,
       });
 
       expect(created.description).not.toContain(
@@ -375,7 +376,7 @@ test("C2: literal backslash, percent, and underscore in seriesId do not cancel o
   }
 });
 
-test("C3: nested or multiple series tags are recursively stripped when sanitizeDescription is used", async () => {
+test("C3: nested or multiple series tags are recursively stripped by default", async () => {
   const [organizer] = await db
     .insert(user)
     .values({
@@ -396,7 +397,6 @@ test("C3: nested or multiple series tags are recursively stripped when sanitizeD
       organizerUserId: organizer.id,
       startTime: new Date(now + 3600000),
       endTime: new Date(now + 7200000),
-      sanitizeDescription: true,
     });
 
     expect(created.description).not.toContain("<!--series:");
@@ -499,4 +499,77 @@ test("C4: unknown booking id throws NotFound without touching Google Calendar", 
   } finally {
     deleteSpy.mockRestore();
   }
+});
+
+describe("C5: series marker sanitization", () => {
+  test("keeps user text around malformed markers", () => {
+    const desc = "Agenda <!--series: draft\nDial-in: 1234 <!-- keep -->";
+    expect(sanitizeBookingDescription(desc)).toBe(desc);
+  });
+
+  test("strips whitespace-padded markers", () => {
+    expect(sanitizeBookingDescription("Notes <!-- series: abc_1 --> end")).toBe(
+      "Notes  end",
+    );
+  });
+
+  test("rejects markers that survive bounded stripping", () => {
+    let nested = "x";
+    for (let i = 0; i < 10; i++) nested = `<!--series:a${nested}b-->`;
+    expect(() => sanitizeBookingDescription(nested)).toThrow(
+      /unsanitizable series tag/,
+    );
+  });
+
+  test("MCP book_meeting does not store raw series markers", async () => {
+    const [organizer] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "MCP Marker Organizer",
+        email: `mcp-marker-${Date.now()}@example.com`,
+      })
+      .returning();
+    try {
+      const server = await createCalendarMcpServer({
+        sub: organizer.id,
+        scopes: ["*"],
+      });
+      const tools = (
+        server as unknown as {
+          _registeredTools: Record<
+            string,
+            {
+              handler: (
+                a: Record<string, unknown>,
+              ) => Promise<{ content: Array<{ text: string }> }>;
+            }
+          >;
+        }
+      )._registeredTools;
+      const res = await tools["book_meeting"].handler({
+        summary: "Spoof",
+        description: "Hi <!--series:series_victim-->",
+        start: "2026-12-01T09:00:00.000Z",
+        end: "2026-12-01T10:00:00.000Z",
+        attendees: [],
+      });
+      const { eventId } = JSON.parse(res.content[0].text);
+      const [stored] = await db
+        .select()
+        .from(booking)
+        .where(eq(booking.gcalEventId, eventId));
+      expect(stored).toBeDefined();
+      expect(stored.description).toBe("Hi");
+    } finally {
+      await db
+        .delete(booking)
+        .where(eq(booking.organizerUserId, organizer.id))
+        .catch(() => {});
+      await db
+        .delete(user)
+        .where(eq(user.id, organizer.id))
+        .catch(() => {});
+    }
+  });
 });

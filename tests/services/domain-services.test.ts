@@ -316,7 +316,8 @@ describe("Domain Services", () => {
 
       const booking1 = await BookingService.createBooking({
         title: "Daily Standup Day 1",
-        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        description: "Sprint sync",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 70 * 3600 * 1000),
         endTime: new Date(now.getTime() + 70 * 3600 * 1000 + 15 * 60 * 1000),
@@ -324,7 +325,8 @@ describe("Domain Services", () => {
 
       const booking2 = await BookingService.createBooking({
         title: "Daily Standup Day 2",
-        description: `Sprint sync\n\n<!--series:${seriesId}-->`,
+        description: "Sprint sync",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 94 * 3600 * 1000),
         endTime: new Date(now.getTime() + 94 * 3600 * 1000 + 15 * 60 * 1000),
@@ -349,7 +351,8 @@ describe("Domain Services", () => {
 
       const bookingA = await BookingService.createBooking({
         title: "Weekly Review Week 1",
-        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        description: "Weekly progress",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 100 * 3600 * 1000),
         endTime: new Date(now.getTime() + 100 * 3600 * 1000 + 30 * 60 * 1000),
@@ -357,7 +360,8 @@ describe("Domain Services", () => {
 
       const bookingB = await BookingService.createBooking({
         title: "Weekly Review Week 2",
-        description: `Weekly progress\n\n<!--series:${seriesId}-->`,
+        description: "Weekly progress",
+        seriesId,
         organizerUserId: "usr_alex_rivera",
         startTime: new Date(now.getTime() + 168 * 3600 * 1000),
         endTime: new Date(now.getTime() + 168 * 3600 * 1000 + 30 * 60 * 1000),
