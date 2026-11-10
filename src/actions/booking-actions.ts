@@ -1,6 +1,9 @@
 "use server";
 
 import { z } from "zod";
+import { and, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { account } from "@/db/schema";
 import { UserService, type Teammate } from "@/services/user";
 import { RoomService, type RoomFilter } from "@/services/rooms";
 import {
@@ -23,11 +26,24 @@ import {
 } from "./schemas";
 import { resolveActionUserId, type ActionResult } from "./auth-helper";
 
+/** The caller's Google account, so directory/room lookups run as them. */
+async function googleOptionsFor(userId: string) {
+  const [googleAccount] = await db
+    .select()
+    .from(account)
+    .where(and(eq(account.userId, userId), eq(account.providerId, "google")))
+    .limit(1);
+  return {
+    accountRecord: googleAccount,
+    accessToken: googleAccount?.accessToken ?? undefined,
+  };
+}
+
 export async function searchTeammatesAction(
   query: string = "",
 ): Promise<ActionResult<Teammate[]>> {
   try {
-    await resolveActionUserId();
+    const userId = await resolveActionUserId();
     const parseResult = z.string().safeParse(query);
     if (!parseResult.success) {
       return {
@@ -35,7 +51,11 @@ export async function searchTeammatesAction(
         error: parseResult.error.issues.map((i) => i.message).join(", "),
       };
     }
-    const teammates = await UserService.searchTeammates(parseResult.data);
+    const teammates = await UserService.searchTeammates(
+      parseResult.data,
+      undefined,
+      await googleOptionsFor(userId),
+    );
     return { success: true, data: teammates };
   } catch (err) {
     return {
@@ -49,7 +69,7 @@ export async function getRoomsAction(
   filter?: RoomFilter,
 ): Promise<ActionResult<MeetingRoom[]>> {
   try {
-    await resolveActionUserId();
+    const userId = await resolveActionUserId();
     const parseResult = RoomFilterSchema.safeParse(filter);
     if (!parseResult.success) {
       return {
@@ -57,7 +77,10 @@ export async function getRoomsAction(
         error: parseResult.error.issues.map((i) => i.message).join(", "),
       };
     }
-    const rooms = await RoomService.listRooms(parseResult.data);
+    const rooms = await RoomService.listRooms(
+      parseResult.data,
+      await googleOptionsFor(userId),
+    );
     return { success: true, data: rooms };
   } catch (err) {
     return {
