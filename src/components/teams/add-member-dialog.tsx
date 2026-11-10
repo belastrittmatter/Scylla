@@ -96,7 +96,7 @@ export function AddMemberDialog({
             Cancel
           </Button>
           <Button disabled={!email || pending} onClick={submit}>
-            Add member
+            {pending ? "Adding…" : "Add member"}
           </Button>
         </DialogFooter>
       </DialogContent>
