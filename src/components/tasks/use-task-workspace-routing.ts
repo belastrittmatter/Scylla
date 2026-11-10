@@ -145,7 +145,11 @@ export function useTaskWorkspaceRouting({
 
   const navigate = React.useCallback(
     ({ scope, team: t, project }: TaskWorkspaceNavigation) => {
-      const team = t ?? teams.find((item) => item.id === project?.teamId);
+      // Name the fallback team (deriveTaskWorkspaceRoute picks teams[0]) so the sidebar can highlight it.
+      const team =
+        t ??
+        teams.find((item) => item.id === project?.teamId) ??
+        (scope === "team" ? teams[0] : undefined);
       router.push(
         buildTasksUrl({
           scope,
