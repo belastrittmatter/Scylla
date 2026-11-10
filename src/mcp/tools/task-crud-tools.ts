@@ -43,7 +43,8 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
   server.registerTool(
     "delete_task",
     {
-      description: "Delete a task by task ID (requires team access).",
+      description:
+        "Delete a task by task ID (team members only; viewers cannot delete).",
       inputSchema: deleteTaskSchema,
     },
     async ({ taskId }) => {
@@ -53,8 +54,18 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
         ]);
-        if (!task) throw new Error(`Task '${taskId}' not found.`);
-        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id);
+        const access = task
+          ? await TaskService.getDeleteAccess(task, currentUser.id)
+          : "not_member";
+        // Non-members see "not found" so task ids can't be probed.
+        if (!task || access === "not_member") {
+          throw new Error(`Task '${taskId}' not found.`);
+        }
+        if (access === "forbidden") {
+          throw new Error(
+            "Permission denied: only team members (not viewers) can delete tasks.",
+          );
+        }
 
         await TaskService.deleteTask(task.id);
         return formatToolSuccess({

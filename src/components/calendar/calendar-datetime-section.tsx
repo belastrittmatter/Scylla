@@ -46,11 +46,11 @@ export function CalendarDateTimeSection({
   }, [dateStr]);
 
   return (
-    <div className="space-y-3 rounded-lg border border-neutral-200/70 bg-neutral-50/40 p-3 dark:border-neutral-800 dark:bg-neutral-900/30">
+    <div className="space-y-3 rounded-lg border border-border/70 bg-muted/40 p-3">
       {/* Date & Time Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div className="space-y-1">
-          <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+          <Label className="text-xs font-medium text-muted-foreground">
             Date
           </Label>
           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
@@ -64,7 +64,7 @@ export function CalendarDateTimeSection({
                     !dateStr && "text-muted-foreground",
                   )}
                 >
-                  <CalendarIcon className="mr-2 size-3.5 shrink-0 text-neutral-500" />
+                  <CalendarIcon className="mr-2 size-3.5 shrink-0 text-muted-foreground" />
                   {dateObj ? format(dateObj, "EEE, MMM d, yyyy") : "Pick date"}
                 </Button>
               }
@@ -86,7 +86,7 @@ export function CalendarDateTimeSection({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+            <Label className="text-xs font-medium text-muted-foreground">
               Start
             </Label>
             <Input
@@ -98,7 +98,7 @@ export function CalendarDateTimeSection({
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
+            <Label className="text-xs font-medium text-muted-foreground">
               End
             </Label>
             <Input
@@ -113,8 +113,8 @@ export function CalendarDateTimeSection({
       </div>
 
       {/* Duration quick pills */}
-      <div className="flex items-center justify-between gap-2 border-t border-neutral-200/60 pt-2 dark:border-neutral-800/60">
-        <span className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+      <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
           <span>
             {durationMinutes >= 60
@@ -131,7 +131,7 @@ export function CalendarDateTimeSection({
               variant={durationMinutes === mins ? "default" : "outline"}
               size="sm"
               onClick={() => onSetDuration(mins)}
-              className="h-6 px-2 text-[10px]"
+              className="h-6 px-2 text-xs"
             >
               {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
             </Button>

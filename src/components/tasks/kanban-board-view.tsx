@@ -2,47 +2,68 @@
 
 import * as React from "react";
 import { KanbanColumn } from "./kanban-column";
+import { cn } from "@/lib/utils";
+import type { MoveTask } from "./use-task-board-state";
 import { KANBAN_COLUMNS } from "./task-types";
 import type { TaskItem, TaskStatus } from "./task-types";
+
+type KanbanColumnDef = (typeof KANBAN_COLUMNS)[number];
 
 interface KanbanBoardViewProps {
   tasks: TaskItem[];
   onSelectTask?: (task: TaskItem) => void;
-  onUpdateStatus: (taskId: string, status: TaskStatus) => void;
-  onMoveTask?: (
-    taskId: string,
-    targetStatus: TaskStatus,
-    targetIndex?: number,
-  ) => void;
+  onUpdateStatus?: MoveTask;
+  onDeleteTask?: (id: string) => Promise<boolean>;
+  /** Hides Delete on cards the user may not delete. */
+  canDeleteTask?: (task: TaskItem) => boolean;
   onAddNewTask?: (status: TaskStatus) => void;
+  readOnly?: boolean;
+  getContextLabel?: (task: TaskItem) => string | null;
+  showAssignee?: boolean;
+  /** Defaults to KANBAN_COLUMNS. */
+  columns?: readonly KanbanColumnDef[];
+  renderColumnAction?: (columnId: TaskStatus) => React.ReactNode;
+  className?: string;
 }
 
 export function KanbanBoardView({
   tasks,
   onSelectTask,
   onUpdateStatus,
-  onMoveTask,
+  onDeleteTask,
+  canDeleteTask,
   onAddNewTask,
+  readOnly,
+  getContextLabel,
+  showAssignee,
+  columns = KANBAN_COLUMNS,
+  renderColumnAction,
+  className,
 }: KanbanBoardViewProps) {
   return (
-    <div className="flex h-full flex-1 gap-4 overflow-x-auto p-6">
-      {KANBAN_COLUMNS.map((col) => {
-        const columnTasks = tasks.filter((t) => t.status === col.id);
-
-        return (
-          <KanbanColumn
-            key={col.id}
-            id={col.id}
-            title={col.title}
-            badgeClass={col.badgeClass}
-            tasks={columnTasks}
-            onSelectTask={onSelectTask}
-            onUpdateStatus={onUpdateStatus}
-            onMoveTask={onMoveTask}
-            onAddNewTask={onAddNewTask}
-          />
-        );
-      })}
+    <div
+      className={cn(
+        "flex h-full flex-1 snap-x snap-mandatory gap-4 overflow-x-auto p-6 sm:snap-none",
+        className,
+      )}
+    >
+      {columns.map((col) => (
+        <KanbanColumn
+          key={col.id}
+          id={col.id}
+          title={col.title}
+          tasks={tasks.filter((t) => t.status === col.id)}
+          onSelectTask={onSelectTask}
+          onUpdateStatus={onUpdateStatus}
+          onDeleteTask={onDeleteTask}
+          canDeleteTask={canDeleteTask}
+          onAddNewTask={onAddNewTask}
+          readOnly={readOnly}
+          getContextLabel={getContextLabel}
+          showAssignee={showAssignee}
+          headerAction={renderColumnAction?.(col.id)}
+        />
+      ))}
     </div>
   );
 }

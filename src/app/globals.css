@@ -2434,18 +2434,6 @@ body.scylla-landing-page {
       var(--tw-backdrop-sepia,);
   }
 }
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    -webkit-transform: translate3d(0, -100%, 0);
-    transform: translate3d(0, -100%, 0);
-  }
-  to {
-    opacity: 1;
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-  }
-}
 :where(.scylla-landing) .menuToggle {
   margin-top: 2px;
   margin-right: calc(10px * -1);

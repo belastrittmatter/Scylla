@@ -875,58 +875,28 @@ describe("MCP Tools & Utilities Suite", () => {
       const taskHtml = getTaskBoardUiHtml({ teamName: "Core", tasks: [] });
       expect(taskHtml).toContain('data-slot="card"');
       expect(taskHtml).toContain("ui/initialize");
-      expect(taskHtml).toContain("draggable");
-      expect(taskHtml).toContain("update_task");
       expect(taskHtml).toContain("Cancelled");
     });
 
-    it("renders task-board-app with live timer, progress bar, and time tracking elements in SSR HTML", () => {
-      const htmlBlue = getTaskBoardUiHtml({
-        teamName: "Core Team",
-        tasks: [
-          {
-            id: "t-1",
-            title: "Test In-Progress Task",
-            status: "in_progress",
-            estimatedMinutes: 60,
-            totalSpentSeconds: 1800,
-            activeSessionStartedAt: new Date().toISOString(),
-          },
-        ],
-      });
-      expect(htmlBlue).toContain('data-testid="task-timer"');
-      expect(htmlBlue).toContain('data-testid="task-progress"');
-      expect(htmlBlue).toContain("bg-blue-500");
-
-      const htmlAmber = getTaskBoardUiHtml({
-        teamName: "Core Team",
-        tasks: [
-          {
-            id: "t-2",
-            title: "Warning Task",
-            status: "in_progress",
-            estimatedMinutes: 60,
-            totalSpentSeconds: 3000,
-            activeSessionStartedAt: null,
-          },
-        ],
-      });
-      expect(htmlAmber).toContain("bg-amber-500");
-
-      const htmlRed = getTaskBoardUiHtml({
-        teamName: "Core Team",
-        tasks: [
-          {
-            id: "t-3",
-            title: "Over Budget Task",
-            status: "in_progress",
-            estimatedMinutes: 60,
-            totalSpentSeconds: 4000,
-            activeSessionStartedAt: null,
-          },
-        ],
-      });
-      expect(htmlRed).toContain("bg-red-500");
+    it("renders task-board-app compact timer only while a session is running", () => {
+      const card = (activeSessionStartedAt: string | null) =>
+        getTaskBoardUiHtml({
+          teamName: "Core Team",
+          tasks: [
+            {
+              id: "t-1",
+              title: "Test In-Progress Task",
+              status: "in_progress",
+              estimatedMinutes: 60,
+              totalSpentSeconds: 1800,
+              activeSessionStartedAt,
+            },
+          ],
+        });
+      expect(card(new Date().toISOString())).toContain("lucide-timer");
+      expect(card(new Date().toISOString())).toContain("30m");
+      expect(card(null)).not.toContain("30m");
+      expect(card(null)).not.toContain('data-slot="progress"');
     });
   });
 
