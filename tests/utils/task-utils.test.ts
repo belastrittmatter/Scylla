@@ -81,30 +81,30 @@ describe("due date round-trip", () => {
 });
 
 describe("filterTasks deadline horizon", () => {
-  const day = (offset: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + offset);
-    d.setHours(12, 0, 0, 0);
-    return d;
-  };
-  const mk = (id: string, dueDate: Date | null, status = "todo") =>
-    ({ id, title: id, dueDate, status, priority: "low" }) as TaskItem;
-  const filters = (deadlineHorizon: DeadlineHorizon): TaskFilters => ({
-    ...INITIAL_TASK_FILTERS,
-    deadlineHorizon,
-  });
-  const tasks = [
-    mk("late", day(-2)),
-    mk("lateDone", day(-2), "done"),
-    mk("today", day(0)),
-    mk("soon", day(3)),
-    mk("far", day(30)),
-    mk("none", null),
-  ];
-  const ids = (h: DeadlineHorizon) =>
-    filterTasks(tasks, filters(h)).map((t) => t.id);
-
   test("buckets agree with the grouped list; closed tasks are never overdue", () => {
+    const day = (offset: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      d.setHours(12, 0, 0, 0);
+      return d;
+    };
+    const mk = (id: string, dueDate: Date | null, status = "todo") =>
+      ({ id, title: id, dueDate, status, priority: "low" }) as TaskItem;
+    const filters = (deadlineHorizon: DeadlineHorizon): TaskFilters => ({
+      ...INITIAL_TASK_FILTERS,
+      deadlineHorizon,
+    });
+    const tasks = [
+      mk("late", day(-2)),
+      mk("lateDone", day(-2), "done"),
+      mk("today", day(0)),
+      mk("soon", day(3)),
+      mk("far", day(30)),
+      mk("none", null),
+    ];
+    const ids = (h: DeadlineHorizon) =>
+      filterTasks(tasks, filters(h)).map((t) => t.id);
+
     expect(ids("overdue")).toEqual(["late"]);
     expect(ids("today")).toEqual(["today"]);
     expect(ids("upcoming")).toEqual(["soon", "far"]);

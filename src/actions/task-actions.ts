@@ -155,6 +155,22 @@ export async function updateTaskAction(
       return { success: false, error: "Assignee must be a member of the team" };
     }
 
+    if (parsedData.status) {
+      const transitionCheck = await checkTaskStatusTransitionAllowed(
+        idParse.data,
+        parsedData.status,
+        userId,
+      );
+      if (!transitionCheck.allowed) {
+        return {
+          success: false,
+          error:
+            transitionCheck.reason ||
+            "Transition not permitted by workflow rules",
+        };
+      }
+    }
+
     const updated = await TaskService.updateTask(
       idParse.data,
       { ...parsedData, dueDate },

@@ -225,14 +225,25 @@ export class GithubBranchService {
     }
 
     // 6. Update task record: store branch name, and Jira automation: move from 'todo' to 'in_progress'
-    const newStatus =
-      taskRecord.status === "todo" ? "in_progress" : taskRecord.status;
+    if (taskRecord.status === "todo") {
+      try {
+        const { TaskService } = await import("@/services/task/task-service");
+        await TaskService.updateTask(
+          taskId,
+          { status: "in_progress" },
+          targetUserId,
+        );
+      } catch (err) {
+        console.warn("Could not start task session via TaskService:", err);
+      }
+    }
+
     await db
       .update(task)
       .set({
         githubBranch: branchName,
         githubIssueNumber: issueNumber ?? taskRecord.githubIssueNumber,
-        status: newStatus,
+        ...(taskRecord.status === "todo" ? { status: "in_progress" } : {}),
       })
       .where(eq(task.id, taskId));
 

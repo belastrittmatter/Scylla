@@ -38,6 +38,16 @@ export interface SyncTaskToGitHubUpdates {
   assigneeId?: string | null;
 }
 
+export function mapGitHubPrState(pr: {
+  merged_at?: string | null;
+  draft?: boolean;
+  state: string;
+}): "merged" | "draft" | "closed" | "open" {
+  if (pr.merged_at) return "merged";
+  if (pr.draft) return "draft";
+  return pr.state === "closed" ? "closed" : "open";
+}
+
 /**
  * Strict validator to check if a Pull Request is legitimately linked to an issue.
  * Avoids false positive full-text search matches (e.g. matching any PR with digit "5" or "Merge pull request #1").

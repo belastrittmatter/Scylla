@@ -190,4 +190,67 @@ describe("GithubAuthService (Token Refresh & Auto Retry)", () => {
     await db.delete(account).where(inArray(account.userId, [testUser.id]));
     await db.delete(user).where(inArray(user.id, [testUser.id]));
   });
+
+  test("fetchWithAuth falls back to GITHUB_TOKEN when DB token has 401 and refresh token is unavailable", async () => {
+    const originalToken = process.env.GITHUB_TOKEN;
+    process.env.GITHUB_TOKEN = "ghp_env_fallback_token_999";
+
+    const [testUser] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "No Refresh User",
+        email: `norefresh-${Date.now()}@example.com`,
+      })
+      .returning();
+
+    await db.insert(account).values({
+      id: crypto.randomUUID(),
+      accountId: "norefresh-gh-1",
+      providerId: "github",
+      userId: testUser.id,
+      accessToken: "gho_dead_token_without_refresh",
+      refreshToken: null,
+    });
+
+    let callCount = 0;
+    globalThis.fetch = (async (
+      url: string | URL | Request,
+      init?: RequestInit,
+    ) => {
+      const urlStr = url.toString();
+      if (urlStr.includes("api.github.com/user")) {
+        callCount++;
+        const authHeader = (init?.headers as Headers)?.get("Authorization");
+        if (authHeader === "Bearer gho_dead_token_without_refresh") {
+          return new Response(JSON.stringify({ message: "Bad credentials" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        if (authHeader === "Bearer ghp_env_fallback_token_999") {
+          return new Response(JSON.stringify({ login: "env_fallback_user" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+      return originalFetch(url, init);
+    }) as unknown as typeof fetch;
+
+    const res = await GithubAuthService.fetchWithAuth(
+      "https://api.github.com/user",
+      {},
+      testUser.id,
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.login).toBe("env_fallback_user");
+    expect(callCount).toBe(2);
+
+    process.env.GITHUB_TOKEN = originalToken;
+    await db.delete(account).where(inArray(account.userId, [testUser.id]));
+    await db.delete(user).where(inArray(user.id, [testUser.id]));
+  });
 });

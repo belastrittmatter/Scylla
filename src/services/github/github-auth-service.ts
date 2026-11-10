@@ -119,7 +119,13 @@ export class GithubAuthService {
           }
         }
 
-        // If refresh failed or not applicable, return existing access token as fallback
+        // If refresh failed or not applicable, check env token first before returning stale token
+        const envToken =
+          process.env.GITHUB_TOKEN || process.env.GITHUB_ACCESS_TOKEN;
+        if (isExpired && envToken) {
+          return envToken;
+        }
+
         if (userAccount.accessToken) {
           return userAccount.accessToken;
         }
@@ -151,22 +157,36 @@ export class GithubAuthService {
 
     let res = await fetch(url, { ...init, headers });
 
-    // If 401 unauthorized and we have a userId, attempt forced token refresh and retry once
-    if (res.status === 401 && userId) {
-      const [userAccount] = await db
-        .select()
-        .from(account)
-        .where(
-          and(eq(account.userId, userId), eq(account.providerId, "github")),
-        )
-        .limit(1);
+    // If 401 unauthorized, attempt token refresh or fallback to GITHUB_TOKEN
+    if (res.status === 401) {
+      let retryToken: string | undefined;
 
-      if (userAccount?.refreshToken) {
-        const refreshed = await this.refreshAccountToken(userAccount);
-        if (refreshed) {
-          headers.set("Authorization", `Bearer ${refreshed}`);
-          res = await fetch(url, { ...init, headers });
+      if (userId) {
+        const [userAccount] = await db
+          .select()
+          .from(account)
+          .where(
+            and(eq(account.userId, userId), eq(account.providerId, "github")),
+          )
+          .limit(1);
+
+        if (userAccount?.refreshToken) {
+          const refreshed = await this.refreshAccountToken(userAccount);
+          if (refreshed) {
+            retryToken = refreshed;
+          }
         }
+      }
+
+      const envToken =
+        process.env.GITHUB_TOKEN || process.env.GITHUB_ACCESS_TOKEN;
+      if (!retryToken && envToken && envToken !== token) {
+        retryToken = envToken;
+      }
+
+      if (retryToken) {
+        headers.set("Authorization", `Bearer ${retryToken}`);
+        res = await fetch(url, { ...init, headers });
       }
     }
 
