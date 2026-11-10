@@ -4,6 +4,7 @@ import { RoomService } from "@/services/rooms";
 import { db, booking } from "@/db";
 import { eq } from "drizzle-orm";
 import { BookingQueryService } from "@/services/booking/booking-query-service";
+import { BookingService } from "@/services/booking";
 import {
   bookMeetingSchema,
   rescheduleMeetingSchema,
@@ -13,10 +14,10 @@ import { resolveProject, verifyScope } from "./auth-helpers";
 import { sanitizeBookingDescription } from "@/services/booking/booking-token-helper";
 import type { McpToolContext } from "../types";
 
-// Same rule as the REST routes: only the organizer may modify a stored booking.
+// Same rule as the REST routes and Server Actions (organizer or calendar owner).
 async function findOwnedBooking(eventId: string, userId: string | undefined) {
   const existing = await BookingQueryService.getBookingById(eventId);
-  if (existing && existing.organizerUserId !== userId) {
+  if (existing && (!userId || !BookingService.canModify(existing, userId))) {
     return {
       forbidden: {
         isError: true as const,

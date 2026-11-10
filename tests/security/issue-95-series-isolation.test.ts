@@ -711,4 +711,60 @@ describe("C7: MCP cancel/reschedule ownership", () => {
       }
     }
   });
+
+  test("the booking's calendar owner may reschedule like over REST", async () => {
+    const [organizer, owner] = await db
+      .insert(user)
+      .values([
+        {
+          id: crypto.randomUUID(),
+          name: "MCP Organizer",
+          email: `mcp-organizer-${Date.now()}@example.com`,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "MCP Calendar Owner",
+          email: `mcp-cal-owner-${Date.now()}@example.com`,
+        },
+      ])
+      .returning();
+    const now = Date.now();
+    try {
+      const created = await BookingService.createBooking({
+        title: "Owned Calendar Meeting",
+        organizerUserId: organizer.id,
+        startTime: new Date(now + 3600000),
+        endTime: new Date(now + 7200000),
+      });
+      await db
+        .update(booking)
+        .set({ userId: owner.id })
+        .where(eq(booking.id, created.id));
+
+      const ownerTools = await mcpTools(owner.id);
+      const newStart = new Date(now + 86400000);
+      const res = await ownerTools["reschedule_meeting"].handler({
+        eventId: created.id,
+        newStart: newStart.toISOString(),
+        newEnd: new Date(now + 90000000).toISOString(),
+      });
+      expect(res.isError).toBeFalsy();
+      const [moved] = await db
+        .select()
+        .from(booking)
+        .where(eq(booking.id, created.id));
+      expect(moved.startTime.getTime()).toBe(newStart.getTime());
+    } finally {
+      await db
+        .delete(booking)
+        .where(eq(booking.organizerUserId, organizer.id))
+        .catch(() => {});
+      for (const u of [organizer, owner]) {
+        await db
+          .delete(user)
+          .where(eq(user.id, u.id))
+          .catch(() => {});
+      }
+    }
+  });
 });
