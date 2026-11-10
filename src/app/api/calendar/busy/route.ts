@@ -1,4 +1,5 @@
 import { resolveUserId } from "@/services/api-utils";
+import { z } from "zod";
 import {
   handleBusyQuery,
   type BusyInterval,
@@ -7,6 +8,14 @@ import {
 } from "./busy-query-handler";
 
 export type { BusyInterval, CalendarBusyInfo, BusyEventItem };
+
+const BusyQuerySchema = z.object({
+  emails: z.union([z.array(z.string()), z.string()]).optional(),
+  roomIds: z.union([z.array(z.string()), z.string()]).optional(),
+  userIds: z.union([z.array(z.string()), z.string()]).optional(),
+  timeMin: z.string().optional(),
+  timeMax: z.string().optional(),
+});
 
 export async function GET(req: Request) {
   try {
@@ -52,12 +61,14 @@ export async function GET(req: Request) {
 
     return Response.json(result, { status: 200 });
   } catch (err) {
+    const isBadInput =
+      err instanceof Error && err.message.includes("Invalid time range");
     return Response.json(
       {
         error:
           err instanceof Error ? err.message : "Failed to fetch busy schedules",
       },
-      { status: 500 },
+      { status: isBadInput ? 400 : 500 },
     );
   }
 }
@@ -69,8 +80,15 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json().catch(() => ({}));
-    const { emails, roomIds, userIds, timeMin, timeMax } = body;
+    const rawBody = await req.json().catch(() => ({}));
+    const parseResult = BusyQuerySchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return Response.json(
+        { error: "Invalid busy query body parameters" },
+        { status: 400 },
+      );
+    }
+    const { emails, roomIds, userIds, timeMin, timeMax } = parseResult.data;
 
     const result = await handleBusyQuery({
       callerId,
@@ -95,12 +113,14 @@ export async function POST(req: Request) {
 
     return Response.json(result, { status: 200 });
   } catch (err) {
+    const isBadInput =
+      err instanceof Error && err.message.includes("Invalid time range");
     return Response.json(
       {
         error:
           err instanceof Error ? err.message : "Failed to fetch busy schedules",
       },
-      { status: 500 },
+      { status: isBadInput ? 400 : 500 },
     );
   }
 }

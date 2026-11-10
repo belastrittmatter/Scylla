@@ -61,6 +61,22 @@ export async function handleBusyQuery(params: {
   const startDate = new Date(timeMin);
   const endDate = new Date(timeMax);
 
+  if (
+    isNaN(startDate.getTime()) ||
+    isNaN(endDate.getTime()) ||
+    startDate >= endDate
+  ) {
+    throw new Error("Invalid time range: timeMin must be before timeMax");
+  }
+
+  if (
+    isNaN(startDate.getTime()) ||
+    isNaN(endDate.getTime()) ||
+    startDate >= endDate
+  ) {
+    throw new Error("Invalid time range: timeMin must be before timeMax");
+  }
+
   // 1. Resolve caller's Google OAuth account
   const accounts = await db
     .select()
@@ -81,9 +97,7 @@ export async function handleBusyQuery(params: {
       .select({ userId: teamMember.userId })
       .from(teamMember)
       .where(inArray(teamMember.teamId, teamIds));
-    for (const t of teammates) {
-      allowedUserIds.add(t.userId);
-    }
+    for (const t of teammates) allowedUserIds.add(t.userId);
   }
 
   // Filter requested userIds to authorized teammate IDs only
@@ -137,6 +151,21 @@ export async function handleBusyQuery(params: {
 
   // Add explicit emails only if they match known teammates or rooms
   if (params.emails && params.emails.length > 0) {
+    const requestedEmails = new Set(
+      params.emails.map((e) => e.trim().toLowerCase()).filter(Boolean),
+    );
+    const teammates = await db
+      .select({ id: user.id, email: user.email, name: user.name })
+      .from(user)
+      .where(inArray(user.id, Array.from(allowedUserIds)));
+    for (const u of teammates) {
+      const em = u.email.toLowerCase();
+      if (!requestedEmails.has(em)) continue;
+      targetEmails.add(em);
+      if (!emailMetadata.has(em)) {
+        emailMetadata.set(em, { name: u.name, type: "user", userId: u.id });
+      }
+    }
     for (const e of params.emails) {
       const trimmed = e.trim().toLowerCase();
       if (

@@ -92,7 +92,10 @@ export class UserService {
         }
       }
     } catch (dbErr) {
-      console.warn("Failed to search database users:", dbErr);
+      console.warn(
+        "Failed to search database users:",
+        dbErr instanceof Error ? dbErr.message : "Unknown error",
+      );
     }
 
     // 2. Fetch directory users from Google Workspace only when caller has linked credentials or in mock/test mode
@@ -132,7 +135,10 @@ export class UserService {
           }
         }
       } catch (gErr) {
-        console.warn("Failed to search Google directory users:", gErr);
+        console.warn(
+          "Failed to search Google directory users:",
+          gErr instanceof Error ? gErr.message : "Unknown error",
+        );
       }
     }
 
