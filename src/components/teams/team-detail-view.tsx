@@ -12,12 +12,12 @@ import { TeamMembersTab } from "./team-members-tab";
 import { canManageTeam } from "./team-roles";
 import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
-interface Props {
+type Props = {
   team: TeamItem;
   role: TeamRole;
   userId: string;
   initialTab: "members" | "projects";
-}
+};
 
 export function TeamDetailView({ team, role, userId, initialTab }: Props) {
   const router = useRouter();

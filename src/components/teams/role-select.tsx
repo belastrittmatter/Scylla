@@ -10,11 +10,11 @@ import {
 import type { TeamRole } from "@/services/team/team-types";
 import { ASSIGNABLE_ROLES } from "./team-roles";
 
-interface RoleSelectProps {
+type RoleSelectProps = {
   value: TeamRole;
   onChange: (role: TeamRole) => void;
   id?: string;
-}
+};
 
 export function RoleSelect({ value, onChange, id }: RoleSelectProps) {
   return (

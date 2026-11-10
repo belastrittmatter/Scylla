@@ -13,13 +13,13 @@ import type { TeamRole } from "@/services/team/team-types";
 import { getPersonInitials } from "@/lib/format-person-name";
 import { RoleSelect } from "./role-select";
 
-interface Props {
+type Props = {
   member: TeamMemberItem;
   canManage: boolean;
   isSelf: boolean;
   onUpdateRole: (userId: string, role: TeamRole) => Promise<void>;
   onRemove: (userId: string) => Promise<void>;
-}
+};
 
 export function TeamMemberTableRow({
   member,

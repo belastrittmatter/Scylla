@@ -5,6 +5,8 @@ import { db } from "@/db";
 import { project, team, teamMember } from "@/db/schema";
 import { TeamService } from "@/services";
 import { roleInTeam } from "@/services/team/team-summaries";
+import type { TeamRole } from "@/services/team/team-types";
+import type { TeamItem } from "@/hooks/use-teams";
 
 export async function getCurrentUserId(): Promise<string | null> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -12,7 +14,7 @@ export async function getCurrentUserId(): Promise<string | null> {
 }
 
 /** Teams the user belongs to, with role and counts (3 queries, no row loading). */
-export async function loadTeamSummaries(userId: string) {
+export async function loadTeamSummaries(userId: string): Promise<TeamItem[]> {
   const rows = await db
     .select({ team, role: teamMember.role })
     .from(teamMember)
@@ -46,7 +48,10 @@ export async function loadTeamSummaries(userId: string) {
 }
 
 /** Team by slug/id, only if `userId` is a member; role is authoritative for UI gating. */
-export async function loadTeamForMember(slugOrId: string, userId: string) {
+export async function loadTeamForMember(
+  slugOrId: string,
+  userId: string,
+): Promise<{ team: TeamItem; role: TeamRole } | null> {
   const found =
     (await TeamService.getTeamById(slugOrId)) ??
     (await TeamService.getTeamBySlug(slugOrId));

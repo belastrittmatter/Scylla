@@ -11,12 +11,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface RowAction {
+type RowAction = {
   label: string;
   icon?: React.ReactNode;
   onSelect: () => void;
   destructive?: boolean;
-}
+};
 
 /** The `···` overflow menu; destructive actions are separated and last. */
 export function RowActionsMenu({

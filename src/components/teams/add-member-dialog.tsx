@@ -18,11 +18,11 @@ import type { Teammate } from "@/services/user";
 import { TeammateOption } from "./teammate-option";
 import { RoleSelect } from "./role-select";
 
-interface AddMemberDialogProps {
+type AddMemberDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (email: string, role: TeamRole) => Promise<void>;
-}
+};
 
 export function AddMemberDialog({
   open,

@@ -10,13 +10,13 @@ import { buildTasksUrl } from "@/components/tasks/use-task-workspace-routing";
 import { ProjectDot } from "./project-dot";
 import { ProjectStatusBadge } from "./project-status-badge";
 
-interface Props {
+type Props = {
   project: ProjectItem;
   teamSlug: string;
   canManage: boolean;
   onEdit: (project: ProjectItem) => void;
   onDelete: (project: ProjectItem) => void;
-}
+};
 
 export function ProjectRow({
   project,

@@ -5,12 +5,12 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-interface TaskDrawerDeleteButtonProps {
+type TaskDrawerDeleteButtonProps = {
   title: string;
   /** Resolves true when deleted; the drawer closes only then. */
   onDelete: () => Promise<boolean>;
   onDeleted: () => void;
-}
+};
 
 export function TaskDrawerDeleteButton({
   title,

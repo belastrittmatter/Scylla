@@ -18,11 +18,11 @@ import { CreateProjectDialog } from "./create-project-dialog";
 import { EditProjectDialog } from "./edit-project-dialog";
 import { ProjectRow } from "./project-row";
 
-interface Props {
+type Props = {
   teamId: string;
   teamSlug: string;
   canManage: boolean;
-}
+};
 
 export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
   const {

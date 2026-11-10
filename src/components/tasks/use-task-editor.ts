@@ -8,7 +8,7 @@ import { withStatus } from "./task-move";
 import { createDraftTask } from "./task-utils";
 import type { Project, TaskItem, TaskStatus, TaskUser } from "./task-types";
 
-interface UseTaskEditorArgs {
+type UseTaskEditorArgs = {
   projects: Project[];
   users: TaskUser[];
   sessionUser?: {
@@ -18,7 +18,7 @@ interface UseTaskEditorArgs {
     image?: string | null;
   } | null;
   setTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>;
-}
+};
 
 function toTaskUser(user: NonNullable<UseTaskEditorArgs["sessionUser"]>) {
   const name = user.name || "Me";
@@ -32,13 +32,22 @@ function toTaskUser(user: NonNullable<UseTaskEditorArgs["sessionUser"]>) {
   };
 }
 
+export type TaskEditor = {
+  selectedTask: TaskItem | null;
+  isDrawerOpen: boolean;
+  openTask: (task: TaskItem) => void;
+  openDraft: (status: TaskStatus, teamId: string, projectId: string) => void;
+  saveTask: (item: TaskItem) => Promise<boolean>;
+  closeDrawer: () => void;
+};
+
 /** Drawer state plus create/update persistence for a single task. */
 export function useTaskEditor({
   projects,
   users,
   sessionUser,
   setTasks,
-}: UseTaskEditorArgs) {
+}: UseTaskEditorArgs): TaskEditor {
   const [selectedTask, setSelectedTask] = React.useState<TaskItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
 

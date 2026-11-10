@@ -16,11 +16,11 @@ import { AddMemberDialog } from "./add-member-dialog";
 import { TeamMemberTableRow } from "./team-member-table-row";
 import { useTeamMembers } from "./use-team-members";
 
-interface Props {
+type Props = {
   teamId: string;
   userId: string;
   canManage: boolean;
-}
+};
 
 export function TeamMembersTab({ teamId, userId, canManage }: Props) {
   const { members, isLoading, addMember, updateRole, removeMember } =

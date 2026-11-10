@@ -7,7 +7,7 @@ import { RowActionsMenu } from "@/components/layout/row-actions-menu";
 import type { TeamItem } from "@/hooks/use-teams";
 import { EditTeamDialog } from "./edit-team-dialog";
 
-interface Props {
+type Props = {
   team: TeamItem;
   canManage: boolean;
   onUpdate: (
@@ -15,7 +15,7 @@ interface Props {
     data: { name?: string; slug?: string; description?: string },
   ) => Promise<TeamItem>;
   onDelete: () => Promise<void>;
-}
+};
 
 export function TeamHeader({ team, canManage, onUpdate, onDelete }: Props) {
   const [editing, setEditing] = React.useState(false);
