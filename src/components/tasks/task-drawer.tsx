@@ -30,10 +30,24 @@ interface TaskDrawerProps {
 }
 
 export function TaskDrawer({ task, isOpen, ...props }: TaskDrawerProps) {
-  if (!task) return null;
+  // Retain the last non-null task during render (official React pattern for deriving state from props).
+  // This allows the drawer to smoothly animate its exit without content unmounting.
+  const [cachedTask, setCachedTask] = React.useState<TaskItem | null>(task);
+  if (task && task !== cachedTask) {
+    setCachedTask(task);
+  }
+
+  const displayTask = task || cachedTask;
+
+  if (!displayTask) return null;
 
   return (
-    <TaskDrawerInner key={task.id} task={task} isOpen={isOpen} {...props} />
+    <TaskDrawerInner
+      key={displayTask.id}
+      task={displayTask}
+      isOpen={isOpen}
+      {...props}
+    />
   );
 }
 
