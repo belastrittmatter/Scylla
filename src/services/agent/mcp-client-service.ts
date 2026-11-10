@@ -5,6 +5,7 @@ import {
   oauthAccessToken,
   oauthRefreshToken,
   agent,
+  agentCapabilityGrant,
 } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { resolveEffectiveScopes } from "./agent-scopes";
@@ -103,12 +104,19 @@ export async function revokeMcpClient(
       ),
     );
 
-  // 4. Update legacy agent row if present (scoped to userId to prevent IDOR)
-  await db
+  // 4. Revoke the agent row and its capability grants (scoped to userId to prevent IDOR)
+  const now = new Date();
+  const revokedAgents = await db
     .update(agent)
-    .set({ status: "revoked", updatedAt: new Date() })
+    .set({ status: "revoked", updatedAt: now })
     .where(and(eq(agent.id, clientIdOrAgentId), eq(agent.userId, userId)))
-    .catch(() => {});
+    .returning({ id: agent.id });
+  if (revokedAgents.length > 0) {
+    await db
+      .update(agentCapabilityGrant)
+      .set({ status: "revoked", updatedAt: now })
+      .where(eq(agentCapabilityGrant.agentId, clientIdOrAgentId));
+  }
 
   return true;
 }

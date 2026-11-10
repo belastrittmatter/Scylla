@@ -1,13 +1,6 @@
 "use client";
 
-import * as React from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import type { ProjectStatus } from "@/services/project/project-types";
 
 export const PROJECT_STATUS_CONFIG: Record<
@@ -46,57 +39,15 @@ export const PROJECT_STATUS_CONFIG: Record<
   },
 };
 
-interface ProjectStatusBadgeProps {
-  status: ProjectStatus;
-  onStatusChange?: (newStatus: ProjectStatus) => void;
-}
-
-export function ProjectStatusBadge({
-  status,
-  onStatusChange,
-}: ProjectStatusBadgeProps) {
+export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
   const config = PROJECT_STATUS_CONFIG[status] || PROJECT_STATUS_CONFIG.active;
-
-  if (!onStatusChange) {
-    return (
-      <Badge
-        variant="outline"
-        className={`gap-1.5 border px-2 py-0.5 text-[11px] font-medium ${config.colorClass}`}
-      >
-        <span className={`size-1.5 rounded-full ${config.dotClass}`} />
-        {config.label}
-      </Badge>
-    );
-  }
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <button
-            type="button"
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors hover:opacity-80 ${config.colorClass}`}
-          >
-            <span className={`size-1.5 rounded-full ${config.dotClass}`} />
-            <span>{config.label}</span>
-          </button>
-        }
-      />
-      <DropdownMenuContent align="start" className="w-36">
-        {(Object.keys(PROJECT_STATUS_CONFIG) as ProjectStatus[]).map((s) => {
-          const item = PROJECT_STATUS_CONFIG[s];
-          return (
-            <DropdownMenuItem
-              key={s}
-              onClick={() => onStatusChange(s)}
-              className="cursor-pointer gap-2 text-xs"
-            >
-              <span className={`size-2 rounded-full ${item.dotClass}`} />
-              <span>{item.label}</span>
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Badge
+      variant="outline"
+      className={`gap-1.5 border px-2 py-0.5 text-xs font-medium ${config.colorClass}`}
+    >
+      <span className={`size-1.5 rounded-full ${config.dotClass}`} />
+      {config.label}
+    </Badge>
   );
 }

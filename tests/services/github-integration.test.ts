@@ -880,6 +880,11 @@ describe("GithubIntegrationService (Jira-grade Git Linking)", () => {
       name: `Issue Link Team ${Date.now()}`,
       ownerId: testOwner.id,
     });
+    await TeamService.addTeamMember({
+      teamId: newTeam.id,
+      userId: testDev.id,
+      role: "member",
+    });
 
     const newProject = await ProjectService.createProject({
       name: "Issue Link Project",

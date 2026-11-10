@@ -1,4 +1,5 @@
-import { TeamService } from "@/services/team/team-service";
+import { TeamService, TeamPermissionError } from "@/services/team/team-service";
+import { UpdateMemberRoleSchema } from "@/services/team/team-types";
 import { resolveUserId } from "@/services/api-utils";
 
 interface RouteParams {
@@ -6,10 +7,21 @@ interface RouteParams {
     Promise<{ id: string; userId: string }> | { id: string; userId: string };
 }
 
+function errorResponse(err: unknown, fallback: string): Response {
+  if (err instanceof TeamPermissionError) {
+    return Response.json({ error: err.message }, { status: 403 });
+  }
+  const message = err instanceof Error ? err.message : fallback;
+  if (message.includes("not found")) {
+    return Response.json({ error: message }, { status: 404 });
+  }
+  return Response.json({ error: message }, { status: 500 });
+}
+
 export async function DELETE(req: Request, context: RouteParams) {
   try {
-    const { id: teamId, userId } = await context.params;
-    if (!teamId || !userId) {
+    const { id: teamId, userId: targetUserId } = await context.params;
+    if (!teamId || !targetUserId) {
       return Response.json(
         { error: "teamId and userId are required" },
         { status: 400 },
@@ -21,30 +33,24 @@ export async function DELETE(req: Request, context: RouteParams) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isSelf = callerId === userId;
-    const isAuthorized =
-      isSelf || (await TeamService.isTeamAdminOrOwner(teamId, callerId));
-    if (!isAuthorized) {
-      return Response.json(
-        { error: "Forbidden: Only team owners and admins can remove members" },
-        { status: 403 },
-      );
+    const removed = await TeamService.removeTeamMember(
+      teamId,
+      targetUserId,
+      callerId,
+    );
+    if (!removed) {
+      return Response.json({ error: "Team member not found" }, { status: 404 });
     }
-
-    await TeamService.removeTeamMember(teamId, userId);
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to remove member" },
-      { status: 500 },
-    );
+    return errorResponse(err, "Failed to remove member");
   }
 }
 
 export async function PATCH(req: Request, context: RouteParams) {
   try {
-    const { id: teamId, userId } = await context.params;
-    if (!teamId || !userId) {
+    const { id: teamId, userId: targetUserId } = await context.params;
+    if (!teamId || !targetUserId) {
       return Response.json(
         { error: "teamId and userId are required" },
         { status: 400 },
@@ -56,35 +62,32 @@ export async function PATCH(req: Request, context: RouteParams) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAuthorized = await TeamService.isTeamAdminOrOwner(teamId, callerId);
-    if (!isAuthorized) {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
       return Response.json(
-        {
-          error:
-            "Forbidden: Only team owners and admins can update member roles",
-        },
-        { status: 403 },
+        { error: "Invalid JSON in request body" },
+        { status: 400 },
       );
     }
 
-    const body = await req.json();
-    if (!body?.role) {
-      return Response.json({ error: "role is required" }, { status: 400 });
+    const parsed = UpdateMemberRoleSchema.safeParse(body);
+    if (!parsed.success) {
+      return Response.json(
+        { error: parsed.error.issues.map((i) => i.message).join(", ") },
+        { status: 400 },
+      );
     }
 
     const updated = await TeamService.updateMemberRole(
       teamId,
-      userId,
-      body.role,
+      targetUserId,
+      parsed.data.role,
+      callerId,
     );
     return Response.json(updated, { status: 200 });
   } catch (err) {
-    return Response.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Failed to update member role",
-      },
-      { status: 500 },
-    );
+    return errorResponse(err, "Failed to update member role");
   }
 }

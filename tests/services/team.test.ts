@@ -60,6 +60,7 @@ describe("TeamService Domain Logic", () => {
       newTeam.id,
       testMember.id,
       "admin",
+      testOwner.id,
     );
     expect(updated.role).toBe("admin");
 
@@ -67,12 +68,13 @@ describe("TeamService Domain Logic", () => {
     const removed = await TeamService.removeTeamMember(
       newTeam.id,
       testMember.id,
+      testOwner.id,
     );
     expect(removed).toBe(true);
 
     // Prevent removing owner
     expect(
-      TeamService.removeTeamMember(newTeam.id, testOwner.id),
+      TeamService.removeTeamMember(newTeam.id, testOwner.id, testOwner.id),
     ).rejects.toThrow();
 
     // Clean up

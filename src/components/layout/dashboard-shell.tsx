@@ -13,9 +13,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         className="relative h-svh w-full overflow-hidden bg-sidebar"
         defaultOpen
       >
-        <React.Suspense fallback={null}>
-          <AppSidebar />
-        </React.Suspense>
+        {/* No Suspense here: a deferred boundary would hydrate after useIsMobile flips and mismatch. */}
+        <AppSidebar />
 
         <SidebarInset className="relative flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-background">
           {/* Fixed Header */}

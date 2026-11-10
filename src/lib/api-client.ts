@@ -85,6 +85,14 @@ export const apiClient = {
     },
   },
 
+  tasks: {
+    /** Maps to: DELETE /api/tasks/[id] (throws the route's error message). */
+    delete: async (id: string): Promise<{ success: boolean }> =>
+      request<{ success: boolean }>(`/api/tasks/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+  },
+
   rooms: {
     /**
      * List physical meeting rooms with optional filters.
@@ -150,7 +158,12 @@ export const apiClient = {
      * Schedule a new meeting atomically.
      * Maps to: POST /api/bookings
      */
-    create: async (payload: CreateBookingPayload): Promise<Booking> => {
+    // The server takes the organizer from the session; organizerUserId is only honored in tests.
+    create: async (
+      payload: Omit<CreateBookingPayload, "organizerUserId"> & {
+        organizerUserId?: string;
+      },
+    ): Promise<Booking> => {
       return request<Booking>("/api/bookings", {
         method: "POST",
         body: JSON.stringify(payload),

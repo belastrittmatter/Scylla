@@ -12,6 +12,8 @@ import { MCP_SERVER_INSTRUCTIONS } from "@/mcp/instructions";
 import {
   getAgentScopesForClient,
   createRevokedTokenResponse,
+  isAgentActive,
+  resolveTokenScopes,
 } from "@/services/agent";
 import type { CalendarMcpAuthInfo } from "@/mcp/types";
 
@@ -78,13 +80,13 @@ const mcpAuthHandler = requireMcpAuth(
       }
     }
 
-    const resolvedScopes: string[] =
-      agentScopes ??
-      (Array.isArray(claims.scopes)
-        ? (claims.scopes as string[])
-        : typeof rawClaims.scope === "string"
-          ? rawClaims.scope.split(/[\s,]+/)
-          : []);
+    const tokenScopes: string[] = Array.isArray(claims.scopes)
+      ? (claims.scopes as string[])
+      : typeof rawClaims.scope === "string"
+        ? rawClaims.scope.split(/[\s,]+/).filter(Boolean)
+        : [];
+
+    const resolvedScopes = resolveTokenScopes(tokenScopes, agentScopes);
 
     const authInfo: CalendarMcpAuthInfo = {
       sub: userId,
@@ -128,12 +130,17 @@ const handler = async (request: Request) => {
           user?: { id?: string };
         };
 
+        const agentId = sessionObj.agentId || sessionObj.agent?.id;
+        // Fail closed: anything but an active agent row (revoked, suspended, missing) is rejected.
+        if (!agentId || !(await isAgentActive(agentId))) {
+          return createRevokedTokenResponse(appUrl);
+        }
+
         const grants = sessionObj.agent?.capabilityGrants || [];
         const activeGrants = grants
           .filter((g) => !g.status || g.status === "active")
           .map((g) => g.capability);
 
-        const agentId = sessionObj.agentId || sessionObj.agent?.id;
         const userId = sessionObj.userId || sessionObj.user?.id;
 
         const authInfo: CalendarMcpAuthInfo = {

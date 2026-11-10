@@ -27,6 +27,8 @@ export type ProviderButtonProps = {
   provider: AuthSocialProvider;
   display?: "full" | "name" | "icon";
   view?: AuthView;
+  /** Show the "last used" badge; pointless when this is the only option. */
+  showLastUsed?: boolean;
 } & Omit<ComponentProps<typeof Button>, "onClick" | "children" | "disabled">;
 
 /**
@@ -39,17 +41,20 @@ export function ProviderButton({
   provider,
   display = "full",
   view = "signIn",
+  showLastUsed = true,
   variant = "outline",
   className,
   ...props
 }: ProviderButtonProps) {
   const {
     authClient,
+    basePaths,
     baseURL,
     localization,
     navigate,
     redirectTo,
     socialSignInMode,
+    viewPaths,
   } = useAuth();
 
   const callbackURL = `${baseURL}${redirectTo}`;
@@ -88,7 +93,13 @@ export function ProviderButton({
       return;
     }
 
-    signInSocial({ provider: providerId, callbackURL, fetchOptions });
+    signInSocial({
+      provider: providerId,
+      callbackURL,
+      // Land OAuth failures (e.g. user cancels) back on sign-in with ?error=.
+      errorCallbackURL: `${baseURL}${basePaths.auth}/${viewPaths.auth.signIn}`,
+      fetchOptions,
+    });
   };
 
   return (
@@ -115,7 +126,9 @@ export function ProviderButton({
         <span className="sr-only">{getProviderName(provider)}</span>
       )}
 
-      {view !== "signUp" && <LastUsedBadge method={providerId} floating />}
+      {showLastUsed && view !== "signUp" && (
+        <LastUsedBadge method={providerId} floating />
+      )}
     </Button>
   );
 }

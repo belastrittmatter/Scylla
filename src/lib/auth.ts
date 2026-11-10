@@ -68,13 +68,21 @@ export const auth = betterAuth({
       },
     },
   },
-  emailAndPassword: {
-    enabled: true,
+  session: {
+    // The proxy and the route both resolve the session; a signed cookie cache
+    // spares the second DB lookup. Revoked sessions stay valid for up to maxAge.
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
   },
   account: {
     accountLinking: {
       enabled: true,
       trustedProviders: ["google", "github"],
+      // #111: team invites create unverified placeholder users (team-service addTeamMember);
+      // Google must be able to claim them. Safe only while no password sign-up exists.
+      requireLocalEmailVerified: false,
     },
   },
   socialProviders: {

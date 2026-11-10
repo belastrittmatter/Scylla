@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteService,
+  toPublicInviteDetails,
+} from "@/services/meeting-invite";
 import { MeetingBookingClient } from "@/components/booking/meeting-booking-client";
 import { CalendarX } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -72,7 +75,7 @@ async function BookingContent(props: BookingPageProps) {
     );
   }
 
-  return <MeetingBookingClient details={details} />;
+  return <MeetingBookingClient details={toPublicInviteDetails(details)} />;
 }
 
 export default function BookingPage(props: BookingPageProps) {
