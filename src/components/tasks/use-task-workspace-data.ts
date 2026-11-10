@@ -19,6 +19,7 @@ let inflightWorkspaceRequest: ReturnType<typeof getWorkspaceDataAction> | null =
 
 export interface TaskWorkspaceData extends WorkspaceCacheSnapshot {
   isLoading: boolean;
+  error?: string | null;
   setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
   setTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>;
 }
@@ -42,12 +43,17 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
   const [isLoading, setIsLoading] = React.useState<boolean>(
     () => !clientWorkspaceCache,
   );
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!isLoading) {
+    if (
+      !isLoading &&
+      !error &&
+      (teams.length > 0 || projects.length > 0 || tasks.length > 0)
+    ) {
       clientWorkspaceCache = { teams, projects, tasks, users, teamMembers };
     }
-  }, [isLoading, teams, projects, tasks, users, teamMembers]);
+  }, [isLoading, error, teams, projects, tasks, users, teamMembers]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -58,6 +64,7 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
     }
     inflightWorkspaceRequest
       .then((res) => {
+        if (!isMounted) return;
         if (res?.success && res.data) {
           const nextCache: WorkspaceCacheSnapshot = {
             teams: res.data.teams,
@@ -67,15 +74,26 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
             teamMembers: res.data.teamMembers ?? [],
           };
           clientWorkspaceCache = nextCache;
-          if (!isMounted) return;
           setTeams(nextCache.teams);
           setProjects(nextCache.projects);
           setTasks(nextCache.tasks);
           setUsers(nextCache.users);
           setTeamMembers(nextCache.teamMembers);
+          setError(null);
+        } else {
+          setError(res?.error ?? "Failed to load workspace data");
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load workspace data",
+          );
+        }
+      })
       .finally(() => {
         if (isMounted) setIsLoading(false);
       });
@@ -91,6 +109,7 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
     users,
     teamMembers,
     isLoading,
+    error,
     setTeams,
     setTasks,
   };

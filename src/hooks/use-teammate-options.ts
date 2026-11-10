@@ -18,7 +18,7 @@ export function useTeammateOptions(query: string, { showEmpty = false } = {}) {
   const items = React.useMemo(() => {
     const trimmed = query.trim();
     if (!trimmed) return showEmpty ? results : [];
-    const list = [...results];
+    const list = results.filter((u) => !u.id.startsWith("email-"));
     if (
       isFullEmail(trimmed) &&
       !list.some((u) => u.email.toLowerCase() === trimmed.toLowerCase())

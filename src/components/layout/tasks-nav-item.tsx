@@ -24,13 +24,31 @@ import type { TeamItem } from "@/hooks/use-teams";
 export function activeTasksTeam(
   pathname: string,
   searchParams: Pick<URLSearchParams, "get">,
+  teams?: Array<{ id: string; slug: string }>,
 ): string | null {
-  const [pathTeam] = pathname.replace(/^\/tasks\/?/, "").split("/");
+  const [pathTeam] = pathname
+    .replace(/^\/tasks\/?/, "")
+    .split("/")
+    .filter(Boolean);
   if (pathTeam) return pathTeam.toLowerCase();
-  const team = searchParams.get("team");
-  return searchParams.get("scope") === "team" && team
-    ? team.toLowerCase()
-    : null;
+
+  const rawScope = searchParams.get("scope");
+  const teamRef = searchParams.get("team") ?? searchParams.get("teamId");
+
+  const isTeamScope =
+    (rawScope ?? (teamRef ? "team" : "me")) === "team" && Boolean(teamRef);
+  if (!isTeamScope || !teamRef) return null;
+
+  if (teams && teams.length > 0) {
+    const matched = teams.find(
+      (t) =>
+        t.slug.toLowerCase() === teamRef.toLowerCase() ||
+        t.id.toLowerCase() === teamRef.toLowerCase(),
+    );
+    if (matched) return matched.slug.toLowerCase();
+  }
+
+  return teamRef.toLowerCase();
 }
 
 const buttonClass =
@@ -48,7 +66,9 @@ export function TasksNavItem({
   teams: TeamItem[];
 }) {
   const onTasks = pathname === "/tasks" || pathname.startsWith("/tasks/");
-  const activeTeam = onTasks ? activeTasksTeam(pathname, searchParams) : null;
+  const activeTeam = onTasks
+    ? activeTasksTeam(pathname, searchParams, teams)
+    : null;
   // Controlled: pathname starts empty (Suspense fallback), so defaultOpen would change after mount.
   const [open, setOpen] = React.useState(onTasks);
   const [wasOnTasks, setWasOnTasks] = React.useState(onTasks);

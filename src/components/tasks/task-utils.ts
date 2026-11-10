@@ -38,7 +38,8 @@ export function parseDbTimestampToIso(
   if (!val) return null;
   if (val instanceof Date) return val.toISOString();
   if (!String(val).trim()) return null;
-  return new Date(parseTimestampMs(val)).toISOString();
+  const ms = parseTimestampMs(val);
+  return Number.isFinite(ms) && ms !== 0 ? new Date(ms).toISOString() : null;
 }
 
 /**

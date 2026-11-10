@@ -131,7 +131,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("GET /api/tasks?teamId=... - lists tasks with filters", async () => {
-    // Stranger gets 404 (existence not leaked)
+    // Stranger gets 403 (non-member)
     const strangerReq = new Request(
       `http://localhost:3000/api/tasks?teamId=${teamId}&priority=high`,
       { headers: { "x-user-id": "usr_unauthorized_stranger" } },
@@ -151,7 +151,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("GET /api/tasks/[id] - retrieves task with relations", async () => {
-    // Stranger gets 404 (existence not leaked)
+    // Stranger gets 403 (non-member)
     const strangerReq = new Request("http://localhost:3000/api/tasks", {
       headers: { "x-user-id": "usr_unauthorized_stranger" },
     });
@@ -173,7 +173,7 @@ describe("Tasks REST API Endpoints", () => {
   });
 
   test("PATCH /api/tasks/[id] - updates task status and priority", async () => {
-    // Stranger gets 404 (existence not leaked)
+    // Stranger gets 403 (non-member)
     const strangerReq = new Request("http://localhost:3000/api/tasks", {
       method: "PATCH",
       headers: {

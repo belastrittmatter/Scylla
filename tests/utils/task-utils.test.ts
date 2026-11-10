@@ -28,6 +28,7 @@ describe("task-utils timestamp parsing", () => {
     expect(parseDbTimestampToIso(undefined)).toBeNull();
     expect(parseDbTimestampToIso("")).toBeNull();
     expect(parseDbTimestampToIso("   ")).toBeNull();
+    expect(parseDbTimestampToIso("garbage")).toBeNull();
   });
 
   test("parseDbTimestampToIso treats unadorned DB timestamps as UTC regardless of local timezone", () => {
