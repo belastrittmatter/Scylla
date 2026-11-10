@@ -1,0 +1,1148 @@
+/* Looping product vignettes on the sign-in page. Classes and keyframes are prefixed sis- because this is global CSS. Every scene is 10s; the component remounts each one so it starts at 0. */
+.sis-root {
+  --stage: color-mix(in oklch, var(--muted) 45%, var(--background));
+  --faint: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+}
+
+.sis-stage {
+  position: relative;
+  height: 262px;
+  padding: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--stage);
+  font-size: 12px;
+}
+.sis-stage *,
+.sis-cap * {
+  animation-duration: 10s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+}
+.sis-cap {
+  position: relative;
+  height: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.sis-cap span {
+  position: absolute;
+  left: 0;
+  white-space: nowrap;
+}
+.sis-cap .sis-hl {
+  color: var(--afg);
+  font-weight: 500;
+}
+/* Default two-state caption for chat scenes. */
+.sis-capA {
+  animation-name: sis-capA;
+}
+.sis-capB {
+  animation-name: sis-capB;
+}
+@keyframes sis-capA {
+  0%,
+  52% {
+    opacity: 1;
+  }
+  56%,
+  97% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes sis-capB {
+  0%,
+  56% {
+    opacity: 0;
+  }
+  60%,
+  90% {
+    opacity: 1;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- shared bits ---------- */
+.sis-av {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.sis-avs {
+  display: flex;
+}
+.sis-avs .sis-av {
+  margin-left: -5px;
+  border: 1.5px solid var(--card);
+}
+.sis-avs .sis-av:first-child {
+  margin-left: 0;
+}
+.sis-box {
+  position: relative;
+  flex: none;
+  width: 11px;
+  height: 11px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--faint);
+  border-radius: 3px;
+}
+.sis-box::after {
+  content: "✓";
+  position: absolute;
+  inset: -2px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: var(--ok);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  opacity: 0;
+  animation: inherit;
+}
+.sis-dot {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 700;
+}
+.sis-swap {
+  position: relative;
+  display: inline-block;
+}
+.sis-swap > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+}
+.sis-mono {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+}
+
+/* ---------- chat scenes ---------- */
+.sis-q {
+  width: fit-content;
+  max-width: 250px;
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  animation-name: sis-q;
+}
+@keyframes sis-q {
+  0%,
+  2% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  7%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-who {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  animation-name: sis-who;
+}
+.sis-who i {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: var(--primary);
+}
+.sis-who span {
+  color: var(--faint);
+  font-weight: 400;
+}
+@keyframes sis-who {
+  0%,
+  11% {
+    opacity: 0;
+  }
+  14%,
+  90% {
+    opacity: 1;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0 0 23px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.sis-spin {
+  position: relative;
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+.sis-spin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--faint);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: sis-spin 0.7s linear infinite;
+}
+.sis-spin::after {
+  content: "✓";
+  position: absolute;
+  inset: -1px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ok);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  animation: inherit;
+}
+@keyframes sis-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.sis-step1 {
+  animation-name: sis-step1;
+}
+.sis-step2 {
+  animation-name: sis-step2;
+}
+.sis-step3 {
+  animation-name: sis-step3;
+}
+.sis-step1 .sis-spin::after {
+  animation-name: sis-tick1;
+}
+.sis-step2 .sis-spin::after {
+  animation-name: sis-tick2;
+}
+.sis-step3 .sis-spin::after {
+  animation-name: sis-tick3;
+}
+@keyframes sis-step1 {
+  0%,
+  15% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  18%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-step2 {
+  0%,
+  26% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  29%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-step3 {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  40%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-tick1 {
+  0%,
+  26% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  29%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sis-tick2 {
+  0%,
+  37% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  40%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sis-tick3 {
+  0%,
+  48% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  51%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sis-result {
+  position: relative;
+  overflow: hidden;
+  margin: 12px 0 0 23px;
+  padding: 9px 11px 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+  animation-name: sis-result;
+  animation-timing-function: cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.sis-result::before,
+.sis-accent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+}
+@keyframes sis-result {
+  0%,
+  52% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  58%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sis-title b {
+  color: var(--afg);
+  font-size: 12px;
+  font-weight: 500;
+}
+.sis-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+
+/* Move: old time struck through, new time slides in. */
+.sis-old {
+  position: relative;
+}
+.sis-old::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  background: currentColor;
+  transform-origin: left;
+  animation: inherit;
+  animation-name: sis-strike;
+}
+@keyframes sis-strike {
+  0%,
+  60% {
+    transform: scaleX(0);
+  }
+  66%,
+  100% {
+    transform: none;
+  }
+}
+.sis-newTime {
+  color: var(--afg);
+  font-weight: 500;
+  animation-name: sis-newTime;
+}
+@keyframes sis-newTime {
+  0%,
+  64% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  70%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Briefing: agenda rows + tasks due. */
+.sis-agenda {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 5px 8px;
+}
+.sis-agenda .sis-time {
+  color: var(--faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.sis-agenda .sis-join {
+  color: var(--afg);
+  font-size: 10.5px;
+}
+.sis-due {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+
+/* ---------- board ---------- */
+.sis-cols {
+  position: absolute;
+  inset: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.sis-col {
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--muted) 50%, transparent);
+}
+.sis-col h4 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.sis-col h4 i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.sis-kcard {
+  position: absolute;
+  width: calc((100% - 40px) / 3);
+  height: 52px;
+  box-sizing: border-box;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.sis-kcard .sis-row {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sis-prio {
+  color: var(--faint);
+  font-size: 9.5px;
+  font-weight: 500;
+}
+.sis-prioHigh {
+  color: var(--afg);
+}
+.sis-mover {
+  left: 14px;
+  top: 40px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+  animation-name: sis-mover;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+.sis-mover .sis-box {
+  margin-top: 2px;
+}
+.sis-mover .sis-box::after {
+  animation-name: sis-moverTick;
+}
+@keyframes sis-mover {
+  0%,
+  12% {
+    transform: none;
+    box-shadow: none;
+    opacity: 1;
+  }
+  16% {
+    transform: translateY(-3px) rotate(2deg) scale(1.04);
+    box-shadow: var(--lift);
+  }
+  28% {
+    transform: translate(calc(100% + 6px), -3px) rotate(2deg) scale(1.04);
+    box-shadow: var(--lift);
+  }
+  32%,
+  52% {
+    transform: translate(calc(100% + 6px), 0);
+    box-shadow: none;
+  }
+  56% {
+    transform: translate(calc(100% + 6px), -3px) rotate(2deg) scale(1.04);
+    box-shadow: var(--lift);
+  }
+  68% {
+    transform: translate(calc(200% + 12px), -3px) rotate(2deg) scale(1.04);
+    box-shadow: var(--lift);
+  }
+  72%,
+  90% {
+    transform: translate(calc(200% + 12px), 0);
+    box-shadow: none;
+    opacity: 1;
+  }
+  96% {
+    transform: translate(calc(200% + 12px), 0);
+    opacity: 0;
+  }
+  97%,
+  100% {
+    transform: none;
+    opacity: 0;
+  }
+}
+@keyframes sis-moverTick {
+  0%,
+  70% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  74%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sis-board1 {
+  animation-name: sis-board1;
+}
+.sis-board2 {
+  animation-name: sis-board2;
+}
+.sis-board3 {
+  animation-name: sis-board3;
+}
+@keyframes sis-board1 {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  34%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-board2 {
+  0%,
+  32% {
+    opacity: 0;
+  }
+  36%,
+  66% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-board3 {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  74%,
+  92% {
+    opacity: 1;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- project ---------- */
+.sis-projHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sis-pill {
+  padding: 1px 7px;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.sis-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 10.5px;
+}
+.sis-bar {
+  flex: 1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--border);
+}
+.sis-bar i {
+  display: block;
+  width: 57%;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--primary);
+  animation-name: sis-bar;
+}
+@keyframes sis-bar {
+  0%,
+  58% {
+    width: 57%;
+  }
+  64%,
+  92% {
+    width: 71%;
+  }
+  97%,
+  100% {
+    width: 57%;
+  }
+}
+.sis-count {
+  width: 30px;
+  height: 13px;
+}
+.sis-count1 {
+  animation-name: sis-count1;
+}
+.sis-count2 {
+  animation-name: sis-count2;
+}
+@keyframes sis-count1 {
+  0%,
+  58% {
+    opacity: 1;
+  }
+  62%,
+  94% {
+    opacity: 0;
+  }
+  98%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes sis-count2 {
+  0%,
+  58% {
+    opacity: 0;
+  }
+  62%,
+  92% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-section {
+  margin-top: 9px;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sis-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  padding: 6px 9px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+}
+.sis-item .sis-end {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.sis-cal {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--primary);
+}
+.sis-calPast {
+  background: var(--faint);
+}
+.sis-added {
+  animation-name: sis-added;
+}
+@keyframes sis-added {
+  0%,
+  14% {
+    opacity: 0;
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    transform: translateY(-6px);
+  }
+  22%,
+  90% {
+    opacity: 1;
+    max-height: 40px;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+    max-height: 40px;
+  }
+}
+.sis-newBadge {
+  padding: 0 6px;
+  border-radius: 99px;
+  background: color-mix(in oklch, var(--primary) 14%, transparent);
+  color: var(--afg);
+  font-size: 9.5px;
+  font-weight: 500;
+  animation: inherit;
+  animation-name: sis-newBadge;
+}
+@keyframes sis-newBadge {
+  0%,
+  46% {
+    opacity: 1;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-done .sis-box::after {
+  animation-name: sis-doneTick;
+}
+@keyframes sis-doneTick {
+  0%,
+  56% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-done .sis-label {
+  position: relative;
+  animation-name: sis-dim;
+}
+.sis-done .sis-label::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 1px;
+  background: var(--muted-foreground);
+  transform-origin: left;
+  animation: inherit;
+  animation-name: sis-strikeTask;
+}
+@keyframes sis-strikeTask {
+  0%,
+  58% {
+    transform: scaleX(0);
+  }
+  64%,
+  92% {
+    transform: none;
+  }
+  97%,
+  100% {
+    transform: scaleX(0);
+  }
+}
+@keyframes sis-dim {
+  0%,
+  58% {
+    color: var(--foreground);
+  }
+  64%,
+  92% {
+    color: var(--muted-foreground);
+  }
+  97%,
+  100% {
+    color: var(--foreground);
+  }
+}
+.sis-proj1 {
+  animation-name: sis-proj1;
+}
+.sis-proj2 {
+  animation-name: sis-proj2;
+}
+@keyframes sis-proj1 {
+  0%,
+  16% {
+    opacity: 1;
+  }
+  20%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes sis-proj2 {
+  0%,
+  20% {
+    opacity: 0;
+  }
+  24%,
+  90% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- github ---------- */
+.sis-task {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+}
+.sis-status {
+  width: 74px;
+  height: 18px;
+  margin-left: auto;
+}
+.sis-status > * {
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.sis-status1 {
+  color: var(--blue);
+  animation-name: sis-status1;
+}
+.sis-status2 {
+  color: var(--violet);
+  animation-name: sis-status2;
+}
+.sis-status3 {
+  color: var(--ok);
+  animation-name: sis-status3;
+}
+@keyframes sis-status1 {
+  0%,
+  22% {
+    opacity: 1;
+  }
+  26%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes sis-status2 {
+  0%,
+  22% {
+    opacity: 0;
+  }
+  26%,
+  60% {
+    opacity: 1;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-status3 {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  64%,
+  92% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-feed {
+  margin: 18px 0 0 6px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+.sis-ev {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  color: var(--muted-foreground);
+}
+.sis-ev:first-child {
+  margin-top: 2px;
+}
+.sis-ev::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--faint);
+  border-radius: 50%;
+  background: var(--stage);
+}
+.sis-ev b {
+  color: var(--foreground);
+  font-weight: 500;
+}
+.sis-ev1 {
+  animation-name: sis-ev1;
+}
+.sis-ev2 {
+  animation-name: sis-ev2;
+}
+.sis-ev3 {
+  animation-name: sis-ev3;
+}
+.sis-ev4 {
+  animation-name: sis-ev4;
+}
+.sis-ev4::before {
+  border-color: var(--violet);
+  background: var(--violet);
+}
+@keyframes sis-ev1 {
+  0%,
+  4% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  8%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-ev2 {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  22%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-ev3 {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  42%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sis-ev4 {
+  0%,
+  56% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  60%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  97%,
+  100% {
+    opacity: 0;
+  }
+}
+.sis-gh1 {
+  animation-name: sis-gh1;
+}
+.sis-gh2 {
+  animation-name: sis-gh2;
+}
+@keyframes sis-gh1 {
+  0%,
+  58% {
+    opacity: 1;
+  }
+  62%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes sis-gh2 {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  64%,
+  92% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: freeze every scene on its finished state (the component also stops rotating). */
+@media (prefers-reduced-motion: reduce) {
+  .sis-stage *,
+  .sis-stage *::before,
+  .sis-stage *::after,
+  .sis-cap * {
+    animation-play-state: paused !important;
+    animation-delay: -8s !important;
+  }
+}

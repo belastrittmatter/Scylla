@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { CircleAlert } from "lucide-react";
 import { AuthUIProvider } from "@/components/auth-provider";
 import { ProviderButton } from "@/components/auth/provider-button";
+import { SignInShowcase } from "@/components/auth/sign-in-showcase";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 function SignInError() {
@@ -64,38 +65,7 @@ export default function SignInPage() {
                 className="mt-8 h-11 w-full text-[15px] shadow-xs [&_svg]:size-5"
               />
 
-              <ol className="mt-10 border-b text-sm">
-                {[
-                  <>
-                    Google asks you to{" "}
-                    <span className="text-foreground font-medium">
-                      allow calendar access
-                    </span>
-                  </>,
-                  <>
-                    First time here? Scylla{" "}
-                    <span className="text-foreground font-medium">
-                      creates your account
-                    </span>
-                  </>,
-                  <>
-                    You land on{" "}
-                    <span className="text-foreground font-medium">
-                      your week
-                    </span>
-                  </>,
-                ].map((step, i) => (
-                  <li
-                    key={i}
-                    className="text-muted-foreground flex gap-4 border-t py-3"
-                  >
-                    <span className="text-muted-foreground/60 w-3 tabular-nums">
-                      {i + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
+              <SignInShowcase className="mt-10" />
             </div>
           </main>
 
