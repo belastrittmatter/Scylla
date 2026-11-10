@@ -35,7 +35,10 @@ export function registerTeamMemberTools(
             : Promise.resolve(undefined),
         ]);
         const resolvedEmail = resolved || email;
-        if (role === "owner" && team.ownerId !== currentUser.id) {
+        if (
+          role === "owner" &&
+          (await TeamService.getUserRole(team.id, currentUser.id)) !== "owner"
+        ) {
           throw new Error(
             "Permission denied: Only the team owner can assign the owner role.",
           );
@@ -72,22 +75,12 @@ export function registerTeamMemberTools(
           resolveUserId(userId, currentUser.id, ctx),
         ]);
         if (!targetUserId) throw new Error(`User '${userId}' not found.`);
-        if (targetUserId === team.ownerId)
-          throw new Error("Cannot remove the owner of the team.");
-        const targetMemberToRemove = team.members?.find(
-          (m) => m.userId === targetUserId,
+        const removed = await TeamService.removeTeamMember(
+          team.id,
+          targetUserId,
+          currentUser.id,
         );
-        if (
-          (targetMemberToRemove?.role === "admin" ||
-            targetMemberToRemove?.role === "owner") &&
-          team.ownerId !== currentUser.id &&
-          targetUserId !== currentUser.id
-        ) {
-          throw new Error(
-            "Permission denied: Admins cannot remove owners or other admins.",
-          );
-        }
-        await TeamService.removeTeamMember(team.id, targetUserId);
+        if (!removed) throw new Error(`User '${userId}' is not a member.`);
         return formatToolSuccess({
           message: `Member removed from team '${team.name}' successfully`,
           teamId: team.id,
@@ -115,28 +108,11 @@ export function registerTeamMemberTools(
           resolveUserId(userId, currentUser.id, ctx),
         ]);
         if (!targetUserId) throw new Error(`User '${userId}' not found.`);
-        if (role === "owner" && team.ownerId !== currentUser.id) {
-          throw new Error(
-            "Permission denied: Only the team owner can assign the owner role.",
-          );
-        }
-        const targetMemberToUpdate = team.members?.find(
-          (m) => m.userId === targetUserId,
-        );
-        if (
-          (targetMemberToUpdate?.role === "admin" ||
-            targetMemberToUpdate?.role === "owner") &&
-          team.ownerId !== currentUser.id &&
-          targetUserId !== currentUser.id
-        ) {
-          throw new Error(
-            "Permission denied: Admins cannot change the role of owners or other admins.",
-          );
-        }
         const updated = await TeamService.updateMemberRole(
           team.id,
           targetUserId,
           role,
+          currentUser.id,
         );
         return formatToolSuccess({
           message: `Role updated to '${role}' successfully`,

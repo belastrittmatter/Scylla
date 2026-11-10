@@ -16,6 +16,7 @@ import {
   type CreateTeamInput,
   type UpdateTeamInput,
   type AddTeamMemberInput,
+  hasTeamRole,
   type TeamRole,
   type TeamWithMembers,
   type TeamMemberWithUser,
@@ -25,6 +26,75 @@ import {
   memberWithUserQuery,
   sortTeamMembersByRole,
 } from "./team-helpers";
+
+export class TeamPermissionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TeamPermissionError";
+  }
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Locks the team row (serialising member changes per team), then applies the one
+ * member-management rule set shared by REST and MCP. `change` is the new role or "remove".
+ */
+async function lockAndAuthorizeMemberChange(
+  tx: Tx,
+  teamId: string,
+  actorId: string,
+  targetUserId: string,
+  change: TeamRole | "remove",
+): Promise<{ targetRole: TeamRole | null }> {
+  const [teamRow] = await tx
+    .select({ ownerId: team.ownerId })
+    .from(team)
+    .where(eq(team.id, teamId))
+    .for("update");
+  if (!teamRow) throw new Error(`Team with id "${teamId}" not found`);
+
+  const rows = await tx
+    .select({ userId: teamMember.userId, role: teamMember.role })
+    .from(teamMember)
+    .where(
+      and(
+        eq(teamMember.teamId, teamId),
+        inArray(teamMember.userId, [actorId, targetUserId]),
+      ),
+    );
+  const roleOf = (id: string) =>
+    (rows.find((r) => r.userId === id)?.role as TeamRole | undefined) ?? null;
+  const actorRole: TeamRole | null =
+    teamRow.ownerId === actorId ? "owner" : roleOf(actorId);
+  const targetRole = roleOf(targetUserId);
+  const isSelf = actorId === targetUserId;
+
+  if (targetUserId === teamRow.ownerId) {
+    throw new TeamPermissionError(
+      change === "remove"
+        ? "Cannot remove the owner of the team"
+        : "Permission denied: the team owner's role cannot be changed",
+    );
+  }
+  if (change === "remove" && isSelf) return { targetRole };
+  if (!hasTeamRole(actorRole, "admin")) {
+    throw new TeamPermissionError(
+      "Permission denied: Team owner or admin role required",
+    );
+  }
+  if (change === "owner" && actorRole !== "owner") {
+    throw new TeamPermissionError(
+      "Permission denied: Only team owners can assign the owner role",
+    );
+  }
+  if (hasTeamRole(targetRole, "admin") && actorRole !== "owner" && !isSelf) {
+    throw new TeamPermissionError(
+      "Permission denied: Admins cannot modify owners or other admins",
+    );
+  }
+  return { targetRole };
+}
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -205,41 +275,57 @@ export class TeamService {
     return (memberWithUser ?? member) as TeamMemberWithUser;
   }
 
+  /** Removes `userId` if `actorId` may (self-leave, or admin+ over lower roles). */
   public static async removeTeamMember(
     teamId: string,
     userId: string,
+    actorId: string,
   ): Promise<boolean> {
-    const targetTeam = await db.query.team.findFirst({
-      where: eq(team.id, teamId),
+    return db.transaction(async (tx) => {
+      const { targetRole } = await lockAndAuthorizeMemberChange(
+        tx,
+        teamId,
+        actorId,
+        userId,
+        "remove",
+      );
+      if (!targetRole) return false;
+      const deleted = await tx
+        .delete(teamMember)
+        .where(
+          and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)),
+        )
+        .returning();
+      return deleted.length > 0;
     });
-    if (targetTeam?.ownerId === userId) {
-      throw new Error("Cannot remove the owner of the team");
-    }
-
-    const deleted = await db
-      .delete(teamMember)
-      .where(and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)))
-      .returning();
-
-    return deleted.length > 0;
   }
 
+  /** Changes `userId`'s role if `actorId` may; check and write share one locked transaction. */
   public static async updateMemberRole(
     teamId: string,
     userId: string,
     role: TeamRole,
+    actorId: string,
   ): Promise<TeamMember> {
     const validated = UpdateMemberRoleSchema.parse({ role });
-    const [updated] = await db
-      .update(teamMember)
-      .set({ role: validated.role })
-      .where(and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)))
-      .returning();
-
-    if (!updated) {
-      throw new Error("Team member not found");
-    }
-    return updated;
+    return db.transaction(async (tx) => {
+      const { targetRole } = await lockAndAuthorizeMemberChange(
+        tx,
+        teamId,
+        actorId,
+        userId,
+        validated.role,
+      );
+      if (!targetRole) throw new Error("Team member not found");
+      const [updated] = await tx
+        .update(teamMember)
+        .set({ role: validated.role })
+        .where(
+          and(eq(teamMember.teamId, teamId), eq(teamMember.userId, userId)),
+        )
+        .returning();
+      return updated;
+    });
   }
 
   public static async updateTeam(
