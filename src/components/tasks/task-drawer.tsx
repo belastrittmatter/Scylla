@@ -14,6 +14,7 @@ import { dueDateToInput, inputToDueDate } from "./task-utils";
 import { TaskDrawerForm } from "./task-drawer-form";
 import { TaskCommentSection } from "./task-comment-section";
 import { TaskDrawerDeleteButton } from "./task-drawer-delete-button";
+import { TaskGithubDevelopmentCard } from "./task-github-development-card";
 import type {
   TaskItem,
   TaskPriority,
@@ -155,6 +156,18 @@ function TaskDrawerInner({
               onEstimatedMinutesChange={setEstimatedMinutes}
             />
           </fieldset>
+
+          {/* GitHub Development Card: Branch & PR Linking */}
+          {!isDraft &&
+            Boolean(task.project?.githubRepo || task.githubIssueNumber) && (
+              <TaskGithubDevelopmentCard
+                task={task}
+                onTaskUpdated={(updated) => {
+                  if (updated.status) setStatus(updated.status as TaskStatus);
+                  void onSaveTask(updated);
+                }}
+              />
+            )}
 
           {!isDraft && (
             <TaskCommentSection taskId={task.id} readOnly={readOnly} />
