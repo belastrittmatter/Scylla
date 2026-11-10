@@ -27,13 +27,9 @@ export async function GET(_req: Request, context: RouteParams) {
 
     return Response.json(toPublicInviteDetails(details), { status: 200 });
   } catch (err) {
+    console.error("Meeting invite lookup failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch meeting invite details",
-      },
+      { error: "Failed to fetch meeting invite details" },
       { status: 500 },
     );
   }

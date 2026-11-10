@@ -14,13 +14,14 @@ import {
   type CreateMeetingInviteInput,
   type BookMeetingInviteInput,
   type InviteDetails,
+  MeetingInviteError,
   toPublicInviteDetails,
 } from "./meeting-invite/meeting-invite-types";
 
 import { getAvailableSlotsForInvite } from "./meeting-invite/meeting-invite-slots";
 
 export type { CreateMeetingInviteInput, BookMeetingInviteInput, InviteDetails };
-export { toPublicInviteDetails };
+export { toPublicInviteDetails, MeetingInviteError };
 
 export class MeetingInviteService {
   /**
@@ -131,7 +132,7 @@ export class MeetingInviteService {
   ): Promise<TimeSlot[]> {
     const details = await this.getInviteBySlug(slug);
     if (!details || !details.invite.isActive) {
-      throw new Error("Meeting invite not found or inactive");
+      throw new MeetingInviteError("Meeting invite not found or inactive", 404);
     }
     return getAvailableSlotsForInvite(details, dateStr, timeZone);
   }
@@ -139,32 +140,39 @@ export class MeetingInviteService {
   public static async bookSlot(input: BookMeetingInviteInput) {
     const details = await this.getInviteBySlug(input.slug);
     if (!details || !details.invite.isActive) {
-      throw new Error("Meeting invite not found or no longer active");
+      throw new MeetingInviteError(
+        "Meeting invite not found or no longer active",
+        404,
+      );
     }
 
     const { invite, organizer } = details;
 
     if (invite.bookingId) {
-      throw new Error("This meeting invitation has already been booked");
+      throw new MeetingInviteError(
+        "This meeting invitation has already been booked",
+        409,
+      );
     }
 
     const startDate = new Date(input.startTime);
     const endDate = new Date(input.endTime);
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new Error("Invalid start or end time format");
+      throw new MeetingInviteError("Invalid start or end time format", 400);
     }
     if (startDate >= endDate) {
-      throw new Error("Start time must be before end time");
+      throw new MeetingInviteError("Start time must be before end time", 400);
     }
     if (startDate.getTime() < Date.now()) {
-      throw new Error("Meeting cannot be booked in the past");
+      throw new MeetingInviteError("Meeting cannot be booked in the past", 400);
     }
 
     const durationMinutes =
       (endDate.getTime() - startDate.getTime()) / (60 * 1000);
     if (Math.round(durationMinutes) !== invite.duration) {
-      throw new Error(
+      throw new MeetingInviteError(
         `Requested booking duration (${durationMinutes}m) must match the invite duration (${invite.duration}m)`,
+        400,
       );
     }
 
@@ -177,8 +185,9 @@ export class MeetingInviteService {
         invite.allowedEmails.map((e) => e.toLowerCase()),
       );
       if (!allowedSet.has(input.guestEmail.trim().toLowerCase())) {
-        throw new Error(
+        throw new MeetingInviteError(
           "This meeting invitation is restricted to invited recipients only.",
+          403,
         );
       }
     }
@@ -202,7 +211,10 @@ export class MeetingInviteService {
       .limit(1);
 
     if (conflictBookings.length > 0) {
-      throw new Error("The selected time slot is no longer available.");
+      throw new MeetingInviteError(
+        "The selected time slot is no longer available.",
+        409,
+      );
     }
 
     const attendees = [
@@ -237,8 +249,9 @@ export class MeetingInviteService {
       .returning();
 
     if (!claimedInvite) {
-      throw new Error(
+      throw new MeetingInviteError(
         "This meeting invitation has already been booked or is no longer active",
+        409,
       );
     }
 

@@ -1,5 +1,14 @@
 import type { MeetingInvite, MeetingRoom } from "@/db/schema";
 
+/** Expected booking failures; routes map `status` to the HTTP response and may echo `message`. */
+export class MeetingInviteError extends Error {
+  status: 400 | 403 | 404 | 409;
+  constructor(message: string, status: 400 | 403 | 404 | 409) {
+    super(message);
+    this.status = status;
+  }
+}
+
 export interface CreateMeetingInviteInput {
   title: string;
   description?: string;

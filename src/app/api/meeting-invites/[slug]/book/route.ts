@@ -1,15 +1,11 @@
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteService,
+  MeetingInviteError,
+} from "@/services/meeting-invite";
+import { bookInviteBodySchema } from "@/lib/validations/meeting-invite";
 
 interface RouteParams {
   params: Promise<{ slug: string }> | { slug: string };
-}
-
-interface BookSlotBody {
-  guestName?: string;
-  guestEmail?: string;
-  startTime?: string;
-  endTime?: string;
-  notes?: string;
 }
 
 export async function POST(req: Request, context: RouteParams) {
@@ -22,9 +18,9 @@ export async function POST(req: Request, context: RouteParams) {
       );
     }
 
-    let body: BookSlotBody;
+    let raw: unknown;
     try {
-      body = (await req.json()) as BookSlotBody;
+      raw = await req.json();
     } catch {
       return Response.json(
         { error: "Invalid JSON in request body" },
@@ -32,29 +28,29 @@ export async function POST(req: Request, context: RouteParams) {
       );
     }
 
-    const { guestName, guestEmail, startTime, endTime, notes } = body || {};
-
-    if (!guestName || !guestEmail || !startTime || !endTime) {
+    // Unknown keys (e.g. organizerUserId) are stripped by the schema.
+    const parsed = bookInviteBodySchema.safeParse(raw);
+    if (!parsed.success) {
       return Response.json(
-        { error: "guestName, guestEmail, startTime, and endTime are required" },
+        {
+          error:
+            "guestName, a valid guestEmail, and ISO 8601 startTime and endTime are required",
+        },
         { status: 400 },
       );
     }
 
     const result = await MeetingInviteService.bookSlot({
       slug,
-      guestName,
-      guestEmail,
-      startTime,
-      endTime,
-      notes,
+      ...parsed.data,
     });
 
     return Response.json(result, { status: 201 });
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : "Failed to book meeting" },
-      { status: 400 },
-    );
+    if (err instanceof MeetingInviteError) {
+      return Response.json({ error: err.message }, { status: err.status });
+    }
+    console.error("Meeting invite booking failed:", err);
+    return Response.json({ error: "Failed to book meeting" }, { status: 500 });
   }
 }

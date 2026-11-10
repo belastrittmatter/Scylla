@@ -2,6 +2,7 @@ import { describe, expect, it, beforeAll, afterAll, afterEach } from "bun:test";
 import { POST as createInviteHandler } from "@/app/api/meeting-invites/route";
 import { GET as getInviteHandler } from "@/app/api/meeting-invites/[slug]/route";
 import { POST as bookHandler } from "@/app/api/meeting-invites/[slug]/book/route";
+import { POST as slotsHandler } from "@/app/api/meeting-invites/[slug]/slots/route";
 import { MeetingInviteService } from "@/services/meeting-invite";
 import type { TimeSlot } from "@/services/scheduler";
 import { db } from "@/db";
@@ -34,6 +35,17 @@ const params = (slug: string) => ({ params: Promise.resolve({ slug }) });
 function bookRequest(slug: string, body: unknown) {
   return bookHandler(
     new Request(`http://localhost:3000/api/meeting-invites/${slug}/book`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+    params(slug),
+  );
+}
+
+function slotsRequest(slug: string, body: unknown) {
+  return slotsHandler(
+    new Request(`http://localhost:3000/api/meeting-invites/${slug}/slots`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -165,6 +177,64 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
       .where(eq(booking.id, data.booking.id));
     expect(row.organizerUserId).toBe(testOrganizerId);
     expect(row.roomId).toBe(roomId);
+  });
+
+  it("POST /book rejects a restricted invite for an uninvited email with 403", async () => {
+    const invite = await createSecretInvite();
+    const [slot] = await offeredSlots(invite.slug);
+
+    const res = await bookRequest(invite.slug, {
+      guestName: "Intruder",
+      guestEmail: "intruder@unknown.com",
+      startTime: slot.start,
+      endTime: slot.end,
+    });
+
+    expect(res.status).toBe(403);
+    expectNoSecrets(await res.json());
+  });
+
+  it("POST /book validates the body and maps unknown slugs to 404", async () => {
+    const invite = await createSecretInvite({ isRestricted: false });
+
+    const bad = await bookRequest(invite.slug, {
+      guestName: "X",
+      guestEmail: "not-an-email",
+      startTime: "tomorrow",
+      endTime: "later",
+    });
+    expect(bad.status).toBe(400);
+
+    const [slot] = await offeredSlots(invite.slug);
+    const missing = await bookRequest(`missing-${RUN}`, {
+      guestName: "X",
+      guestEmail: "x@example.com",
+      startTime: slot.start,
+      endTime: slot.end,
+    });
+    expect(missing.status).toBe(404);
+  });
+
+  it("slots endpoint validates date and timeZone and maps unknown slugs to 404", async () => {
+    const invite = await createSecretInvite();
+
+    expect(
+      (await slotsRequest(invite.slug, { date: "2026-13-45" })).status,
+    ).toBe(400);
+    expect(
+      (await slotsRequest(invite.slug, { date: "2026-02-30" })).status,
+    ).toBe(400);
+    expect(
+      (
+        await slotsRequest(invite.slug, {
+          date: "2026-12-01",
+          timeZone: "Mars/Base",
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (await slotsRequest(`missing-${RUN}`, { date: "2026-12-01" })).status,
+    ).toBe(404);
   });
 
   it("bookSlot rejects booking with mismatched duration", async () => {
