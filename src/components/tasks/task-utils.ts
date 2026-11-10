@@ -1,8 +1,9 @@
-import { format, isToday, isPast, isFuture } from "date-fns";
+import { format, isToday, isPast } from "date-fns";
+import { cn } from "@/lib/utils";
+import { getDeadlineBucket } from "./task-selectors";
 import type {
   TaskItem,
   TaskFilters,
-  TaskPriority,
   TaskStatus,
   Project,
   TaskUser,
@@ -36,15 +37,8 @@ export function parseDbTimestampToIso(
 ): string | null {
   if (!val) return null;
   if (val instanceof Date) return val.toISOString();
-  const str = String(val).trim();
-  if (!str) return null;
-  if (str.endsWith("Z") || /[+-]\d{2}(:\d{2})?$/.test(str)) {
-    return new Date(str).toISOString();
-  }
-  const normalized = str.replace(" ", "T");
-  return new Date(
-    normalized.endsWith("Z") ? normalized : `${normalized}Z`,
-  ).toISOString();
+  if (!String(val).trim()) return null;
+  return new Date(parseTimestampMs(val)).toISOString();
 }
 
 /**
@@ -59,19 +53,8 @@ export function parseTimestampMs(
   if (val instanceof Date) return val.getTime();
   const str = String(val).trim();
   if (!str) return 0;
-  if (str.endsWith("Z") || /[+-]\d{2}(:\d{2})?$/.test(str)) {
-    return new Date(str).getTime();
-  }
-  const normalized = str.replace(" ", "T");
-  return new Date(
-    normalized.endsWith("Z") ? normalized : `${normalized}Z`,
-  ).getTime();
-}
-
-export function formatDueDate(date: Date | string | null | undefined): string {
-  if (!date) return "No deadline";
-  const d = typeof date === "string" ? new Date(date) : date;
-  return isNaN(d.getTime()) ? "Invalid date" : format(d, "MMM d, yyyy");
+  const hasZone = str.endsWith("Z") || /[+-]\d{2}(:\d{2})?$/.test(str);
+  return new Date(hasZone ? str : `${str.replace(" ", "T")}Z`).getTime();
 }
 
 export function getDeadlineStatus(
@@ -81,139 +64,56 @@ export function getDeadlineStatus(
   label: string;
   variant: "default" | "warning" | "destructive" | "muted";
   isOverdue: boolean;
-  colorClass: string;
 } {
-  if (!date) {
+  const d = date ? new Date(date) : null;
+  if (!d || isNaN(d.getTime())) {
     return {
-      label: "No deadline",
+      label: d ? "Invalid date" : "No deadline",
       variant: "muted",
       isOverdue: false,
-      colorClass: "text-neutral-400 dark:text-neutral-500",
     };
   }
-  const d = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(d.getTime())) {
-    return {
-      label: "Invalid date",
-      variant: "muted",
-      isOverdue: false,
-      colorClass: "text-neutral-400",
-    };
-  }
-
   if (isCompleted) {
-    return {
-      label: format(d, "MMM d"),
-      variant: "muted",
-      isOverdue: false,
-      colorClass: "text-neutral-500 dark:text-neutral-400",
-    };
+    return { label: format(d, "MMM d"), variant: "muted", isOverdue: false };
   }
-
   if (isPast(d) && !isToday(d)) {
     return {
       label: `Overdue (${format(d, "MMM d")})`,
       variant: "destructive",
       isOverdue: true,
-      colorClass:
-        "text-rose-600 bg-rose-50 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-md font-semibold",
     };
   }
-  const isDueToday = isToday(d);
+  return isToday(d)
+    ? { label: "Due today", variant: "warning", isOverdue: false }
+    : { label: format(d, "MMM d"), variant: "default", isOverdue: false };
+}
+
+/** Compact elapsed time: "12m", "3h 12m", "6d 4h" (two most significant units). */
+export function formatElapsedCompact(totalSeconds: number): string {
+  const mins = Math.max(0, Math.floor(totalSeconds / 60));
+  const days = Math.floor(mins / 1440);
+  const hrs = Math.floor((mins % 1440) / 60);
+  const rest = mins % 60;
+  if (days > 0) return hrs ? `${days}d ${hrs}h` : `${days}d`;
+  if (hrs > 0) return rest ? `${hrs}h ${rest}m` : `${hrs}h`;
+  return `${rest}m`;
+}
+
+/** Quiet chip for urgent/high only; null for everything else and for closed tasks. */
+export function getQuietPriority(
+  priority: string,
+  isClosed: boolean,
+): { label: string; className: string } | null {
+  if (isClosed || (priority !== "urgent" && priority !== "high")) return null;
   return {
-    label: isDueToday ? "Due today" : format(d, "MMM d"),
-    variant: isDueToday ? "warning" : "default",
-    isOverdue: false,
-    colorClass: isDueToday
-      ? "text-amber-700 bg-amber-50 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md font-semibold"
-      : "text-sky-700 bg-sky-50 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-2 py-0.5 rounded-md font-medium",
+    label: priority === "urgent" ? "Urgent" : "High",
+    className: cn(
+      "rounded-sm border px-1.5 py-px text-xs",
+      priority === "urgent"
+        ? "font-medium text-foreground"
+        : "text-muted-foreground",
+    ),
   };
-}
-
-const PRIORITY_BADGES: Record<
-  TaskPriority,
-  { label: string; badgeClass: string; dotColor: string }
-> = {
-  urgent: {
-    label: "Urgent",
-    dotColor: "bg-rose-500",
-    badgeClass:
-      "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-200 border-rose-300 dark:border-rose-800 font-semibold",
-  },
-  high: {
-    label: "High",
-    dotColor: "bg-orange-500",
-    badgeClass:
-      "bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-200 border-orange-300 dark:border-orange-800 font-semibold",
-  },
-  medium: {
-    label: "Medium",
-    dotColor: "bg-sky-500",
-    badgeClass:
-      "bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-200 border-sky-300 dark:border-sky-800 font-medium",
-  },
-  low: {
-    label: "Low",
-    dotColor: "bg-emerald-500",
-    badgeClass:
-      "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800 font-medium",
-  },
-};
-
-export function getPriorityBadge(priority: TaskPriority) {
-  return PRIORITY_BADGES[priority] ?? PRIORITY_BADGES.low;
-}
-
-const STATUS_BADGES: Record<
-  TaskStatus,
-  { label: string; badgeClass: string; dotColor: string }
-> = {
-  todo: {
-    label: "To Do",
-    dotColor: "bg-slate-400",
-    badgeClass:
-      "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800/80 dark:text-slate-200 dark:border-slate-700",
-  },
-  in_progress: {
-    label: "In Progress",
-    dotColor: "bg-blue-500",
-    badgeClass:
-      "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/70 dark:text-blue-200 dark:border-blue-800",
-  },
-  in_review: {
-    label: "In Review",
-    dotColor: "bg-purple-500",
-    badgeClass:
-      "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/70 dark:text-purple-200 dark:border-purple-800",
-  },
-  done: {
-    label: "Done",
-    dotColor: "bg-emerald-500",
-    badgeClass:
-      "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-800",
-  },
-  cancelled: {
-    label: "Cancelled",
-    dotColor: "bg-neutral-400",
-    badgeClass:
-      "bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400",
-  },
-};
-
-export function getStatusBadge(status: TaskStatus) {
-  return STATUS_BADGES[status] ?? STATUS_BADGES.todo;
-}
-
-export function formatTimer(totalSeconds: number): string {
-  const s = Math.max(0, Math.floor(totalSeconds));
-  const hrs = Math.floor(s / 3600);
-  const mins = Math.floor((s % 3600) / 60);
-  const secs = s % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  if (hrs > 0) {
-    return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-  }
-  return `${pad(mins)}:${pad(secs)}`;
 }
 
 export function formatEstimatedMinutes(minutes?: number | null): string {
@@ -286,24 +186,42 @@ export function filterTasks(
       return false;
 
     if (filters.deadlineHorizon !== "all") {
-      const d = t.dueDate ? new Date(t.dueDate) : null;
-      if (!d) {
-        if (filters.deadlineHorizon !== "no_date") return false;
-      } else {
-        if (filters.deadlineHorizon === "no_date") return false;
-        if (
-          filters.deadlineHorizon === "overdue" &&
-          (t.status === "done" || !isPast(d) || isToday(d))
-        )
-          return false;
-        if (filters.deadlineHorizon === "today" && !isToday(d)) return false;
-        if (
-          filters.deadlineHorizon === "upcoming" &&
-          (!isFuture(d) || isToday(d))
-        )
-          return false;
-      }
+      const bucket = getDeadlineBucket(t.dueDate);
+      const closed = t.status === "done" || t.status === "cancelled";
+      const match = {
+        overdue: bucket === "overdue" && !closed,
+        today: bucket === "today",
+        upcoming: bucket === "upcoming7" || bucket === "later",
+        no_date: bucket === "no_date",
+      }[filters.deadlineHorizon];
+      if (!match) return false;
     }
     return true;
   });
+}
+
+/** Picker value (`yyyy-MM-dd`) -> local 18:00, so the day survives a save/read round-trip. */
+export function inputToDueDate(value: string): Date | null {
+  return value ? new Date(`${value}T18:00:00`) : null;
+}
+
+export function dueDateToInput(date: Date | string | null | undefined): string {
+  return date ? format(new Date(date), "yyyy-MM-dd") : "";
+}
+
+/** Undo a partial optimistic delete: bring `failedIds` back, keep everything else as it is now. */
+export function restoreFailedTasks(
+  current: TaskItem[],
+  snapshot: TaskItem[],
+  failedIds: ReadonlySet<string>,
+): TaskItem[] {
+  const now = new Map(current.map((t) => [t.id, t]));
+  const known = new Set(snapshot.map((t) => t.id));
+  return [
+    ...snapshot.flatMap((t) => {
+      const live = now.get(t.id);
+      return failedIds.has(t.id) ? [t] : live ? [live] : [];
+    }),
+    ...current.filter((t) => !known.has(t.id)),
+  ];
 }

@@ -1,200 +1,182 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, Check } from "lucide-react";
+import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { TableCell, TableRow } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   getDeadlineStatus,
-  getPriorityBadge,
-  getStatusBadge,
+  getQuietPriority,
   getUserAvatarColor,
-  formatEstimatedMinutes,
-  formatDurationSeconds,
 } from "./task-utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import type { TaskItem, TaskPriority, TaskStatus } from "./task-types";
+import { StatusIcon } from "./task-status-icon";
 import { TASK_FORM_STATUSES } from "./task-types";
+import type { TaskItem, TaskStatus } from "./task-types";
 
 interface TaskTableRowProps {
   task: TaskItem;
-  onSelectTask?: (task: TaskItem) => void;
+  onSelectTask: (task: TaskItem) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
+  contextLabel?: string | null;
+  showAssignee: boolean;
+  /** Selection is enabled only when a toggle handler is given. */
+  selected?: boolean;
+  anySelected?: boolean;
+  onToggleSelect?: (id: string) => void;
+  /** False keeps the cell (column alignment) but hides the checkbox. */
+  selectable?: boolean;
 }
 
+/** Single-line row: status, title + context, priority, due date, assignee. */
 export function TaskTableRow({
   task,
   onSelectTask,
   onUpdateStatus,
+  contextLabel,
+  showAssignee,
+  selected = false,
+  anySelected = false,
+  onToggleSelect,
+  selectable = true,
 }: TaskTableRowProps) {
-  const isDone = task.status === "done";
-  const deadline = getDeadlineStatus(task.dueDate, isDone);
-  const priorityInfo = getPriorityBadge(task.priority as TaskPriority);
-  const avatarColor = getUserAvatarColor(task.assignee?.name || "");
-  const statusInfo = getStatusBadge(task.status as TaskStatus);
+  const isClosed = task.status === "done" || task.status === "cancelled";
+  const deadline = getDeadlineStatus(task.dueDate, isClosed);
+  const priority = getQuietPriority(task.priority, isClosed);
+  const project = contextLabel?.split(" · ").pop();
+  const status =
+    TASK_FORM_STATUSES.find((s) => s.value === task.status) ??
+    TASK_FORM_STATUSES[0];
 
   return (
     <TableRow
-      onClick={() => onSelectTask?.(task)}
-      className={cn(
-        "cursor-pointer transition-colors hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50",
-        isDone && "bg-neutral-50/30 opacity-80 dark:bg-neutral-900/30",
-      )}
+      onClick={() => onSelectTask(task)}
+      data-state={selected ? "selected" : undefined}
+      className="group/row cursor-pointer"
     >
-      <TableCell className="max-w-[340px] py-3">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1.5">
-            {isDone && (
-              <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            )}
-            <span
+      {onToggleSelect && (
+        <TableCell className="w-0 pr-0" onClick={(e) => e.stopPropagation()}>
+          {selectable && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect(task.id)}
+              aria-label={`Select ${task.title}`}
               className={cn(
-                "truncate text-sm font-semibold",
-                isDone
-                  ? "font-medium text-neutral-600 dark:text-neutral-400"
-                  : "text-neutral-900 dark:text-neutral-100",
+                "opacity-0 focus-visible:opacity-100 group-hover/row:opacity-100",
+                (anySelected || selected) && "opacity-100",
               )}
-            >
-              {task.title}
-            </span>
-          </div>
-          {task.description && (
-            <span className="truncate text-xs text-neutral-500">
-              {task.description}
-            </span>
+            />
           )}
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            {task.project && (
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="size-1.5 rounded-full"
-                  style={{ backgroundColor: task.project.color || "#6366f1" }}
-                />
-                <span className="truncate text-[11px] text-neutral-400">
-                  {task.project.name}
-                </span>
-              </div>
-            )}
-            {task.status === "in_progress" ? (
-              <Badge
-                variant="outline"
-                className="gap-1.5 border-neutral-200/80 bg-neutral-50/70 px-2 py-0 text-[10px] font-medium text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900/60 dark:text-neutral-300"
-              >
-                <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                <span>
-                  Tracking • Est:{" "}
-                  {formatEstimatedMinutes(task.estimatedMinutes)}
-                </span>
-              </Badge>
-            ) : (
-              <span className="text-muted-foreground text-[11px]">
-                Est: {formatEstimatedMinutes(task.estimatedMinutes)}
-                {(task.totalSpentSeconds || 0) > 0 &&
-                  ` • Spent: ${formatDurationSeconds(task.totalSpentSeconds!)}`}
-              </span>
-            )}
-          </div>
-        </div>
-      </TableCell>
-
-      <TableCell className="w-[150px] py-3">
-        <div onClick={(e) => e.stopPropagation()}>
-          <Select
-            value={task.status}
-            onValueChange={(val) =>
-              val && onUpdateStatus(task.id, val as TaskStatus)
+        </TableCell>
+      )}
+      <TableCell className="w-0" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`Status: ${status.label}`}
+              />
             }
           >
-            <SelectTrigger className="h-8 w-full border border-neutral-200/80 bg-neutral-50/70 text-xs font-medium hover:bg-neutral-100/70 dark:border-neutral-700 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/70">
-              <SelectValue>
-                <span className="flex items-center gap-1.5 truncate">
-                  <span
-                    className={`size-2 shrink-0 rounded-full ${statusInfo.dotColor}`}
-                  />
-                  <span>{statusInfo.label}</span>
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {TASK_FORM_STATUSES.map((opt) => (
-                <SelectItem
-                  key={opt.value}
-                  value={opt.value}
-                  className="text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`size-2 rounded-full ${opt.dot}`} />
-                    <span>{opt.label}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <StatusIcon status={task.status as TaskStatus} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {TASK_FORM_STATUSES.map((s) => (
+              <DropdownMenuItem
+                key={s.value}
+                onClick={() => onUpdateStatus(task.id, s.value)}
+              >
+                <StatusIcon status={s.value} />
+                {s.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+
+      <TableCell className="w-full max-w-0">
+        <div className="flex min-w-0 items-baseline gap-2">
+          {/* Real button for keyboard access; its click bubbles to the row handler. */}
+          <button
+            type="button"
+            className={cn(
+              "min-w-0 truncate text-left font-medium focus-visible:outline-2 focus-visible:outline-ring",
+              isClosed && "text-muted-foreground",
+            )}
+          >
+            {task.title}
+          </button>
+          {project && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="min-w-0 max-w-[40%] shrink truncate text-xs text-muted-foreground" />
+                }
+              >
+                {project}
+              </TooltipTrigger>
+              <TooltipContent>{contextLabel}</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </TableCell>
 
-      <TableCell className="w-[110px] py-3">
-        <Badge
-          variant="outline"
-          className={`px-2.5 py-0.5 text-xs font-medium ${priorityInfo.badgeClass}`}
-        >
-          {priorityInfo.label}
-        </Badge>
-      </TableCell>
-
-      <TableCell className="w-[160px] py-3">
-        {task.assignee ? (
-          <div className="flex items-center gap-2">
-            <Avatar className="size-6 text-[10px]">
-              <AvatarImage
-                src={task.assignee.avatarUrl}
-                alt={task.assignee.name}
-              />
-              <AvatarFallback className={avatarColor}>
-                {task.assignee.initials || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <span className="max-w-[110px] truncate text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              {task.assignee.name}
-            </span>
-          </div>
-        ) : (
-          <span className="text-sm italic text-neutral-400">Unassigned</span>
+      <TableCell>
+        {priority && (
+          <span className={priority.className}>{priority.label}</span>
         )}
       </TableCell>
 
-      <TableCell className="w-[140px] py-3 text-right">
-        {task.dueDate ? (
-          isDone ? (
-            <span className="inline-flex items-center justify-end gap-1 text-sm text-neutral-500 dark:text-neutral-400">
-              <Check className="size-3 text-emerald-600 dark:text-emerald-400" />
-              <span>{deadline.label}</span>
-            </span>
-          ) : (
-            <span
-              className={`text-sm font-medium ${
-                deadline.isOverdue
-                  ? "text-rose-600 dark:text-rose-400"
-                  : deadline.variant === "warning"
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-neutral-600 dark:text-neutral-300"
-              }`}
-            >
-              {deadline.label}
-            </span>
-          )
-        ) : (
-          <span className="text-sm text-neutral-400">--</span>
+      <TableCell
+        className={cn(
+          "text-right text-xs",
+          !showAssignee && "pr-4",
+          deadline.isOverdue ? "text-destructive" : "text-muted-foreground",
         )}
+      >
+        {task.dueDate ? format(new Date(task.dueDate), "MMM d") : "—"}
       </TableCell>
+
+      {showAssignee && (
+        <TableCell className="w-0 pr-4">
+          {task.assignee && (
+            <Tooltip>
+              <TooltipTrigger render={<span />}>
+                <Avatar className="size-6">
+                  <AvatarImage
+                    src={task.assignee.avatarUrl}
+                    alt={task.assignee.name}
+                  />
+                  <AvatarFallback
+                    className={cn(
+                      "text-xs",
+                      getUserAvatarColor(task.assignee.name),
+                    )}
+                  >
+                    {task.assignee.initials || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent>{task.assignee.name}</TooltipContent>
+            </Tooltip>
+          )}
+        </TableCell>
+      )}
     </TableRow>
   );
 }

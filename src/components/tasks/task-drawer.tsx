@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import {
   Drawer,
   DrawerContent,
@@ -11,8 +10,10 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { dueDateToInput, inputToDueDate } from "./task-utils";
 import { TaskDrawerForm } from "./task-drawer-form";
 import { TaskCommentSection } from "./task-comment-section";
+import { TaskDrawerDeleteButton } from "./task-drawer-delete-button";
 import type {
   TaskItem,
   TaskPriority,
@@ -25,27 +26,17 @@ interface TaskDrawerProps {
   isOpen: boolean;
   users: TaskUser[];
   onClose: () => void;
-  onSaveTask: (updated: TaskItem) => void;
+  /** Resolves true when persisted; the drawer closes only then. */
+  onSaveTask: (updated: TaskItem) => Promise<boolean>;
+  /** Only passed when the user may delete this task. */
+  onDeleteTask?: () => Promise<boolean>;
 }
 
-export function TaskDrawer({
-  task,
-  isOpen,
-  users,
-  onClose,
-  onSaveTask,
-}: TaskDrawerProps) {
+export function TaskDrawer({ task, isOpen, ...props }: TaskDrawerProps) {
   if (!isOpen || !task) return null;
 
   return (
-    <TaskDrawerInner
-      key={task.id}
-      task={task}
-      isOpen={isOpen}
-      users={users}
-      onClose={onClose}
-      onSaveTask={onSaveTask}
-    />
+    <TaskDrawerInner key={task.id} task={task} isOpen={isOpen} {...props} />
   );
 }
 
@@ -55,6 +46,7 @@ function TaskDrawerInner({
   users,
   onClose,
   onSaveTask,
+  onDeleteTask,
 }: TaskDrawerProps & { task: TaskItem }) {
   const isDraft = task.id.startsWith("draft-");
   const [title, setTitle] = React.useState(task.title);
@@ -69,14 +61,16 @@ function TaskDrawerInner({
     task.assigneeId || "unassigned",
   );
   const [dueDateStr, setDueDateStr] = React.useState(
-    task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "",
+    dueDateToInput(task.dueDate),
   );
   const [estimatedMinutes, setEstimatedMinutes] = React.useState<number>(
     task.estimatedMinutes ?? 60,
   );
 
-  const handleSave = () => {
-    if (!title.trim()) return;
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const handleSave = async () => {
+    if (!title.trim() || isSaving) return;
 
     const matchedAssignee =
       assigneeId === "unassigned"
@@ -91,19 +85,23 @@ function TaskDrawerInner({
       priority,
       assigneeId: assigneeId === "unassigned" ? null : assigneeId,
       assignee: matchedAssignee,
-      dueDate: dueDateStr ? new Date(`${dueDateStr}T18:00:00Z`) : null,
+      dueDate: inputToDueDate(dueDateStr),
       estimatedMinutes,
       updatedAt: new Date(),
     };
 
-    onSaveTask(updated);
-    onClose();
+    setIsSaving(true);
+    try {
+      if (await onSaveTask(updated)) onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
-      handleSave();
+      void handleSave();
     }
   };
 
@@ -119,16 +117,16 @@ function TaskDrawerInner({
         className="flex h-full w-full flex-col sm:max-w-md"
       >
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-6">
-          <DrawerHeader className="border-b border-neutral-100 p-0 pb-3 text-left dark:border-neutral-800">
-            <DrawerTitle className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+          <DrawerHeader className="border-b border-border p-0 pb-3 text-left">
+            <DrawerTitle className="text-lg font-semibold text-foreground">
               {isDraft ? "Create Task" : "Task Details"}
             </DrawerTitle>
-            <DrawerDescription className="text-xs text-neutral-500 dark:text-neutral-400">
+            <DrawerDescription className="text-xs text-muted-foreground">
               {isDraft
                 ? "Enter task details, priority, assignee, and target deadline."
                 : "Update task metadata, priority, assignee, and target deadline."}{" "}
               Press{" "}
-              <kbd className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[10px] text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+              <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-muted-foreground">
                 ⌘+Enter
               </kbd>{" "}
               to save.
@@ -156,7 +154,14 @@ function TaskDrawerInner({
           {!isDraft && <TaskCommentSection taskId={task.id} />}
         </div>
 
-        <DrawerFooter className="flex shrink-0 flex-row justify-end gap-2 border-t border-neutral-100 p-4 dark:border-neutral-800">
+        <DrawerFooter className="flex shrink-0 flex-row justify-end gap-2 border-t border-border p-4">
+          {!isDraft && onDeleteTask && (
+            <TaskDrawerDeleteButton
+              title={task.title}
+              onDelete={onDeleteTask}
+              onDeleted={onClose}
+            />
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -167,8 +172,8 @@ function TaskDrawerInner({
           </Button>
           <Button
             size="sm"
-            onClick={handleSave}
-            disabled={!title.trim()}
+            onClick={() => void handleSave()}
+            disabled={!title.trim() || isSaving}
             className="text-sm"
           >
             {isDraft ? "Create Task" : "Save Changes"}

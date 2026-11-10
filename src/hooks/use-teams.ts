@@ -8,8 +8,8 @@ export interface TeamMemberItem {
   teamId: string;
   userId: string;
   role: TeamRole;
-  joinedAt: string | Date;
   isNew?: boolean;
+  joinedAt: string | Date;
   user?: {
     id: string;
     name: string;
@@ -27,11 +27,14 @@ export interface TeamItem {
   createdAt: string | Date;
   updatedAt: string | Date;
   role?: TeamRole;
+  memberCount?: number;
+  projectCount?: number;
 }
 
-export function useTeams() {
-  const [teams, setTeams] = useState<TeamItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+/** `initialTeams` (server-loaded) skips the first client fetch. */
+export function useTeams(initialTeams?: TeamItem[]) {
+  const [teams, setTeams] = useState<TeamItem[]>(initialTeams ?? []);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialTeams);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTeams = useCallback(async () => {
@@ -54,6 +57,7 @@ export function useTeams() {
   }, []);
 
   useEffect(() => {
+    if (initialTeams) return;
     let ignore = false;
     const load = async () => {
       try {
@@ -81,6 +85,7 @@ export function useTeams() {
     return () => {
       ignore = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial value only
   }, []);
 
   const createTeam = async (data: {

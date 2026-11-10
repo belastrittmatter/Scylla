@@ -2,6 +2,14 @@
 
 import * as React from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import type { TaskScope } from "./task-selectors";
+import type { TaskViewMode } from "./task-scope-content";
+import {
+  parseTaskViewMode,
+  readStoredView,
+  resolveTaskViewMode,
+  storeView,
+} from "./task-view-mode";
 import type { Team, Project } from "./task-types";
 
 export function findTeamBySlugOrId(
@@ -26,147 +34,144 @@ export function findProjectBySlugOrId(
   );
 }
 
-export function buildTaskWorkspaceUrl(
-  teamSlug: string,
-  projectSlug?: string | null,
-): string {
-  if (!projectSlug || projectSlug === "all") {
-    return `/tasks/${teamSlug}`;
-  }
-  return `/tasks/${teamSlug}/${projectSlug}`;
+export interface TasksUrlParts {
+  scope: TaskScope;
+  team?: string | null;
+  project?: string | null;
+  view?: TaskViewMode | null;
 }
 
-export interface UseTaskWorkspaceRoutingOptions {
+/** Canonical /tasks URL for a scope; team/project are slugs. */
+export function buildTasksUrl({
+  scope,
+  team,
+  project,
+  view,
+}: TasksUrlParts): string {
+  const params = new URLSearchParams();
+  if (scope !== "me") {
+    params.set("scope", scope);
+    if (team) params.set("team", team);
+    if (project) params.set("project", project);
+  }
+  if (view) params.set("view", view);
+  const query = params.toString();
+  return query ? `/tasks?${query}` : "/tasks";
+}
+
+export interface TaskWorkspaceRoute {
+  scope: TaskScope;
+  team?: Team;
+  project?: Project;
+  /** Only set when the URL names a valid view. */
+  view?: TaskViewMode;
+}
+
+/**
+ * Single source of truth for scope/team/project, derived from the URL.
+ * Legacy `/tasks/<team>/<project>` and `?teamId=&projectId=` resolve to Team.
+ */
+export function deriveTaskWorkspaceRoute({
+  pathname,
+  searchParams,
+  teams,
+  projects,
+}: {
+  pathname: string;
+  searchParams: Pick<URLSearchParams, "get">;
   teams: Team[];
   projects: Project[];
-  initialTeamSlug?: string;
-  initialProjectSlug?: string;
+}): TaskWorkspaceRoute {
+  const [pathTeam, pathProject] = pathname
+    .replace(/^\/tasks\/?/, "")
+    .split("/")
+    .filter(Boolean);
+  const teamRef =
+    pathTeam ?? searchParams.get("team") ?? searchParams.get("teamId");
+  const projectRef =
+    pathProject ?? searchParams.get("project") ?? searchParams.get("projectId");
+  const rawScope = searchParams.get("scope");
+  const view = parseTaskViewMode(searchParams.get("view"));
+
+  // Unknown or removed scopes (e.g. the old `all`) resolve to Me.
+  const scope: TaskScope =
+    pathTeam || (rawScope ?? (teamRef || projectRef ? "team" : "me")) === "team"
+      ? "team"
+      : "me";
+  if (scope === "me") return { scope, view };
+
+  let team = findTeamBySlugOrId(teams, teamRef);
+  let project = findProjectBySlugOrId(
+    team ? projects.filter((p) => p.teamId === team?.id) : projects,
+    projectRef,
+  );
+  if (!team && project) team = teams.find((t) => t.id === project?.teamId);
+  // Team scope is never empty: fall back to the first team, all projects.
+  if (scope === "team" && !team) {
+    team = teams[0];
+    project = undefined;
+  }
+  return { scope, team, project, view };
+}
+
+export interface TaskWorkspaceNavigation {
+  scope: TaskScope;
+  team?: Team | null;
+  /** The project's team is used when `team` is omitted. */
+  project?: Project | null;
 }
 
 export function useTaskWorkspaceRouting({
   teams,
   projects,
-  initialTeamSlug,
-  initialProjectSlug,
-}: UseTaskWorkspaceRoutingOptions) {
+}: {
+  teams: Team[];
+  projects: Project[];
+}) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/tasks";
   const searchParams = useSearchParams();
 
-  const isTasksPath = Boolean(pathname && pathname.startsWith("/tasks"));
-
-  // Extract path slugs from current Next.js pathname if on a task route
-  const pathSlugs = React.useMemo(() => {
-    if (!isTasksPath || !pathname) return [];
-    return pathname
-      .replace(/^\/tasks\/?/, "")
-      .split("/")
-      .filter(Boolean);
-  }, [isTasksPath, pathname]);
-
-  const pathTeamSlug = isTasksPath ? pathSlugs[0] : initialTeamSlug;
-  const pathProjSlug = isTasksPath ? pathSlugs[1] : initialProjectSlug;
-
-  const queryTeam = searchParams?.get("team") || searchParams?.get("teamId");
-  const queryProjectId =
-    searchParams?.get("projectId") || searchParams?.get("project");
-
-  // Derive the active team strictly from URL path or query params
-  const activeTeam = React.useMemo(() => {
-    if (teams.length === 0) return undefined;
-
-    if (queryProjectId) {
-      const p = findProjectBySlugOrId(projects, queryProjectId);
-      if (p) {
-        const t = teams.find((item) => item.id === p.teamId);
-        if (t) return t;
-      }
-    }
-
-    return (
-      findTeamBySlugOrId(teams, pathTeamSlug) ||
-      findTeamBySlugOrId(teams, queryTeam)
-    );
-  }, [teams, pathTeamSlug, queryTeam, queryProjectId, projects]);
-
-  // Derive the active project within the active team strictly from URL path or query params
-  const activeProject = React.useMemo(() => {
-    if (!activeTeam) return undefined;
-    const teamProjs = projects.filter((p) => p.teamId === activeTeam.id);
-
-    if (queryProjectId && queryProjectId !== "all") {
-      const p = findProjectBySlugOrId(teamProjs, queryProjectId);
-      if (p) return p;
-    }
-
-    return findProjectBySlugOrId(teamProjs, pathProjSlug);
-  }, [activeTeam, projects, pathProjSlug, queryProjectId]);
-
-  const selectedTeamId = activeTeam?.id || "";
-  const selectedProjectId = activeProject?.id || "";
-
-  // Canonicalize legacy query-param URLs (?teamId=...&projectId=...) to slug paths
-  React.useEffect(() => {
-    if (!activeTeam || (!queryTeam && !queryProjectId)) return;
-    const targetUrl = buildTaskWorkspaceUrl(
-      activeTeam.slug,
-      activeProject ? activeProject.slug : null,
-    );
-    if (pathname?.startsWith("/tasks") && pathname !== targetUrl) {
-      router.replace(targetUrl, { scroll: false });
-    }
-  }, [activeTeam, activeProject, queryTeam, queryProjectId, pathname, router]);
-
-  const handleSelectTeam = React.useCallback(
-    (teamIdOrSlug: string) => {
-      const targetTeam = findTeamBySlugOrId(teams, teamIdOrSlug);
-      if (!targetTeam) return;
-
-      const targetUrl = buildTaskWorkspaceUrl(targetTeam.slug);
-      router.push(targetUrl, { scroll: false });
-    },
-    [teams, router],
+  const route = React.useMemo(
+    () =>
+      deriveTaskWorkspaceRoute({
+        pathname,
+        searchParams: searchParams ?? new URLSearchParams(),
+        teams,
+        projects,
+      }),
+    [pathname, searchParams, teams, projects],
   );
 
-  const handleSelectProject = React.useCallback(
-    (projectIdOrSlug: string) => {
-      if (!activeTeam) return;
-
-      const teamProjs = projects.filter((p) => p.teamId === activeTeam.id);
-      const targetProj = findProjectBySlugOrId(teamProjs, projectIdOrSlug);
-      if (!targetProj) return;
-
-      const targetUrl = buildTaskWorkspaceUrl(activeTeam.slug, targetProj.slug);
-      router.push(targetUrl, { scroll: false });
+  const navigate = React.useCallback(
+    ({ scope, team: t, project }: TaskWorkspaceNavigation) => {
+      const team = t ?? teams.find((item) => item.id === project?.teamId);
+      router.push(
+        buildTasksUrl({
+          scope,
+          team: team?.slug,
+          project: project?.slug,
+          view: route.view,
+        }),
+        { scroll: false },
+      );
     },
-    [activeTeam, projects, router],
+    [teams, router, route.view],
   );
 
-  const handleProjectCreated = React.useCallback(
-    (created: Project) => {
-      if (!activeTeam) return;
-      const targetUrl = buildTaskWorkspaceUrl(activeTeam.slug, created.slug);
-      router.push(targetUrl, { scroll: false });
+  // Lazy read: the first (SSR) render shows the skeleton, so no hydration diff.
+  const [storedView, setStoredView] = React.useState(readStoredView);
+  const viewMode = resolveTaskViewMode(route.scope, route.view, storedView);
+  const setViewMode = React.useCallback(
+    (view: TaskViewMode) => {
+      storeView(view);
+      setStoredView(view);
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("view", view);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [activeTeam, router],
+    [router, pathname, searchParams],
   );
 
-  const handleTeamCreated = React.useCallback(
-    (created: Team) => {
-      const targetUrl = buildTaskWorkspaceUrl(created.slug);
-      router.push(targetUrl, { scroll: false });
-    },
-    [router],
-  );
-
-  return {
-    selectedTeamId,
-    selectedProjectId,
-    activeTeam,
-    activeProject,
-    handleSelectTeam,
-    handleSelectProject,
-    handleProjectCreated,
-    handleTeamCreated,
-  };
+  return { ...route, viewMode, setViewMode, navigate };
 }
