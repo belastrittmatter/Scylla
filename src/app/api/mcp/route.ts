@@ -12,6 +12,7 @@ import { MCP_SERVER_INSTRUCTIONS } from "@/mcp/instructions";
 import {
   getAgentScopesForClient,
   createRevokedTokenResponse,
+  isAgentActive,
   resolveTokenScopes,
 } from "@/services/agent";
 import type { CalendarMcpAuthInfo } from "@/mcp/types";
@@ -124,13 +125,14 @@ const handler = async (request: Request) => {
           agentId?: string;
           agent?: {
             id?: string;
-            status?: string;
             capabilityGrants?: { capability: string; status?: string }[];
           };
           user?: { id?: string };
         };
 
-        if (sessionObj.agent?.status === "revoked") {
+        const agentId = sessionObj.agentId || sessionObj.agent?.id;
+        // Fail closed: anything but an active agent row (revoked, suspended, missing) is rejected.
+        if (!agentId || !(await isAgentActive(agentId))) {
           return createRevokedTokenResponse(appUrl);
         }
 
@@ -139,7 +141,6 @@ const handler = async (request: Request) => {
           .filter((g) => !g.status || g.status === "active")
           .map((g) => g.capability);
 
-        const agentId = sessionObj.agentId || sessionObj.agent?.id;
         const userId = sessionObj.userId || sessionObj.user?.id;
 
         const authInfo: CalendarMcpAuthInfo = {

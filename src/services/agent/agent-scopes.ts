@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { oauthConsent } from "@/db/schema";
+import { agent, oauthConsent } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
   ALL_MCP_CAPABILITIES,
@@ -28,6 +28,16 @@ export function resolveTokenScopes(
   if (!consentScopes) return tokenScopes;
   const consent = new Set(consentScopes);
   return tokenScopes.filter((s) => consent.has(s));
+}
+
+/** Agent Auth sessions don't expose agent.status, so read it from the row. */
+export async function isAgentActive(agentId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ status: agent.status })
+    .from(agent)
+    .where(eq(agent.id, agentId))
+    .limit(1);
+  return row?.status === "active";
 }
 
 export interface AgentScopesResult {
