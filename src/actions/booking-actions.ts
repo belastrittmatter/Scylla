@@ -1,9 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { user, booking } from "@/db/schema";
 import { UserService, type Teammate } from "@/services/user";
 import { RoomService, type RoomFilter } from "@/services/rooms";
 import {
@@ -25,28 +22,6 @@ import {
   ReschedulePayloadSchema,
 } from "./schemas";
 import { resolveActionUserId, type ActionResult } from "./auth-helper";
-
-async function verifyBookingAccess(
-  b: BookingRecord,
-  sessionUserId: string,
-): Promise<boolean> {
-  if (b.organizerUserId === sessionUserId || b.userId === sessionUserId) {
-    return true;
-  }
-  if (Array.isArray(b.attendees)) {
-    const [u] = await db
-      .select({ email: user.email, emailVerified: user.emailVerified })
-      .from(user)
-      .where(eq(user.id, sessionUserId))
-      .limit(1);
-    if (u?.email && u.emailVerified) {
-      return b.attendees.some(
-        (a) => a.email.toLowerCase() === u.email.toLowerCase(),
-      );
-    }
-  }
-  return false;
-}
 
 export async function searchTeammatesAction(
   query: string = "",
@@ -199,18 +174,11 @@ export async function rescheduleBookingAction(
 
     const sessionUserId = await resolveActionUserId();
 
-    const [existingBooking] = await db
-      .select()
-      .from(booking)
-      .where(eq(booking.id, idParse.data))
-      .limit(1);
-
+    const existingBooking = await BookingService.getBookingById(idParse.data);
     if (!existingBooking) {
       return { success: false, error: "Booking not found" };
     }
-
-    const hasAccess = await verifyBookingAccess(existingBooking, sessionUserId);
-    if (!hasAccess) {
+    if (!BookingService.canModify(existingBooking, sessionUserId)) {
       return { success: false, error: "Access denied" };
     }
 
@@ -242,18 +210,11 @@ export async function cancelBookingAction(
 
     const sessionUserId = await resolveActionUserId();
 
-    const [existingBooking] = await db
-      .select()
-      .from(booking)
-      .where(eq(booking.id, idParse.data))
-      .limit(1);
-
+    const existingBooking = await BookingService.getBookingById(idParse.data);
     if (!existingBooking) {
       return { success: false, error: "Booking not found" };
     }
-
-    const hasAccess = await verifyBookingAccess(existingBooking, sessionUserId);
-    if (!hasAccess) {
+    if (!BookingService.canModify(existingBooking, sessionUserId)) {
       return { success: false, error: "Access denied" };
     }
 

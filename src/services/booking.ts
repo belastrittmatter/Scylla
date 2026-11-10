@@ -409,6 +409,18 @@ export class BookingService {
   }
 
   /**
+   * Who may reschedule or cancel a booking: its organizer or calendar owner.
+   * Attendees can see a booking on their agenda but never change it.
+   * Shared by Server Actions and the REST route so both enforce one rule.
+   */
+  public static canModify(
+    b: Pick<Booking, "organizerUserId" | "userId">,
+    userId: string,
+  ): boolean {
+    return b.organizerUserId === userId || b.userId === userId;
+  }
+
+  /**
    * Lookup a booking by ID.
    */
   public static async getBookingById(id: string): Promise<Booking | null> {

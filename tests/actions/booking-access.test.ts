@@ -1,19 +1,20 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import * as authHelper from "@/actions/auth-helper";
+import * as apiUtils from "@/services/api-utils";
 import {
   cancelBookingAction,
   getAgendaAction,
   rescheduleBookingAction,
 } from "@/actions/booking-actions";
-import { db } from "@/db";
-import { booking, user, type Booking } from "@/db/schema";
+import { DELETE, PATCH } from "@/app/api/bookings/[id]/route";
+import { type Booking } from "@/db/schema";
 import { BookingService } from "@/services/booking";
 
 const record = {
   id: "booking-access-test",
   organizerUserId: "organizer",
   userId: "owner",
-  attendees: [{ email: "Attendee@Example.com" }],
+  attendees: [{ email: "attendee@example.com" }],
 } as Booking;
 const changes = {
   startTime: "2026-11-20T10:00:00.000Z",
@@ -27,72 +28,70 @@ afterEach(() => {
 
 function identity(id = "attendee") {
   spies.push(spyOn(authHelper, "resolveActionUserId").mockResolvedValue(id));
+  spies.push(spyOn(apiUtils, "resolveUserId").mockResolvedValue(id));
 }
 
-function bookingReads(
-  emailVerified: boolean,
-  email = "attendee@example.com",
-  b = record,
-) {
-  const select = spyOn(db, "select").mockImplementation((() => ({
-    from: (table: unknown) => ({
-      where: () => ({
-        limit: async () =>
-          table === booking ? [b] : [{ email, emailVerified }],
-      }),
-    }),
-  })) as unknown as typeof db.select);
-  spies.push(select);
-  return select;
+function stubBooking() {
+  spies.push(spyOn(BookingService, "getBookingById").mockResolvedValue(record));
+  const mutations = {
+    cancel: spyOn(BookingService, "cancel").mockResolvedValue(record),
+    reschedule: spyOn(BookingService, "reschedule").mockResolvedValue(record),
+  };
+  spies.push(mutations.cancel, mutations.reschedule);
+  return mutations;
 }
 
-describe("booking action authorization", () => {
-  for (const action of ["cancel", "reschedule"] as const) {
-    test(`${action} denies unverified attendee email and allows it after verification`, async () => {
-      identity();
-      const mutation = spyOn(BookingService, action).mockResolvedValue(record);
-      spies.push(mutation);
-      const reads = bookingReads(false);
-      const invoke = () =>
-        action === "cancel"
-          ? cancelBookingAction(record.id)
-          : rescheduleBookingAction(record.id, changes);
+const url = `http://localhost/api/bookings/${record.id}`;
+const ctx = { params: { id: record.id } };
+// Same rule on both paths: a mutation is allowed iff this returns success.
+const paths = {
+  "action cancel": async () => (await cancelBookingAction(record.id)).success,
+  "action reschedule": async () =>
+    (await rescheduleBookingAction(record.id, changes)).success,
+  "REST DELETE": async () =>
+    (await DELETE(new Request(url, { method: "DELETE" }), ctx)).ok,
+  "REST PATCH": async () =>
+    (
+      await PATCH(
+        new Request(url, { method: "PATCH", body: JSON.stringify(changes) }),
+        ctx,
+      )
+    ).ok,
+};
 
-      expect(await invoke()).toEqual({
-        success: false,
-        error: "Access denied",
+describe("booking mutation authorization (Server Actions and REST agree)", () => {
+  for (const [path, invoke] of Object.entries(paths)) {
+    for (const [caller, allowed] of [
+      ["organizer", true],
+      ["owner", true],
+      ["attendee", false],
+      ["stranger", false],
+    ] as const) {
+      test(`${path}: ${caller} is ${allowed ? "allowed" : "denied"}`, async () => {
+        identity(caller);
+        const mutations = stubBooking();
+        expect(await invoke()).toBe(allowed);
+        const calls =
+          mutations.cancel.mock.calls.length +
+          mutations.reschedule.mock.calls.length;
+        expect(calls).toBe(allowed ? 1 : 0);
       });
-      expect(mutation).not.toHaveBeenCalled();
-      expect(reads).toHaveBeenCalledWith({
-        email: user.email,
-        emailVerified: user.emailVerified,
-      });
-      reads.mockRestore();
-      bookingReads(true);
-      expect((await invoke()).success).toBe(true);
-      expect(mutation).toHaveBeenCalledTimes(1);
-    });
+    }
   }
 
-  for (const id of ["organizer", "owner"]) {
-    test(`preserves ID-based access for ${id} without email verification`, async () => {
-      identity(id);
-      bookingReads(false);
-      const mutation = spyOn(BookingService, "cancel").mockResolvedValue(
-        record,
-      );
-      spies.push(mutation);
-      expect((await cancelBookingAction(record.id)).success).toBe(true);
+  test("action reports the exact denial message", async () => {
+    identity("attendee");
+    stubBooking();
+    expect(await cancelBookingAction(record.id)).toEqual({
+      success: false,
+      error: "Access denied",
     });
-  }
+  });
 
-  test("denies a verified email that is not an attendee", async () => {
-    identity();
-    bookingReads(true, "stranger@example.com");
-    const mutation = spyOn(BookingService, "cancel").mockResolvedValue(record);
-    spies.push(mutation);
-    expect((await cancelBookingAction(record.id)).success).toBe(false);
-    expect(mutation).not.toHaveBeenCalled();
+  test("canModify is organizer-or-owner only", () => {
+    expect(BookingService.canModify(record, "organizer")).toBe(true);
+    expect(BookingService.canModify(record, "owner")).toBe(true);
+    expect(BookingService.canModify(record, "attendee")).toBe(false);
   });
 });
 
