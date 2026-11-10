@@ -126,83 +126,87 @@ describe("Issue #99 Authorization & Hardening", () => {
       })
       .returning();
 
-    // 0. The x-user-id header is never a source of identity
-    const reqHeaderOnly = new Request("http://localhost:3000/api/bookings", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-user-id": organizer.id,
-      },
-      body: JSON.stringify({
-        title: "Header-only identity",
-        startTime: new Date(Date.now() + 3600000).toISOString(),
-        endTime: new Date(Date.now() + 7200000).toISOString(),
-        attendees: [{ email: "guest@example.com", name: "Guest" }],
-      }),
-    });
-    expect((await createBookingHandler(reqHeaderOnly)).status).toBe(401);
+    try {
+      // 0. The x-user-id header is never a source of identity
+      const reqHeaderOnly = new Request("http://localhost:3000/api/bookings", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-user-id": organizer.id,
+        },
+        body: JSON.stringify({
+          title: "Header-only identity",
+          startTime: new Date(Date.now() + 3600000).toISOString(),
+          endTime: new Date(Date.now() + 7200000).toISOString(),
+          attendees: [{ email: "guest@example.com", name: "Guest" }],
+        }),
+      });
+      expect((await createBookingHandler(reqHeaderOnly)).status).toBe(401);
 
-    // 1. Rejects foreign project where organizer is not a team member
-    const reqForeignProject = new Request(
-      "http://localhost:3000/api/bookings",
-      {
+      // 1. Rejects foreign project where organizer is not a team member
+      const reqForeignProject = new Request(
+        "http://localhost:3000/api/bookings",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            title: "Meeting with foreign project",
+            startTime: new Date(Date.now() + 3600000).toISOString(),
+            endTime: new Date(Date.now() + 7200000).toISOString(),
+            attendees: [{ email: "guest@example.com", name: "Guest" }],
+            organizerUserId: organizer.id,
+            projectId: foreignProject.id,
+          }),
+        },
+      );
+      const resForeignProject = await createBookingHandler(reqForeignProject);
+      expect(resForeignProject.status).toBe(403);
+
+      // 2. Rejects non-existent room
+      const reqInvalidRoom = new Request("http://localhost:3000/api/bookings", {
         method: "POST",
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          title: "Meeting with foreign project",
+          title: "Meeting with fake room",
           startTime: new Date(Date.now() + 3600000).toISOString(),
           endTime: new Date(Date.now() + 7200000).toISOString(),
           attendees: [{ email: "guest@example.com", name: "Guest" }],
           organizerUserId: organizer.id,
-          projectId: foreignProject.id,
+          roomId: "room_non_existent_uuid",
         }),
-      },
-    );
-    const resForeignProject = await createBookingHandler(reqForeignProject);
-    expect(resForeignProject.status).toBe(403);
+      });
+      const resInvalidRoom = await createBookingHandler(reqInvalidRoom);
+      expect(resInvalidRoom.status).toBe(400);
 
-    // 2. Rejects non-existent room
-    const reqInvalidRoom = new Request("http://localhost:3000/api/bookings", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        title: "Meeting with fake room",
-        startTime: new Date(Date.now() + 3600000).toISOString(),
-        endTime: new Date(Date.now() + 7200000).toISOString(),
-        attendees: [{ email: "guest@example.com", name: "Guest" }],
-        organizerUserId: organizer.id,
-        roomId: "room_non_existent_uuid",
-      }),
-    });
-    const resInvalidRoom = await createBookingHandler(reqInvalidRoom);
-    expect(resInvalidRoom.status).toBe(400);
-
-    // 3. Rejects foreign eventType
-    const reqForeignEventType = new Request(
-      "http://localhost:3000/api/bookings",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
+      // 3. Rejects foreign eventType
+      const reqForeignEventType = new Request(
+        "http://localhost:3000/api/bookings",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            title: "Meeting with foreign event type",
+            startTime: new Date(Date.now() + 3600000).toISOString(),
+            endTime: new Date(Date.now() + 7200000).toISOString(),
+            attendees: [{ email: "guest@example.com", name: "Guest" }],
+            organizerUserId: organizer.id,
+            eventTypeId: foreignEventType.id,
+          }),
         },
-        body: JSON.stringify({
-          title: "Meeting with foreign event type",
-          startTime: new Date(Date.now() + 3600000).toISOString(),
-          endTime: new Date(Date.now() + 7200000).toISOString(),
-          attendees: [{ email: "guest@example.com", name: "Guest" }],
-          organizerUserId: organizer.id,
-          eventTypeId: foreignEventType.id,
-        }),
-      },
-    );
-    const resForeignEventType = await createBookingHandler(reqForeignEventType);
-    expect(resForeignEventType.status).toBe(403);
-
-    await db.delete(eventType).where(eq(eventType.id, foreignEventType.id));
+      );
+      const resForeignEventType =
+        await createBookingHandler(reqForeignEventType);
+      expect(resForeignEventType.status).toBe(403);
+    } finally {
+      // A leftover event type breaks the seed test on the next run.
+      await db.delete(eventType).where(eq(eventType.id, foreignEventType.id));
+    }
   });
 
   test("C3: Team member routes prevent role escalation", async () => {
