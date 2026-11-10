@@ -1,4 +1,13 @@
-import { describe, expect, it } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from "bun:test";
 import { NextRequest } from "next/server";
 import { proxy } from "@/proxy";
 import { GET as searchUsersHandler } from "@/app/api/users/search/route";
@@ -12,8 +21,10 @@ import {
   POST as createEventTypeHandler,
 } from "@/app/api/event-types/route";
 import { db } from "@/db";
-import { eventType, user } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eventType, team, teamMember, user } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
+import { UserService } from "@/services/user";
+import { GoogleCalendarService } from "@/services/google-calendar";
 
 describe("Security Issue #96: Proxy and Route Session Hardening", () => {
   it("proxy blocks forged session cookie on protected API routes with 401", async () => {
@@ -211,5 +222,103 @@ describe("Security Issue #96: Proxy and Route Session Hardening", () => {
     const evilEntry =
       data.calendars?.["x+resource.calendar.google.com@evil.com"];
     expect(evilEntry).toBeUndefined();
+  });
+});
+
+describe("Security Issue #96: tenant scoping", () => {
+  const tag = `scope${Date.now()}`;
+  const callerId = `usr_${tag}_caller`;
+  const teammateId = `usr_${tag}_mate`;
+  const outsiderId = `usr_${tag}_out`;
+  const teammateEmail = `${tag}.mate@example.com`;
+  const outsiderEmail = `${tag}.out@other.com`;
+
+  beforeAll(async () => {
+    await db.insert(user).values([
+      {
+        id: callerId,
+        name: `${tag} Caller`,
+        email: `${tag}.caller@example.com`,
+      },
+      { id: teammateId, name: `${tag} Mate`, email: teammateEmail },
+      { id: outsiderId, name: `${tag} Outsider`, email: outsiderEmail },
+    ]);
+    const [t] = await db
+      .insert(team)
+      .values({ name: tag, slug: tag, ownerId: callerId })
+      .returning();
+    await db.insert(teamMember).values([
+      { teamId: t.id, userId: callerId, role: "owner" },
+      { teamId: t.id, userId: teammateId },
+    ]);
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(user)
+      .where(inArray(user.id, [callerId, teammateId, outsiderId]));
+  });
+
+  const asCaller = (url: string, init: RequestInit = {}) =>
+    new Request(`http://localhost:3000${url}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": callerId,
+        ...(init.headers as Record<string, string> | undefined),
+      },
+    });
+
+  describe("user search", () => {
+    afterEach(() => mock.restore());
+
+    it("GET /api/users/search returns teammates and never other-tenant users", async () => {
+      const res = await searchUsersHandler(
+        asCaller(`/api/users/search?q=${tag}`),
+      );
+      expect(res.status).toBe(200);
+      const ids = ((await res.json()) as Array<{ id: string }>).map(
+        (u) => u.id,
+      );
+      expect(ids).toContain(teammateId);
+      expect(ids).not.toContain(outsiderId);
+    });
+
+    it("searchTeammates fails closed without a caller id", async () => {
+      const results = await UserService.searchTeammates(tag, 20, {
+        currentUserId: "",
+      });
+      expect(results).toEqual([]);
+    });
+
+    it("searchTeammates ignores one-character queries", async () => {
+      const results = await UserService.searchTeammates("s", 20, {
+        currentUserId: callerId,
+      });
+      expect(results).toEqual([]);
+    });
+
+    it("searchTeammates caps the limit at 50", async () => {
+      const results = await UserService.searchTeammates("", 1000, {
+        currentUserId: callerId,
+      });
+      expect(results.length).toBeLessThanOrEqual(50);
+    });
+
+    it("directory results are limited to the caller's teammates", async () => {
+      spyOn(GoogleCalendarService, "searchDirectoryUsers").mockResolvedValue([
+        { id: "d1", name: `${tag} Mate`, email: teammateEmail, title: "Eng" },
+        { id: "d2", name: `${tag} Stranger`, email: `${tag}.x@corp.com` },
+        { id: "d3", name: `${tag} Outsider`, email: outsiderEmail },
+      ]);
+      const results = await UserService.searchTeammates(tag, 20, {
+        currentUserId: callerId,
+        accessToken: "caller-token",
+      });
+      const emails = results.map((u) => u.email);
+      expect(emails).toContain(teammateEmail);
+      expect(emails).not.toContain(outsiderEmail);
+      expect(emails).not.toContain(`${tag}.x@corp.com`);
+    });
   });
 });

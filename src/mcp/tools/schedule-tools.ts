@@ -253,6 +253,7 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
           }
           try {
             const matches = await UserService.searchTeammates(trimmed, 1, {
+              currentUserId: ctx.userId ?? "",
               accessToken: token || undefined,
             });
             if (matches.length > 0 && matches[0].email) {
@@ -479,6 +480,7 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
       };
 
       const teammates = await UserService.searchTeammates(targetUserParam, 5, {
+        currentUserId: ctx.userId ?? "",
         accessToken: token || undefined,
       });
 

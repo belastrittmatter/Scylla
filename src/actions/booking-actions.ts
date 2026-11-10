@@ -51,11 +51,10 @@ export async function searchTeammatesAction(
         error: parseResult.error.issues.map((i) => i.message).join(", "),
       };
     }
-    const teammates = await UserService.searchTeammates(
-      parseResult.data,
-      undefined,
-      await googleOptionsFor(userId),
-    );
+    const teammates = await UserService.searchTeammates(parseResult.data, 20, {
+      currentUserId: userId,
+      ...(await googleOptionsFor(userId)),
+    });
     return { success: true, data: teammates };
   } catch (err) {
     return {

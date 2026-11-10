@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, afterAll, spyOn } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  spyOn,
+} from "bun:test";
 import { createCalendarMcpServer } from "@/app/api/mcp/route";
 import {
   buildScheduleComparisonMarkdown,
@@ -14,6 +22,7 @@ import { db, user } from "@/db";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { UserService } from "@/services/user";
 import { TeamService } from "@/services/team/team-service";
+import { team, teamMember } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 interface RegisteredToolDef {
@@ -58,7 +67,33 @@ describe("MCP Tools & Utilities Suite", () => {
     }
   });
 
+  // Nickname resolution only reaches teammates, so Sarah (the mock directory user) joins the organizer's team.
+  const sarahId = "usr_mcp_test_sarah";
+  beforeAll(async () => {
+    await db
+      .insert(user)
+      .values([
+        { id: testUserId, name: "MCP Test Organizer", email: testUserEmail },
+        { id: sarahId, name: "Sarah Chen", email: "sarah@example.com" },
+      ])
+      .onConflictDoNothing();
+    const [t] = await db
+      .insert(team)
+      .values({
+        name: "MCP Sarah Team",
+        slug: "mcp-sarah-team",
+        ownerId: testUserId,
+      })
+      .onConflictDoUpdate({ target: team.slug, set: { ownerId: testUserId } })
+      .returning();
+    await db.insert(teamMember).values([
+      { teamId: t.id, userId: testUserId, role: "owner" },
+      { teamId: t.id, userId: sarahId },
+    ]);
+  });
+
   afterAll(async () => {
+    await db.delete(user).where(eq(user.id, sarahId));
     await db.delete(user).where(eq(user.id, testUserId));
   });
 

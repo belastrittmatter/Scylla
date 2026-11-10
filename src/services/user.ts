@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { user, teamMember, type User } from "@/db/schema";
-import { eq, or, ilike, and, inArray } from "drizzle-orm";
+import { eq, or, ilike, and, inArray, sql } from "drizzle-orm";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { isFullEmail } from "@/lib/format-person-name";
 
@@ -14,69 +14,69 @@ export interface Teammate {
   department?: string;
 }
 
+const MIN_QUERY_LENGTH = 2;
+const MAX_LIMIT = 50;
+
 export class UserService {
   /**
-   * Search teammates from Google Workspace Directory, Calendar events, and database users.
+   * IDs of every user sharing a team with `userId`, including `userId` itself.
+   */
+  public static async getTeammateIds(userId: string): Promise<string[]> {
+    const members = await db
+      .selectDistinct({ userId: teamMember.userId })
+      .from(teamMember)
+      .where(
+        inArray(
+          teamMember.teamId,
+          db
+            .select({ teamId: teamMember.teamId })
+            .from(teamMember)
+            .where(eq(teamMember.userId, userId)),
+        ),
+      );
+    return Array.from(new Set([userId, ...members.map((m) => m.userId)]));
+  }
+
+  /**
+   * Search the caller's teammates across database users and the Google
+   * Workspace directory. Fails closed (empty result) without a caller id.
    */
   public static async searchTeammates(
     query: string = "",
     limit: number = 20,
-    options?: {
+    options: {
+      currentUserId: string;
       accountRecord?: unknown;
       accessToken?: string;
-      currentUserId?: string;
     },
   ): Promise<Teammate[]> {
     const trimmed = query.trim();
+    // An empty query lists the caller's teammates; a single character is too broad to search.
+    if (!options.currentUserId || trimmed.length === 1) return [];
+    limit = Math.min(Math.max(1, limit), MAX_LIMIT);
+
     const seenEmails = new Set<string>();
     const results: Teammate[] = [];
+    const teammateIds = await this.getTeammateIds(options.currentUserId);
 
-    // 1. Search database users (scoped to caller's teammates if currentUserId provided)
+    // 1. Search database users scoped to the caller's teammates
     try {
       const searchPattern = `%${trimmed}%`;
-      let teammateIds: string[] | null = null;
-
-      if (options?.currentUserId) {
-        const memberships = await db
-          .select({ teamId: teamMember.teamId })
-          .from(teamMember)
-          .where(eq(teamMember.userId, options.currentUserId));
-        const teamIds = memberships.map((m) => m.teamId);
-        if (teamIds.length > 0) {
-          const members = await db
-            .select({ userId: teamMember.userId })
-            .from(teamMember)
-            .where(inArray(teamMember.teamId, teamIds));
-          teammateIds = Array.from(
-            new Set([options.currentUserId, ...members.map((m) => m.userId)]),
-          );
-        } else {
-          teammateIds = [options.currentUserId];
-        }
-      }
-
-      let dbUsers: User[] = [];
-      if (teammateIds !== null && teammateIds.length === 0) {
-        dbUsers = [];
-      } else {
-        const userScopeCondition =
-          teammateIds !== null ? inArray(user.id, teammateIds) : undefined;
-        const textSearchCondition = trimmed
-          ? or(
-              ilike(user.name, searchPattern),
-              ilike(user.email, searchPattern),
-            )
-          : undefined;
-
-        const combinedCondition =
-          userScopeCondition && textSearchCondition
-            ? and(userScopeCondition, textSearchCondition)
-            : userScopeCondition || textSearchCondition;
-
-        dbUsers = combinedCondition
-          ? await db.select().from(user).where(combinedCondition).limit(limit)
-          : await db.select().from(user).limit(limit);
-      }
+      const dbUsers = await db
+        .select()
+        .from(user)
+        .where(
+          and(
+            inArray(user.id, teammateIds),
+            trimmed
+              ? or(
+                  ilike(user.name, searchPattern),
+                  ilike(user.email, searchPattern),
+                )
+              : undefined,
+          ),
+        )
+        .limit(limit);
 
       for (const u of dbUsers) {
         const em = u.email.toLowerCase();
@@ -100,20 +100,40 @@ export class UserService {
 
     // 2. Fetch directory users from Google Workspace only when caller has linked credentials or in mock/test mode
     if (
-      options?.accountRecord ||
-      options?.accessToken ||
-      GoogleCalendarService.isMockMode()
+      trimmed.length >= MIN_QUERY_LENGTH &&
+      (options.accountRecord ||
+        options.accessToken ||
+        GoogleCalendarService.isMockMode())
     ) {
       try {
         const directoryUsers = await GoogleCalendarService.searchDirectoryUsers(
           trimmed,
           options,
         );
+        const directoryEmails = directoryUsers
+          .map((du) => du.email.toLowerCase())
+          .filter(isFullEmail);
+        // The Workspace directory spans the whole org; only teammates may surface.
+        const teammateEmails = new Set(
+          directoryEmails.length === 0
+            ? []
+            : (
+                await db
+                  .select({ email: user.email })
+                  .from(user)
+                  .where(
+                    and(
+                      inArray(user.id, teammateIds),
+                      inArray(sql`lower(${user.email})`, directoryEmails),
+                    ),
+                  )
+              ).map((u) => u.email.toLowerCase()),
+        );
         for (const du of directoryUsers) {
           const em = du.email.toLowerCase();
           // Google answers fragments with a synthetic non-email entry; only real
           // addresses may enter the list, and only when they match the query.
-          if (!isFullEmail(du.email)) continue;
+          if (!isFullEmail(du.email) || !teammateEmails.has(em)) continue;
           if (
             trimmed &&
             !du.name.toLowerCase().includes(trimmed.toLowerCase()) &&

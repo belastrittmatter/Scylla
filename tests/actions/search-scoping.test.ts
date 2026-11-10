@@ -40,8 +40,11 @@ describe("search actions are scoped to the session user (#93)", () => {
     await searchTeammatesAction("al");
     expect(search).toHaveBeenCalledWith(
       "al",
-      undefined,
-      expect.objectContaining({ accessToken: "scope-token" }),
+      20,
+      expect.objectContaining({
+        currentUserId: userId,
+        accessToken: "scope-token",
+      }),
     );
   });
 
