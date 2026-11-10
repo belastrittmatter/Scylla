@@ -64,7 +64,7 @@ describe("Issue #99 Authorization & Hardening", () => {
 
     // Cross-team project assignment in updateTask must be rejected
     await expect(
-      TaskService.updateTask(taskA.id, { projectId: projectB.id }),
+      TaskService.updateTask(taskA.id, { projectId: projectB.id }, ownerA.id),
     ).rejects.toThrow(/not found in team/);
 
     // Non-member assignee assignment in createTask must be rejected
@@ -82,7 +82,7 @@ describe("Issue #99 Authorization & Hardening", () => {
 
     // Non-member assignee assignment in updateTask must be rejected
     await expect(
-      TaskService.updateTask(taskA.id, { assigneeId: ownerB.id }),
+      TaskService.updateTask(taskA.id, { assigneeId: ownerB.id }, ownerA.id),
     ).rejects.toThrow(/not a member of team/);
   });
 

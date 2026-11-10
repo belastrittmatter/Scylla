@@ -21,6 +21,17 @@ import { canMutateTasks } from "./task-permissions";
 /** `not_member` must be reported like a missing task so ids can't be probed. */
 export type TaskWriteAccess = "allowed" | "forbidden" | "not_member";
 
+/** Thrown by task mutations; `not_member` reads as "not found" so ids can't be probed. */
+export class TaskAccessError extends Error {
+  constructor(
+    readonly access: Exclude<TaskWriteAccess, "allowed">,
+    message: string,
+  ) {
+    super(message);
+    this.name = "TaskAccessError";
+  }
+}
+
 export { MIN_TASK_SESSION_DURATION_SECONDS };
 
 export class TaskService {
@@ -135,7 +146,7 @@ export class TaskService {
   public static async updateTask(
     taskId: string,
     input: UpdateTaskInput,
-    currentUserId?: string,
+    currentUserId: string,
   ): Promise<Task> {
     const validated = UpdateTaskSchema.parse(input);
 
@@ -144,15 +155,11 @@ export class TaskService {
     });
     if (!existing) throw new Error(`Task with id "${taskId}" not found`);
 
-    if (currentUserId) {
-      const access = await TaskService.getWriteAccess(existing, currentUserId);
-      if (access === "forbidden") {
-        throw new Error("Forbidden: Viewer role cannot update tasks");
-      }
-      if (access === "not_member") {
-        throw new Error("Forbidden: User is not a member of this team");
-      }
-    }
+    await TaskService.assertWriteAccess(
+      existing,
+      currentUserId,
+      "Forbidden: Viewer role cannot update tasks",
+    );
 
     if (validated.projectId !== undefined && validated.projectId !== null) {
       const projectRecord = await db.query.project.findFirst({
@@ -182,12 +189,7 @@ export class TaskService {
       validated.status !== existing.status
     ) {
       if (validated.status === "in_progress") {
-        const effectiveUserId =
-          currentUserId ||
-          validated.assigneeId ||
-          existing.assigneeId ||
-          existing.creatorId;
-        await TaskSessionService.startTaskSession(taskId, effectiveUserId);
+        await TaskSessionService.startTaskSession(taskId, currentUserId);
       } else if (existing.status === "in_progress") {
         await TaskSessionService.stopTaskSession(
           taskId,
@@ -263,7 +265,38 @@ export class TaskService {
     return allowed ? "allowed" : "forbidden";
   }
 
-  public static async deleteTask(taskId: string): Promise<boolean> {
+  /** Throws TaskAccessError unless `userId` may mutate tasks of `target`'s team. */
+  public static async assertWriteAccess(
+    target: Pick<Task, "id" | "teamId">,
+    userId: string,
+    forbiddenMessage: string,
+  ): Promise<void> {
+    const access = await TaskService.getWriteAccess(target, userId);
+    if (access === "not_member") {
+      throw new TaskAccessError(
+        access,
+        `Task with id "${target.id}" not found`,
+      );
+    }
+    if (access === "forbidden") {
+      throw new TaskAccessError(access, forbiddenMessage);
+    }
+  }
+
+  public static async deleteTask(
+    taskId: string,
+    currentUserId: string,
+  ): Promise<boolean> {
+    const existing = await db.query.task.findFirst({
+      where: eq(task.id, taskId),
+      columns: { id: true, teamId: true },
+    });
+    if (!existing) return false;
+    await TaskService.assertWriteAccess(
+      existing,
+      currentUserId,
+      "Permission denied: only team members (not viewers) can delete tasks",
+    );
     const deleted = await db
       .delete(task)
       .where(eq(task.id, taskId))

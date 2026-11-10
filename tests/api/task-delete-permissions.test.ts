@@ -1,6 +1,9 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { eq, inArray } from "drizzle-orm";
-import { DELETE as deleteTaskHandler } from "@/app/api/tasks/[id]/route";
+import {
+  DELETE as deleteTaskHandler,
+  PATCH as patchTaskHandler,
+} from "@/app/api/tasks/[id]/route";
 import { createCalendarMcpServer } from "@/app/api/mcp/route";
 import { db, task as taskTable, user } from "@/db";
 import { TaskService } from "@/services/task/task-service";
@@ -26,6 +29,15 @@ async function del(taskId: string, userId?: string) {
     headers: userId ? { "x-user-id": userId } : {},
   });
   return deleteTaskHandler(req, { params: { id: taskId } });
+}
+
+async function patch(taskId: string, userId: string, body: unknown) {
+  const req = new Request(`http://localhost/api/tasks/${taskId}`, {
+    method: "PATCH",
+    headers: { "x-user-id": userId, "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return patchTaskHandler(req, { params: { id: taskId } });
 }
 
 async function mcpDelete(userId: string, taskId: string) {
@@ -152,5 +164,37 @@ describe("Task deletion authorization", () => {
     expect(await TaskService.getTaskById(task.id)).not.toBeNull();
     expect((await mcpDelete(ids.member, task.id)).isError).toBeFalsy();
     expect(await TaskService.getTaskById(task.id)).toBeNull();
+  });
+
+  test("PATCH: viewer gets 403, non-member gets 404, member gets 200", async () => {
+    const task = await newTask();
+    expect((await patch(task.id, ids.viewer, { title: "x" })).status).toBe(403);
+    expect((await patch(task.id, ids.stranger, { title: "x" })).status).toBe(
+      404,
+    );
+    expect(
+      (await patch(`missing-${uid}`, ids.owner, { title: "x" })).status,
+    ).toBe(404);
+    const ok = await patch(task.id, ids.member, { title: "renamed" });
+    expect(ok.status).toBe(200);
+    expect((await TaskService.getTaskById(task.id))?.title).toBe("renamed");
+  });
+
+  test("service enforces write access on update and delete", async () => {
+    const task = await newTask();
+    await expect(
+      TaskService.updateTask(task.id, { status: "done" }, ids.viewer),
+    ).rejects.toThrow(/Viewer role cannot update tasks/);
+    await expect(
+      TaskService.updateTask(task.id, { title: "x" }, ids.stranger),
+    ).rejects.toThrow(/not found/);
+    await expect(TaskService.deleteTask(task.id, ids.viewer)).rejects.toThrow(
+      /viewers/,
+    );
+    await expect(TaskService.deleteTask(task.id, ids.stranger)).rejects.toThrow(
+      /not found/,
+    );
+    expect(await TaskService.getTaskById(task.id)).not.toBeNull();
+    expect(await TaskService.deleteTask(task.id, ids.member)).toBe(true);
   });
 });
