@@ -1,9 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, or } from "drizzle-orm";
 import { booking, db, user } from "@/db";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { RoomService } from "@/services/rooms";
-import { SchedulerService } from "@/services/scheduler";
+import { bookingHasAttendee, SchedulerService } from "@/services/scheduler";
 import { UserService } from "@/services/user";
 import {
   buildScheduleComparisonMarkdown,
@@ -65,21 +65,11 @@ async function loadRoomsAndBusy(
   };
   try {
     const lowerEmails = attendeeEmails.map((e) => e.toLowerCase());
-    const [allRooms, bookings, dbUsers] = await Promise.all([
+    const [allRooms, dbUsers] = await Promise.all([
       RoomService.listRooms(
         undefined,
         accessToken ? { accessToken } : undefined,
       ),
-      db
-        .select()
-        .from(booking)
-        .where(
-          and(
-            eq(booking.status, "confirmed"),
-            gte(booking.endTime, start),
-            lte(booking.startTime, end),
-          ),
-        ),
       lowerEmails.length > 0
         ? db
             .select()
@@ -88,6 +78,35 @@ async function loadRoomsAndBusy(
             .catch(() => [])
         : Promise.resolve([]),
     ]);
+    // Only bookings touching these attendees or the listed rooms; never other tenants' calendars.
+    const bookingScope = or(
+      dbUsers.length > 0
+        ? inArray(
+            booking.organizerUserId,
+            dbUsers.map((u) => u.id),
+          )
+        : undefined,
+      allRooms.length > 0
+        ? inArray(
+            booking.roomId,
+            allRooms.map((r) => r.id),
+          )
+        : undefined,
+      lowerEmails.length > 0 ? bookingHasAttendee(lowerEmails) : undefined,
+    );
+    const bookings = bookingScope
+      ? await db
+          .select()
+          .from(booking)
+          .where(
+            and(
+              eq(booking.status, "confirmed"),
+              gte(booking.endTime, start),
+              lte(booking.startTime, end),
+              bookingScope,
+            ),
+          )
+      : [];
 
     const freeBusyEmails = Array.from(
       new Set([
@@ -275,6 +294,20 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
         if (email && name && !nameByEmail.has(email)) {
           nameByEmail.set(email, name);
         }
+      }
+
+      if (
+        !(await UserService.areTeammates(ctx.userId ?? "", resolvedAttendees))
+      ) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "Attendees must be registered members of your teams.",
+            },
+          ],
+        };
       }
 
       let start: Date;
@@ -498,6 +531,18 @@ export function registerScheduleTools(server: McpServer, ctx: McpToolContext) {
             {
               type: "text",
               text: `Could not find any teammate or contact matching "${targetUserParam}". Please check the name or provide an email address.`,
+            },
+          ],
+        };
+      }
+
+      if (!(await UserService.areTeammates(ctx.userId ?? "", [targetEmail]))) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "Attendees must be registered members of your teams.",
             },
           ],
         };
