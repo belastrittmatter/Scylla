@@ -1,5 +1,5 @@
-import { SchedulerService, type TimeSlot } from "../scheduler";
-import type { InviteDetails } from "./meeting-invite-types";
+import { SchedulerService, type TimeSlot } from "@/services/scheduler";
+import type { InviteDetails } from "@/services/meeting-invite/meeting-invite-types";
 
 export async function getAvailableSlotsForInvite(
   details: InviteDetails,
