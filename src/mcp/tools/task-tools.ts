@@ -24,7 +24,12 @@ import { buildTaskBoardMarkdown } from "@/utils/mcp-markdown-builder";
 import { getTaskBoardUiHtml } from "@/utils/mcp-ui-builder";
 import type { McpToolContext } from "../types";
 import type { TaskStatus, TaskPriority } from "@/services/task/task-types";
-import { resolveProject, resolveUserId, verifyScope } from "./auth-helpers";
+import {
+  resolveProject,
+  resolveTeamAndVerifyAccess,
+  resolveUserId,
+  verifyScope,
+} from "./auth-helpers";
 
 function parseAndValidateDate(
   dateStr: string | undefined | null,
@@ -39,35 +44,6 @@ function parseAndValidateDate(
     );
   }
   return d;
-}
-
-async function resolveAndVerifyTeam(teamIdOrSlug: string, userId: string) {
-  const userTeams = await TeamService.listUserTeams(userId);
-  let matched = userTeams.find(
-    (t) => t.id === teamIdOrSlug || t.slug === teamIdOrSlug,
-  );
-
-  if (!matched) {
-    const [byId, bySlug] = await Promise.all([
-      TeamService.getTeamById(teamIdOrSlug),
-      TeamService.getTeamBySlug(teamIdOrSlug),
-    ]);
-    const directTeam = byId || bySlug;
-    if (directTeam) {
-      const isMember =
-        directTeam.ownerId === userId ||
-        directTeam.members?.some((m) => m.userId === userId);
-      if (isMember) {
-        matched = directTeam;
-      }
-    }
-  }
-
-  if (!matched) {
-    throw new Error(`Team '${teamIdOrSlug}' not found or access denied.`);
-  }
-
-  return matched;
 }
 
 async function getTaskSessionStatsMap(taskIds: string[]) {
@@ -174,7 +150,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       if (scopeErr) return scopeErr;
 
       const currentUser = await ctx.getCurrentUser();
-      const team = await resolveAndVerifyTeam(teamId, currentUser.id);
+      const team = await resolveTeamAndVerifyAccess(teamId, currentUser.id);
 
       const projects = await ProjectService.listProjectsByTeam(team.id, {
         status,
@@ -219,7 +195,11 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       if (scopeErr) return scopeErr;
 
       const currentUser = await ctx.getCurrentUser();
-      const team = await resolveAndVerifyTeam(teamId, currentUser.id);
+      const team = await resolveTeamAndVerifyAccess(
+        teamId,
+        currentUser.id,
+        "member",
+      );
 
       const project = await ProjectService.createProject({
         teamId: team.id,
@@ -284,7 +264,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
 
       const [targetTeamIds, resolvedAssignee] = await Promise.all([
         teamId
-          ? resolveAndVerifyTeam(teamId, currentUser.id).then((team) => [
+          ? resolveTeamAndVerifyAccess(teamId, currentUser.id).then((team) => [
               team.id,
             ])
           : TeamService.listUserTeams(currentUser.id).then((teams) =>
@@ -439,7 +419,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       if (scopeErr) return scopeErr;
 
       const currentUser = await ctx.getCurrentUser();
-      const team = await resolveAndVerifyTeam(teamId, currentUser.id);
+      const team = await resolveTeamAndVerifyAccess(teamId, currentUser.id);
 
       // Project ID is required. If user did not provide a project, return available project options for selection.
       if (!projectId || !projectId.trim()) {
@@ -570,7 +550,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       }
 
       const [team, resolvedAssignee] = await Promise.all([
-        resolveAndVerifyTeam(existingTask.teamId, currentUser.id),
+        resolveTeamAndVerifyAccess(existingTask.teamId, currentUser.id),
         assigneeId !== undefined && assigneeId !== null && assigneeId !== ""
           ? resolveUserId(assigneeId, currentUser.id, ctx)
           : Promise.resolve(undefined),
@@ -708,7 +688,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
 
       const currentUser = await ctx.getCurrentUser();
       const [team, projectObj] = await Promise.all([
-        resolveAndVerifyTeam(teamId, currentUser.id),
+        resolveTeamAndVerifyAccess(teamId, currentUser.id),
         projectId
           ? ProjectService.getProjectById(projectId)
           : Promise.resolve(null),
@@ -818,7 +798,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       const currentUser = await ctx.getCurrentUser();
       const [targetTeamIds, resolvedAssignee] = await Promise.all([
         teamId
-          ? resolveAndVerifyTeam(teamId, currentUser.id).then((team) => [
+          ? resolveTeamAndVerifyAccess(teamId, currentUser.id).then((team) => [
               team.id,
             ])
           : TeamService.listUserTeams(currentUser.id).then((teams) =>
@@ -948,7 +928,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
         throw new Error(`Task with id '${taskId}' not found.`);
       }
 
-      await resolveAndVerifyTeam(taskRecord.teamId, currentUser.id);
+      await resolveTeamAndVerifyAccess(taskRecord.teamId, currentUser.id);
 
       const rawSessions = await TaskService.getTaskTimeSessions(taskId);
 

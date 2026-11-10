@@ -1,6 +1,6 @@
 import { TeamService } from "@/services/team/team-service";
 import { ProjectService } from "@/services/project/project-service";
-import type { TeamWithMembers } from "@/services/team/team-types";
+import { hasTeamRole, type TeamWithMembers } from "@/services/team/team-types";
 import type { Project } from "@/db/schema";
 import { db, user } from "@/db";
 import { eq } from "drizzle-orm";
@@ -11,13 +11,10 @@ export async function resolveTeamAndVerifyAccess(
   userId: string,
   requiredRole?: "owner" | "admin" | "member" | "viewer",
 ): Promise<TeamWithMembers> {
-  const isUuid =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      teamIdOrSlug,
-    );
-  const matched = isUuid
-    ? await TeamService.getTeamById(teamIdOrSlug)
-    : await TeamService.getTeamBySlug(teamIdOrSlug);
+  // Exact id first (seeded ids aren't UUIDs), then slug; callers act on the returned team.id.
+  const matched =
+    (await TeamService.getTeamById(teamIdOrSlug)) ??
+    (await TeamService.getTeamBySlug(teamIdOrSlug));
 
   if (!matched) {
     throw new Error(`Team '${teamIdOrSlug}' not found.`);
@@ -32,28 +29,19 @@ export async function resolveTeamAndVerifyAccess(
     );
   }
 
+  // "owner" stays tied to team.ownerId (team deletion), matching REST.
   if (requiredRole === "owner" && !isOwner) {
     throw new Error(
       `Permission denied: Only the team owner can perform this operation.`,
     );
   }
 
-  if (
-    requiredRole === "admin" &&
-    !isOwner &&
-    member?.role !== "admin" &&
-    member?.role !== "owner"
-  ) {
+  const role = isOwner ? "owner" : member?.role;
+  if (requiredRole === "admin" && !hasTeamRole(role, "admin")) {
     throw new Error(`Permission denied: Team owner or admin role required.`);
   }
 
-  if (
-    requiredRole === "member" &&
-    !isOwner &&
-    member?.role !== "admin" &&
-    member?.role !== "owner" &&
-    member?.role !== "member"
-  ) {
+  if (requiredRole === "member" && !hasTeamRole(role, "member")) {
     throw new Error(
       `Permission denied: Member or higher role required, viewer is read-only.`,
     );

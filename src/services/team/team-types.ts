@@ -11,6 +11,15 @@ export const ROLE_PRIORITY: Record<TeamRole, number> = {
   viewer: 3,
 };
 
+/** Single role-rank rule for REST, MCP and actions: owner > admin > member > viewer. */
+export function hasTeamRole(
+  role: string | null | undefined,
+  min: TeamRole,
+): boolean {
+  const rank = ROLE_PRIORITY[role as TeamRole];
+  return rank !== undefined && rank <= ROLE_PRIORITY[min];
+}
+
 export const CreateTeamSchema = z.object({
   name: z.string().min(1, "Team name cannot be empty").max(100),
   slug: z.string().min(1).max(100).optional(),

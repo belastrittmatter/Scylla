@@ -73,7 +73,7 @@ export function registerProjectCrudTools(
           ProjectService.getProjectById(projectId),
         ]);
         if (!proj) throw new Error(`Project '${projectId}' not found.`);
-        await resolveTeamAndVerifyAccess(proj.teamId, currentUser.id, "member");
+        await resolveTeamAndVerifyAccess(proj.teamId, currentUser.id, "admin");
 
         const updated = await ProjectService.updateProject(proj.id, {
           name,
