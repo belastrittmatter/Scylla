@@ -20,16 +20,16 @@ interface TaskScopeContentProps {
   tasks: TaskItem[];
   /** Set when `tasks` is empty: which empty state to show. */
   emptyKind: TaskEmptyKind | null;
-  onEmptyAction: () => void;
+  onEmptyAction?: () => void;
   emptySecondary?: { label: string; onClick: () => void };
   getContextLabel?: (task: TaskItem) => string | null;
   showAssignee: boolean;
   onSelectTask: (task: TaskItem) => void;
   onUpdateStatus: MoveTask;
-  onAddNewTask: (status: TaskStatus) => void;
+  onAddNewTask?: (status: TaskStatus) => void;
   onDeleteTasks: (ids: string[]) => Promise<boolean>;
-  /** Mirrors the server delete rule; gates every delete affordance. */
-  canDeleteTask: (task: TaskItem) => boolean;
+  /** Mirrors the server task write rule; gates delete, move and status affordances. */
+  canEditTask: (task: TaskItem) => boolean;
 }
 
 export function TaskScopeContent({
@@ -41,7 +41,7 @@ export function TaskScopeContent({
   emptySecondary,
   onAddNewTask,
   onDeleteTasks,
-  canDeleteTask,
+  canEditTask,
   ...rowProps
 }: TaskScopeContentProps) {
   if (emptyKind) {
@@ -61,7 +61,7 @@ export function TaskScopeContent({
           tasks={tasks}
           onAddNewTask={onAddNewTask}
           onDeleteTask={(id) => onDeleteTasks([id])}
-          canDeleteTask={canDeleteTask}
+          canEditTask={canEditTask}
           {...rowProps}
         />
       )}
@@ -71,7 +71,7 @@ export function TaskScopeContent({
           // Team shows closed work too, so deadline buckets would mislabel done tasks as overdue.
           groupBy={scope === "team" ? "status" : "deadline"}
           onDeleteTasks={onDeleteTasks}
-          canDeleteTask={canDeleteTask}
+          canEditTask={canEditTask}
           {...rowProps}
         />
       )}

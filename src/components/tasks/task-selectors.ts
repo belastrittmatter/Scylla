@@ -1,4 +1,4 @@
-import { canDeleteTask } from "@/services/task/task-permissions";
+import { canMutateTasks } from "@/services/task/task-permissions";
 import type { WorkspaceTeamMember } from "@/services/task/workspace-types";
 import { TASK_FORM_STATUSES } from "./task-types";
 import type { TaskItem, TaskStatus, Team } from "./task-types";
@@ -103,15 +103,15 @@ export function groupTasksForList(
     .map((g) => ({ ...g, destructive: g.id === "overdue" }));
 }
 
-/** Client mirror of the server delete rule; the API still enforces it. */
-export function makeCanDeleteTask(
+/** Client mirror of the server task write rule (create, edit, move, comment, delete); the API still enforces it. */
+export function makeCanEditTask(
   teams: readonly Pick<Team, "id" | "ownerId">[],
   members: readonly WorkspaceTeamMember[],
   userId?: string | null,
-): (task: TaskItem) => boolean {
+): (task: Pick<TaskItem, "teamId">) => boolean {
   return (task) =>
     Boolean(userId) &&
-    canDeleteTask({
+    canMutateTasks({
       role: members.find((m) => m.teamId === task.teamId && m.userId === userId)
         ?.role,
       isTeamOwner: teams.find((t) => t.id === task.teamId)?.ownerId === userId,

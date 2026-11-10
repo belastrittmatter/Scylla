@@ -54,20 +54,9 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           ctx.getCurrentUser(),
           TaskService.getTaskById(taskId),
         ]);
-        const access = task
-          ? await TaskService.getDeleteAccess(task, currentUser.id)
-          : "not_member";
-        // Non-members see "not found" so task ids can't be probed.
-        if (!task || access === "not_member") {
+        if (!task || !(await TaskService.deleteTask(task.id, currentUser.id))) {
           throw new Error(`Task '${taskId}' not found.`);
         }
-        if (access === "forbidden") {
-          throw new Error(
-            "Permission denied: only team members (not viewers) can delete tasks.",
-          );
-        }
-
-        await TaskService.deleteTask(task.id);
         return formatToolSuccess({
           message: `Task '${task.title}' deleted successfully`,
           taskId: task.id,
@@ -92,7 +81,7 @@ export function registerTaskCrudTools(server: McpServer, ctx: McpToolContext) {
           TaskService.getTaskById(taskId),
         ]);
         if (!task) throw new Error(`Task '${taskId}' not found.`);
-        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id);
+        await resolveTeamAndVerifyAccess(task.teamId, currentUser.id, "member");
 
         const comment = await TaskService.createTaskComment({
           taskId: task.id,

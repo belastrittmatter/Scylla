@@ -3,6 +3,7 @@ import { createCalendarMcpServer, POST as mcpPost } from "@/app/api/mcp/route";
 import { GET as getAgentConfiguration } from "@/app/.well-known/agent-configuration/route";
 import { auth } from "@/lib/auth";
 import { db, user } from "@/db";
+import { agent, agentHost } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
@@ -158,7 +159,7 @@ describe("MCP Agent Auth & Server-Side Scope Enforcement (#36)", () => {
 
       await expect(
         taskTools.list_tasks.handler({ teamId: "none" }),
-      ).rejects.toThrow("not found or access denied");
+      ).rejects.toThrow("not found");
     });
 
     it("strictly separates destructive delete operations from write/manage scopes", async () => {
@@ -304,6 +305,24 @@ describe("MCP Agent Auth & Server-Side Scope Enforcement (#36)", () => {
         getAgentSession?: (opts: { headers: Headers }) => Promise<unknown>;
       };
       const origGetAgentSession = authApi.getAgentSession;
+      // The route only trusts sessions whose agent row is active.
+      const now = new Date();
+      await db.insert(agentHost).values({
+        id: "host_mock_test",
+        name: "Mock Host",
+        userId: testUserId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await db.insert(agent).values({
+        id: "agent_mock_test",
+        name: "Mock Agent",
+        userId: testUserId,
+        hostId: "host_mock_test",
+        publicKey: "k",
+        createdAt: now,
+        updatedAt: now,
+      });
       authApi.getAgentSession = async () => ({
         userId: testUserId,
         agentId: "agent_mock_test",
@@ -338,6 +357,7 @@ describe("MCP Agent Auth & Server-Side Scope Enforcement (#36)", () => {
         expect(text).toContain("resolve_user");
       } finally {
         authApi.getAgentSession = origGetAgentSession;
+        await db.delete(agentHost).where(eq(agentHost.id, "host_mock_test"));
       }
     });
   });

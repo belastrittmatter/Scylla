@@ -30,6 +30,8 @@ interface TaskDrawerProps {
   onSaveTask: (updated: TaskItem) => Promise<boolean>;
   /** Only passed when the user may delete this task. */
   onDeleteTask?: () => Promise<boolean>;
+  /** Viewers: fields disabled, no save or comment input. */
+  readOnly?: boolean;
 }
 
 export function TaskDrawer({ task, isOpen, ...props }: TaskDrawerProps) {
@@ -47,6 +49,7 @@ function TaskDrawerInner({
   onClose,
   onSaveTask,
   onDeleteTask,
+  readOnly,
 }: TaskDrawerProps & { task: TaskItem }) {
   const isDraft = task.id.startsWith("draft-");
   const [title, setTitle] = React.useState(task.title);
@@ -70,7 +73,7 @@ function TaskDrawerInner({
   const [isSaving, setIsSaving] = React.useState(false);
 
   const handleSave = async () => {
-    if (!title.trim() || isSaving) return;
+    if (readOnly || !title.trim() || isSaving) return;
 
     const matchedAssignee =
       assigneeId === "unassigned"
@@ -133,25 +136,29 @@ function TaskDrawerInner({
             </DrawerDescription>
           </DrawerHeader>
 
-          <TaskDrawerForm
-            title={title}
-            description={description}
-            status={status}
-            priority={priority}
-            assigneeId={assigneeId}
-            dueDateStr={dueDateStr}
-            estimatedMinutes={estimatedMinutes}
-            users={users}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onStatusChange={setStatus}
-            onPriorityChange={setPriority}
-            onAssigneeChange={setAssigneeId}
-            onDueDateChange={setDueDateStr}
-            onEstimatedMinutesChange={setEstimatedMinutes}
-          />
+          <fieldset disabled={readOnly} className="contents">
+            <TaskDrawerForm
+              title={title}
+              description={description}
+              status={status}
+              priority={priority}
+              assigneeId={assigneeId}
+              dueDateStr={dueDateStr}
+              estimatedMinutes={estimatedMinutes}
+              users={users}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onStatusChange={setStatus}
+              onPriorityChange={setPriority}
+              onAssigneeChange={setAssigneeId}
+              onDueDateChange={setDueDateStr}
+              onEstimatedMinutesChange={setEstimatedMinutes}
+            />
+          </fieldset>
 
-          {!isDraft && <TaskCommentSection taskId={task.id} />}
+          {!isDraft && (
+            <TaskCommentSection taskId={task.id} readOnly={readOnly} />
+          )}
         </div>
 
         <DrawerFooter className="flex shrink-0 flex-row justify-end gap-2 border-t border-border p-4">
@@ -170,14 +177,16 @@ function TaskDrawerInner({
           >
             Cancel
           </Button>
-          <Button
-            size="sm"
-            onClick={() => void handleSave()}
-            disabled={!title.trim() || isSaving}
-            className="text-sm"
-          >
-            {isDraft ? "Create Task" : "Save Changes"}
-          </Button>
+          {!readOnly && (
+            <Button
+              size="sm"
+              onClick={() => void handleSave()}
+              disabled={!title.trim() || isSaving}
+              className="text-sm"
+            >
+              {isDraft ? "Create Task" : "Save Changes"}
+            </Button>
+          )}
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

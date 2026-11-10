@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { eq } from "drizzle-orm";
 import { db } from "../../src/db";
-import { user } from "../../src/db/schema";
+import { team, user } from "../../src/db/schema";
 import { seedDefaultWorkspace } from "../../src/services/task-seed";
 import { TeamService } from "../../src/services/team/team-service";
 import { TaskService } from "../../src/services/task/task-service";
@@ -270,10 +270,14 @@ describe("Task Server Actions with Core Domain Services", () => {
       beforeAll(async () => {
         const shadow = await TeamService.createTeam({
           name: `Shadow Team ${Date.now()}`,
-          slug: foreignTeamId,
           ownerId: actingUserId,
         });
         shadowTeamId = shadow.id;
+        // createTeam rejects UUID-shaped slugs; write one directly to model a legacy row.
+        await db
+          .update(team)
+          .set({ slug: foreignTeamId })
+          .where(eq(team.id, shadowTeamId));
       });
 
       afterAll(async () => {
@@ -307,6 +311,89 @@ describe("Task Server Actions with Core Domain Services", () => {
         });
         expect(res).toEqual({ success: false, error: "Access denied" });
       });
+    });
+  });
+
+  describe("Security: viewers are read-only (#99)", () => {
+    const ownerId = `usr_viewer_owner_${Date.now()}`;
+    let viewerTeamId: string;
+    let viewerTaskId: string;
+
+    beforeAll(async () => {
+      await db.insert(user).values({
+        id: ownerId,
+        name: "Owner",
+        email: `${ownerId}@example.com`,
+      });
+      const t = await TeamService.createTeam({
+        name: `Viewer Team ${Date.now()}`,
+        slug: `viewer-team-${Date.now()}`,
+        ownerId,
+      });
+      viewerTeamId = t.id;
+      await TeamService.addTeamMember({
+        teamId: viewerTeamId,
+        userId: actingUserId,
+        role: "viewer",
+      });
+      const task = await TaskService.createTask({
+        title: "Viewer-visible task",
+        teamId: viewerTeamId,
+        creatorId: ownerId,
+        status: "todo",
+        priority: "medium",
+      });
+      viewerTaskId = task.id;
+    });
+
+    afterAll(async () => {
+      if (viewerTeamId) await TeamService.deleteTeam(viewerTeamId);
+      await db.delete(user).where(eq(user.id, ownerId));
+    });
+
+    test("createProjectAction requires admin (viewer and member denied)", async () => {
+      for (const role of ["viewer", "member"] as const) {
+        await TeamService.updateMemberRole(
+          viewerTeamId,
+          actingUserId,
+          role,
+          ownerId,
+        );
+        const res = await createProjectAction({
+          teamId: viewerTeamId,
+          name: `${role} project`,
+        });
+        expect(res.success).toBe(false);
+        expect(res.error).toMatch(/admin role required/);
+      }
+
+      await TeamService.updateMemberRole(
+        viewerTeamId,
+        actingUserId,
+        "admin",
+        ownerId,
+      );
+      const admin = await createProjectAction({
+        teamId: viewerTeamId,
+        name: "Admin project",
+      });
+      expect(admin.success).toBe(true);
+
+      await TeamService.updateMemberRole(
+        viewerTeamId,
+        actingUserId,
+        "viewer",
+        ownerId,
+      );
+    });
+
+    test("createTaskCommentAction rejects viewers", async () => {
+      const res = await createTaskCommentAction({
+        taskId: viewerTaskId,
+        content: "Viewer comment",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/viewer/i);
     });
   });
 });

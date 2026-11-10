@@ -52,9 +52,11 @@ describe("TaskService Domain Logic", () => {
     expect(fetched?.project?.id).toBe(newProject.id);
 
     // Update status
-    const inProgressTask = await TaskService.updateTask(newTask.id, {
-      status: "in_progress",
-    });
+    const inProgressTask = await TaskService.updateTask(
+      newTask.id,
+      { status: "in_progress" },
+      testUser.id,
+    );
     expect(inProgressTask.status).toBe("in_progress");
 
     // List tasks
@@ -66,7 +68,7 @@ describe("TaskService Domain Logic", () => {
     expect(tasks.length).toBe(1);
 
     // Delete task
-    const deleted = await TaskService.deleteTask(newTask.id);
+    const deleted = await TaskService.deleteTask(newTask.id, testUser.id);
     expect(deleted).toBe(true);
 
     // Clean up
@@ -272,7 +274,7 @@ describe("TaskService Domain Logic", () => {
     expect(wsTask?.activeSessionStartedAt).toBeNull();
 
     // Clean up
-    await TaskService.deleteTask(task.id);
+    await TaskService.deleteTask(task.id, testUser.id);
     await db.delete(user).where(inArray(user.id, [testUser.id]));
   });
 });

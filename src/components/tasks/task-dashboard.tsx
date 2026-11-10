@@ -18,7 +18,7 @@ import { useTaskWorkspaceRouting } from "./use-task-workspace-routing";
 import { useTeamAssignees } from "./use-team-assignees";
 import { useTeams } from "@/hooks/use-teams";
 import { useScopedTasks } from "./use-scoped-tasks";
-import { makeCanDeleteTask } from "./task-selectors";
+import { makeCanEditTask } from "./task-selectors";
 import { INITIAL_TASK_FILTERS } from "./task-types";
 import type { TaskFilters, TaskStatus, Team } from "./task-types";
 
@@ -46,7 +46,7 @@ export function TaskDashboard() {
   const teamProjects = projects.filter((p) => p.teamId === teamId);
   const projectId = project?.id ?? "";
   const userId = session?.user?.id;
-  const canDelete = makeCanDeleteTask(teams, teamMembers, userId);
+  const canEdit = makeCanEditTask(teams, teamMembers, userId);
 
   const [filters, setFilters] =
     React.useState<TaskFilters>(INITIAL_TASK_FILTERS);
@@ -101,8 +101,11 @@ export function TaskDashboard() {
   const clearFilters = () => setFilters(INITIAL_TASK_FILTERS);
 
   // shortcut: outside a team the drawer has no team picker, so new tasks land in the first team; add a picker if users ask.
-  const addTask = (status: TaskStatus = "todo") =>
-    editor.openDraft(status, teamId || teams[0]?.id || "", projectId);
+  const draftTeamId = teamId || teams[0]?.id || "";
+  const addTask = canEdit({ teamId: draftTeamId })
+    ? (status: TaskStatus = "todo") =>
+        editor.openDraft(status, draftTeamId, projectId)
+    : undefined;
 
   return (
     <div className="bg-muted/30 flex h-full w-full flex-col overflow-hidden">
@@ -144,7 +147,7 @@ export function TaskDashboard() {
             filterDefs={filterDefs}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onNewTask={() => addTask()}
+            onNewTask={addTask && (() => addTask())}
           />
           <TaskFilterChips
             defs={filterDefs}
@@ -158,7 +161,9 @@ export function TaskDashboard() {
             tasks={visibleTasks}
             emptyKind={emptyKind}
             onEmptyAction={
-              emptyKind === "filtered" ? clearFilters : () => addTask()
+              emptyKind === "filtered"
+                ? clearFilters
+                : addTask && (() => addTask())
             }
             emptySecondary={
               scope === "me"
@@ -174,7 +179,7 @@ export function TaskDashboard() {
             onUpdateStatus={handleMoveTask}
             onAddNewTask={addTask}
             onDeleteTasks={handleDeleteTasks}
-            canDeleteTask={canDelete}
+            canEditTask={canEdit}
           />
         </>
       )}
@@ -185,8 +190,9 @@ export function TaskDashboard() {
         users={assignees}
         onClose={editor.closeDrawer}
         onSaveTask={editor.saveTask}
+        readOnly={!!selectedTask && !canEdit(selectedTask)}
         onDeleteTask={
-          selectedTask && canDelete(selectedTask)
+          selectedTask && canEdit(selectedTask)
             ? () => handleDeleteTasks([selectedTask.id])
             : undefined
         }

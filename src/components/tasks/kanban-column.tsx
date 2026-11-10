@@ -16,7 +16,7 @@ interface KanbanColumnProps {
   onSelectTask?: (task: TaskItem) => void;
   onUpdateStatus?: MoveTask;
   onDeleteTask?: (id: string) => Promise<boolean>;
-  canDeleteTask?: (task: TaskItem) => boolean;
+  canEditTask?: (task: TaskItem) => boolean;
   onAddNewTask?: (status: TaskStatus) => void;
   readOnly?: boolean;
   getContextLabel?: (task: TaskItem) => string | null;
@@ -31,7 +31,7 @@ export function KanbanColumn({
   onSelectTask,
   onUpdateStatus,
   onDeleteTask,
-  canDeleteTask,
+  canEditTask,
   onAddNewTask,
   readOnly,
   getContextLabel,
@@ -108,47 +108,48 @@ export function KanbanColumn({
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-        {tasks.map((task, idx) => (
-          <React.Fragment key={task.id}>
-            {dragOverIndex === idx && <DropIndicator />}
-            <div
-              draggable={canDrag}
-              className={cn(canDrag && "cursor-grab active:cursor-grabbing")}
-              onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", task.id);
-                e.dataTransfer.effectAllowed = "move";
-                setDraggingId(task.id);
-                window.getSelection?.()?.removeAllRanges();
-              }}
-              onDragEnd={() => setDraggingId(null)}
-              onDragOver={(e) => {
-                if (!canDrag) return;
-                e.preventDefault();
-                e.stopPropagation();
-                setDragOverIndex(cardIndex(e, idx));
-              }}
-              onDrop={(e) => {
-                if (!canDrag) return;
-                e.stopPropagation();
-                dropAt(e, cardIndex(e, idx));
-              }}
-            >
-              <KanbanCard
-                task={task}
-                onSelectTask={onSelectTask}
-                onUpdateStatus={readOnly ? undefined : onUpdateStatus}
-                onDeleteTask={
-                  readOnly || canDeleteTask?.(task) === false
-                    ? undefined
-                    : onDeleteTask
-                }
-                contextLabel={getContextLabel?.(task)}
-                showAssignee={showAssignee}
-                isDragging={draggingId === task.id}
-              />
-            </div>
-          </React.Fragment>
-        ))}
+        {tasks.map((task, idx) => {
+          const editable = !readOnly && canEditTask?.(task) !== false;
+          return (
+            <React.Fragment key={task.id}>
+              {dragOverIndex === idx && <DropIndicator />}
+              <div
+                draggable={canDrag && editable}
+                className={cn(
+                  canDrag && editable && "cursor-grab active:cursor-grabbing",
+                )}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", task.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  setDraggingId(task.id);
+                  window.getSelection?.()?.removeAllRanges();
+                }}
+                onDragEnd={() => setDraggingId(null)}
+                onDragOver={(e) => {
+                  if (!canDrag) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverIndex(cardIndex(e, idx));
+                }}
+                onDrop={(e) => {
+                  if (!canDrag) return;
+                  e.stopPropagation();
+                  dropAt(e, cardIndex(e, idx));
+                }}
+              >
+                <KanbanCard
+                  task={task}
+                  onSelectTask={onSelectTask}
+                  onUpdateStatus={editable ? onUpdateStatus : undefined}
+                  onDeleteTask={editable ? onDeleteTask : undefined}
+                  contextLabel={getContextLabel?.(task)}
+                  showAssignee={showAssignee}
+                  isDragging={draggingId === task.id}
+                />
+              </div>
+            </React.Fragment>
+          );
+        })}
         {dragOverIndex === tasks.length && tasks.length > 0 && (
           <DropIndicator />
         )}

@@ -67,7 +67,8 @@ const COPY: Record<
 
 interface TaskScopeEmptyStateProps {
   kind: TaskEmptyKind;
-  onAction: () => void;
+  /** Omitted hides the primary button (e.g. viewers cannot create). */
+  onAction?: () => void;
   /** Optional secondary link, e.g. "Browse team tasks" from Me. */
   secondary?: { label: string; onClick: () => void };
 }
@@ -90,14 +91,16 @@ export function TaskScopeEmptyState({
         <EmptyDescription className="text-pretty">{body}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent className="flex-row justify-center">
-        <Button
-          onClick={onAction}
-          variant={isCreate ? "default" : "outline"}
-          className="gap-1.5"
-        >
-          {isCreate && <Plus className="size-4" />}
-          {action}
-        </Button>
+        {onAction && (
+          <Button
+            onClick={onAction}
+            variant={isCreate ? "default" : "outline"}
+            className="gap-1.5"
+          >
+            {isCreate && <Plus className="size-4" />}
+            {action}
+          </Button>
+        )}
         {secondary && (
           <Button
             variant="ghost"

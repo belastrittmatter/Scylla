@@ -1,24 +1,6 @@
 import { db } from "@/db";
-import {
-  task,
-  team,
-  teamMember,
-  project,
-  taskTimeSession,
-  type Task,
-  type TaskTimeSession,
-} from "@/db/schema";
-import {
-  eq,
-  and,
-  lte,
-  lt,
-  inArray,
-  desc,
-  asc,
-  isNull,
-  type SQL,
-} from "drizzle-orm";
+import { task, team, teamMember, project, type Task } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import {
   CreateTaskSchema,
   UpdateTaskSchema,
@@ -28,12 +10,29 @@ import {
   type TaskWithRelations,
   type TaskStatus,
 } from "./task-types";
-import { canDeleteTask } from "./task-permissions";
+import {
+  TaskSessionService,
+  MIN_TASK_SESSION_DURATION_SECONDS,
+} from "./task-session-service";
+import { TaskQueryService } from "./task-query-service";
+import { TeamService } from "@/services/team/team-service";
+import { canMutateTasks } from "./task-permissions";
 
 /** `not_member` must be reported like a missing task so ids can't be probed. */
-export type TaskDeleteAccess = "allowed" | "forbidden" | "not_member";
+export type TaskWriteAccess = "allowed" | "forbidden" | "not_member";
 
-export const MIN_TASK_SESSION_DURATION_SECONDS = 60; // 1 minute (< 1 minute is considered accidental drag)
+/** Thrown by task mutations; `not_member` reads as "not found" so ids can't be probed. */
+export class TaskAccessError extends Error {
+  constructor(
+    readonly access: Exclude<TaskWriteAccess, "allowed">,
+    message: string,
+  ) {
+    super(message);
+    this.name = "TaskAccessError";
+  }
+}
+
+export { MIN_TASK_SESSION_DURATION_SECONDS };
 
 export class TaskService {
   public static async createTask(input: CreateTaskInput): Promise<Task> {
@@ -67,10 +66,35 @@ export class TaskService {
       throw new Error(`Team with id "${validated.teamId}" not found`);
     }
 
+    if (validated.creatorId) {
+      const access = await TaskService.getWriteAccess(
+        validated,
+        validated.creatorId,
+      );
+      if (access === "forbidden") {
+        throw new Error("Forbidden: Viewer role cannot create tasks");
+      }
+      if (access === "not_member") {
+        throw new Error("Forbidden: Creator is not a member of this team");
+      }
+    }
+
     if (validated.projectId) {
       if (!projectRecord || projectRecord.teamId !== validated.teamId) {
         throw new Error(
           `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
+        );
+      }
+    }
+
+    if (validated.assigneeId) {
+      const isMember = await TeamService.isTeamMember(
+        validated.teamId,
+        validated.assigneeId,
+      );
+      if (!isMember) {
+        throw new Error(
+          `User "${validated.assigneeId}" is not a member of team "${validated.teamId}"`,
         );
       }
     }
@@ -100,7 +124,10 @@ export class TaskService {
       .returning();
 
     if (validated.status === "in_progress") {
-      await TaskService.startTaskSession(newTask.id, validated.creatorId);
+      await TaskSessionService.startTaskSession(
+        newTask.id,
+        validated.creatorId,
+      );
     }
 
     return newTask;
@@ -109,73 +136,17 @@ export class TaskService {
   public static async getTaskById(
     taskId: string,
   ): Promise<TaskWithRelations | null> {
-    const record = await db.query.task.findFirst({
-      where: eq(task.id, taskId),
-      with: {
-        creator: {
-          columns: { id: true, name: true, email: true, image: true },
-        },
-        assignee: {
-          columns: { id: true, name: true, email: true, image: true },
-        },
-        project: { columns: { id: true, name: true, slug: true, color: true } },
-      },
-    });
-    return (record as TaskWithRelations) ?? null;
+    return TaskQueryService.getTaskById(taskId);
   }
 
   public static async listTasks(filter: TaskFilterInput): Promise<Task[]> {
-    const conditions: SQL[] = [];
-
-    if (Array.isArray(filter.teamId)) {
-      if (filter.teamId.length === 0) return [];
-      conditions.push(inArray(task.teamId, filter.teamId));
-    } else if (filter.teamId) {
-      conditions.push(eq(task.teamId, filter.teamId));
-    }
-
-    if (filter.projectId) conditions.push(eq(task.projectId, filter.projectId));
-
-    if (filter.status) {
-      if (Array.isArray(filter.status)) {
-        conditions.push(inArray(task.status, filter.status));
-      } else {
-        conditions.push(eq(task.status, filter.status));
-      }
-    }
-
-    if (filter.priority) {
-      if (Array.isArray(filter.priority)) {
-        conditions.push(inArray(task.priority, filter.priority));
-      } else {
-        conditions.push(eq(task.priority, filter.priority));
-      }
-    }
-
-    if (filter.assigneeId)
-      conditions.push(eq(task.assigneeId, filter.assigneeId));
-
-    if (filter.dueBefore) conditions.push(lte(task.dueDate, filter.dueBefore));
-
-    if (filter.overdue) {
-      const now = new Date();
-      conditions.push(lt(task.dueDate, now));
-      conditions.push(
-        inArray(task.status, ["todo", "in_progress", "in_review"]),
-      );
-    }
-
-    return await db
-      .select()
-      .from(task)
-      .where(and(...conditions))
-      .orderBy(asc(task.position), desc(task.createdAt));
+    return TaskQueryService.listTasks(filter);
   }
 
   public static async updateTask(
     taskId: string,
     input: UpdateTaskInput,
-    currentUserId?: string,
+    currentUserId: string,
   ): Promise<Task> {
     const validated = UpdateTaskSchema.parse(input);
 
@@ -184,19 +155,43 @@ export class TaskService {
     });
     if (!existing) throw new Error(`Task with id "${taskId}" not found`);
 
+    await TaskService.assertWriteAccess(
+      existing,
+      currentUserId,
+      "Forbidden: Viewer role cannot update tasks",
+    );
+
+    if (validated.projectId !== undefined && validated.projectId !== null) {
+      const projectRecord = await db.query.project.findFirst({
+        where: eq(project.id, validated.projectId),
+      });
+      if (!projectRecord || projectRecord.teamId !== existing.teamId) {
+        throw new Error(
+          `Project with id "${validated.projectId}" not found in team "${existing.teamId}"`,
+        );
+      }
+    }
+
+    if (validated.assigneeId !== undefined && validated.assigneeId !== null) {
+      const isMember = await TeamService.isTeamMember(
+        existing.teamId,
+        validated.assigneeId,
+      );
+      if (!isMember) {
+        throw new Error(
+          `User "${validated.assigneeId}" is not a member of team "${existing.teamId}"`,
+        );
+      }
+    }
+
     if (
       validated.status !== undefined &&
       validated.status !== existing.status
     ) {
       if (validated.status === "in_progress") {
-        const effectiveUserId =
-          currentUserId ||
-          validated.assigneeId ||
-          existing.assigneeId ||
-          existing.creatorId;
-        await TaskService.startTaskSession(taskId, effectiveUserId);
+        await TaskSessionService.startTaskSession(taskId, currentUserId);
       } else if (existing.status === "in_progress") {
-        await TaskService.stopTaskSession(
+        await TaskSessionService.stopTaskSession(
           taskId,
           MIN_TASK_SESSION_DURATION_SECONDS,
         );
@@ -228,92 +223,26 @@ export class TaskService {
     return updated;
   }
 
-  public static async startTaskSession(
-    taskId: string,
-    userId?: string | null,
-  ): Promise<TaskTimeSession> {
-    const existingActive = await db.query.taskTimeSession.findFirst({
-      where: and(
-        eq(taskTimeSession.taskId, taskId),
-        isNull(taskTimeSession.endedAt),
-      ),
-    });
-    if (existingActive) {
-      return existingActive;
-    }
-    const inserted = await db
-      .insert(taskTimeSession)
-      .values({
-        taskId,
-        userId: userId ?? null,
-        startedAt: new Date(),
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (inserted.length > 0) {
-      return inserted[0];
-    }
-    const concurrentActive = await db.query.taskTimeSession.findFirst({
-      where: and(
-        eq(taskTimeSession.taskId, taskId),
-        isNull(taskTimeSession.endedAt),
-      ),
-    });
-    return concurrentActive!;
+  public static async startTaskSession(taskId: string, userId?: string | null) {
+    return TaskSessionService.startTaskSession(taskId, userId);
   }
 
   public static async stopTaskSession(
     taskId: string,
     minDurationSeconds = MIN_TASK_SESSION_DURATION_SECONDS,
-  ): Promise<TaskTimeSession | null> {
-    const activeSession = await db.query.taskTimeSession.findFirst({
-      where: and(
-        eq(taskTimeSession.taskId, taskId),
-        isNull(taskTimeSession.endedAt),
-      ),
-    });
-    if (!activeSession) return null;
-
-    const now = new Date();
-    const durationSeconds = Math.max(
-      0,
-      Math.round((now.getTime() - activeSession.startedAt.getTime()) / 1000),
-    );
-
-    // Anti-spam filter: discard session if shorter than minDurationSeconds (e.g. rapid drag-and-drop)
-    if (durationSeconds < minDurationSeconds) {
-      await db
-        .delete(taskTimeSession)
-        .where(eq(taskTimeSession.id, activeSession.id));
-      return null;
-    }
-
-    const [updated] = await db
-      .update(taskTimeSession)
-      .set({
-        endedAt: now,
-        durationSeconds,
-      })
-      .where(eq(taskTimeSession.id, activeSession.id))
-      .returning();
-
-    return updated;
+  ) {
+    return TaskSessionService.stopTaskSession(taskId, minDurationSeconds);
   }
 
-  public static async getTaskTimeSessions(
-    taskId: string,
-  ): Promise<TaskTimeSession[]> {
-    return await db
-      .select()
-      .from(taskTimeSession)
-      .where(eq(taskTimeSession.taskId, taskId))
-      .orderBy(desc(taskTimeSession.startedAt));
+  public static async getTaskTimeSessions(taskId: string) {
+    return TaskSessionService.getTaskTimeSessions(taskId);
   }
 
-  public static async getDeleteAccess(
+  /** Single write-permission check for create/update/delete (see task-permissions). */
+  public static async getWriteAccess(
     target: Pick<Task, "teamId">,
     userId: string,
-  ): Promise<TaskDeleteAccess> {
+  ): Promise<TaskWriteAccess> {
     const [teamRecord, membership] = await Promise.all([
       db.query.team.findFirst({
         where: eq(team.id, target.teamId),
@@ -329,14 +258,45 @@ export class TaskService {
     ]);
     const isTeamOwner = teamRecord?.ownerId === userId;
     if (!isTeamOwner && !membership) return "not_member";
-    const allowed = canDeleteTask({
+    const allowed = canMutateTasks({
       role: membership?.role,
       isTeamOwner,
     });
     return allowed ? "allowed" : "forbidden";
   }
 
-  public static async deleteTask(taskId: string): Promise<boolean> {
+  /** Throws TaskAccessError unless `userId` may mutate tasks of `target`'s team. */
+  public static async assertWriteAccess(
+    target: Pick<Task, "id" | "teamId">,
+    userId: string,
+    forbiddenMessage: string,
+  ): Promise<void> {
+    const access = await TaskService.getWriteAccess(target, userId);
+    if (access === "not_member") {
+      throw new TaskAccessError(
+        access,
+        `Task with id "${target.id}" not found`,
+      );
+    }
+    if (access === "forbidden") {
+      throw new TaskAccessError(access, forbiddenMessage);
+    }
+  }
+
+  public static async deleteTask(
+    taskId: string,
+    currentUserId: string,
+  ): Promise<boolean> {
+    const existing = await db.query.task.findFirst({
+      where: eq(task.id, taskId),
+      columns: { id: true, teamId: true },
+    });
+    if (!existing) return false;
+    await TaskService.assertWriteAccess(
+      existing,
+      currentUserId,
+      "Permission denied: only team members (not viewers) can delete tasks",
+    );
     const deleted = await db
       .delete(task)
       .where(eq(task.id, taskId))
@@ -347,17 +307,7 @@ export class TaskService {
   public static async reorderTaskPositions(
     updates: Array<{ id: string; position: number; status?: TaskStatus }>,
   ): Promise<void> {
-    await db.transaction(async (tx) => {
-      await Promise.all(
-        updates.map((item) => {
-          const updateSet: Partial<typeof task.$inferInsert> = {
-            position: item.position,
-          };
-          if (item.status) updateSet.status = item.status;
-          return tx.update(task).set(updateSet).where(eq(task.id, item.id));
-        }),
-      );
-    });
+    return TaskQueryService.reorderTaskPositions(updates);
   }
 
   public static async getWorkspaceData(currentUserId?: string) {

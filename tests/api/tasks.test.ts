@@ -30,6 +30,12 @@ describe("Tasks REST API Endpoints", () => {
     });
     teamId = team.id;
 
+    await TeamService.addTeamMember({
+      teamId,
+      userId: assigneeUserId,
+      role: "member",
+    });
+
     const proj = await ProjectService.createProject({
       teamId,
       name: "API Subsystem",
@@ -185,7 +191,7 @@ describe("Tasks REST API Endpoints", () => {
     const strangerRes = await updateTaskHandler(strangerReq, {
       params: { id: createdTaskId },
     });
-    expect(strangerRes.status).toBe(403);
+    expect(strangerRes.status).toBe(404);
 
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "PATCH",
