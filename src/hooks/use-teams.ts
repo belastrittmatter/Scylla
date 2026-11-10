@@ -8,7 +8,6 @@ export interface TeamMemberItem {
   teamId: string;
   userId: string;
   role: TeamRole;
-  isNew?: boolean;
   joinedAt: string | Date;
   user?: {
     id: string;
