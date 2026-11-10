@@ -313,4 +313,60 @@ describe("Task Server Actions with Core Domain Services", () => {
       });
     });
   });
+
+  describe("Security: viewers are read-only (#99)", () => {
+    const ownerId = `usr_viewer_owner_${Date.now()}`;
+    let viewerTeamId: string;
+    let viewerTaskId: string;
+
+    beforeAll(async () => {
+      await db.insert(user).values({
+        id: ownerId,
+        name: "Owner",
+        email: `${ownerId}@example.com`,
+      });
+      const t = await TeamService.createTeam({
+        name: `Viewer Team ${Date.now()}`,
+        slug: `viewer-team-${Date.now()}`,
+        ownerId,
+      });
+      viewerTeamId = t.id;
+      await TeamService.addTeamMember({
+        teamId: viewerTeamId,
+        userId: actingUserId,
+        role: "viewer",
+      });
+      const task = await TaskService.createTask({
+        title: "Viewer-visible task",
+        teamId: viewerTeamId,
+        creatorId: ownerId,
+        status: "todo",
+        priority: "medium",
+      });
+      viewerTaskId = task.id;
+    });
+
+    afterAll(async () => {
+      if (viewerTeamId) await TeamService.deleteTeam(viewerTeamId);
+      await db.delete(user).where(eq(user.id, ownerId));
+    });
+
+    test("createProjectAction rejects viewers", async () => {
+      const res = await createProjectAction({
+        teamId: viewerTeamId,
+        name: "Viewer Project",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/viewer/i);
+    });
+
+    test("createTaskCommentAction rejects viewers", async () => {
+      const res = await createTaskCommentAction({
+        taskId: viewerTaskId,
+        content: "Viewer comment",
+      });
+      expect(res.success).toBe(false);
+      expect(res.error).toMatch(/viewer/i);
+    });
+  });
 });

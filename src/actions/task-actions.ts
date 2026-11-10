@@ -4,6 +4,7 @@ import { z } from "zod";
 import { TaskService } from "@/services/task/task-service";
 import { ProjectService } from "@/services/project/project-service";
 import { TeamService } from "@/services/team/team-service";
+import { hasTeamRole } from "@/services/team/team-types";
 import type { Task, Project, TaskComment } from "@/db/schema";
 import type {
   WorkspaceData,
@@ -161,8 +162,15 @@ export async function createProjectAction(
 
     const userId = await resolveActionUserId();
     const teamId = await TeamService.resolveTeamId(parseResult.data.teamId);
-    if (!teamId || !(await TeamService.isTeamMember(teamId, userId))) {
+    const role = teamId ? await TeamService.getUserRole(teamId, userId) : null;
+    if (!teamId || !role) {
       return { success: false, error: "Access denied" };
+    }
+    if (!hasTeamRole(role, "member")) {
+      return {
+        success: false,
+        error: "Permission denied: viewers cannot create projects",
+      };
     }
 
     const created = await ProjectService.createProject({
@@ -278,12 +286,15 @@ export async function createTaskCommentAction(payload: {
     if (!existingTask) {
       return { success: false, error: "Task not found" };
     }
-    const isMember = await TeamService.isTeamMember(
-      existingTask.teamId,
-      userId,
-    );
-    if (!isMember) {
+    const access = await TaskService.getWriteAccess(existingTask, userId);
+    if (access === "not_member") {
       return { success: false, error: "Access denied" };
+    }
+    if (access === "forbidden") {
+      return {
+        success: false,
+        error: "Permission denied: viewers cannot comment on tasks",
+      };
     }
 
     const comment = await TaskService.createTaskComment({
