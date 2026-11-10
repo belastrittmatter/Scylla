@@ -233,7 +233,7 @@ describe("REST API Route Handlers", () => {
           "x-user-id": "usr_alex_rivera",
         },
         body: JSON.stringify({
-          attendees: ["alex@company.com"],
+          attendees: ["alex@example.com"],
           durationMinutes: 30,
           startDate: "2026-10-19T08:00:00.000Z",
           endDate: "2026-10-19T18:00:00.000Z",

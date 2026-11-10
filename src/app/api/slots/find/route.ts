@@ -1,9 +1,10 @@
 import { SchedulerService } from "@/services/scheduler";
 import { FindSlotsParamsSchema } from "@/actions/schemas";
 import { resolveUserId } from "@/services/api-utils";
+import { UserService } from "@/services/user";
 import { db } from "@/db";
-import { teamMember, user } from "@/db/schema";
-import { eq, inArray, or } from "drizzle-orm";
+import { account, user } from "@/db/schema";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
@@ -30,48 +31,52 @@ export async function POST(req: Request) {
       );
     }
 
-    // Prevent cross-tenant availability leaks: reject if any attendee is a user outside the caller's teams
-    const userMemberships = await db
-      .select({ teamId: teamMember.teamId })
-      .from(teamMember)
-      .where(eq(teamMember.userId, callerId));
-    const teamIds = userMemberships.map((m) => m.teamId);
-
-    const allowedUserIds = new Set<string>([callerId]);
-    if (teamIds.length > 0) {
-      const teammates = await db
-        .select({ userId: teamMember.userId })
-        .from(teamMember)
-        .where(inArray(teamMember.teamId, teamIds));
-      for (const t of teammates) allowedUserIds.add(t.userId);
-    }
-
-    const trimmedAttendees = parseResult.data.attendees.map((a) => a.trim());
-    const requestedAttendees = trimmedAttendees.map((a) => a.toLowerCase());
+    // Every attendee must be a registered teammate; unknown addresses and other tenants are refused.
+    const allowedUserIds = new Set(await UserService.getTeammateIds(callerId));
+    const requested = parseResult.data.attendees.map((a) => a.trim());
     const matchedUsers = await db
       .select({ id: user.id, email: user.email })
       .from(user)
       .where(
         or(
-          inArray(user.id, trimmedAttendees),
-          inArray(user.email, requestedAttendees),
+          inArray(user.id, requested),
+          inArray(
+            sql`lower(${user.email})`,
+            requested.map((a) => a.toLowerCase()),
+          ),
         ),
       );
-
-    const hasCrossTenantUser = matchedUsers.some(
-      (u) => !allowedUserIds.has(u.id),
+    const allAllowed = requested.every((a) =>
+      matchedUsers.some(
+        (u) =>
+          allowedUserIds.has(u.id) &&
+          (u.id === a || u.email.toLowerCase() === a.toLowerCase()),
+      ),
     );
-    if (hasCrossTenantUser) {
+    if (!allAllowed) {
       return Response.json(
         {
           error:
-            "Forbidden: You may not query availability for users outside your team",
+            "Forbidden: attendees must be registered members of your teams",
         },
         { status: 403 },
       );
     }
 
-    const slots = await SchedulerService.findSlots(parseResult.data);
+    // Availability is read with the caller's own Google credentials, never the server's.
+    const [googleAccount] = await db
+      .select()
+      .from(account)
+      .where(
+        and(eq(account.userId, callerId), eq(account.providerId, "google")),
+      )
+      .limit(1);
+
+    const slots = await SchedulerService.findSlots({
+      ...parseResult.data,
+      attendees: requested,
+      accountRecord: googleAccount,
+    });
     return Response.json(slots, { status: 200 });
   } catch (err) {
     return Response.json(

@@ -97,14 +97,12 @@ async function loadRoomsAndBusy(
           .filter(Boolean),
       ]),
     ) as string[];
+    // Without the caller's own token, skip Google rather than fall back to server credentials.
     const gcalFreeBusy =
-      freeBusyEmails.length > 0
-        ? await GoogleCalendarService.getFreeBusy(
-            freeBusyEmails,
-            start,
-            end,
-            accessToken ? { accessToken } : undefined,
-          ).catch(() => ({}))
+      freeBusyEmails.length > 0 && accessToken
+        ? await GoogleCalendarService.getFreeBusy(freeBusyEmails, start, end, {
+            accessToken,
+          }).catch(() => ({}))
         : {};
 
     const emailByUserId = new Map<string, string>();

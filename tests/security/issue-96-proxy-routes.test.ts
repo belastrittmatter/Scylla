@@ -21,7 +21,7 @@ import {
   POST as createEventTypeHandler,
 } from "@/app/api/event-types/route";
 import { db } from "@/db";
-import { eventType, team, teamMember, user } from "@/db/schema";
+import { booking, eventType, team, teamMember, user } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { UserService } from "@/services/user";
 import { GoogleCalendarService } from "@/services/google-calendar";
@@ -319,6 +319,70 @@ describe("Security Issue #96: tenant scoping", () => {
       expect(emails).toContain(teammateEmail);
       expect(emails).not.toContain(outsiderEmail);
       expect(emails).not.toContain(`${tag}.x@corp.com`);
+    });
+  });
+
+  describe("slot finding", () => {
+    afterEach(() => mock.restore());
+
+    // Tuesday 09:00-11:00 Asia/Ho_Chi_Minh, inside default working hours
+    const window = {
+      startDate: "2026-10-20T02:00:00.000Z",
+      endDate: "2026-10-20T04:00:00.000Z",
+      durationMinutes: 60,
+    };
+    const findSlots = (attendees: string[]) =>
+      findSlotsHandler(
+        asCaller("/api/slots/find", {
+          method: "POST",
+          body: JSON.stringify({ ...window, attendees }),
+        }),
+      );
+
+    it("rejects attendee emails that are not registered teammates", async () => {
+      const res = await findSlots([`${tag}.nobody@unknown.test`]);
+      expect(res.status).toBe(403);
+    });
+
+    it("never queries Google with server credentials when the caller has no linked account", async () => {
+      const freeBusySpy = spyOn(GoogleCalendarService, "getFreeBusy");
+      const res = await findSlots([teammateEmail]);
+      expect(res.status).toBe(200);
+      expect(freeBusySpy).not.toHaveBeenCalled();
+    });
+
+    it("blocks slots for teammate attendee bookings but ignores unrelated tenants' bookings", async () => {
+      const [blocking, unrelated] = await db
+        .insert(booking)
+        .values([
+          {
+            title: `${tag} blocking`,
+            organizerUserId: outsiderId,
+            startTime: new Date("2026-10-20T02:00:00.000Z"),
+            endTime: new Date("2026-10-20T03:00:00.000Z"),
+            attendees: [{ email: teammateEmail.toUpperCase() }],
+          },
+          {
+            title: `${tag} unrelated`,
+            organizerUserId: outsiderId,
+            startTime: new Date("2026-10-20T03:00:00.000Z"),
+            endTime: new Date("2026-10-20T04:00:00.000Z"),
+            attendees: [{ email: outsiderEmail }],
+          },
+        ])
+        .returning();
+      try {
+        const res = await findSlots([teammateEmail]);
+        const starts = ((await res.json()) as Array<{ start: string }>).map(
+          (s) => s.start,
+        );
+        expect(starts).not.toContain("2026-10-20T02:00:00.000Z");
+        expect(starts).toContain("2026-10-20T03:00:00.000Z");
+      } finally {
+        await db
+          .delete(booking)
+          .where(inArray(booking.id, [blocking.id, unrelated.id]));
+      }
     });
   });
 });
