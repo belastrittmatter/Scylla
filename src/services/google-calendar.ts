@@ -8,6 +8,7 @@
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { createHash } from "crypto";
 import { CalendarEventTracker } from "@/utils/calendar-event-tracker";
 import {
   isGoogleApiUrl,
@@ -828,12 +829,13 @@ export class GoogleCalendarService {
 
     const accountRec = options.accountRecord as
       { id?: string; userId?: string } | undefined;
-    const accountKey =
-      accountRec?.userId ||
-      accountRec?.id ||
-      (options.accessToken
-        ? `token:${options.accessToken.slice(-16)}`
-        : "user:anonymous");
+    const accountKey = accountRec?.userId
+      ? `user:${accountRec.userId}`
+      : accountRec?.id
+        ? `account:${accountRec.id}`
+        : options.accessToken
+          ? `token:${createHash("sha256").update(options.accessToken).digest("hex")}`
+          : "anonymous";
 
     // Evict expired entries periodically to prevent memory leak
     const now = Date.now();
