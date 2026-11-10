@@ -10,6 +10,7 @@ import type { TeamRole } from "@/services/team/team-types";
 import { TeamHeader } from "./team-header";
 import { TeamMembersTab } from "./team-members-tab";
 import { canManageTeam } from "./team-roles";
+import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
 interface Props {
   team: TeamItem;
@@ -51,6 +52,7 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
         }}
         onDelete={async () => {
           await deleteTeam(current.id);
+          invalidateTaskWorkspaceCache();
           router.push("/teams");
         }}
       />

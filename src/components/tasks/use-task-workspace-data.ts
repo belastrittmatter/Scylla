@@ -18,6 +18,15 @@ const LOAD_ERROR = "Failed to load workspace data";
 let clientWorkspaceCache: WorkspaceCacheSnapshot | null = null;
 let inflightWorkspaceRequest: ReturnType<typeof getWorkspaceDataAction> | null =
   null;
+// Bumped on invalidation so responses to requests started earlier are ignored.
+let cacheGeneration = 0;
+
+/** Drop the cached workspace, e.g. after a team is deleted elsewhere. */
+export function invalidateTaskWorkspaceCache(): void {
+  clientWorkspaceCache = null;
+  inflightWorkspaceRequest = null;
+  cacheGeneration++;
+}
 
 export interface TaskWorkspaceData extends WorkspaceCacheSnapshot {
   isLoading: boolean;
@@ -58,10 +67,14 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
 
   React.useEffect(() => {
     let isMounted = true;
+    const generation = cacheGeneration;
     if (!inflightWorkspaceRequest) {
-      inflightWorkspaceRequest = getWorkspaceDataAction().finally(() => {
-        inflightWorkspaceRequest = null;
+      const request = getWorkspaceDataAction().finally(() => {
+        if (inflightWorkspaceRequest === request) {
+          inflightWorkspaceRequest = null;
+        }
       });
+      inflightWorkspaceRequest = request;
     }
     inflightWorkspaceRequest
       .then((res) => {
@@ -69,6 +82,7 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
           if (isMounted) setError(res?.error ?? LOAD_ERROR);
           return;
         }
+        if (generation !== cacheGeneration) return;
         const nextCache: WorkspaceCacheSnapshot = {
           teams: res.data.teams,
           projects: res.data.projects,
