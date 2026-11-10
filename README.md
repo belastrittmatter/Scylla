@@ -146,7 +146,7 @@ _(Requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your `.env` file wit
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4 & shadcn/ui primitives
 - **Database**: PostgreSQL 16 with Drizzle ORM
-- **Auth**: Better Auth (Google OAuth, email/password, and MCP agent auth)
+- **Auth**: Better Auth (Google OAuth and MCP agent auth)
 - **Runtime**: Bun
 
 ---
