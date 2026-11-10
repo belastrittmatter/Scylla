@@ -20,6 +20,7 @@ import {
 import { ExternalLink, Settings } from "lucide-react";
 import { MAIN_NAV_ITEMS, WORKSPACE_INFO } from "@/constants/navigation";
 import { UserButton } from "@daveyplate/better-auth-ui";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function SidebarNavMenu({ pathname }: { pathname: string }) {
   const segments = pathname.split("/").filter(Boolean);
@@ -117,7 +118,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* Bottom navigation links & user info card */}
       <SidebarFooter className="gap-2 p-2">
         <SidebarMenu className="gap-0.5">
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex items-center gap-1">
             <SidebarMenuButton
               tooltip="Settings"
               className="h-9 rounded-lg text-[13px] font-normal tracking-[-0.01em] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
@@ -128,6 +129,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 Settings
               </span>
             </SidebarMenuButton>
+            <div className="group-data-[collapsible=icon]:hidden">
+              <ThemeToggle />
+            </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
