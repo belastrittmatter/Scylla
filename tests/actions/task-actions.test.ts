@@ -216,6 +216,40 @@ describe("Task Server Actions with Core Domain Services", () => {
       expect(res.error).toMatch(/Access denied|Unauthorized/i);
     });
 
+    test("createTaskAction rejects an assignee outside the team", async () => {
+      const res = await createTaskAction({
+        teamId: testTeamId,
+        title: "Assigned to outsider",
+        assigneeId: foreignUserId,
+      });
+      expect(res).toEqual({
+        success: false,
+        error: "Assignee must be a member of the team",
+      });
+    });
+
+    test("updateTaskAction rejects an assignee outside the team", async () => {
+      const res = await updateTaskAction(testTaskId, {
+        assigneeId: foreignUserId,
+      });
+      expect(res).toEqual({
+        success: false,
+        error: "Assignee must be a member of the team",
+      });
+    });
+
+    test("updateTaskAction accepts a member assignee and unassigning", async () => {
+      const assigned = await updateTaskAction(testTaskId, {
+        assigneeId: actingUserId,
+      });
+      expect(assigned.success).toBe(true);
+      expect(assigned.data!.assigneeId).toBe(actingUserId);
+
+      const cleared = await updateTaskAction(testTaskId, { assigneeId: null });
+      expect(cleared.success).toBe(true);
+      expect(cleared.data!.assigneeId).toBeNull();
+    });
+
     describe("team slug that equals another team's id", () => {
       let shadowTeamId: string;
 
