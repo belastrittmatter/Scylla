@@ -619,3 +619,96 @@ describe("C6: reschedule", () => {
     }
   });
 });
+
+describe("C7: MCP cancel/reschedule ownership", () => {
+  type ToolResult = { isError?: boolean; content: Array<{ text: string }> };
+  async function mcpTools(sub: string) {
+    const server = await createCalendarMcpServer({ sub, scopes: ["*"] });
+    return (
+      server as unknown as {
+        _registeredTools: Record<
+          string,
+          { handler: (a: Record<string, unknown>) => Promise<ToolResult> }
+        >;
+      }
+    )._registeredTools;
+  }
+
+  test("non-organizer cannot cancel or reschedule; organizer can cancel", async () => {
+    const [organizer, attacker] = await db
+      .insert(user)
+      .values([
+        {
+          id: crypto.randomUUID(),
+          name: "MCP Owner",
+          email: `mcp-owner-${Date.now()}@example.com`,
+        },
+        {
+          id: crypto.randomUUID(),
+          name: "MCP Attacker",
+          email: `mcp-attacker-${Date.now()}@example.com`,
+        },
+      ])
+      .returning();
+    const deleteSpy = spyOn(GoogleCalendarService, "deleteEvent");
+    const updateSpy = spyOn(GoogleCalendarService, "updateEvent");
+    const now = Date.now();
+    try {
+      const created = await BookingService.createBooking({
+        title: "Owner Meeting",
+        organizerUserId: organizer.id,
+        startTime: new Date(now + 3600000),
+        endTime: new Date(now + 7200000),
+      });
+      const eventId = created.gcalEventId as string;
+      const attackerTools = await mcpTools(attacker.id);
+
+      const cancelRes = await attackerTools["cancel_meeting"].handler({
+        eventId,
+      });
+      expect(cancelRes.isError).toBe(true);
+      expect(cancelRes.content[0].text).toMatch(/Forbidden/);
+
+      const reschedRes = await attackerTools["reschedule_meeting"].handler({
+        eventId: created.id,
+        newStart: new Date(now + 86400000).toISOString(),
+        newEnd: new Date(now + 90000000).toISOString(),
+      });
+      expect(reschedRes.isError).toBe(true);
+      expect(reschedRes.content[0].text).toMatch(/Forbidden/);
+
+      expect(deleteSpy).not.toHaveBeenCalled();
+      expect(updateSpy).not.toHaveBeenCalled();
+      const [untouched] = await db
+        .select()
+        .from(booking)
+        .where(eq(booking.id, created.id));
+      expect(untouched.status).toBe("confirmed");
+      expect(untouched.startTime.getTime()).toBe(created.startTime.getTime());
+
+      const ownerTools = await mcpTools(organizer.id);
+      const ownerCancel = await ownerTools["cancel_meeting"].handler({
+        eventId,
+      });
+      expect(ownerCancel.isError).toBeFalsy();
+      const [cancelled] = await db
+        .select()
+        .from(booking)
+        .where(eq(booking.id, created.id));
+      expect(cancelled.status).toBe("cancelled");
+    } finally {
+      deleteSpy.mockRestore();
+      updateSpy.mockRestore();
+      await db
+        .delete(booking)
+        .where(eq(booking.organizerUserId, organizer.id))
+        .catch(() => {});
+      for (const u of [organizer, attacker]) {
+        await db
+          .delete(user)
+          .where(eq(user.id, u.id))
+          .catch(() => {});
+      }
+    }
+  });
+});

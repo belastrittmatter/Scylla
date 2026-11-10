@@ -2,7 +2,8 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { RoomService } from "@/services/rooms";
 import { db, booking } from "@/db";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { BookingQueryService } from "@/services/booking/booking-query-service";
 import {
   bookMeetingSchema,
   rescheduleMeetingSchema,
@@ -11,6 +12,25 @@ import {
 import { resolveProject, verifyScope } from "./auth-helpers";
 import { sanitizeBookingDescription } from "@/services/booking/booking-token-helper";
 import type { McpToolContext } from "../types";
+
+// Same rule as the REST routes: only the organizer may modify a stored booking.
+async function findOwnedBooking(eventId: string, userId: string | undefined) {
+  const existing = await BookingQueryService.getBookingById(eventId);
+  if (existing && existing.organizerUserId !== userId) {
+    return {
+      forbidden: {
+        isError: true as const,
+        content: [
+          {
+            type: "text" as const,
+            text: "Forbidden: Only the meeting organizer may modify this booking",
+          },
+        ],
+      },
+    };
+  }
+  return { existing };
+}
 
 export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
   // 1. Tool: book_meeting
@@ -233,6 +253,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
+      const { existing, forbidden } = await findOwnedBooking(
+        eventId,
+        ctx.userId,
+      );
+      if (forbidden) return forbidden;
+
       // Resolve optional linked project and update Google Calendar event in parallel
       const [linkedProject, updated] = await Promise.all([
         projectId !== undefined
@@ -265,16 +291,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         if (finalProjectId !== undefined) {
           updateValues.projectId = finalProjectId;
         }
-        await db
-          .update(booking)
-          .set(updateValues)
-          .where(
-            or(
-              eq(booking.id, eventId),
-              eq(booking.googleEventId, eventId),
-              eq(booking.gcalEventId, eventId),
-            ),
-          );
+        if (existing) {
+          await db
+            .update(booking)
+            .set(updateValues)
+            .where(eq(booking.id, existing.id));
+        }
       } catch (dbErr) {
         console.warn("Could not sync reschedule to DB:", dbErr);
       }
@@ -327,6 +349,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
+      const { existing, forbidden } = await findOwnedBooking(
+        eventId,
+        ctx.userId,
+      );
+      if (forbidden) return forbidden;
+
       const result = await GoogleCalendarService.deleteEvent(
         eventId,
         calendarId,
@@ -335,16 +363,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
 
       // Update DB record status if present
       try {
-        await db
-          .update(booking)
-          .set({ status: "cancelled", updatedAt: new Date() })
-          .where(
-            or(
-              eq(booking.id, eventId),
-              eq(booking.googleEventId, eventId),
-              eq(booking.gcalEventId, eventId),
-            ),
-          );
+        if (existing) {
+          await db
+            .update(booking)
+            .set({ status: "cancelled", updatedAt: new Date() })
+            .where(eq(booking.id, existing.id));
+        }
       } catch (dbErr) {
         console.warn("Could not sync cancellation to DB:", dbErr);
       }
