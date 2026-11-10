@@ -1,12 +1,16 @@
 import { db } from "@/db";
 import { booking, type Booking } from "@/db/schema";
-import { and, ne, sql, inArray, eq, or } from "drizzle-orm";
-import { GoogleCalendarService } from "../google-calendar";
+import { and, ne, sql, inArray, eq } from "drizzle-orm";
+import { GoogleCalendarService } from "@/services/google-calendar";
 import { getOrganizerToken } from "./booking-token-helper";
 import { BookingQueryService } from "./booking-query-service";
+import { escapeLike } from "@/utils/sql-utils";
 
-export function escapeLike(str: string): string {
-  return str.replace(/[%_\\]/g, "\\$&");
+export { escapeLike };
+
+export interface CancelSeriesOptions {
+  reason?: string;
+  callerUserId?: string;
 }
 
 export class BookingSeriesService {
@@ -17,6 +21,9 @@ export class BookingSeriesService {
   ): Promise<Booking[]> {
     if (!seriesId || !seriesId.trim()) {
       throw new Error("Series ID is required");
+    }
+    if (ownerUserId !== undefined && !ownerUserId.trim()) {
+      throw new Error("Owner user ID cannot be empty");
     }
 
     const cleanSeriesId = seriesId.trim();
@@ -29,12 +36,7 @@ export class BookingSeriesService {
     ];
 
     if (ownerUserId) {
-      conditions.push(
-        or(
-          eq(booking.organizerUserId, ownerUserId),
-          eq(booking.userId, ownerUserId),
-        )!,
-      );
+      conditions.push(eq(booking.organizerUserId, ownerUserId));
     }
 
     const matchingBookings = await db
@@ -76,15 +78,28 @@ export class BookingSeriesService {
   public static async cancelSeriesByBooking(
     id: string,
     cancelSingleFn: (bookingId: string, reason?: string) => Promise<Booking>,
-    reasonOrCaller?: string,
-    callerUserId?: string,
+    optionsOrReason?: CancelSeriesOptions | string,
+    callerUserIdParam?: string,
   ): Promise<Booking[]> {
-    let reason = reasonOrCaller;
-    let callerId = callerUserId;
+    let reason: string | undefined;
+    let callerId: string | undefined;
 
-    if (!callerId && reason && /^[0-9a-f-]{36}$/i.test(reason)) {
-      callerId = reason;
-      reason = undefined;
+    if (
+      optionsOrReason &&
+      typeof optionsOrReason === "object" &&
+      !("length" in optionsOrReason)
+    ) {
+      reason = optionsOrReason.reason;
+      callerId = optionsOrReason.callerUserId;
+    } else if (typeof optionsOrReason === "string") {
+      reason = optionsOrReason;
+      callerId = callerUserIdParam;
+      if (!callerId && /^[0-9a-f-]{36}$/i.test(reason)) {
+        callerId = reason;
+        reason = undefined;
+      }
+    } else {
+      callerId = callerUserIdParam;
     }
 
     if (id.startsWith("series_")) {
@@ -105,15 +120,10 @@ export class BookingSeriesService {
       return [];
     }
 
-    const ownerId = targetBooking.organizerUserId || targetBooking.userId;
-    if (
-      callerId &&
-      ownerId &&
-      targetBooking.organizerUserId !== callerId &&
-      targetBooking.userId !== callerId
-    ) {
+    const organizerId = targetBooking.organizerUserId;
+    if (callerId && organizerId && organizerId !== callerId) {
       throw new Error(
-        "Forbidden: You are not authorized to cancel this booking series",
+        "Forbidden: Only the meeting organizer may cancel this booking series",
       );
     }
 
@@ -124,7 +134,7 @@ export class BookingSeriesService {
       const seriesCancelled = await this.cancelSeries(
         seriesMatch[1],
         reason,
-        ownerId || callerId,
+        organizerId || callerId,
       );
       if (seriesCancelled.length > 0) {
         return seriesCancelled;

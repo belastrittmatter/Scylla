@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { GoogleCalendarService } from "../google-calendar";
+import { GoogleCalendarService } from "@/services/google-calendar";
 import type { BookingAttendee } from "./booking-query-service";
 
 export function normalizeAttendees(
@@ -37,6 +37,8 @@ export function sanitizeBookingDescription(
     if (next === out) break;
     out = next;
   }
+  // Strip any remaining or malformed/nested series comment patterns
+  out = out.replace(/<!--\s*series:[\s\S]*?-->/gi, "");
   return out.trim() || undefined;
 }
 

@@ -295,3 +295,168 @@ describe("Issue #95 Series Cancellation Isolation", () => {
     }
   });
 });
+
+test("C2: literal backslash, percent, and underscore in seriesId do not cancel other series", async () => {
+  const [testUser] = await db
+    .insert(user)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Escape Test User",
+      email: `escape-${Date.now()}@example.com`,
+    })
+    .returning();
+
+  const now = Date.now();
+  // Series containing literal backslash and percent in the middle of id
+  const legitimateSeriesId = `series_legit_normal_${Date.now()}`;
+
+  const [targetBooking] = await db
+    .insert(booking)
+    .values({
+      organizerUserId: testUser.id,
+      title: "Normal Meeting",
+      description: `Meeting notes <!--series:${legitimateSeriesId}-->`,
+      status: "confirmed",
+      startTime: new Date(now + 3600000),
+      endTime: new Date(now + 7200000),
+    })
+    .returning();
+
+  try {
+    // Attacker tries literal backslash and % in middle of queried id
+    const trickyId = "series_legit\\%normal";
+    const cancelledTricky = await BookingService.cancelSeries(
+      trickyId,
+      "test tricky",
+      testUser.id,
+    );
+    expect(cancelledTricky.length).toBe(0);
+
+    // Verify the booking is still confirmed
+    const [reloaded] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, targetBooking.id));
+    expect(reloaded.status).toBe("confirmed");
+
+    // Calling cancelSeries without ownerUserId must throw
+    await expect(
+      BookingService.cancelSeries(legitimateSeriesId, "test no owner", ""),
+    ).rejects.toThrow(/Owner user ID/i);
+  } finally {
+    await db
+      .delete(booking)
+      .where(eq(booking.id, targetBooking.id))
+      .catch(() => {});
+    await db
+      .delete(user)
+      .where(eq(user.id, testUser.id))
+      .catch(() => {});
+  }
+});
+
+test("C3: nested or multiple series tags are recursively stripped when sanitizeDescription is used", async () => {
+  const [organizer] = await db
+    .insert(user)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Nested Sanitize User",
+      email: `nested-${Date.now()}@example.com`,
+    })
+    .returning();
+
+  const now = Date.now();
+
+  try {
+    // Nested series tag injection
+    const nestedTag = "Start <!--series:outer<!--series:inner-->tag--> End";
+    const created = await BookingService.createBooking({
+      title: "Nested Tag Booking",
+      description: nestedTag,
+      organizerUserId: organizer.id,
+      startTime: new Date(now + 3600000),
+      endTime: new Date(now + 7200000),
+      sanitizeDescription: true,
+    });
+
+    expect(created.description).not.toContain("<!--series:");
+    expect(created.description).not.toContain("outer");
+    expect(created.description).not.toContain("inner");
+
+    await db
+      .delete(booking)
+      .where(eq(booking.id, created.id))
+      .catch(() => {});
+  } finally {
+    await db
+      .delete(user)
+      .where(eq(user.id, organizer.id))
+      .catch(() => {});
+  }
+});
+
+test("C1: non-organizer attendee cannot cancel entire series", async () => {
+  const [organizer] = await db
+    .insert(user)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Series Organizer",
+      email: `organizer-${Date.now()}@example.com`,
+    })
+    .returning();
+
+  const [attendee] = await db
+    .insert(user)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Series Attendee",
+      email: `attendee-${Date.now()}@example.com`,
+    })
+    .returning();
+
+  const now = Date.now();
+  const seriesId = `series_org_${Date.now()}`;
+
+  const [seriesBooking] = await db
+    .insert(booking)
+    .values({
+      organizerUserId: organizer.id,
+      title: "Organizer Team Meeting",
+      description: `Recurring team meeting <!--series:${seriesId}-->`,
+      status: "confirmed",
+      startTime: new Date(now + 3600000),
+      endTime: new Date(now + 7200000),
+    })
+    .returning();
+
+  try {
+    // Attendee tries to cancel the organizer's entire series
+    await expect(
+      BookingService.cancelSeriesByBooking(seriesBooking.id, {
+        callerUserId: attendee.id,
+      }),
+    ).rejects.toThrow(
+      /Only the meeting organizer may cancel this booking series/i,
+    );
+
+    // Verify the booking is still confirmed
+    const [reloaded] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, seriesBooking.id));
+    expect(reloaded.status).toBe("confirmed");
+  } finally {
+    await db
+      .delete(booking)
+      .where(eq(booking.id, seriesBooking.id))
+      .catch(() => {});
+    await db
+      .delete(user)
+      .where(eq(user.id, organizer.id))
+      .catch(() => {});
+    await db
+      .delete(user)
+      .where(eq(user.id, attendee.id))
+      .catch(() => {});
+  }
+});

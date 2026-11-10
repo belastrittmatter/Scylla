@@ -281,13 +281,14 @@ export class BookingService {
 
   public static async cancelSeriesByBooking(
     id: string,
-    reasonOrCaller?: string,
+    optionsOrReason?:
+      import("./booking/booking-series-service").CancelSeriesOptions | string,
     callerUserId?: string,
   ): Promise<Booking[]> {
     return BookingSeriesService.cancelSeriesByBooking(
       id,
       (bookingId, r) => this.cancel(bookingId, r),
-      reasonOrCaller,
+      optionsOrReason,
       callerUserId,
     );
   }
