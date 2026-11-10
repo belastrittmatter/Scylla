@@ -20,6 +20,8 @@ import {
   GET as getEventTypesHandler,
   POST as createEventTypeHandler,
 } from "@/app/api/event-types/route";
+import { GET as getRoomsHandler } from "@/app/api/rooms/route";
+import { GET as getCalendarHandler } from "@/app/api/calendar/route";
 import { db } from "@/db";
 import { booking, eventType, team, teamMember, user } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
@@ -505,6 +507,36 @@ describe("Security Issue #96: tenant scoping", () => {
       expect(res.status).toBe(500);
       expect(JSON.stringify(await res.json())).not.toContain("pg boom");
       expect(errorSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("rooms and calendar", () => {
+    const range =
+      "timeMin=2026-10-26T00:00:00.000Z&timeMax=2026-10-27T00:00:00.000Z";
+
+    it("GET /api/rooms returns 401 when unauthenticated", async () => {
+      const res = await getRoomsHandler(
+        new Request("http://localhost:3000/api/rooms"),
+      );
+      expect(res.status).toBe(401);
+    });
+
+    it("GET /api/calendar returns 401 when unauthenticated", async () => {
+      const res = await getCalendarHandler(
+        new Request(`http://localhost:3000/api/calendar?${range}`),
+      );
+      expect(res.status).toBe(401);
+    });
+
+    it("GET /api/calendar?userId= allows teammates and refuses other tenants", async () => {
+      const mate = await getCalendarHandler(
+        asCaller(`/api/calendar?${range}&userId=${teammateId}`),
+      );
+      expect(mate.status).toBe(200);
+      const outsider = await getCalendarHandler(
+        asCaller(`/api/calendar?${range}&userId=${outsiderId}`),
+      );
+      expect(outsider.status).toBe(403);
     });
   });
 });

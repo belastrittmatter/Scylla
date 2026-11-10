@@ -107,7 +107,9 @@ describe("REST API Route Handlers", () => {
 
   describe("GET /api/rooms", () => {
     test("returns list of rooms without filters", async () => {
-      const req = new Request("http://localhost:3000/api/rooms");
+      const req = new Request("http://localhost:3000/api/rooms", {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      });
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -116,7 +118,9 @@ describe("REST API Route Handlers", () => {
     });
 
     test("filters rooms by minimum capacity", async () => {
-      const req = new Request("http://localhost:3000/api/rooms?minCapacity=6");
+      const req = new Request("http://localhost:3000/api/rooms?minCapacity=6", {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      });
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -130,6 +134,9 @@ describe("REST API Route Handlers", () => {
     test("filters rooms by feature", async () => {
       const req = new Request(
         "http://localhost:3000/api/rooms?features=whiteboard",
+        {
+          headers: { "x-user-id": "usr_alex_rivera" },
+        },
       );
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(200);
@@ -143,7 +150,9 @@ describe("REST API Route Handlers", () => {
     });
 
     test("filters rooms by building", async () => {
-      const req = new Request("http://localhost:3000/api/rooms?building=HQ");
+      const req = new Request("http://localhost:3000/api/rooms?building=HQ", {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      });
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -156,6 +165,9 @@ describe("REST API Route Handlers", () => {
     test("returns 400 for invalid minCapacity query parameter", async () => {
       const req = new Request(
         "http://localhost:3000/api/rooms?minCapacity=invalid",
+        {
+          headers: { "x-user-id": "usr_alex_rivera" },
+        },
       );
       const res = await getRoomsHandler(req);
       expect(res.status).toBe(400);
@@ -654,7 +666,9 @@ describe("REST API Route Handlers", () => {
     test("handles attendeeEmails with dots in usernames without throwing 500", async () => {
       const url =
         "http://localhost:3000/api/calendar?timeMin=2026-10-26T00:00:00.000Z&timeMax=2026-11-02T00:00:00.000Z&attendeeEmails=user.one%40example.com%2Cuser.two%40example.com%2Cuser.three%40example.com";
-      const req = new Request(url);
+      const req = new Request(url, {
+        headers: { "x-user-id": "usr_alex_rivera" },
+      });
       const res = await getCalendarHandler(req);
       expect(res.status).toBe(200);
       const data = await res.json();
