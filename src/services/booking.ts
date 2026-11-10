@@ -216,7 +216,10 @@ export class BookingService {
           end,
           roomEmail,
           title: targetTitle,
-          description: targetDescription || undefined,
+          // "" clears the Google description; undefined would leave it untouched.
+          description:
+            targetDescription ??
+            (payload.description !== undefined ? "" : undefined),
           attendees: existing.attendees,
         },
         organizerToken,
@@ -234,7 +237,7 @@ export class BookingService {
         description: targetDescription,
         updatedAt: new Date(),
       })
-      .where(eq(booking.id, id))
+      .where(eq(booking.id, existing.id))
       .returning();
 
     return updated;

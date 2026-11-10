@@ -573,3 +573,49 @@ describe("C5: series marker sanitization", () => {
     }
   });
 });
+
+describe("C6: reschedule", () => {
+  test("updates the stored booking when addressed by an alias id and propagates a cleared description", async () => {
+    const [organizer] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "Reschedule Organizer",
+        email: `resched-${Date.now()}@example.com`,
+      })
+      .returning();
+    const updateSpy = spyOn(GoogleCalendarService, "updateEvent");
+    const now = Date.now();
+    try {
+      const created = await BookingService.createBooking({
+        title: "Original",
+        description: "Has notes",
+        organizerUserId: organizer.id,
+        startTime: new Date(now + 3600000),
+        endTime: new Date(now + 7200000),
+      });
+      expect(created.gcalEventId).toBeTruthy();
+
+      const updated = await BookingService.reschedule(
+        `gcal-${created.gcalEventId}`,
+        { title: "Renamed", description: "" },
+      );
+      expect(updated?.id).toBe(created.id);
+      expect(updated.title).toBe("Renamed");
+      expect(updated.description).toBeNull();
+
+      const gcalPayload = updateSpy.mock.calls.at(-1)?.[1];
+      expect(gcalPayload?.description).toBe("");
+    } finally {
+      updateSpy.mockRestore();
+      await db
+        .delete(booking)
+        .where(eq(booking.organizerUserId, organizer.id))
+        .catch(() => {});
+      await db
+        .delete(user)
+        .where(eq(user.id, organizer.id))
+        .catch(() => {});
+    }
+  });
+});
