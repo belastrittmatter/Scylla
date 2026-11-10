@@ -132,157 +132,6 @@ function Briefing() {
   );
 }
 
-function KCard({
-  title,
-  prio,
-  color,
-  col,
-  top,
-}: {
-  title: string;
-  prio: string;
-  color: string;
-  col: number;
-  top: number;
-}) {
-  return (
-    <div
-      className="sis-kcard"
-      style={{ left: `calc(14px + ${col} * ((100% - 40px) / 3 + 6px))`, top }}
-    >
-      {title}
-      <div className="sis-row">
-        <span className="sis-prio">{prio}</span>
-        <Avatar color={color} />
-      </div>
-    </div>
-  );
-}
-
-function Board() {
-  return (
-    <>
-      <div className="sis-stage">
-        <div className="sis-cols">
-          {[
-            ["To do", "var(--faint)"],
-            ["In progress", "var(--blue)"],
-            ["Done", "var(--ok)"],
-          ].map(([name, color]) => (
-            <div key={name} className="sis-col">
-              <h4>
-                <i style={{ background: color }} />
-                {name}
-              </h4>
-            </div>
-          ))}
-        </div>
-        <KCard
-          title="Update API docs"
-          prio="Low"
-          color="#34d399"
-          col={0}
-          top={98}
-        />
-        <KCard
-          title="Fix flaky test"
-          prio="Medium"
-          color="#fbbf24"
-          col={0}
-          top={156}
-        />
-        <KCard
-          title="Search endpoint"
-          prio="Medium"
-          color="#60a5fa"
-          col={1}
-          top={98}
-        />
-        <KCard
-          title="Onboarding flow"
-          prio="High"
-          color="#a78bfa"
-          col={2}
-          top={98}
-        />
-        <div className={`sis-kcard sis-mover`}>
-          <span className="sis-box" />
-          <span>Changelog</span>
-          <div className="sis-row">
-            <span className={`sis-prio sis-prioHigh`}>High</span>
-            <Avatar color="#f472b6" />
-          </div>
-        </div>
-      </div>
-      <div className="sis-cap">
-        <span className="sis-board1">Your team&apos;s board</span>
-        <span className={`sis-board2 sis-hl`}>
-          Lena moved it to In progress
-        </span>
-        <span className={`sis-board3 sis-hl`}>
-          Done · everyone sees it live
-        </span>
-      </div>
-    </>
-  );
-}
-
-function Project() {
-  return (
-    <>
-      <div className="sis-stage">
-        <div className="sis-projHead">
-          Website relaunch{" "}
-          <span className="sis-pill" style={{ color: "var(--ok)" }}>
-            Active
-          </span>
-        </div>
-        <div className="sis-progress">
-          <span className="sis-bar">
-            <i />
-          </span>
-          <span className={`sis-swap sis-count`}>
-            <span className="sis-count1">4/7</span>
-            <span className="sis-count2">5/7</span>
-          </span>
-        </div>
-        <div className="sis-section">Meetings</div>
-        <div className={`sis-item sis-added`}>
-          <span className="sis-cal" />
-          Design review <span className="sis-newBadge">New</span>
-          <span className="sis-end">Thu 14:00</span>
-        </div>
-        <div className="sis-item">
-          <span className={`sis-cal sis-calPast`} />
-          Kickoff
-          <span className="sis-end">Mon 10:00</span>
-        </div>
-        <div className="sis-section">Tasks</div>
-        <div className={`sis-item sis-done`}>
-          <span className="sis-box" />
-          <span className="sis-label">Ship hero section</span>
-          <span className="sis-end">
-            <Avatar color="#f472b6" />
-          </span>
-        </div>
-        <div className="sis-item">
-          <span className="sis-box" />
-          Migrate blog posts
-          <span className="sis-end">
-            <Avatar color="#60a5fa" />
-          </span>
-        </div>
-      </div>
-      <div className="sis-cap">
-        <span className="sis-proj1">One project, one place</span>
-        <span className={`sis-proj2 sis-hl`}>
-          Meetings and tasks stay with the project
-        </span>
-      </div>
-    </>
-  );
-}
-
 function GitHub() {
   return (
     <>
@@ -327,7 +176,7 @@ function GitHub() {
   );
 }
 
-const SCENES = [Book, Board, Move, Project, Briefing, GitHub];
+const SCENES = [Book, Move, Briefing, GitHub];
 
 /** Decorative loop of product vignettes; each scene remounts so its CSS animation starts from 0. */
 export function SignInShowcase({ className }: { className?: string }) {
@@ -347,7 +196,7 @@ export function SignInShowcase({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
-      className={`sis-root [--afg:#c2410c] [--blue:#2563eb] [--lift:0_10px_24px_rgb(0_0_0/0.1)] [--ok:#16a34a] [--violet:#7c3aed] dark:[--afg:#fdba74] dark:[--blue:#60a5fa] dark:[--lift:0_10px_24px_rgb(0_0_0/0.55)] dark:[--ok:#22c55e] dark:[--violet:#a78bfa] ${className ?? ""}`}
+      className={`sis-root [--afg:#c2410c] [--blue:#2563eb] [--ok:#16a34a] [--violet:#7c3aed] dark:[--afg:#fdba74] dark:[--blue:#60a5fa] dark:[--ok:#22c55e] dark:[--violet:#a78bfa] ${className ?? ""}`}
     >
       <Scene key={index} />
     </div>
