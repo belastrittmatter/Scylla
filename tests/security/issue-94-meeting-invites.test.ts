@@ -1,12 +1,27 @@
-import { describe, expect, it, beforeAll, afterAll, afterEach } from "bun:test";
+import {
+  describe,
+  expect,
+  it,
+  beforeAll,
+  afterAll,
+  afterEach,
+  spyOn,
+} from "bun:test";
 import { POST as createInviteHandler } from "@/app/api/meeting-invites/route";
 import { GET as getInviteHandler } from "@/app/api/meeting-invites/[slug]/route";
 import { POST as bookHandler } from "@/app/api/meeting-invites/[slug]/book/route";
 import { POST as slotsHandler } from "@/app/api/meeting-invites/[slug]/slots/route";
 import { MeetingInviteService } from "@/services/meeting-invite";
+import { GoogleCalendarService } from "@/services/google-calendar";
 import type { TimeSlot } from "@/services/scheduler";
 import { db } from "@/db";
-import { user, meetingInvite, meetingRoom, booking } from "@/db/schema";
+import {
+  user,
+  account,
+  meetingInvite,
+  meetingRoom,
+  booking,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 const RUN = Date.now();
@@ -370,5 +385,56 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
       .from(booking)
       .where(eq(booking.organizerUserId, testOrganizerId));
     expect(rows).toHaveLength(1);
+  });
+
+  it("invite slots and bookings respect the organizer's Google busy times", async () => {
+    await db.insert(account).values({
+      id: `acc_${testOrganizerId}`,
+      accountId: testOrganizerId,
+      providerId: "google",
+      userId: testOrganizerId,
+      accessToken: "org-94-token",
+      updatedAt: new Date(),
+    });
+    const freeBusy = spyOn(GoogleCalendarService, "getFreeBusy");
+    try {
+      freeBusy.mockResolvedValue({});
+      const invite = await createSecretInvite();
+      const [slot] = await offeredSlots(invite.slug);
+      expect(freeBusy).toHaveBeenCalledWith(
+        expect.arrayContaining([ORGANIZER_EMAIL.toLowerCase()]),
+        expect.any(Date),
+        expect.any(Date),
+        expect.objectContaining({
+          accountRecord: expect.objectContaining({ userId: testOrganizerId }),
+        }),
+      );
+
+      // The organizer's Google calendar now has the first offered slot busy.
+      const slotStart = new Date(slot.start).getTime();
+      freeBusy.mockResolvedValue({
+        [ORGANIZER_EMAIL.toLowerCase()]: [
+          {
+            start: new Date(slot.start).toISOString(),
+            end: new Date(slot.end).toISOString(),
+          },
+        ],
+      });
+      const after = await offeredSlots(invite.slug);
+      expect(after.some((s) => new Date(s.start).getTime() === slotStart)).toBe(
+        false,
+      );
+
+      const res = await bookRequest(invite.slug, {
+        guestName: "VIP",
+        guestEmail: SECRET_GUEST,
+        startTime: slot.start,
+        endTime: slot.end,
+      });
+      expect(res.status).toBe(409);
+    } finally {
+      freeBusy.mockRestore();
+      await db.delete(account).where(eq(account.id, `acc_${testOrganizerId}`));
+    }
   });
 });

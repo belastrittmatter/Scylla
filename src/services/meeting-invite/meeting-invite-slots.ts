@@ -1,3 +1,6 @@
+import { and, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { account } from "@/db/schema";
 import { SchedulerService, type TimeSlot } from "@/services/scheduler";
 import type { InviteDetails } from "@/services/meeting-invite/meeting-invite-types";
 
@@ -18,7 +21,20 @@ export async function findInviteSlots(
     allAttendees.add(email.toLowerCase());
   }
 
+  // Public guests have no Google account; free/busy is read with the organizer's own.
+  const [organizerAccount] = await db
+    .select()
+    .from(account)
+    .where(
+      and(
+        eq(account.userId, invite.organizerUserId),
+        eq(account.providerId, "google"),
+      ),
+    )
+    .limit(1);
+
   const slots = await SchedulerService.findSlots({
+    accountRecord: organizerAccount,
     attendees: Array.from(allAttendees),
     durationMinutes: invite.duration,
     startDate: start,
