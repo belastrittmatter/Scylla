@@ -149,17 +149,14 @@ export async function createProjectAction(
       };
 
     const userId = await resolveActionUserId();
-    const isMember = await TeamService.isTeamMember(
-      parseResult.data.teamId,
-      userId,
-    );
-    if (!isMember) {
+    const teamId = await TeamService.resolveTeamId(parseResult.data.teamId);
+    if (!teamId || !(await TeamService.isTeamMember(teamId, userId))) {
       return { success: false, error: "Access denied" };
     }
 
     const created = await ProjectService.createProject({
       name: parseResult.data.name,
-      teamId: parseResult.data.teamId,
+      teamId,
       description: parseResult.data.description ?? undefined,
       color: parseResult.data.color ?? undefined,
       status: "active",
@@ -185,11 +182,8 @@ export async function createTaskAction(
       };
 
     const creatorId = await resolveActionUserId();
-    const isMember = await TeamService.isTeamMember(
-      parseResult.data.teamId,
-      creatorId,
-    );
-    if (!isMember) {
+    const teamId = await TeamService.resolveTeamId(parseResult.data.teamId);
+    if (!teamId || !(await TeamService.isTeamMember(teamId, creatorId))) {
       return { success: false, error: "Access denied" };
     }
 
@@ -205,7 +199,7 @@ export async function createTaskAction(
       description: parsedData.description ?? undefined,
       status: parsedData.status ?? "todo",
       priority: parsedData.priority ?? "medium",
-      teamId: parsedData.teamId,
+      teamId,
       projectId: parsedData.projectId ?? undefined,
       creatorId,
       assigneeId: parsedData.assigneeId ?? null,

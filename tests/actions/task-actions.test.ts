@@ -101,6 +101,16 @@ describe("Task Server Actions with Core Domain Services", () => {
     expect(updateRes.data!.priority).toBe("high");
   });
 
+  test("createTaskAction accepts a team slug and stores the real team id", async () => {
+    const own = await TeamService.getTeamById(testTeamId);
+    const res = await createTaskAction({
+      teamId: own!.slug,
+      title: `Slug Task ${Date.now()}`,
+    });
+    expect(res.success).toBe(true);
+    expect(res.data!.teamId).toBe(testTeamId);
+  });
+
   test("createTaskCommentAction and getTaskCommentsAction comments flow", async () => {
     const commentRes = await createTaskCommentAction({
       taskId: testTaskId,
@@ -204,6 +214,51 @@ describe("Task Server Actions with Core Domain Services", () => {
       });
       expect(res.success).toBe(false);
       expect(res.error).toMatch(/Access denied|Unauthorized/i);
+    });
+
+    describe("team slug that equals another team's id", () => {
+      let shadowTeamId: string;
+
+      beforeAll(async () => {
+        const shadow = await TeamService.createTeam({
+          name: `Shadow Team ${Date.now()}`,
+          slug: foreignTeamId,
+          ownerId: actingUserId,
+        });
+        shadowTeamId = shadow.id;
+      });
+
+      afterAll(async () => {
+        if (shadowTeamId) await TeamService.deleteTeam(shadowTeamId);
+      });
+
+      test("resolveTeamId prefers the real id over a colliding slug", async () => {
+        expect(await TeamService.resolveTeamId(foreignTeamId)).toBe(
+          foreignTeamId,
+        );
+      });
+
+      test("isTeamMember only matches by id", async () => {
+        expect(
+          await TeamService.isTeamMember(foreignTeamId, actingUserId),
+        ).toBe(false);
+      });
+
+      test("createTaskAction cannot write into the victim team", async () => {
+        const res = await createTaskAction({
+          teamId: foreignTeamId,
+          title: "Slug collision task",
+        });
+        expect(res).toEqual({ success: false, error: "Access denied" });
+      });
+
+      test("createProjectAction cannot write into the victim team", async () => {
+        const res = await createProjectAction({
+          teamId: foreignTeamId,
+          name: "Slug collision project",
+        });
+        expect(res).toEqual({ success: false, error: "Access denied" });
+      });
     });
   });
 });
