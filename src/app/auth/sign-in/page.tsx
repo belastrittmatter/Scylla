@@ -91,18 +91,18 @@ export default function SignInPage() {
           className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900"
         >
           {/* Light: soft orange wash. Dark: a neutral white lift; orange over near-black reads brown. */}
-          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:bg-[radial-gradient(90%_60%_at_30%_0%,rgb(255_255_255/0.13),transparent_75%)]" />
-          <div className="relative flex h-full flex-col justify-center px-12 py-16 xl:px-16">
-            <p className="max-w-md text-2xl leading-snug font-semibold tracking-tight">
+          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:bg-[radial-gradient(90%_60%_at_50%_0%,rgb(255_255_255/0.13),transparent_75%)]" />
+          <div className="relative mx-auto flex h-full max-w-md flex-col justify-center py-16">
+            <p className="text-2xl leading-snug font-semibold tracking-tight">
               Your team&apos;s calendars, tasks and agents.{" "}
               <span className="text-orange-600 dark:text-orange-400">
                 One schedule.
               </span>
             </p>
-            <p className="text-muted-foreground mt-3 max-w-md text-sm">
+            <p className="text-muted-foreground mt-3 text-sm">
               A quick look at what Scylla does once you&apos;re in.
             </p>
-            <SignInShowcase className="mt-10 max-w-md" />
+            <SignInShowcase className="mt-10" />
           </div>
         </aside>
       </div>
