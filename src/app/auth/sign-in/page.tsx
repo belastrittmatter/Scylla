@@ -4,17 +4,10 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CalendarDays, CircleAlert, DoorOpen, UserRound } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { AuthUIProvider } from "@/components/auth-provider";
 import { ProviderButton } from "@/components/auth/provider-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// Mirrors the Google scopes requested in src/lib/auth.ts, so the consent screen holds no surprises.
-const ACCESS = [
-  { icon: CalendarDays, label: "See and edit events on your calendars" },
-  { icon: DoorOpen, label: "See your organization's meeting rooms" },
-  { icon: UserRound, label: "Know your name, email and profile photo" },
-];
 
 function SignInError() {
   const error = useSearchParams().get("error");
@@ -58,9 +51,7 @@ export default function SignInPage() {
                 Sign in to Scylla
               </h1>
               <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                Scylla works on top of your Google Calendar. Use your work
-                account. If you&apos;re new, we&apos;ll set up your workspace
-                automatically.
+                Use the Google account your calendar lives in.
               </p>
 
               <React.Suspense fallback={null}>
@@ -73,21 +64,27 @@ export default function SignInPage() {
                 className="mt-8 h-11 w-full text-[15px] shadow-xs [&_svg]:size-5"
               />
 
-              <div className="mt-10 border-t pt-6">
-                <p className="text-foreground text-sm font-medium">
-                  Google will ask to let Scylla
+              {/* Illustrative: the one thing Scylla adds on top of Google Calendar. */}
+              <div
+                aria-hidden
+                className="bg-card mt-10 rounded-xl border p-4 text-sm shadow-xs"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-medium">Design review</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    Thu 14:00
+                  </span>
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  Focus Room Alpha · 4 people
                 </p>
-                <ul className="text-muted-foreground mt-3 space-y-2.5 text-sm">
-                  {ACCESS.map(({ icon: Icon, label }) => (
-                    <li key={label} className="flex items-center gap-3">
-                      <Icon
-                        aria-hidden
-                        className="size-4 shrink-0 text-orange-600 dark:text-orange-400"
-                      />
-                      {label}
-                    </li>
-                  ))}
-                </ul>
+                <div className="text-muted-foreground mt-3 flex items-center gap-2 border-t border-dashed pt-3">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Booked by Claude
+                  <span className="ml-auto rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+                    via MCP
+                  </span>
+                </div>
               </div>
             </div>
           </main>
@@ -113,13 +110,15 @@ export default function SignInPage() {
 
         <aside
           aria-hidden
-          className="bg-muted relative hidden overflow-hidden border-l lg:block"
+          className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900"
         >
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-orange-500/10 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:24px_24px] opacity-60 dark:opacity-40" />
           <div className="absolute inset-0 px-12 pt-16 xl:px-16 xl:pt-20">
             <p className="max-w-md text-2xl font-semibold leading-snug tracking-tight">
-              Your team&apos;s calendars, rooms and AI agents, scheduled in one
-              place.
+              Your team&apos;s calendars, rooms and agents.{" "}
+              <span className="text-orange-600 dark:text-orange-400">
+                One schedule.
+              </span>
             </p>
             <p className="text-muted-foreground mt-3 max-w-md text-sm">
               Find a time that works for everyone, book the room, and let agents
