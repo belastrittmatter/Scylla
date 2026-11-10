@@ -231,14 +231,18 @@ export class GithubSyncService {
       };
 
       if (existing) {
-        await TaskService.updateTask(existing.id, {
-          title: cleanTitle,
-          description: cleanDescription,
-          status: mappedStatus,
-          githubIssueUrl: issue.html_url,
-          ...gitData,
-          ...(matchedAssigneeId ? { assigneeId: matchedAssigneeId } : {}),
-        });
+        await TaskService.updateTask(
+          existing.id,
+          {
+            title: cleanTitle,
+            description: cleanDescription,
+            status: mappedStatus,
+            githubIssueUrl: issue.html_url,
+            ...gitData,
+            ...(matchedAssigneeId ? { assigneeId: matchedAssigneeId } : {}),
+          },
+          currentUserId || existing.creatorId || "system",
+        );
         updatedCount++;
       } else {
         await TaskService.createTask({

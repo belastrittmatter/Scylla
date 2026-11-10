@@ -29,13 +29,11 @@ export function CalendarRepeatOptions({
   const isRepeating = frequency !== "none";
 
   return (
-    <div className="space-y-2 rounded-lg border border-neutral-200/80 bg-neutral-50/50 p-2.5 dark:border-neutral-800 dark:bg-neutral-900/40">
+    <div className="space-y-2 rounded-lg border border-border/80 bg-muted/50 p-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Repeat className="size-3.5 text-neutral-500" />
-          <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-            Repeat
-          </Label>
+          <Repeat className="size-3.5 text-muted-foreground" />
+          <Label className="text-xs font-medium text-foreground">Repeat</Label>
         </div>
         <Button
           type="button"
@@ -43,7 +41,7 @@ export function CalendarRepeatOptions({
           size="sm"
           disabled={disabled}
           onClick={() => onChange(isRepeating ? "none" : "daily_workdays")}
-          className="h-6.5 cursor-pointer px-2 text-[11px]"
+          className="h-6.5 cursor-pointer px-2 text-xs"
         >
           {isRepeating ? "Repeats" : "Does not repeat"}
         </Button>

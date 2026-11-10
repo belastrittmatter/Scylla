@@ -6,11 +6,16 @@ import { createContext, useContext, useState, useCallback } from "react";
 interface BreadcrumbContextType {
   customLabels: Record<string, string>;
   setLabel: (segment: string, label: string) => void;
+  /** Node ViewHeader renders for page-owned header content (see HeaderSlot). */
+  headerSlot: HTMLElement | null;
+  setHeaderSlot: (node: HTMLElement | null) => void;
 }
 
 const BreadcrumbContext = createContext<BreadcrumbContextType>({
   customLabels: {},
   setLabel: () => {},
+  headerSlot: null,
+  setHeaderSlot: () => {},
 });
 
 export function BreadcrumbProvider({
@@ -19,6 +24,7 @@ export function BreadcrumbProvider({
   children: React.ReactNode;
 }) {
   const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
 
   const setLabel = useCallback((segment: string, label: string) => {
     setCustomLabels((prev) => {
@@ -28,7 +34,9 @@ export function BreadcrumbProvider({
   }, []);
 
   return (
-    <BreadcrumbContext.Provider value={{ customLabels, setLabel }}>
+    <BreadcrumbContext.Provider
+      value={{ customLabels, setLabel, headerSlot, setHeaderSlot }}
+    >
       {children}
     </BreadcrumbContext.Provider>
   );

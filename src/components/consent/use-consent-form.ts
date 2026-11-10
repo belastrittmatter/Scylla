@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createAuthClient } from "better-auth/react";
 import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { ALL_MCP_CAPABILITIES } from "@/constants/agent-capabilities";
+import { initialConsentScopes } from "./consent-scopes";
+import type { ConsentClient } from "./consent-client-info";
 
 // Dedicated client for OAuth consent with disabled redirectPlugin so scope persistence finishes first
 const consentClient = createAuthClient({
@@ -15,25 +17,22 @@ const consentClient = createAuthClient({
 export function useConsentForm(clientId: string, requestedScopeParam: string) {
   const router = useRouter();
 
-  // Initialize selected scopes: if specific MCP scopes requested, use those;
-  // otherwise default to standard non-destructive capabilities.
-  const [selectedScopes, setSelectedScopes] = React.useState<string[]>(() => {
-    if (requestedScopeParam) {
-      const requested = requestedScopeParam
-        .split(/[\s,]+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const validRequested = requested.filter((s) =>
-        ALL_MCP_CAPABILITIES.some((c) => c.id === s),
-      );
-      if (validRequested.length > 0) {
-        return validRequested;
-      }
-    }
-    return ALL_MCP_CAPABILITIES.filter((c) => !c.isDestructive).map(
-      (c) => c.id,
-    );
-  });
+  const [selectedScopes, setSelectedScopes] = React.useState<string[]>(() =>
+    initialConsentScopes(requestedScopeParam),
+  );
+  const [client, setClient] = React.useState<ConsentClient | null>(null);
+
+  React.useEffect(() => {
+    if (!clientId) return;
+    consentClient.oauth2
+      .publicClient({ query: { client_id: clientId } })
+      .then(({ data }) =>
+        setClient(
+          data ? { name: data.client_name, uri: data.client_uri } : null,
+        ),
+      )
+      .catch(() => setClient(null));
+  }, [clientId]);
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -122,7 +121,7 @@ export function useConsentForm(clientId: string, requestedScopeParam: string) {
       }
 
       // Persist the user's customized MCP capabilities to the consent record
-      if (clientId && clientId !== "Unknown Client") {
+      if (clientId) {
         let persisted = false;
         let lastErrorText = "";
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -176,6 +175,7 @@ export function useConsentForm(clientId: string, requestedScopeParam: string) {
   };
 
   return {
+    client,
     selectedScopes,
     isLoading,
     error,

@@ -47,17 +47,15 @@ export function CalendarLocationSection({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-          Location
-        </Label>
-        <div className="inline-flex rounded-md border border-neutral-200 bg-neutral-100/80 p-0.5 dark:border-neutral-800 dark:bg-neutral-900">
+        <Label className="text-xs font-medium text-foreground">Location</Label>
+        <div className="inline-flex rounded-md border border-border bg-muted/80 p-0.5">
           <Button
             type="button"
             variant={locationType === "virtual" ? "default" : "ghost"}
             size="sm"
             disabled={disabled}
             onClick={() => onLocationTypeChange("virtual")}
-            className="h-6 cursor-pointer gap-1.5 px-2.5 text-[11px]"
+            className="h-6 cursor-pointer gap-1.5 px-2.5 text-xs"
           >
             <Video className="size-3" />
             <span>Google Meet</span>
@@ -69,7 +67,7 @@ export function CalendarLocationSection({
             size="sm"
             disabled={disabled}
             onClick={() => onLocationTypeChange("room")}
-            className="h-6 cursor-pointer gap-1.5 px-2.5 text-[11px]"
+            className="h-6 cursor-pointer gap-1.5 px-2.5 text-xs"
           >
             <Building2 className="size-3" />
             <span>Room</span>
@@ -100,7 +98,7 @@ export function CalendarLocationSection({
             )}
             {Array.from(groupedRooms.entries()).map(([loc, roomList]) => (
               <SelectGroup key={loc}>
-                <SelectLabel className="text-muted-foreground px-2 py-1 text-[10px] font-semibold uppercase tracking-wider">
+                <SelectLabel className="text-muted-foreground px-2 py-1 text-xs font-semibold uppercase tracking-wider">
                   {loc} Office
                 </SelectLabel>
                 {roomList.map((r) => (
@@ -109,7 +107,7 @@ export function CalendarLocationSection({
                       <span>
                         [{loc}] {r.name}
                       </span>
-                      <span className="text-muted-foreground text-[10px]">
+                      <span className="text-muted-foreground text-xs">
                         {r.capacity} seats
                       </span>
                     </div>

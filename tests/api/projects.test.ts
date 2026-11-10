@@ -10,6 +10,8 @@ import {
 } from "../../src/app/api/projects/[id]/route";
 import { TeamService } from "../../src/services/team/team-service";
 import { seedDatabase } from "../../src/db/seed";
+import { db, user } from "../../src/db";
+import { inArray } from "drizzle-orm";
 
 describe("Projects REST API Endpoints", () => {
   let teamId: string;
@@ -88,6 +90,45 @@ describe("Projects REST API Endpoints", () => {
     expect(data.name).toBe("Core Infrastructure");
     expect(data.teamId).toBe(teamId);
     createdProjectId = data.id;
+  });
+
+  test("POST /api/projects - members are denied, admins allowed (#99)", async () => {
+    const memberId = `usr_proj_member_${Date.now()}`;
+    const adminId = `usr_proj_admin_${Date.now()}`;
+    await db.insert(user).values(
+      [memberId, adminId].map((id) => ({
+        id,
+        name: id,
+        email: `${id}@example.com`,
+      })),
+    );
+    try {
+      await TeamService.addTeamMember({
+        teamId,
+        userId: memberId,
+        role: "member",
+      });
+      await TeamService.addTeamMember({
+        teamId,
+        userId: adminId,
+        role: "admin",
+      });
+      const post = (userId: string) =>
+        createProjectHandler(
+          new Request("http://localhost:3000/api/projects", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-user-id": userId,
+            },
+            body: JSON.stringify({ teamId, name: `By ${userId}` }),
+          }),
+        );
+      expect((await post(memberId)).status).toBe(403);
+      expect((await post(adminId)).status).toBe(201);
+    } finally {
+      await db.delete(user).where(inArray(user.id, [memberId, adminId]));
+    }
   });
 
   test("POST /api/projects - returns 409 conflict when duplicate slug is used", async () => {

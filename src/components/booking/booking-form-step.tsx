@@ -1,12 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeft, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "cn";
 import type { InviteData, Slot } from "./booking-types";
 import { formatFullDate, formatSlotTime } from "./booking-utils";
 
@@ -39,26 +38,6 @@ export function BookingFormStep({
   onBackToSlots,
   onSubmit,
 }: BookingFormStepProps) {
-  const isGuestEmailAllowed = (email: string) => {
-    if (
-      !invite.isRestricted ||
-      !invite.allowedEmails ||
-      invite.allowedEmails.length === 0
-    ) {
-      return true;
-    }
-    const clean = email.trim().toLowerCase();
-    return invite.allowedEmails.some(
-      (allowed) => allowed.toLowerCase() === clean,
-    );
-  };
-
-  const isEmailRestrictedMismatch =
-    Boolean(invite.isRestricted) &&
-    guestEmail.includes("@") &&
-    guestEmail.includes(".") &&
-    !isGuestEmailAllowed(guestEmail);
-
   return (
     <div className="mx-auto max-w-md space-y-6">
       <Button
@@ -133,23 +112,12 @@ export function BookingFormStep({
             onChange={(e) => setGuestEmail(e.target.value)}
             disabled={isBooking}
             required
-            className={cn(
-              "rounded-xl focus-visible:ring-orange-500",
-              isEmailRestrictedMismatch &&
-                "border-destructive focus-visible:ring-destructive",
-            )}
+            className="rounded-xl focus-visible:ring-orange-500"
           />
-          {isEmailRestrictedMismatch ? (
-            <p className="text-destructive flex items-center gap-1 text-[11px] font-medium">
-              <AlertCircle className="size-3.5 shrink-0" />
-              This email is not on the authorized guest list for this meeting.
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-[11px]">
-              Meeting confirmation and calendar invites will be sent to this
-              address.
-            </p>
-          )}
+          <p className="text-muted-foreground text-[11px]">
+            Meeting confirmation and calendar invites will be sent to this
+            address.
+          </p>
         </div>
 
         <div className="space-y-1.5">
@@ -173,7 +141,7 @@ export function BookingFormStep({
         <div className="pt-2">
           <Button
             type="submit"
-            disabled={isBooking || isEmailRestrictedMismatch}
+            disabled={isBooking}
             className="h-11 w-full gap-2 rounded-xl bg-orange-600 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orange-500"
           >
             {isBooking ? (

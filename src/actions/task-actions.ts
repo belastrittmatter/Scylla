@@ -1,12 +1,11 @@
 "use server";
 
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
-import { db, task, project, teamMember } from "@/db";
 import { TaskService } from "@/services/task/task-service";
 import { ProjectService } from "@/services/project/project-service";
-import type { Task, Project, TaskComment } from "@/db/schema";
-import type { TaskCommentItem } from "@/components/tasks/task-types";
+import { TeamService } from "@/services/team/team-service";
+import { hasTeamRole } from "@/services/team/team-types";
+import type { Task, Project } from "@/db/schema";
 import type {
   WorkspaceData,
   TaskUser,
@@ -14,14 +13,33 @@ import type {
   UpdateTaskActionPayload,
   CreateProjectActionPayload,
 } from "./task-action-types";
+import { resolveActionUserId, type ActionResult } from "./auth-helper";
 import {
-  UpdateTaskStatusSchema,
   UpdateTaskPayloadSchema,
   CreateProjectPayloadSchema,
-  CreateTaskPayloadSchema,
-  CreateTaskCommentPayloadSchema,
+  UpdateTaskStatusSchema,
 } from "./schemas";
-import { resolveActionUserId, type ActionResult } from "./auth-helper";
+import {
+  checkTaskStatusTransitionAllowed,
+  handleProjectGithubSetup,
+} from "./task-action-helpers";
+
+export type {
+  WorkspaceData,
+  TaskUser,
+  CreateTaskActionPayload,
+  UpdateTaskActionPayload,
+  CreateProjectActionPayload,
+};
+
+export {
+  createTaskAction,
+  getTaskCommentsAction,
+  createTaskCommentAction,
+  deleteTaskAction,
+} from "./task-crud-actions";
+
+export { createGithubRepositoryAction } from "./project-github-action";
 
 export async function getWorkspaceDataAction(): Promise<
   ActionResult<WorkspaceData>
@@ -41,80 +59,39 @@ export async function getWorkspaceDataAction(): Promise<
 
 export async function updateTaskStatusAction(
   taskId: string,
-  status: string,
+  newStatus: string,
 ): Promise<ActionResult<Task>> {
   try {
     const idParse = z.string().min(1, "Task ID is required").safeParse(taskId);
     if (!idParse.success)
-      return {
-        success: false,
-        error: idParse.error.issues.map((i) => i.message).join(", "),
-      };
+      return { success: false, error: idParse.error.issues[0]?.message };
 
-    const statusParse = UpdateTaskStatusSchema.safeParse({ status });
+    const statusParse = UpdateTaskStatusSchema.safeParse({ status: newStatus });
     if (!statusParse.success)
       return {
         success: false,
-        error: statusParse.error.issues.map((i) => i.message).join(", "),
+        error: statusParse.error.issues
+          .map((i: z.ZodIssue) => i.message)
+          .join(", "),
       };
 
-    const userId = await resolveActionUserId().catch(() => null);
-
-    // Enforce Git workflow and permission transition rules
-    const [existingTask] = await db
-      .select()
-      .from(task)
-      .where(eq(task.id, idParse.data))
-      .limit(1);
-
-    if (existingTask) {
-      let isProjectLinkedToGithub = false;
-      if (existingTask.projectId) {
-        const [proj] = await db
-          .select()
-          .from(project)
-          .where(eq(project.id, existingTask.projectId))
-          .limit(1);
-        isProjectLinkedToGithub = Boolean(proj?.githubRepo?.trim());
-      }
-
-      let userTeamRole: string | undefined;
-      if (userId && existingTask.teamId) {
-        const [memberRow] = await db
-          .select()
-          .from(teamMember)
-          .where(
-            and(
-              eq(teamMember.teamId, existingTask.teamId),
-              eq(teamMember.userId, userId),
-            ),
-          )
-          .limit(1);
-        userTeamRole = memberRow?.role;
-      }
-
-      const { validateTaskTransitionRule } =
-        await import("@/services/task/task-rules");
-      const validation = validateTaskTransitionRule({
-        task: existingTask,
-        targetStatus: statusParse.data.status,
-        currentUser: userId ? { id: userId } : null,
-        currentTeamRole: userTeamRole,
-        isProjectLinkedToGithub,
-      });
-
-      if (!validation.allowed) {
-        return {
-          success: false,
-          error: validation.reason || "Status transition not allowed by rules",
-        };
-      }
+    const userId = await resolveActionUserId();
+    const transitionCheck = await checkTaskStatusTransitionAllowed(
+      idParse.data,
+      statusParse.data.status,
+      userId,
+    );
+    if (!transitionCheck.allowed) {
+      return {
+        success: false,
+        error: transitionCheck.reason || "Status transition not allowed",
+      };
     }
 
     const updated = await TaskService.updateTask(
       idParse.data,
       { status: statusParse.data.status },
-      userId ?? undefined,
+      userId,
     );
 
     try {
@@ -123,7 +100,7 @@ export async function updateTaskStatusAction(
       await GithubIntegrationService.syncTaskToGitHub(
         idParse.data,
         { status: statusParse.data.status },
-        userId ?? undefined,
+        userId,
       );
     } catch (syncErr) {
       console.warn("GitHub issue sync on status update failed:", syncErr);
@@ -141,35 +118,56 @@ export async function updateTaskStatusAction(
 
 export async function updateTaskAction(
   taskId: string,
-  payload: UpdateTaskActionPayload,
+  data: UpdateTaskActionPayload,
 ): Promise<ActionResult<Task>> {
   try {
     const idParse = z.string().min(1, "Task ID is required").safeParse(taskId);
     if (!idParse.success)
+      return { success: false, error: idParse.error.issues[0]?.message };
+
+    const parseResult = UpdateTaskPayloadSchema.safeParse(data);
+    if (!parseResult.success)
       return {
         success: false,
-        error: idParse.error.issues.map((i) => i.message).join(", "),
+        error: parseResult.error.issues
+          .map((i: z.ZodIssue) => i.message)
+          .join(", "),
       };
 
-    const payloadParse = UpdateTaskPayloadSchema.safeParse(payload);
-    if (!payloadParse.success)
-      return {
-        success: false,
-        error: payloadParse.error.issues.map((i) => i.message).join(", "),
-      };
-
-    const parsedData = payloadParse.data;
-    const dueDate = parsedData.dueDate
-      ? new Date(parsedData.dueDate)
-      : parsedData.dueDate === null
+    const parsedData = parseResult.data;
+    const dueDate =
+      parsedData.dueDate === null
         ? null
-        : undefined;
+        : parsedData.dueDate
+          ? new Date(parsedData.dueDate)
+          : undefined;
 
-    const userId = await resolveActionUserId().catch(() => null);
+    const userId = await resolveActionUserId();
+    const existingTask = await TaskService.getTaskById(idParse.data);
+    if (!existingTask) {
+      return { success: false, error: "Task not found" };
+    }
+    const isMember = await TeamService.isTeamMember(
+      existingTask.teamId,
+      userId,
+    );
+    if (!isMember) {
+      return { success: false, error: "Access denied" };
+    }
+    if (
+      parsedData.assigneeId &&
+      !(await TeamService.isTeamMember(
+        existingTask.teamId,
+        parsedData.assigneeId,
+      ))
+    ) {
+      return { success: false, error: "Assignee must be a member of the team" };
+    }
+
     const updated = await TaskService.updateTask(
       idParse.data,
       { ...parsedData, dueDate },
-      userId ?? undefined,
+      userId,
     );
 
     try {
@@ -184,7 +182,7 @@ export async function updateTaskAction(
           priority: parsedData.priority,
           assigneeId: parsedData.assigneeId,
         },
-        userId ?? undefined,
+        userId,
       );
     } catch (syncErr) {
       console.warn("GitHub issue sync on task update failed:", syncErr);
@@ -200,53 +198,59 @@ export async function updateTaskAction(
 }
 
 export async function createProjectAction(
-  payload: CreateProjectActionPayload,
+  data: CreateProjectActionPayload,
 ): Promise<ActionResult<Project>> {
   try {
-    const parseResult = CreateProjectPayloadSchema.safeParse(payload);
+    const parseResult = CreateProjectPayloadSchema.safeParse(data);
     if (!parseResult.success)
       return {
         success: false,
-        error: parseResult.error.issues.map((i) => i.message).join(", "),
+        error: parseResult.error.issues
+          .map((i: z.ZodIssue) => i.message)
+          .join(", "),
       };
+
+    const userId = await resolveActionUserId();
+    const teamId = await TeamService.resolveTeamId(parseResult.data.teamId);
+    const role = teamId ? await TeamService.getUserRole(teamId, userId) : null;
+    if (!teamId || !role) {
+      return { success: false, error: "Access denied" };
+    }
+    if (!hasTeamRole(role, "admin")) {
+      return {
+        success: false,
+        error: "Permission denied: Team owner or admin role required",
+      };
+    }
 
     let targetGithubRepo = parseResult.data.githubRepo?.trim() || null;
 
-    // Unified creation: If user selected create new repo, create & setup repo on GitHub first
     if (parseResult.data.createNewRepo) {
-      const { validateGithubRepoName } =
-        await import("@/lib/github-validation");
-      const validation = validateGithubRepoName(
-        parseResult.data.createNewRepo.name,
-      );
-      if (!validation.valid) {
+      try {
+        targetGithubRepo = await handleProjectGithubSetup(
+          parseResult.data.name,
+          parseResult.data.description,
+          {
+            ...parseResult.data.createNewRepo,
+            description:
+              parseResult.data.createNewRepo.description ?? undefined,
+          },
+          userId,
+        );
+      } catch (repoErr) {
         return {
           success: false,
-          error: validation.error || "Invalid GitHub repository name",
+          error:
+            repoErr instanceof Error
+              ? repoErr.message
+              : "Failed to setup GitHub repository",
         };
       }
-
-      const userId = await resolveActionUserId();
-      const { GithubSyncService } =
-        await import("@/services/github/github-sync-service");
-      const createdRepo = await GithubSyncService.createAndSetupRepository(
-        {
-          name: validation.cleanName,
-          description:
-            parseResult.data.createNewRepo.description ||
-            parseResult.data.description,
-          isPrivate: parseResult.data.createNewRepo.isPrivate,
-          projectName: parseResult.data.name,
-        },
-        userId,
-      );
-
-      targetGithubRepo = createdRepo.fullName;
     }
 
     const created = await ProjectService.createProject({
       name: parseResult.data.name,
-      teamId: parseResult.data.teamId,
+      teamId,
       description: parseResult.data.description ?? undefined,
       color: parseResult.data.color ?? undefined,
       githubRepo: targetGithubRepo ?? undefined,
@@ -255,16 +259,13 @@ export async function createProjectAction(
 
     if (targetGithubRepo) {
       try {
-        const userId = await resolveActionUserId().catch(() => null);
-        if (userId) {
-          const { GithubIntegrationService } =
-            await import("@/services/github/github-integration-service");
-          await GithubIntegrationService.inviteTeamCollaborators(
-            parseResult.data.teamId,
-            targetGithubRepo,
-            userId,
-          );
-        }
+        const { GithubIntegrationService } =
+          await import("@/services/github/github-integration-service");
+        await GithubIntegrationService.inviteTeamCollaborators(
+          teamId,
+          targetGithubRepo,
+          userId,
+        );
       } catch (inviteErr) {
         console.warn(
           "Failed to auto-invite team collaborators to GitHub repo:",
@@ -286,139 +287,6 @@ export async function createProjectAction(
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to create project",
-    };
-  }
-}
-
-export async function createGithubRepositoryAction(payload: {
-  name: string;
-  description?: string | null;
-  isPrivate?: boolean;
-  projectName?: string;
-}): Promise<
-  ActionResult<
-    import("@/services/github/github-sync-service").CreatedRepositoryResult
-  >
-> {
-  try {
-    const userId = await resolveActionUserId();
-    const { GithubSyncService } =
-      await import("@/services/github/github-sync-service");
-    const result = await GithubSyncService.createAndSetupRepository(
-      payload,
-      userId,
-    );
-    return { success: true, data: result };
-  } catch (err) {
-    return {
-      success: false,
-      error:
-        err instanceof Error
-          ? err.message
-          : "Failed to create GitHub repository",
-    };
-  }
-}
-
-export async function createTaskAction(
-  payload: CreateTaskActionPayload,
-): Promise<ActionResult<Task>> {
-  try {
-    const parseResult = CreateTaskPayloadSchema.safeParse(payload);
-    if (!parseResult.success)
-      return {
-        success: false,
-        error: parseResult.error.issues.map((i) => i.message).join(", "),
-      };
-
-    const creatorId = await resolveActionUserId();
-    const parsedData = parseResult.data;
-    const dueDate = parsedData.dueDate
-      ? new Date(parsedData.dueDate)
-      : parsedData.dueDate === null
-        ? null
-        : undefined;
-
-    const created = await TaskService.createTask({
-      title: parsedData.title,
-      description: parsedData.description ?? undefined,
-      status: parsedData.status ?? "todo",
-      priority: parsedData.priority ?? "medium",
-      teamId: parsedData.teamId,
-      projectId: parsedData.projectId ?? undefined,
-      creatorId,
-      assigneeId: parsedData.assigneeId ?? null,
-      dueDate,
-      estimatedMinutes: parsedData.estimatedMinutes ?? 60,
-    });
-
-    if (created.projectId) {
-      try {
-        const { GithubIntegrationService } =
-          await import("@/services/github/github-integration-service");
-        const issueRes = await GithubIntegrationService.createIssueForTask(
-          created.id,
-          creatorId,
-        );
-        if (issueRes) {
-          created.githubIssueNumber = issueRes.number;
-          created.githubIssueUrl = issueRes.url;
-          created.githubBranch = issueRes.branchName;
-        }
-      } catch (issueErr) {
-        console.error("Auto GitHub issue creation failed:", issueErr);
-      }
-    }
-
-    return { success: true, data: created };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to create task",
-    };
-  }
-}
-
-export async function getTaskCommentsAction(
-  taskId: string,
-): Promise<ActionResult<TaskCommentItem[]>> {
-  try {
-    if (!taskId) return { success: false, error: "Task ID is required" };
-    const userId = await resolveActionUserId().catch(() => undefined);
-    const comments = await TaskService.getTaskComments(taskId, userId);
-    return { success: true, data: comments };
-  } catch (err) {
-    return {
-      success: false,
-      error:
-        err instanceof Error ? err.message : "Failed to fetch task comments",
-    };
-  }
-}
-
-export async function createTaskCommentAction(payload: {
-  taskId: string;
-  content: string;
-}): Promise<ActionResult<TaskComment & { user: TaskUser | null }>> {
-  try {
-    const parseResult = CreateTaskCommentPayloadSchema.safeParse(payload);
-    if (!parseResult.success)
-      return {
-        success: false,
-        error: parseResult.error.issues.map((i) => i.message).join(", "),
-      };
-
-    const userId = await resolveActionUserId();
-    const comment = await TaskService.createTaskComment({
-      taskId: parseResult.data.taskId,
-      userId,
-      content: parseResult.data.content,
-    });
-    return { success: true, data: comment };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to add comment",
     };
   }
 }

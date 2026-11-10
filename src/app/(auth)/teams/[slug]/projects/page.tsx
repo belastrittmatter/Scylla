@@ -1,40 +1,10 @@
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { TeamProjectsView } from "@/components/projects";
-import { TeamService } from "@/services";
+import { redirect } from "next/navigation";
 
-interface TeamProjectsPageProps {
+interface Props {
   params: Promise<{ slug: string }>;
 }
 
-async function TeamProjectsContent({ params }: TeamProjectsPageProps) {
+export default async function TeamProjectsRedirect({ params }: Props) {
   const { slug } = await params;
-
-  let team = await TeamService.getTeamBySlug(slug);
-  if (!team) {
-    team = await TeamService.getTeamById(slug);
-  }
-
-  if (!team) {
-    notFound();
-  }
-
-  return (
-    <TeamProjectsView
-      team={{
-        id: team.id,
-        name: team.name,
-        slug: team.slug,
-        description: team.description,
-      }}
-    />
-  );
-}
-
-export default function TeamProjectsPage(props: TeamProjectsPageProps) {
-  return (
-    <Suspense fallback={null}>
-      <TeamProjectsContent params={props.params} />
-    </Suspense>
-  );
+  redirect(`/teams/${slug}?tab=projects`);
 }

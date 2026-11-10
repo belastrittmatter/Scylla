@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { oauthConsent } from "@/db/schema";
+import { agent, oauthConsent } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
   ALL_MCP_CAPABILITIES,
@@ -14,6 +14,30 @@ export function resolveEffectiveScopes(scopes: string[]): string[] {
       (s.includes(".") || s.includes(":") || s === "*") &&
       s !== "agent:customized",
   );
+}
+
+/**
+ * Effective MCP scopes for an OAuth token: the token's own scopes narrowed to the
+ * user's current consent, so neither down-scoped tokens nor later consent edits widen access.
+ */
+export function resolveTokenScopes(
+  tokenScopes: string[],
+  consentScopes: string[] | undefined,
+): string[] {
+  if (tokenScopes.length === 0) return consentScopes ?? [];
+  if (!consentScopes) return tokenScopes;
+  const consent = new Set(consentScopes);
+  return tokenScopes.filter((s) => consent.has(s));
+}
+
+/** Agent Auth sessions don't expose agent.status, so read it from the row. */
+export async function isAgentActive(agentId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ status: agent.status })
+    .from(agent)
+    .where(eq(agent.id, agentId))
+    .limit(1);
+  return row?.status === "active";
 }
 
 export interface AgentScopesResult {

@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TaskDatePicker } from "./task-date-picker";
-import { AssigneeSearchPicker } from "./assignee-search-picker";
+import { AssigneeCombobox } from "./assignee-combobox";
 import {
   TASK_FORM_STATUSES,
   TASK_FORM_PRIORITIES,
@@ -73,7 +73,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
               <SelectValue>
                 <span className="flex items-center gap-2">
                   <span
-                    className={`size-2 rounded-full ${curStatus?.dot || "bg-neutral-400"}`}
+                    className={`size-2 rounded-full ${curStatus?.dot || "bg-muted-foreground"}`}
                   />
                   <span>{curStatus?.label || status}</span>
                 </span>
@@ -128,7 +128,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
 
       <Field>
         <FieldLabel>Assignee</FieldLabel>
-        <AssigneeSearchPicker
+        <AssigneeCombobox
           users={users}
           assigneeId={assigneeId}
           onAssigneeChange={onAssigneeChange}
@@ -162,7 +162,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
               <InputGroupText className="text-xs">mins</InputGroupText>
             </InputGroupAddon>
           </InputGroup>
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-[11px]">
+          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
             <span>Presets:</span>
             {[30, 60, 120, 240].map((mins) => (
               <Button
@@ -171,7 +171,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
                 variant={estimatedMinutes === mins ? "default" : "outline"}
                 size="xs"
                 onClick={() => onEstimatedMinutesChange(mins)}
-                className="h-5 px-1.5 text-[10px] font-medium"
+                className="h-5 px-1.5 text-xs font-medium"
               >
                 {mins < 60 ? `${mins}m` : `${mins / 60}h`}
               </Button>

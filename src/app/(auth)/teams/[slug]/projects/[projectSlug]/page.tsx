@@ -1,20 +1,16 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-interface ProjectRedirectPageProps {
+interface Props {
   params: Promise<{ slug: string; projectSlug: string }>;
 }
 
-async function ProjectRedirectContent({ params }: ProjectRedirectPageProps) {
+export default async function ProjectRedirectPage({ params }: Props) {
   const { slug, projectSlug } = await params;
-  redirect(`/tasks/${slug}/${projectSlug}`);
-  return null;
-}
-
-export default function ProjectRedirectPage(props: ProjectRedirectPageProps) {
-  return (
-    <Suspense fallback={null}>
-      <ProjectRedirectContent params={props.params} />
-    </Suspense>
-  );
+  // Not buildTasksUrl: that module is "use client" and can't be called here.
+  const qs = new URLSearchParams({
+    scope: "team",
+    team: slug,
+    project: projectSlug,
+  });
+  redirect(`/tasks?${qs}`);
 }

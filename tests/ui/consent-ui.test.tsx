@@ -5,6 +5,8 @@ import { ConsentBrandHeader } from "@/components/consent/consent-brand-header";
 import { ConsentSignInRequired } from "@/components/consent/consent-sign-in-required";
 import { ConsentScopeItem } from "@/components/consent/consent-scope-item";
 import { ConsentScopeList } from "@/components/consent/consent-scope-list";
+import { ConsentClientInfo } from "@/components/consent/consent-client-info";
+import { initialConsentScopes } from "@/components/consent/consent-scopes";
 import { ALL_MCP_CAPABILITIES } from "@/constants/agent-capabilities";
 
 describe("Consent UI Sub-components (#36 / #43)", () => {
@@ -86,5 +88,27 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
       />,
     );
     expect(allHtml).toContain("Destructive Scopes Granted:");
+  });
+
+  it("pre-selects nothing unless the client requested known scopes (#99)", () => {
+    expect(initialConsentScopes("")).toEqual([]);
+    expect(initialConsentScopes("openid profile")).toEqual([]);
+    expect(
+      initialConsentScopes("openid calendar.readonly bogus.scope"),
+    ).toEqual(["calendar.readonly"]);
+  });
+
+  it("shows the client's self-registered name flagged as unverified (#99)", () => {
+    const html = renderToString(
+      <ConsentClientInfo
+        client={{ name: "Acme Agent", uri: "https://acme.example/about" }}
+      />,
+    );
+    expect(html).toContain("Acme Agent");
+    expect(html).toContain("acme.example");
+    expect(html).toContain("Unverified");
+
+    const unknown = renderToString(<ConsentClientInfo client={null} />);
+    expect(unknown).toContain("Unknown client");
   });
 });

@@ -24,6 +24,7 @@ export function AuthUIProvider({ children }: { children: React.ReactNode }) {
       navigate={navigate}
       redirectTo="/calendar"
       socialProviders={["google"]}
+      emailAndPassword={{ enabled: false }}
     >
       <DaveyplateAuthUIProvider
         authClient={authClient}

@@ -1,25 +1,6 @@
 import { db } from "@/db";
-import {
-  task,
-  team,
-  project,
-  taskTimeSession,
-  account,
-  user,
-  type Task,
-  type TaskTimeSession,
-} from "@/db/schema";
-import {
-  eq,
-  and,
-  lte,
-  lt,
-  inArray,
-  desc,
-  asc,
-  isNull,
-  type SQL,
-} from "drizzle-orm";
+import { task, team, project, type Task } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import {
   CreateTaskSchema,
   UpdateTaskSchema,
@@ -29,8 +10,30 @@ import {
   type TaskWithRelations,
   type TaskStatus,
 } from "./task-types";
+import {
+  TaskSessionService,
+  MIN_TASK_SESSION_DURATION_SECONDS,
+} from "./task-session-service";
+import { TaskQueryService } from "./task-query-service";
+import { TeamService } from "@/services/team/team-service";
+import {
+  validateCreateTaskGithubRules,
+  validateUpdateTaskGithubRules,
+  populateTaskGithubFields,
+} from "./task-mutation-helper";
+import {
+  assertTaskCreationAccess,
+  assertAssigneeBelongsToTeam,
+} from "./task-validation-helper";
 
-export const MIN_TASK_SESSION_DURATION_SECONDS = 60; // 1 minute (< 1 minute is considered accidental drag)
+import {
+  TaskAccessService,
+  TaskAccessError,
+  type TaskWriteAccess,
+} from "./task-access-service";
+
+export type { TaskWriteAccess };
+export { TaskAccessError, MIN_TASK_SESSION_DURATION_SECONDS };
 
 export class TaskService {
   public static async createTask(input: CreateTaskInput): Promise<Task> {
@@ -64,38 +67,21 @@ export class TaskService {
       throw new Error(`Team with id "${validated.teamId}" not found`);
     }
 
-    if (validated.projectId) {
-      if (!projectRecord || projectRecord.teamId !== validated.teamId) {
-        throw new Error(
-          `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
-        );
-      }
+    await assertTaskCreationAccess(validated.teamId, validated.creatorId);
+    if (
+      validated.projectId &&
+      (!projectRecord || projectRecord.teamId !== validated.teamId)
+    ) {
+      throw new Error(
+        `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
+      );
     }
-
-    // Enforce GitHub sync rule: If project is linked to GitHub, assignee must have linked GitHub account
-    if (projectRecord?.githubRepo?.trim() && validated.assigneeId) {
-      const [ghAcc] = await db
-        .select({ id: account.id })
-        .from(account)
-        .where(
-          and(
-            eq(account.userId, validated.assigneeId),
-            eq(account.providerId, "github"),
-          ),
-        )
-        .limit(1);
-
-      if (!ghAcc) {
-        const [assigneeUser] = await db
-          .select({ name: user.name })
-          .from(user)
-          .where(eq(user.id, validated.assigneeId))
-          .limit(1);
-        const name = assigneeUser?.name || "The selected member";
-        throw new Error(
-          `Cannot assign task: ${name} has not connected their GitHub account yet. Members must connect GitHub in Settings to be assigned to this project.`,
-        );
-      }
+    if (validated.assigneeId) {
+      await assertAssigneeBelongsToTeam(validated.teamId, validated.assigneeId);
+      await validateCreateTaskGithubRules(
+        validated.assigneeId,
+        projectRecord?.githubRepo,
+      );
     }
 
     const position =
@@ -105,31 +91,28 @@ export class TaskService {
           ? existing[0].position + 1
           : 0;
 
-    const [newTask] = await db
-      .insert(task)
-      .values({
-        title: validated.title,
-        description: validated.description,
-        status: validated.status,
-        priority: validated.priority,
-        teamId: validated.teamId,
-        projectId: validated.projectId,
-        creatorId: validated.creatorId,
-        assigneeId: validated.assigneeId,
-        dueDate: validated.dueDate,
-        position,
-        estimatedMinutes: validated.estimatedMinutes ?? 60,
-        githubIssueNumber: validated.githubIssueNumber,
-        githubIssueUrl: validated.githubIssueUrl,
-        githubBranch: validated.githubBranch,
-        githubPrNumber: validated.githubPrNumber,
-        githubPrUrl: validated.githubPrUrl,
-        githubPrStatus: validated.githubPrStatus,
-      })
-      .returning();
+    const taskValues: typeof task.$inferInsert = {
+      title: validated.title,
+      description: validated.description,
+      status: validated.status,
+      priority: validated.priority,
+      teamId: validated.teamId,
+      projectId: validated.projectId,
+      creatorId: validated.creatorId,
+      assigneeId: validated.assigneeId,
+      dueDate: validated.dueDate,
+      position,
+      estimatedMinutes: validated.estimatedMinutes ?? 60,
+    };
+    populateTaskGithubFields(taskValues, validated);
+
+    const [newTask] = await db.insert(task).values(taskValues).returning();
 
     if (validated.status === "in_progress") {
-      await TaskService.startTaskSession(newTask.id, validated.creatorId);
+      await TaskSessionService.startTaskSession(
+        newTask.id,
+        validated.creatorId,
+      );
     }
 
     return newTask;
@@ -138,73 +121,17 @@ export class TaskService {
   public static async getTaskById(
     taskId: string,
   ): Promise<TaskWithRelations | null> {
-    const record = await db.query.task.findFirst({
-      where: eq(task.id, taskId),
-      with: {
-        creator: {
-          columns: { id: true, name: true, email: true, image: true },
-        },
-        assignee: {
-          columns: { id: true, name: true, email: true, image: true },
-        },
-        project: { columns: { id: true, name: true, slug: true, color: true } },
-      },
-    });
-    return (record as TaskWithRelations) ?? null;
+    return TaskQueryService.getTaskById(taskId);
   }
 
   public static async listTasks(filter: TaskFilterInput): Promise<Task[]> {
-    const conditions: SQL[] = [];
-
-    if (Array.isArray(filter.teamId)) {
-      if (filter.teamId.length === 0) return [];
-      conditions.push(inArray(task.teamId, filter.teamId));
-    } else if (filter.teamId) {
-      conditions.push(eq(task.teamId, filter.teamId));
-    }
-
-    if (filter.projectId) conditions.push(eq(task.projectId, filter.projectId));
-
-    if (filter.status) {
-      if (Array.isArray(filter.status)) {
-        conditions.push(inArray(task.status, filter.status));
-      } else {
-        conditions.push(eq(task.status, filter.status));
-      }
-    }
-
-    if (filter.priority) {
-      if (Array.isArray(filter.priority)) {
-        conditions.push(inArray(task.priority, filter.priority));
-      } else {
-        conditions.push(eq(task.priority, filter.priority));
-      }
-    }
-
-    if (filter.assigneeId)
-      conditions.push(eq(task.assigneeId, filter.assigneeId));
-
-    if (filter.dueBefore) conditions.push(lte(task.dueDate, filter.dueBefore));
-
-    if (filter.overdue) {
-      const now = new Date();
-      conditions.push(lt(task.dueDate, now));
-      conditions.push(
-        inArray(task.status, ["todo", "in_progress", "in_review"]),
-      );
-    }
-
-    return await db
-      .select()
-      .from(task)
-      .where(and(...conditions))
-      .orderBy(asc(task.position), desc(task.createdAt));
+    return TaskQueryService.listTasks(filter);
   }
 
   public static async updateTask(
     taskId: string,
     input: UpdateTaskInput,
-    currentUserId?: string,
+    currentUserId: string,
   ): Promise<Task> {
     const validated = UpdateTaskSchema.parse(input);
 
@@ -213,38 +140,37 @@ export class TaskService {
     });
     if (!existing) throw new Error(`Task with id "${taskId}" not found`);
 
-    // Enforce GitHub sync rule on task update
-    if (validated.assigneeId) {
-      const targetProjectId = validated.projectId || existing.projectId;
-      if (targetProjectId) {
-        const proj = await db.query.project.findFirst({
-          where: eq(project.id, targetProjectId),
-        });
-        if (proj?.githubRepo?.trim()) {
-          const [ghAcc] = await db
-            .select({ id: account.id })
-            .from(account)
-            .where(
-              and(
-                eq(account.userId, validated.assigneeId),
-                eq(account.providerId, "github"),
-              ),
-            )
-            .limit(1);
+    await TaskService.assertWriteAccess(
+      existing,
+      currentUserId,
+      "Forbidden: Viewer role cannot update tasks",
+    );
 
-          if (!ghAcc) {
-            const [assigneeUser] = await db
-              .select({ name: user.name })
-              .from(user)
-              .where(eq(user.id, validated.assigneeId))
-              .limit(1);
-            const name = assigneeUser?.name || "The selected member";
-            throw new Error(
-              `Cannot assign task: ${name} has not connected their GitHub account yet. Members must connect GitHub in Settings to be assigned to this project.`,
-            );
-          }
-        }
+    if (validated.projectId !== undefined && validated.projectId !== null) {
+      const projectRecord = await db.query.project.findFirst({
+        where: eq(project.id, validated.projectId),
+      });
+      if (!projectRecord || projectRecord.teamId !== existing.teamId) {
+        throw new Error(
+          `Project with id "${validated.projectId}" not found in team "${existing.teamId}"`,
+        );
       }
+    }
+
+    if (validated.assigneeId !== undefined && validated.assigneeId !== null) {
+      const isMember = await TeamService.isTeamMember(
+        existing.teamId,
+        validated.assigneeId,
+      );
+      if (!isMember) {
+        throw new Error(
+          `User "${validated.assigneeId}" is not a member of team "${existing.teamId}"`,
+        );
+      }
+      await validateUpdateTaskGithubRules(
+        validated.assigneeId,
+        validated.projectId || existing.projectId,
+      );
     }
 
     if (
@@ -252,14 +178,9 @@ export class TaskService {
       validated.status !== existing.status
     ) {
       if (validated.status === "in_progress") {
-        const effectiveUserId =
-          currentUserId ||
-          validated.assigneeId ||
-          existing.assigneeId ||
-          existing.creatorId;
-        await TaskService.startTaskSession(taskId, effectiveUserId);
+        await TaskSessionService.startTaskSession(taskId, currentUserId);
       } else if (existing.status === "in_progress") {
-        await TaskService.stopTaskSession(
+        await TaskSessionService.stopTaskSession(
           taskId,
           MIN_TASK_SESSION_DURATION_SECONDS,
         );
@@ -282,18 +203,7 @@ export class TaskService {
       updateData.position = validated.position;
     if (validated.estimatedMinutes !== undefined)
       updateData.estimatedMinutes = validated.estimatedMinutes;
-    if (validated.githubIssueNumber !== undefined)
-      updateData.githubIssueNumber = validated.githubIssueNumber;
-    if (validated.githubIssueUrl !== undefined)
-      updateData.githubIssueUrl = validated.githubIssueUrl;
-    if (validated.githubBranch !== undefined)
-      updateData.githubBranch = validated.githubBranch;
-    if (validated.githubPrNumber !== undefined)
-      updateData.githubPrNumber = validated.githubPrNumber;
-    if (validated.githubPrUrl !== undefined)
-      updateData.githubPrUrl = validated.githubPrUrl;
-    if (validated.githubPrStatus !== undefined)
-      updateData.githubPrStatus = validated.githubPrStatus;
+    populateTaskGithubFields(updateData, validated);
 
     const [updated] = await db
       .update(task)
@@ -303,89 +213,54 @@ export class TaskService {
     return updated;
   }
 
-  public static async startTaskSession(
-    taskId: string,
-    userId?: string | null,
-  ): Promise<TaskTimeSession> {
-    const existingActive = await db.query.taskTimeSession.findFirst({
-      where: and(
-        eq(taskTimeSession.taskId, taskId),
-        isNull(taskTimeSession.endedAt),
-      ),
-    });
-    if (existingActive) {
-      return existingActive;
-    }
-    const inserted = await db
-      .insert(taskTimeSession)
-      .values({
-        taskId,
-        userId: userId ?? null,
-        startedAt: new Date(),
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (inserted.length > 0) {
-      return inserted[0];
-    }
-    const concurrentActive = await db.query.taskTimeSession.findFirst({
-      where: and(
-        eq(taskTimeSession.taskId, taskId),
-        isNull(taskTimeSession.endedAt),
-      ),
-    });
-    return concurrentActive!;
+  public static async startTaskSession(taskId: string, userId?: string | null) {
+    return TaskSessionService.startTaskSession(taskId, userId);
   }
 
   public static async stopTaskSession(
     taskId: string,
     minDurationSeconds = MIN_TASK_SESSION_DURATION_SECONDS,
-  ): Promise<TaskTimeSession | null> {
-    const activeSession = await db.query.taskTimeSession.findFirst({
-      where: and(
-        eq(taskTimeSession.taskId, taskId),
-        isNull(taskTimeSession.endedAt),
-      ),
-    });
-    if (!activeSession) return null;
+  ) {
+    return TaskSessionService.stopTaskSession(taskId, minDurationSeconds);
+  }
 
-    const now = new Date();
-    const durationSeconds = Math.max(
-      0,
-      Math.round((now.getTime() - activeSession.startedAt.getTime()) / 1000),
+  public static async getTaskTimeSessions(taskId: string) {
+    return TaskSessionService.getTaskTimeSessions(taskId);
+  }
+
+  public static async getWriteAccess(
+    target: Pick<Task, "teamId">,
+    userId: string,
+  ): Promise<TaskWriteAccess> {
+    return TaskAccessService.getWriteAccess(target, userId);
+  }
+
+  public static async assertWriteAccess(
+    target: Pick<Task, "id" | "teamId">,
+    userId: string,
+    forbiddenMessage: string,
+  ): Promise<void> {
+    return TaskAccessService.assertWriteAccess(
+      target,
+      userId,
+      forbiddenMessage,
     );
-
-    // Anti-spam filter: discard session if shorter than minDurationSeconds (e.g. rapid drag-and-drop)
-    if (durationSeconds < minDurationSeconds) {
-      await db
-        .delete(taskTimeSession)
-        .where(eq(taskTimeSession.id, activeSession.id));
-      return null;
-    }
-
-    const [updated] = await db
-      .update(taskTimeSession)
-      .set({
-        endedAt: now,
-        durationSeconds,
-      })
-      .where(eq(taskTimeSession.id, activeSession.id))
-      .returning();
-
-    return updated;
   }
 
-  public static async getTaskTimeSessions(
+  public static async deleteTask(
     taskId: string,
-  ): Promise<TaskTimeSession[]> {
-    return await db
-      .select()
-      .from(taskTimeSession)
-      .where(eq(taskTimeSession.taskId, taskId))
-      .orderBy(desc(taskTimeSession.startedAt));
-  }
-
-  public static async deleteTask(taskId: string): Promise<boolean> {
+    currentUserId: string,
+  ): Promise<boolean> {
+    const existing = await db.query.task.findFirst({
+      where: eq(task.id, taskId),
+      columns: { id: true, teamId: true },
+    });
+    if (!existing) return false;
+    await TaskService.assertWriteAccess(
+      existing,
+      currentUserId,
+      "Permission denied: only team members (not viewers) can delete tasks",
+    );
     const deleted = await db
       .delete(task)
       .where(eq(task.id, taskId))
@@ -396,17 +271,7 @@ export class TaskService {
   public static async reorderTaskPositions(
     updates: Array<{ id: string; position: number; status?: TaskStatus }>,
   ): Promise<void> {
-    await db.transaction(async (tx) => {
-      await Promise.all(
-        updates.map((item) => {
-          const updateSet: Partial<typeof task.$inferInsert> = {
-            position: item.position,
-          };
-          if (item.status) updateSet.status = item.status;
-          return tx.update(task).set(updateSet).where(eq(task.id, item.id));
-        }),
-      );
-    });
+    return TaskQueryService.reorderTaskPositions(updates);
   }
 
   public static async getWorkspaceData(currentUserId?: string) {

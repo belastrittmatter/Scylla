@@ -18,6 +18,7 @@ export function registerUserTools(server: McpServer, ctx: McpToolContext) {
 
       const token = await ctx.getAccessToken();
       const teammates = await UserService.searchTeammates(query, limit, {
+        currentUserId: ctx.userId ?? "",
         accessToken: token || undefined,
       });
 

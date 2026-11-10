@@ -205,7 +205,7 @@ export function AgendaApp({
                           key={ev.id || `${ev.start}-${i}`}
                           title={fullTitle}
                           style={{ left: `${sPct}%`, width: `${width}%` }}
-                          className="shadow-2xs absolute inset-y-1 flex items-center overflow-hidden whitespace-nowrap rounded bg-blue-500/85 px-1 text-[10px] font-medium text-white"
+                          className="shadow-2xs absolute inset-y-1 flex items-center overflow-hidden whitespace-nowrap rounded bg-primary/85 px-1 text-[10px] font-medium text-primary-foreground"
                         >
                           {label}
                         </div>
@@ -252,10 +252,10 @@ export function AgendaApp({
                                       [rowKey]: !p[rowKey],
                                     }))
                                   }
-                                  className="text-foreground flex cursor-pointer items-center justify-between gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 px-2.5 py-1.5 transition-colors hover:bg-blue-500/15"
+                                  className="text-foreground flex cursor-pointer items-center justify-between gap-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 transition-colors hover:bg-primary/15"
                                 >
                                   <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                                    <span className="shrink-0 font-semibold tabular-nums text-blue-600 dark:text-blue-400">
+                                    <span className="shrink-0 font-semibold tabular-nums text-primary">
                                       {timeRange}
                                     </span>
                                     <div className="min-w-0 flex-1">

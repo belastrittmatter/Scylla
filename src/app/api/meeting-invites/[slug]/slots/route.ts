@@ -1,12 +1,11 @@
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteService,
+  MeetingInviteError,
+} from "@/services/meeting-invite";
+import { inviteSlotsBodySchema } from "@/lib/validations/meeting-invite";
 
 interface RouteParams {
   params: Promise<{ slug: string }> | { slug: string };
-}
-
-interface SlotsBody {
-  date?: string;
-  timeZone?: string;
 }
 
 export async function POST(req: Request, context: RouteParams) {
@@ -19,9 +18,9 @@ export async function POST(req: Request, context: RouteParams) {
       );
     }
 
-    let body: SlotsBody;
+    let raw: unknown;
     try {
-      body = (await req.json()) as SlotsBody;
+      raw = await req.json();
     } catch {
       return Response.json(
         { error: "Invalid JSON in request body" },
@@ -29,30 +28,31 @@ export async function POST(req: Request, context: RouteParams) {
       );
     }
 
-    const dateStr = body?.date;
-    if (!dateStr || typeof dateStr !== "string") {
+    const parsed = inviteSlotsBodySchema.safeParse(raw);
+    if (!parsed.success) {
       return Response.json(
-        { error: "date (YYYY-MM-DD) is required in request body" },
+        {
+          error:
+            "date (YYYY-MM-DD) is required and timeZone must be a valid IANA time zone",
+        },
         { status: 400 },
       );
     }
 
-    const timeZone = body?.timeZone || "Asia/Ho_Chi_Minh";
     const availableSlots = await MeetingInviteService.getAvailableSlots(
       slug,
-      dateStr,
-      timeZone,
+      parsed.data.date,
+      parsed.data.timeZone,
     );
 
     return Response.json({ slots: availableSlots }, { status: 200 });
   } catch (err) {
+    if (err instanceof MeetingInviteError) {
+      return Response.json({ error: err.message }, { status: err.status });
+    }
+    console.error("Meeting invite slot lookup failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to calculate mutual free slots",
-      },
+      { error: "Failed to calculate mutual free slots" },
       { status: 500 },
     );
   }
