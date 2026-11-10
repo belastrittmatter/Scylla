@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -21,8 +21,18 @@ import { ExternalLink, Settings } from "lucide-react";
 import { MAIN_NAV_ITEMS, WORKSPACE_INFO } from "@/constants/navigation";
 import { UserButton } from "@daveyplate/better-auth-ui";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { TasksNavItem } from "./tasks-nav-item";
+import { useTeams, type TeamItem } from "@/hooks/use-teams";
 
-function SidebarNavMenu({ pathname }: { pathname: string }) {
+function SidebarNavMenu({
+  pathname,
+  searchParams,
+  teams,
+}: {
+  pathname: string;
+  searchParams: Pick<URLSearchParams, "get">;
+  teams: TeamItem[];
+}) {
   const segments = pathname.split("/").filter(Boolean);
   const activeKey =
     pathname === "/" || segments[0] === "calendar"
@@ -35,6 +45,18 @@ function SidebarNavMenu({ pathname }: { pathname: string }) {
         const isActive = pathname
           ? item.id === activeKey || pathname === item.url
           : false;
+
+        if (item.id === "tasks") {
+          return (
+            <TasksNavItem
+              key={item.id}
+              item={item}
+              pathname={pathname}
+              searchParams={searchParams}
+              teams={teams}
+            />
+          );
+        }
 
         return (
           <SidebarMenuItem key={item.id}>
@@ -56,9 +78,16 @@ function SidebarNavMenu({ pathname }: { pathname: string }) {
   );
 }
 
-function ActiveSidebarNavMenu() {
+function ActiveSidebarNavMenu({ teams }: { teams: TeamItem[] }) {
   const pathname = usePathname();
-  return <SidebarNavMenu pathname={pathname} />;
+  const searchParams = useSearchParams();
+  return (
+    <SidebarNavMenu
+      pathname={pathname}
+      searchParams={searchParams}
+      teams={teams}
+    />
+  );
 }
 
 const markMask = {
@@ -66,7 +95,11 @@ const markMask = {
   WebkitMask: "url('/logo.svg') center / contain no-repeat",
 } as const;
 
+const NO_PARAMS = new URLSearchParams();
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // Here (not in the nav) so the mobile sheet remounting doesn't refetch.
+  const { teams } = useTeams();
   return (
     <Sidebar
       collapsible="icon"
@@ -108,8 +141,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup className="py-1">
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
-            <React.Suspense fallback={<SidebarNavMenu pathname="" />}>
-              <ActiveSidebarNavMenu />
+            <React.Suspense
+              fallback={
+                <SidebarNavMenu
+                  pathname=""
+                  searchParams={NO_PARAMS}
+                  teams={[]}
+                />
+              }
+            >
+              <ActiveSidebarNavMenu teams={teams} />
             </React.Suspense>
           </SidebarGroupContent>
         </SidebarGroup>
