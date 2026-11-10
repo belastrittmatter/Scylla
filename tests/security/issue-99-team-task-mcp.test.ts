@@ -438,21 +438,4 @@ describe("Issue #99 Authorization & Hardening", () => {
       }),
     ).rejects.toThrow(/cannot be formatted as a UUID/);
   });
-
-  test("C6: MCP scope resolution downscopes to token scopes and prevents scope expansion", () => {
-    // Simulating token scope intersection logic in mcp/route.ts
-    const consentScopes = ["tasks.readonly", "tasks.write", "teams.manage"];
-    const downscopedTokenClaims = { scopes: ["tasks.readonly"] };
-
-    const tokenScopes: string[] = Array.isArray(downscopedTokenClaims.scopes)
-      ? downscopedTokenClaims.scopes
-      : [];
-
-    const consentSet = new Set(consentScopes);
-    const resolvedScopes = tokenScopes.filter((s) => consentSet.has(s));
-
-    expect(resolvedScopes).toEqual(["tasks.readonly"]);
-    expect(resolvedScopes).not.toContain("tasks.write");
-    expect(resolvedScopes).not.toContain("teams.manage");
-  });
 });

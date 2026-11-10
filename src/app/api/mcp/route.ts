@@ -12,6 +12,7 @@ import { MCP_SERVER_INSTRUCTIONS } from "@/mcp/instructions";
 import {
   getAgentScopesForClient,
   createRevokedTokenResponse,
+  resolveTokenScopes,
 } from "@/services/agent";
 import type { CalendarMcpAuthInfo } from "@/mcp/types";
 
@@ -84,17 +85,7 @@ const mcpAuthHandler = requireMcpAuth(
         ? rawClaims.scope.split(/[\s,]+/).filter(Boolean)
         : [];
 
-    let resolvedScopes: string[];
-    if (tokenScopes.length > 0) {
-      if (agentScopes) {
-        const consentSet = new Set(agentScopes);
-        resolvedScopes = tokenScopes.filter((s) => consentSet.has(s));
-      } else {
-        resolvedScopes = tokenScopes;
-      }
-    } else {
-      resolvedScopes = agentScopes ?? [];
-    }
+    const resolvedScopes = resolveTokenScopes(tokenScopes, agentScopes);
 
     const authInfo: CalendarMcpAuthInfo = {
       sub: userId,

@@ -16,6 +16,20 @@ export function resolveEffectiveScopes(scopes: string[]): string[] {
   );
 }
 
+/**
+ * Effective MCP scopes for an OAuth token: the token's own scopes narrowed to the
+ * user's current consent, so neither down-scoped tokens nor later consent edits widen access.
+ */
+export function resolveTokenScopes(
+  tokenScopes: string[],
+  consentScopes: string[] | undefined,
+): string[] {
+  if (tokenScopes.length === 0) return consentScopes ?? [];
+  if (!consentScopes) return tokenScopes;
+  const consent = new Set(consentScopes);
+  return tokenScopes.filter((s) => consent.has(s));
+}
+
 export interface AgentScopesResult {
   scopes: string[];
   isRevoked: boolean;
