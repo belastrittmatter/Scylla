@@ -1,17 +1,45 @@
 "use client";
 
 import * as React from "react";
-import "./sign-in-showcase.css";
+import { cn } from "@/lib/utils";
 
-const SCENE_MS = 10_000; // must match the 10s animation-duration in the stylesheet
+const SCENE_MS = 10_000;
+
+/** One-shot tw-animate-css entrance starting `at` seconds into the scene; reduced motion shows the end state. */
+function In({
+  at,
+  className,
+  children,
+}: {
+  at: number;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "animate-in fade-in fill-mode-both block duration-300 motion-reduce:animate-none",
+        className,
+      )}
+      style={{ animationDelay: `${at}s` }}
+    >
+      {children}
+    </span>
+  );
+}
 
 function Avatar({ color }: { color: string }) {
-  return <span className="sis-av" style={{ background: color }} />;
+  return (
+    <span
+      className="border-card -ml-1.5 size-3.5 shrink-0 rounded-full border-[1.5px] first:ml-0"
+      style={{ background: color }}
+    />
+  );
 }
 
 function Team() {
   return (
-    <span className="sis-avs">
+    <span className="flex">
       {["#60a5fa", "#f472b6", "#34d399", "#fbbf24"].map((c) => (
         <Avatar key={c} color={c} />
       ))}
@@ -19,159 +47,228 @@ function Team() {
   );
 }
 
-function Caption({ before, after }: { before: string; after: string }) {
+const stage =
+  "bg-muted/40 relative h-[262px] overflow-hidden rounded-xl border p-3.5 text-xs";
+const accent = "text-orange-700 dark:text-orange-300";
+const title = "flex items-center justify-between text-[13px] font-semibold";
+const meta =
+  "text-muted-foreground mt-1 flex items-center gap-1.5 text-[11.5px]";
+
+function Caption({ at, children }: { at: number; children: string }) {
   return (
-    <div className="sis-cap">
-      <span className="sis-capA">{before}</span>
-      <span className={`sis-capB sis-hl`}>{after}</span>
-    </div>
+    <In at={at} className={cn("mt-2.5 text-xs font-medium", accent)}>
+      {children}
+    </In>
   );
 }
 
 function Chat({
   question,
   steps,
+  caption,
   children,
 }: {
   question: string;
   steps: string[];
+  caption: string;
   children: React.ReactNode;
 }) {
-  const stepClass = ["sis-step1", "sis-step2", "sis-step3"];
   return (
-    <div className="sis-stage">
-      <div className="sis-q">{question}</div>
-      <div className="sis-who">
-        <i />
-        Scylla <span>via MCP</span>
+    <>
+      <div className={stage}>
+        <In
+          at={0.2}
+          className="bg-foreground/[0.07] slide-in-from-bottom-2 ml-auto w-fit max-w-[250px] rounded-[14px_14px_4px_14px] px-3 py-2 text-[13px] leading-snug"
+        >
+          {question}
+        </In>
+        <In
+          at={1.2}
+          className="mt-3 flex items-center gap-1.5 text-[11.5px] font-semibold"
+        >
+          <i className="bg-primary size-4 rounded-[5px]" />
+          Scylla{" "}
+          <span className="text-muted-foreground font-normal">via MCP</span>
+        </In>
+        {steps.map((step, i) => (
+          <In
+            key={step}
+            at={1.6 + i * 1.1}
+            className="text-muted-foreground slide-in-from-bottom-1 mt-1.5 ml-[23px] flex items-center gap-2 text-[12.5px]"
+          >
+            <span className="relative size-[13px] shrink-0">
+              <span className="border-muted-foreground/50 absolute inset-0 animate-spin rounded-full border-[1.5px] border-t-transparent motion-reduce:hidden" />
+              <In
+                at={2.6 + i * 1.1}
+                className="zoom-in-50 absolute -inset-px grid place-items-center rounded-full bg-green-600 text-[9px] font-bold text-white dark:bg-green-500"
+              >
+                ✓
+              </In>
+            </span>
+            {step}
+          </In>
+        ))}
+        <In
+          at={2.6 + steps.length * 1.1}
+          className="bg-card zoom-in-95 slide-in-from-bottom-2 before:bg-primary relative mt-3 ml-[23px] overflow-hidden rounded-lg border py-2.5 pr-3 pl-3.5 before:absolute before:inset-y-0 before:left-0 before:w-[3px]"
+        >
+          {children}
+        </In>
       </div>
-      {steps.map((step, i) => (
-        <div key={step} className={`sis-step ${stepClass[i]}`}>
-          <span className="sis-spin" />
-          {step}
-        </div>
-      ))}
-      <div className="sis-result">{children}</div>
-    </div>
+      <Caption at={3 + steps.length * 1.1}>{caption}</Caption>
+    </>
   );
 }
 
 function Book() {
   return (
-    <>
-      <Chat
-        question="Find an hour with the design team this week and book a room."
-        steps={[
-          "Checked 4 calendars",
-          "Everyone is free Thu 14:00",
-          "Booked Room Alpha",
-        ]}
-      >
-        <div className="sis-title">
-          Design sync <b>Thu 14:00</b>
-        </div>
-        <div className="sis-meta">
-          <Team />
-          Room Alpha · invites sent
-        </div>
-      </Chat>
-      <Caption before="Ask your AI assistant" after="On everyone's calendar" />
-    </>
+    <Chat
+      question="Find an hour with the design team this week and book a room."
+      steps={[
+        "Checked 4 calendars",
+        "Everyone is free Thu 14:00",
+        "Booked Room Alpha",
+      ]}
+      caption="On everyone's calendar"
+    >
+      <div className={title}>
+        Design sync
+        <span className={cn("text-xs font-medium", accent)}>Thu 14:00</span>
+      </div>
+      <div className={meta}>
+        <Team />
+        Room Alpha · invites sent
+      </div>
+    </Chat>
   );
 }
 
 function Move() {
   return (
-    <>
-      <Chat
-        question="Push my 1:1 with Lena to tomorrow, same time."
-        steps={[
-          'Found "1:1 with Lena" on Wed',
-          "Lena is free Thu 10:00",
-          "Moved and notified Lena",
-        ]}
-      >
-        <div className="sis-title">1:1 with Lena</div>
-        <div className="sis-meta">
-          <span className="sis-old">Wed 10:00</span>
-          <span className="sis-newTime">→ Thu 10:00</span>
-        </div>
-      </Chat>
-      <Caption
-        before="Ask your AI assistant"
-        after="Rescheduled, no back-and-forth"
-      />
-    </>
+    <Chat
+      question="Push my 1:1 with Lena to tomorrow, same time."
+      steps={[
+        'Found "1:1 with Lena" on Wed',
+        "Lena is free Thu 10:00",
+        "Moved and notified Lena",
+      ]}
+      caption="Rescheduled, no back-and-forth"
+    >
+      <div className={title}>1:1 with Lena</div>
+      <div className={meta}>
+        <span className="line-through">Wed 10:00</span>
+        <span className={cn("font-medium", accent)}>→ Thu 10:00</span>
+      </div>
+    </Chat>
   );
 }
 
 function Briefing() {
   return (
-    <>
-      <Chat
-        question="What's on my plate today?"
-        steps={["Read today's calendar", "Checked your open tasks"]}
-      >
-        <div className="sis-agenda">
-          <span className="sis-time">09:30</span>
-          <span>Standup</span>
-          <span className="sis-join">Join</span>
-          <span className="sis-time">14:00</span>
-          <span>Design sync</span>
-          <span className="sis-join">Join</span>
-          <span className="sis-time">16:00</span>
-          <span>1:1 with Lena</span>
-          <span />
-        </div>
-        <div className="sis-due">
-          <span className="sis-box" />2 tasks due · Ship release notes, …
-        </div>
-      </Chat>
-      <Caption before="Ask your AI assistant" after="Your day in one answer" />
-    </>
+    <Chat
+      question="What's on my plate today?"
+      steps={["Read today's calendar", "Checked your open tasks"]}
+      caption="Your day in one answer"
+    >
+      <div className="grid grid-cols-[38px_1fr_auto] items-center gap-x-2 gap-y-1.5">
+        {[
+          ["09:30", "Standup", "Join"],
+          ["14:00", "Design sync", "Join"],
+          ["16:00", "1:1 with Lena", ""],
+        ].map(([time, name, join]) => (
+          <React.Fragment key={time}>
+            <span className="text-muted-foreground text-[11px] tabular-nums">
+              {time}
+            </span>
+            <span>{name}</span>
+            <span className={cn("text-[10.5px]", accent)}>{join}</span>
+          </React.Fragment>
+        ))}
+      </div>
+      <div className="text-muted-foreground mt-2 flex items-center gap-1.5 border-t border-dashed pt-2 text-[11.5px]">
+        <span className="border-muted-foreground/60 size-[11px] rounded-[3px] border-[1.5px]" />
+        2 tasks due · Ship release notes, …
+      </div>
+    </Chat>
   );
 }
 
 function GitHub() {
+  const pill =
+    "bg-card col-start-1 row-start-1 w-[76px] rounded-full border border-current py-px text-center text-[10.5px] font-medium";
+  const code = "bg-border rounded px-1.5 font-mono text-[10.5px]";
+  const events: [number, React.ReactNode][] = [
+    [
+      0.4,
+      <>
+        <b>Lena</b> created branch{" "}
+        <code className={code}>fix/login-redirect</code>
+      </>,
+    ],
+    [
+      1.8,
+      <>
+        <b>Lena</b> opened PR <code className={code}>#318</code>
+      </>,
+    ],
+    [
+      3.6,
+      <>
+        <span className="grid size-[13px] place-items-center rounded-full bg-green-600 text-[8.5px] font-bold text-white dark:bg-green-500">
+          ✓
+        </span>
+        Checks passed
+      </>,
+    ],
+    [
+      5.4,
+      <>
+        <b>Sam</b> merged <code className={code}>#318</code> into main
+      </>,
+    ],
+  ];
   return (
     <>
-      <div className="sis-stage">
-        <div className="sis-task">
-          <div className="sis-title">
+      <div className={stage}>
+        <div className="bg-card rounded-lg border px-3 py-2.5">
+          <div className={title}>
             Fix login redirect
-            <span className={`sis-swap sis-status`}>
-              <span className="sis-status1">In progress</span>
-              <span className="sis-status2">In review</span>
-              <span className="sis-status3">Done</span>
+            <span className="grid justify-items-end">
+              <span className={cn(pill, "text-blue-600 dark:text-blue-400")}>
+                In progress
+              </span>
+              <In
+                at={1.8}
+                className={cn(pill, "text-violet-600 dark:text-violet-400")}
+              >
+                In review
+              </In>
+              <In
+                at={5.4}
+                className={cn(pill, "text-green-600 dark:text-green-500")}
+              >
+                Done
+              </In>
             </span>
           </div>
-          <div className="sis-meta" style={{ marginTop: 7 }}>
+          <div className={cn(meta, "mt-1.5")}>
             <Avatar color="#60a5fa" />
             Lena · Website relaunch
           </div>
         </div>
-        <div className="sis-feed">
-          <div className={`sis-ev sis-ev1`}>
-            <b>Lena</b> created branch{" "}
-            <code className="sis-mono">fix/login-redirect</code>
-          </div>
-          <div className={`sis-ev sis-ev2`}>
-            <b>Lena</b> opened PR <code className="sis-mono">#318</code>
-          </div>
-          <div className={`sis-ev sis-ev3`}>
-            <span className="sis-dot">✓</span>Checks passed
-          </div>
-          <div className={`sis-ev sis-ev4`}>
-            <b>Sam</b> merged <code className="sis-mono">#318</code> into main
-          </div>
+        <div className="mt-4 ml-1.5 border-l pl-3.5">
+          {events.map(([at, text]) => (
+            <In
+              key={at}
+              at={at}
+              className="text-muted-foreground slide-in-from-bottom-1 [&_b]:text-foreground mt-3.5 flex items-center gap-1.5 first:mt-0.5 [&_b]:font-medium"
+            >
+              {text}
+            </In>
+          ))}
         </div>
       </div>
-      <div className="sis-cap">
-        <span className="sis-gh1">Linked to GitHub</span>
-        <span className={`sis-gh2 sis-hl`}>
-          Board updated itself · team in sync
-        </span>
-      </div>
+      <Caption at={6}>Board updated itself · team in sync</Caption>
     </>
   );
 }
@@ -183,7 +280,7 @@ const SCENES = [
   { title: "GitHub sync", Scene: GitHub },
 ];
 
-/** Feature tour: story-style progress tabs over a looping vignette; each scene remounts so its CSS animation starts from 0. */
+/** Feature tour: story-style progress tabs over a vignette; each scene remounts so its animations start from 0. */
 export function SignInShowcase({ className }: { className?: string }) {
   const [index, setIndex] = React.useState(0);
 
@@ -197,12 +294,8 @@ export function SignInShowcase({ className }: { className?: string }) {
   }, []);
 
   const { Scene } = SCENES[index];
-  // Theme colours are Tailwind classes so dark: applies; unlayered CSS would always win over them.
   return (
-    <div
-      aria-hidden
-      className={`sis-root [--afg:#c2410c] [--blue:#2563eb] [--ok:#16a34a] [--violet:#7c3aed] dark:[--afg:#fdba74] dark:[--blue:#60a5fa] dark:[--ok:#22c55e] dark:[--violet:#a78bfa] ${className ?? ""}`}
-    >
+    <div aria-hidden className={className}>
       <div className="mb-5 grid grid-cols-4 gap-3 text-[13px]">
         {SCENES.map((scene, i) => (
           <div
@@ -216,14 +309,19 @@ export function SignInShowcase({ className }: { className?: string }) {
             <div className="bg-foreground/10 mb-2.5 h-0.5 overflow-hidden rounded-full">
               {i < index && <div className="bg-foreground/40 h-full" />}
               {i === index && (
-                <div key={index} className="sis-fill bg-primary h-full" />
+                <div
+                  key={index}
+                  className="animate-in slide-in-from-left-full bg-primary h-full duration-[10s] ease-linear motion-reduce:animate-none"
+                />
               )}
             </div>
             {scene.title}
           </div>
         ))}
       </div>
-      <Scene key={index} />
+      <div key={index} className="animate-in fade-in duration-500">
+        <Scene />
+      </div>
     </div>
   );
 }
