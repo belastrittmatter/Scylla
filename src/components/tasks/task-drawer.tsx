@@ -30,7 +30,7 @@ interface TaskDrawerProps {
 }
 
 export function TaskDrawer({ task, isOpen, ...props }: TaskDrawerProps) {
-  if (!isOpen || !task) return null;
+  if (!task) return null;
 
   return (
     <TaskDrawerInner key={task.id} task={task} isOpen={isOpen} {...props} />
