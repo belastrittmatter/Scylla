@@ -197,12 +197,7 @@ export class MeetingInviteService {
       );
 
     // Only accept a slot the invite actually offers (same computation as the slots endpoint).
-    const offered = await findInviteSlots(
-      details,
-      startDate,
-      endDate,
-      input.timeZone,
-    );
+    const offered = await findInviteSlots(details, startDate, endDate);
     const isOffered = offered.some(
       (s) =>
         new Date(s.start).getTime() === startDate.getTime() &&

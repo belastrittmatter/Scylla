@@ -21,6 +21,7 @@ import {
   meetingInvite,
   meetingRoom,
   booking,
+  schedule,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -435,6 +436,60 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     } finally {
       freeBusy.mockRestore();
       await db.delete(account).where(eq(account.id, `acc_${testOrganizerId}`));
+    }
+  });
+
+  it("guest time zone never shifts the organizer's working hours", async () => {
+    await db.insert(schedule).values({
+      userId: testOrganizerId,
+      timeZone: "Asia/Ho_Chi_Minh",
+      workingHours: [1, 2, 3, 4, 5].map((day) => ({
+        day,
+        start: "08:00",
+        end: "18:00",
+      })),
+    });
+    try {
+      const invite = await createSecretInvite({ isRestricted: false });
+      // A Tue-Thu date at least a week out, so the whole day is a workday in both zones.
+      let date = "";
+      for (let d = 7; !date; d++) {
+        const day = new Date(Date.now() + d * 86_400_000);
+        if ([2, 3, 4].includes(day.getUTCDay())) {
+          date = day.toISOString().slice(0, 10);
+        }
+      }
+      const guestZone = "America/New_York";
+      const hcmHour = (iso: string) =>
+        Number(
+          new Intl.DateTimeFormat("en-US", {
+            timeZone: "Asia/Ho_Chi_Minh",
+            hour: "numeric",
+            hourCycle: "h23",
+          }).format(new Date(iso)),
+        );
+
+      const res = await slotsRequest(invite.slug, { date, timeZone: guestZone });
+      expect(res.status).toBe(200);
+      const { slots } = (await res.json()) as { slots: TimeSlot[] };
+      expect(slots.length).toBeGreaterThan(0);
+      for (const s of slots) {
+        expect(hcmHour(s.start)).toBeGreaterThanOrEqual(8);
+        expect(hcmHour(s.end)).toBeLessThanOrEqual(18);
+      }
+
+      // 14:00 UTC: 21:00 for the organizer, 09:00/10:00 for the guest.
+      const night = new Date(`${date}T14:00:00.000Z`);
+      const book = await bookRequest(invite.slug, {
+        guestName: "Night Owl",
+        guestEmail: "owl@example.com",
+        startTime: night.toISOString(),
+        endTime: new Date(night.getTime() + 30 * 60 * 1000).toISOString(),
+        timeZone: guestZone,
+      });
+      expect(book.status).toBe(409);
+    } finally {
+      await db.delete(schedule).where(eq(schedule.userId, testOrganizerId));
     }
   });
 });

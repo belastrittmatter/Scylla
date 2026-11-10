@@ -280,8 +280,8 @@ export class SchedulerService {
               userId: dbUser.id,
               schedule: {
                 email: resolvedEmail,
-                timeZone:
-                  params.timeZone || scheds[0].timeZone || "Asia/Ho_Chi_Minh",
+                // Working hours are in the attendee's own zone, never the caller's.
+                timeZone: scheds[0].timeZone,
                 workingHours: scheds[0].workingHours || DEFAULT_WORKING_HOURS,
               },
             };

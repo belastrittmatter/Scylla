@@ -12,7 +12,6 @@ export async function findInviteSlots(
   details: InviteDetails,
   start: Date,
   end: Date,
-  timeZone = "Asia/Ho_Chi_Minh",
 ): Promise<TimeSlot[]> {
   const { invite, organizer } = details;
   const allAttendees = new Set<string>();
@@ -40,7 +39,7 @@ export async function findInviteSlots(
     startDate: start,
     endDate: end,
     roomId: invite.roomId || undefined,
-    timeZone,
+    // No guest zone: it would shift the organizer's and members' working hours.
   });
   return slots.filter((s) => s.available);
 }
@@ -55,7 +54,6 @@ export async function getAvailableSlotsForInvite(
     details,
     new Date(baseDate.getTime() - 24 * 3600 * 1000),
     new Date(baseDate.getTime() + 24 * 3600 * 1000),
-    timeZone,
   );
 
   const dateFormatter = new Intl.DateTimeFormat("en-CA", {
