@@ -23,8 +23,17 @@ import { INITIAL_TASK_FILTERS } from "./task-types";
 import type { TaskFilters, TaskStatus, Team } from "./task-types";
 
 export function TaskDashboard() {
-  const { teams, projects, tasks, users, teamMembers, isLoading, ...setters } =
-    useTaskWorkspaceData();
+  const {
+    teams,
+    projects,
+    tasks,
+    users,
+    teamMembers,
+    isLoading,
+    error,
+    reload,
+    ...setters
+  } = useTaskWorkspaceData();
   const { setTeams, setTasks } = setters;
   const { handleMoveTask, handleDeleteTasks } = useTaskBoardState(
     tasks,
@@ -97,7 +106,9 @@ export function TaskDashboard() {
 
   return (
     <div className="bg-muted/30 flex h-full w-full flex-col overflow-hidden">
-      {teams.length === 0 ? (
+      {error && teams.length === 0 ? (
+        <TaskScopeEmptyState kind="load_error" onAction={reload} />
+      ) : teams.length === 0 ? (
         <TaskScopeEmptyState
           kind="no_teams"
           onAction={() => setIsCreateTeamOpen(true)}

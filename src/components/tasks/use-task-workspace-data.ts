@@ -13,13 +13,16 @@ interface WorkspaceCacheSnapshot {
   teamMembers: WorkspaceTeamMember[];
 }
 
+const LOAD_ERROR = "Failed to load workspace data";
+
 let clientWorkspaceCache: WorkspaceCacheSnapshot | null = null;
 let inflightWorkspaceRequest: ReturnType<typeof getWorkspaceDataAction> | null =
   null;
 
 export interface TaskWorkspaceData extends WorkspaceCacheSnapshot {
   isLoading: boolean;
-  error?: string | null;
+  error: string | null;
+  reload: () => void;
   setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
   setTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>;
 }
@@ -44,13 +47,11 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
     () => !clientWorkspaceCache,
   );
   const [error, setError] = React.useState<string | null>(null);
+  const [attempt, setAttempt] = React.useState(0);
 
+  // Keep local edits (moves, deletes) in the snapshot; never cache a failed load.
   React.useEffect(() => {
-    if (
-      !isLoading &&
-      !error &&
-      (teams.length > 0 || projects.length > 0 || tasks.length > 0)
-    ) {
+    if (!isLoading && !error) {
       clientWorkspaceCache = { teams, projects, tasks, users, teamMembers };
     }
   }, [isLoading, error, teams, projects, tasks, users, teamMembers]);
@@ -64,35 +65,29 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
     }
     inflightWorkspaceRequest
       .then((res) => {
-        if (!isMounted) return;
-        if (res?.success && res.data) {
-          const nextCache: WorkspaceCacheSnapshot = {
-            teams: res.data.teams,
-            projects: res.data.projects,
-            tasks: res.data.tasks,
-            users: res.data.users,
-            teamMembers: res.data.teamMembers ?? [],
-          };
-          clientWorkspaceCache = nextCache;
-          setTeams(nextCache.teams);
-          setProjects(nextCache.projects);
-          setTasks(nextCache.tasks);
-          setUsers(nextCache.users);
-          setTeamMembers(nextCache.teamMembers);
-          setError(null);
-        } else {
-          setError(res?.error ?? "Failed to load workspace data");
+        if (!res?.success || !res.data) {
+          if (isMounted) setError(res?.error ?? LOAD_ERROR);
+          return;
         }
+        const nextCache: WorkspaceCacheSnapshot = {
+          teams: res.data.teams,
+          projects: res.data.projects,
+          tasks: res.data.tasks,
+          users: res.data.users,
+          teamMembers: res.data.teamMembers ?? [],
+        };
+        clientWorkspaceCache = nextCache;
+        if (!isMounted) return;
+        setTeams(nextCache.teams);
+        setProjects(nextCache.projects);
+        setTasks(nextCache.tasks);
+        setUsers(nextCache.users);
+        setTeamMembers(nextCache.teamMembers);
+        setError(null);
       })
       .catch((err) => {
         console.error(err);
-        if (isMounted) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to load workspace data",
-          );
-        }
+        if (isMounted) setError(LOAD_ERROR);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -100,6 +95,12 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
     return () => {
       isMounted = false;
     };
+  }, [attempt]);
+
+  const reload = React.useCallback(() => {
+    setIsLoading(true);
+    setError(null);
+    setAttempt((n) => n + 1);
   }, []);
 
   return {
@@ -110,6 +111,7 @@ export function useTaskWorkspaceData(): TaskWorkspaceData {
     teamMembers,
     isLoading,
     error,
+    reload,
     setTeams,
     setTasks,
   };

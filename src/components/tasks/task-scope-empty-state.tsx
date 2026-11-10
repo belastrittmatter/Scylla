@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, Inbox, Plus, SearchX, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleAlert,
+  Inbox,
+  Plus,
+  SearchX,
+  Users,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +20,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 
-export type TaskEmptyKind = "me" | "team" | "project" | "filtered" | "no_teams";
+export type TaskEmptyKind =
+  "me" | "team" | "project" | "filtered" | "no_teams" | "load_error";
 
 const COPY: Record<
   TaskEmptyKind,
@@ -49,6 +57,12 @@ const COPY: Record<
     body: "Teams organize your projects, tasks, and members in one place.",
     action: "New team",
   },
+  load_error: {
+    icon: CircleAlert,
+    title: "Couldn't load your tasks",
+    body: "Something went wrong on our side. Your teams and tasks are safe.",
+    action: "Try again",
+  },
 };
 
 interface TaskScopeEmptyStateProps {
@@ -64,6 +78,7 @@ export function TaskScopeEmptyState({
   secondary,
 }: TaskScopeEmptyStateProps) {
   const { icon: Icon, title, body, action } = COPY[kind];
+  const isCreate = kind !== "filtered" && kind !== "load_error";
   return (
     <Empty>
       <EmptyHeader className="w-full max-w-sm">
@@ -77,10 +92,10 @@ export function TaskScopeEmptyState({
       <EmptyContent className="flex-row justify-center">
         <Button
           onClick={onAction}
-          variant={kind === "filtered" ? "outline" : "default"}
+          variant={isCreate ? "default" : "outline"}
           className="gap-1.5"
         >
-          {kind !== "filtered" && <Plus className="size-4" />}
+          {isCreate && <Plus className="size-4" />}
           {action}
         </Button>
         {secondary && (
