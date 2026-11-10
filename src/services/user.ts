@@ -38,6 +38,36 @@ export class UserService {
   }
 
   /**
+   * True when every entry (a user id or email, case-insensitive) is a registered
+   * user sharing a team with `callerId`; unknown addresses and other tenants fail.
+   */
+  public static async areTeammates(
+    callerId: string,
+    idsOrEmails: string[],
+  ): Promise<boolean> {
+    const allowedUserIds = new Set(await this.getTeammateIds(callerId));
+    const matchedUsers = await db
+      .select({ id: user.id, email: user.email })
+      .from(user)
+      .where(
+        or(
+          inArray(user.id, idsOrEmails),
+          inArray(
+            sql`lower(${user.email})`,
+            idsOrEmails.map((a) => a.toLowerCase()),
+          ),
+        ),
+      );
+    return idsOrEmails.every((a) =>
+      matchedUsers.some(
+        (u) =>
+          allowedUserIds.has(u.id) &&
+          (u.id === a || u.email.toLowerCase() === a.toLowerCase()),
+      ),
+    );
+  }
+
+  /**
    * Search the caller's teammates across database users and the Google
    * Workspace directory. Fails closed (empty result) without a caller id.
    */

@@ -79,4 +79,18 @@ describe("search actions are scoped to the session user (#93)", () => {
       }),
     );
   });
+
+  test("findSlotsAction rejects attendees who are not teammates (#96)", async () => {
+    const find = spyOn(SchedulerService, "findSlots").mockResolvedValue([]);
+    find.mockClear();
+    spies.push(find);
+    const result = await findSlotsAction({
+      attendees: ["outsider@other-tenant.test"],
+      durationMinutes: 30,
+      startDate: new Date(Date.now() + 86_400_000).toISOString(),
+      endDate: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+    });
+    expect(result.success).toBe(false);
+    expect(find).not.toHaveBeenCalled();
+  });
 });

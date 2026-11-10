@@ -3,8 +3,8 @@ import { FindSlotsParamsSchema } from "@/actions/schemas";
 import { resolveUserId } from "@/services/api-utils";
 import { UserService } from "@/services/user";
 import { db } from "@/db";
-import { account, user } from "@/db/schema";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { account } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
@@ -32,28 +32,8 @@ export async function POST(req: Request) {
     }
 
     // Every attendee must be a registered teammate; unknown addresses and other tenants are refused.
-    const allowedUserIds = new Set(await UserService.getTeammateIds(callerId));
     const requested = parseResult.data.attendees.map((a) => a.trim());
-    const matchedUsers = await db
-      .select({ id: user.id, email: user.email })
-      .from(user)
-      .where(
-        or(
-          inArray(user.id, requested),
-          inArray(
-            sql`lower(${user.email})`,
-            requested.map((a) => a.toLowerCase()),
-          ),
-        ),
-      );
-    const allAllowed = requested.every((a) =>
-      matchedUsers.some(
-        (u) =>
-          allowedUserIds.has(u.id) &&
-          (u.id === a || u.email.toLowerCase() === a.toLowerCase()),
-      ),
-    );
-    if (!allAllowed) {
+    if (!(await UserService.areTeammates(callerId, requested))) {
       return Response.json(
         {
           error:

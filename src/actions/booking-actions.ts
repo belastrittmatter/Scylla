@@ -102,9 +102,18 @@ export async function findSlotsAction(
         error: parseResult.error.issues.map((i) => i.message).join(", "),
       };
     }
+    // Every attendee must be a registered teammate, as in POST /api/slots/find.
+    const attendees = parseResult.data.attendees.map((a) => a.trim());
+    if (!(await UserService.areTeammates(userId, attendees))) {
+      return {
+        success: false,
+        error: "Attendees must be registered members of your teams",
+      };
+    }
     // Google free/busy is only read with the caller's own credentials, as in POST /api/slots/find.
     const slots = await SchedulerService.findSlots({
       ...parseResult.data,
+      attendees,
       ...(await googleOptionsFor(userId)),
     });
     return { success: true, data: slots };
