@@ -13,33 +13,31 @@ describe("Domain Services", () => {
   });
 
   describe("UserService", () => {
-    test("searchTeammates finds users in database by name or email", async () => {
-      const alexResults = await UserService.searchTeammates("Alex");
+    const caller = { currentUserId: "usr_alex_rivera" };
+
+    test("searchTeammates finds the caller's teammates by name and accepts full emails", async () => {
+      const alexResults = await UserService.searchTeammates("Alex", 20, caller);
       expect(alexResults.length).toBeGreaterThan(0);
       expect(alexResults[0].name).toContain("Alex");
 
-      const emailResults =
-        await UserService.searchTeammates("user1@example.com");
+      const emailResults = await UserService.searchTeammates(
+        "user1@example.com",
+        20,
+        caller,
+      );
       expect(emailResults.length).toBe(1);
       expect(emailResults[0].email).toBe("user1@example.com");
     });
 
-    test("searchTeammates falls back to Google Directory when DB has no matches", async () => {
-      const dirResults = await UserService.searchTeammates("Sarah");
-      expect(dirResults.length).toBeGreaterThan(0);
-      expect(dirResults[0].name).toContain("Sarah");
-      expect(dirResults[0].email).toContain("sarah@example.com");
-    });
-
-    test("searchTeammates includes Google Directory users even when DB has users", async () => {
-      const results = await UserService.searchTeammates("Sarah");
+    test("searchTeammates never surfaces Google Directory users outside the caller's teams", async () => {
+      const results = await UserService.searchTeammates("Sarah", 20, caller);
       expect(results.some((u) => u.email.includes("sarah@example.com"))).toBe(
-        true,
+        false,
       );
     });
 
     test("searchTeammates respects limit parameter", async () => {
-      const results = await UserService.searchTeammates("", 1);
+      const results = await UserService.searchTeammates("", 1, caller);
       expect(results.length).toBeLessThanOrEqual(1);
     });
   });

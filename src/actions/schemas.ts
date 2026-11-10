@@ -10,7 +10,10 @@ export const RoomFilterSchema = z
 
 export const FindSlotsParamsSchema = z
   .object({
-    attendees: z.array(z.string()).min(1, "At least one attendee is required"),
+    attendees: z
+      .array(z.string())
+      .min(1, "At least one attendee is required")
+      .max(20, "Maximum 20 attendees allowed"),
     durationMinutes: z.number().int().positive().optional().default(30),
     startDate: z.union([z.string(), z.date()]),
     endDate: z.union([z.string(), z.date()]),
@@ -24,10 +27,15 @@ export const FindSlotsParamsSchema = z
     (data) => {
       const start = new Date(data.startDate);
       const end = new Date(data.endDate);
-      return !isNaN(start.getTime()) && !isNaN(end.getTime()) && start < end;
+      if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+        return false;
+      }
+      const maxWindowMs = 60 * 24 * 60 * 60 * 1000;
+      return end.getTime() - start.getTime() <= maxWindowMs;
     },
     {
-      message: "startDate must be before endDate and valid dates",
+      message:
+        "startDate must be before endDate and range must not exceed 60 days",
       path: ["startDate"],
     },
   );

@@ -1,9 +1,14 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { getRoomsAction, searchTeammatesAction } from "@/actions";
+import {
+  findSlotsAction,
+  getRoomsAction,
+  searchTeammatesAction,
+} from "@/actions";
 import { db } from "@/db";
 import { account, user } from "@/db/schema";
 import { RoomService } from "@/services/rooms";
+import { SchedulerService } from "@/services/scheduler";
 import { UserService } from "@/services/user";
 import { mockSessionUser } from "../test-utils/mock-session";
 
@@ -40,8 +45,11 @@ describe("search actions are scoped to the session user (#93)", () => {
     await searchTeammatesAction("al");
     expect(search).toHaveBeenCalledWith(
       "al",
-      undefined,
-      expect.objectContaining({ accessToken: "scope-token" }),
+      20,
+      expect.objectContaining({
+        currentUserId: userId,
+        accessToken: "scope-token",
+      }),
     );
   });
 
@@ -53,5 +61,36 @@ describe("search actions are scoped to the session user (#93)", () => {
       {},
       expect.objectContaining({ accessToken: "scope-token" }),
     );
+  });
+
+  test("findSlotsAction passes the caller's Google account (#96)", async () => {
+    const find = spyOn(SchedulerService, "findSlots").mockResolvedValue([]);
+    spies.push(find);
+    await findSlotsAction({
+      attendees: [`${userId}@example.com`],
+      durationMinutes: 30,
+      startDate: new Date(Date.now() + 86_400_000).toISOString(),
+      endDate: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+    });
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: "scope-token",
+        accountRecord: expect.objectContaining({ userId }),
+      }),
+    );
+  });
+
+  test("findSlotsAction rejects attendees who are not teammates (#96)", async () => {
+    const find = spyOn(SchedulerService, "findSlots").mockResolvedValue([]);
+    find.mockClear();
+    spies.push(find);
+    const result = await findSlotsAction({
+      attendees: ["outsider@other-tenant.test"],
+      durationMinutes: 30,
+      startDate: new Date(Date.now() + 86_400_000).toISOString(),
+      endDate: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+    });
+    expect(result.success).toBe(false);
+    expect(find).not.toHaveBeenCalled();
   });
 });

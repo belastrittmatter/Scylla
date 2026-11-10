@@ -68,6 +68,14 @@ export const auth = betterAuth({
       },
     },
   },
+  session: {
+    // The proxy and the route both resolve the session; a signed cookie cache
+    // spares the second DB lookup. Revoked sessions stay valid for up to maxAge.
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
+  },
   account: {
     accountLinking: {
       enabled: true,

@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, afterAll, spyOn } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  spyOn,
+} from "bun:test";
 import { createCalendarMcpServer } from "@/app/api/mcp/route";
 import {
   buildScheduleComparisonMarkdown,
@@ -14,6 +22,7 @@ import { db, user } from "@/db";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { UserService } from "@/services/user";
 import { TeamService } from "@/services/team/team-service";
+import { team, teamMember } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 interface RegisteredToolDef {
@@ -58,7 +67,33 @@ describe("MCP Tools & Utilities Suite", () => {
     }
   });
 
+  // Nickname resolution only reaches teammates, so Sarah (the mock directory user) joins the organizer's team.
+  const sarahId = "usr_mcp_test_sarah";
+  beforeAll(async () => {
+    await db
+      .insert(user)
+      .values([
+        { id: testUserId, name: "MCP Test Organizer", email: testUserEmail },
+        { id: sarahId, name: "Sarah Chen", email: "sarah@example.com" },
+      ])
+      .onConflictDoNothing();
+    const [t] = await db
+      .insert(team)
+      .values({
+        name: "MCP Sarah Team",
+        slug: "mcp-sarah-team",
+        ownerId: testUserId,
+      })
+      .onConflictDoUpdate({ target: team.slug, set: { ownerId: testUserId } })
+      .returning();
+    await db.insert(teamMember).values([
+      { teamId: t.id, userId: testUserId, role: "owner" },
+      { teamId: t.id, userId: sarahId },
+    ]);
+  });
+
   afterAll(async () => {
+    await db.delete(user).where(eq(user.id, sarahId));
     await db.delete(user).where(eq(user.id, testUserId));
   });
 
@@ -171,7 +206,7 @@ describe("MCP Tools & Utilities Suite", () => {
 
       try {
         const res = await tool.handler({
-          attendees: ["me", "sarah", "alex@example.com"],
+          attendees: ["me", "sarah", "SARAH@example.com"],
           durationMinutes: 30,
           startDate: "2026-10-20T08:00:00.000Z",
           endDate: "2026-10-20T18:00:00.000Z",
@@ -192,6 +227,24 @@ describe("MCP Tools & Utilities Suite", () => {
         freeBusySpy.mockRestore();
         searchSpy.mockRestore();
       }
+    }, 15000);
+
+    it("rejects attendees who are not teammates (#96)", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["find_common_meeting_slots"];
+
+      const res = await tool.handler({
+        attendees: ["me", "outsider@other-tenant.test"],
+        durationMinutes: 30,
+        startDate: "2026-10-20T08:00:00.000Z",
+        endDate: "2026-10-20T18:00:00.000Z",
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.structuredContent).toBeUndefined();
     }, 15000);
   });
 
@@ -235,6 +288,22 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(res.content[0].text).toContain(
         "Could not find any teammate or contact",
       );
+    }, 15000);
+
+    it("rejects a target who is not a teammate (#96)", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["compare_schedules"];
+
+      const res = await tool.handler({
+        targetUser: "outsider@other-tenant.test",
+        date: "2026-10-20",
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.structuredContent).toBeUndefined();
     }, 15000);
 
     it("incorporates roomId and suggestedTitle into schedule comparison and UI", async () => {

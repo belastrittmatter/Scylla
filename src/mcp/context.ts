@@ -200,6 +200,7 @@ export function createMcpToolContext(
         return current.email.toLowerCase();
       }
       const teammates = await UserService.searchTeammates(trimmed, 1, {
+        currentUserId: userId ?? "",
         accessToken: token || undefined,
       });
       if (teammates.length > 0 && teammates[0].email) {
