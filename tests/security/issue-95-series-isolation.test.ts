@@ -1,8 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { db } from "@/db";
 import { user, booking } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { BookingService } from "@/services/booking";
+import { GoogleCalendarService } from "@/services/google-calendar";
 
 describe("Issue #95 Series Cancellation Isolation", () => {
   test("C1: cancelling series does not cancel other users' bookings with matching series tag", async () => {
@@ -478,5 +479,24 @@ test("C1: non-organizer attendee cannot cancel entire series", async () => {
       .delete(user)
       .where(eq(user.id, attendee.id))
       .catch(() => {});
+  }
+});
+
+test("C4: unknown booking id throws NotFound without touching Google Calendar", async () => {
+  const deleteSpy = spyOn(GoogleCalendarService, "deleteEvent");
+  try {
+    const unknownId = `gcal-${crypto.randomUUID()}`;
+    await expect(
+      BookingService.cancelSeriesByBooking({
+        bookingId: unknownId,
+        callerId: crypto.randomUUID(),
+      }),
+    ).rejects.toThrow(/not found/i);
+    await expect(BookingService.cancel(unknownId)).rejects.toThrow(
+      /not found/i,
+    );
+    expect(deleteSpy).not.toHaveBeenCalled();
+  } finally {
+    deleteSpy.mockRestore();
   }
 });

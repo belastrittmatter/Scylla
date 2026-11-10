@@ -243,12 +243,8 @@ export class BookingService {
   }
 
   public static async cancel(id: string, reason?: string): Promise<Booking> {
-    const cleanId = id.replace(/^gcal-/, "");
     const existing = await this.getBookingById(id);
     if (!existing) {
-      try {
-        await GoogleCalendarService.deleteEvent(cleanId);
-      } catch {}
       throw new Error(`Booking with ID ${id} not found`);
     }
 

@@ -97,15 +97,9 @@ export class BookingSeriesService {
     }
 
     const id = options.bookingId;
-    const cleanId = id.replace(/^gcal-/, "");
     const targetBooking = await BookingQueryService.getBookingById(id);
     if (!targetBooking) {
-      try {
-        await GoogleCalendarService.deleteEvent(cleanId);
-      } catch (gcalErr) {
-        console.warn("Could not delete gcal event:", gcalErr);
-      }
-      return [];
+      throw new Error(`Booking with ID ${id} not found`);
     }
 
     if (targetBooking.organizerUserId !== callerId) {
