@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import {
@@ -48,9 +49,20 @@ export function TasksNavItem({
 }) {
   const onTasks = pathname === "/tasks" || pathname.startsWith("/tasks/");
   const activeTeam = onTasks ? activeTasksTeam(pathname, searchParams) : null;
+  // Controlled: pathname starts empty (Suspense fallback), so defaultOpen would change after mount.
+  const [open, setOpen] = React.useState(onTasks);
+  const [wasOnTasks, setWasOnTasks] = React.useState(onTasks);
+  if (wasOnTasks !== onTasks) {
+    setWasOnTasks(onTasks);
+    if (onTasks) setOpen(true);
+  }
 
   return (
-    <Collapsible defaultOpen={onTasks} render={<SidebarMenuItem />}>
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      render={<SidebarMenuItem />}
+    >
       <SidebarMenuButton
         isActive={onTasks}
         tooltip={item.title}
