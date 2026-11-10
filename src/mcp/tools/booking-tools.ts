@@ -11,7 +11,10 @@ import {
   cancelMeetingSchema,
 } from "../schemas";
 import { resolveProject, verifyScope } from "./auth-helpers";
-import { sanitizeBookingDescription } from "@/services/booking/booking-token-helper";
+import {
+  getOrganizerToken,
+  sanitizeBookingDescription,
+} from "@/services/booking/booking-token-helper";
 import type { McpToolContext } from "../types";
 
 // Same rule as the REST routes and Server Actions (organizer or calendar owner).
@@ -30,7 +33,13 @@ async function findOwnedBooking(eventId: string, userId: string | undefined) {
       },
     };
   }
-  return { existing };
+  if (!existing) return { gcalId: eventId, token: undefined };
+  // A stored booking lives on the organizer's calendar under its gcalEventId, like the REST routes.
+  return {
+    existing,
+    gcalId: existing.gcalEventId ?? eventId,
+    token: await getOrganizerToken(existing.organizerUserId),
+  };
 }
 
 export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
@@ -254,10 +263,12 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
-      const { existing, forbidden } = await findOwnedBooking(
-        eventId,
-        ctx.userId,
-      );
+      const {
+        existing,
+        forbidden,
+        gcalId,
+        token: organizerToken,
+      } = await findOwnedBooking(eventId, ctx.userId);
       if (forbidden) return forbidden;
 
       // Resolve optional linked project and update Google Calendar event in parallel
@@ -266,13 +277,13 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
           ? resolveProject(projectId, ctx.userId)
           : Promise.resolve(undefined),
         GoogleCalendarService.updateEvent(
-          eventId,
+          gcalId,
           {
             start: newStart,
             end: newEnd,
             roomEmail,
           },
-          token,
+          organizerToken ?? token,
         ),
       ]);
       const finalProjectId =
@@ -350,16 +361,18 @@ export function registerBookingTools(server: McpServer, ctx: McpToolContext) {
         };
       }
 
-      const { existing, forbidden } = await findOwnedBooking(
-        eventId,
-        ctx.userId,
-      );
+      const {
+        existing,
+        forbidden,
+        gcalId,
+        token: organizerToken,
+      } = await findOwnedBooking(eventId, ctx.userId);
       if (forbidden) return forbidden;
 
       const result = await GoogleCalendarService.deleteEvent(
-        eventId,
+        gcalId,
         calendarId,
-        token,
+        organizerToken ?? token,
       );
 
       // Update DB record status if present

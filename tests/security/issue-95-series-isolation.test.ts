@@ -712,6 +712,57 @@ describe("C7: MCP cancel/reschedule ownership", () => {
     }
   });
 
+  test("cancel and reschedule by booking id target the stored Google event id", async () => {
+    const [organizer] = await db
+      .insert(user)
+      .values({
+        id: crypto.randomUUID(),
+        name: "MCP Gcal Id Owner",
+        email: `mcp-gcal-id-${Date.now()}@example.com`,
+      })
+      .returning();
+    const deleteSpy = spyOn(GoogleCalendarService, "deleteEvent");
+    const updateSpy = spyOn(GoogleCalendarService, "updateEvent");
+    const now = Date.now();
+    try {
+      const created = await BookingService.createBooking({
+        title: "Gcal Id Meeting",
+        organizerUserId: organizer.id,
+        startTime: new Date(now + 3600000),
+        endTime: new Date(now + 7200000),
+      });
+      const gcalEventId = created.gcalEventId as string;
+      expect(gcalEventId).toBeTruthy();
+      expect(gcalEventId).not.toBe(created.id);
+      const tools = await mcpTools(organizer.id);
+
+      const resched = await tools["reschedule_meeting"].handler({
+        eventId: created.id,
+        newStart: new Date(now + 86400000).toISOString(),
+        newEnd: new Date(now + 90000000).toISOString(),
+      });
+      expect(resched.isError).toBeFalsy();
+      expect(updateSpy.mock.calls.at(-1)?.[0]).toBe(gcalEventId);
+
+      const cancel = await tools["cancel_meeting"].handler({
+        eventId: created.id,
+      });
+      expect(cancel.isError).toBeFalsy();
+      expect(deleteSpy.mock.calls.at(-1)?.[0]).toBe(gcalEventId);
+    } finally {
+      deleteSpy.mockRestore();
+      updateSpy.mockRestore();
+      await db
+        .delete(booking)
+        .where(eq(booking.organizerUserId, organizer.id))
+        .catch(() => {});
+      await db
+        .delete(user)
+        .where(eq(user.id, organizer.id))
+        .catch(() => {});
+    }
+  });
+
   test("the booking's calendar owner may reschedule like over REST", async () => {
     const [organizer, owner] = await db
       .insert(user)
