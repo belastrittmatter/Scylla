@@ -1,5 +1,8 @@
 import { resolveUserId } from "@/services/api-utils";
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteError,
+  MeetingInviteService,
+} from "@/services/meeting-invite";
 
 interface CreateMeetingInviteBody {
   title?: string;
@@ -74,6 +77,9 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (err) {
+    if (err instanceof MeetingInviteError) {
+      return Response.json({ error: err.message }, { status: err.status });
+    }
     return Response.json(
       {
         error:

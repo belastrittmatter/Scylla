@@ -12,6 +12,7 @@ import { eq, desc, inArray, and, lt, gt, or, sql } from "drizzle-orm";
 import type { TimeSlot } from "./scheduler";
 import { BookingService } from "./booking";
 import { GoogleCalendarService } from "./google-calendar";
+import { UserService } from "./user";
 import {
   type CreateMeetingInviteInput,
   type BookMeetingInviteInput,
@@ -45,6 +46,19 @@ export class MeetingInviteService {
   public static async createInvite(
     input: CreateMeetingInviteInput,
   ): Promise<MeetingInvite> {
+    // Members' free/busy is shown on the public slots page, so only teammates may be added.
+    if (
+      input.memberEmails.length > 0 &&
+      !(await UserService.areTeammates(
+        input.organizerUserId,
+        input.memberEmails.map((e) => e.trim()),
+      ))
+    ) {
+      throw new MeetingInviteError(
+        "Members must be registered members of your teams",
+        403,
+      );
+    }
     const slug = this.generateSlug(input.title);
     const [created] = await db
       .insert(meetingInvite)

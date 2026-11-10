@@ -23,6 +23,8 @@ import {
   meetingRoom,
   booking,
   schedule,
+  team,
+  teamMember,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -105,6 +107,18 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
       .values({ name: `Room 94 ${RUN}`, email: ROOM_EMAIL, capacity: 4 })
       .returning();
     roomId = room.id;
+    const [t] = await db
+      .insert(team)
+      .values({
+        name: "Team 94",
+        slug: `team-94-${RUN}`,
+        ownerId: testOrganizerId,
+      })
+      .returning();
+    await db.insert(teamMember).values([
+      { teamId: t.id, userId: testOrganizerId, role: "owner" },
+      { teamId: t.id, userId: memberUserId },
+    ]);
   });
 
   afterEach(async () => {
@@ -117,6 +131,7 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
   });
 
   afterAll(async () => {
+    await db.delete(team).where(eq(team.slug, `team-94-${RUN}`));
     await db.delete(meetingRoom).where(eq(meetingRoom.id, roomId));
     await db.delete(user).where(eq(user.id, testOrganizerId));
     await db.delete(user).where(eq(user.id, memberUserId));
@@ -127,7 +142,7 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
       title: "Confidential Strategy Session",
       duration: 30,
       organizerUserId: testOrganizerId,
-      memberEmails: [MEMBER_USER_EMAIL, SECRET_MEMBER],
+      memberEmails: [MEMBER_USER_EMAIL],
       locationType: "room",
       roomId,
       isRestricted: true,
@@ -149,8 +164,45 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     expect(res.status).toBe(401);
   });
 
+  const createInviteAs = (callerId: string, memberEmails: string[]) =>
+    createInviteHandler(
+      new Request("http://localhost:3000/api/meeting-invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": callerId },
+        body: JSON.stringify({ title: "Team Sync", memberEmails }),
+      }),
+    );
+
+  it("POST /api/meeting-invites rejects members who are not the organizer's teammates", async () => {
+    const res = await createInviteAs(testOrganizerId, [SECRET_MEMBER]);
+    expect(res.status).toBe(403);
+    // A registered user outside the organizer's teams is rejected too.
+    const other = await createInviteAs(memberUserId, [
+      ORGANIZER_EMAIL,
+      `x-${RUN}@a.com`,
+    ]);
+    expect(other.status).toBe(403);
+    const rows = await db
+      .select()
+      .from(meetingInvite)
+      .where(eq(meetingInvite.organizerUserId, testOrganizerId));
+    expect(rows).toHaveLength(0);
+  });
+
+  it("POST /api/meeting-invites accepts the organizer's teammates as members", async () => {
+    const res = await createInviteAs(testOrganizerId, [MEMBER_USER_EMAIL]);
+    expect(res.status).toBe(201);
+    const { invite } = await res.json();
+    expect(invite.memberEmails).toEqual([MEMBER_USER_EMAIL.toLowerCase()]);
+  });
+
   it("GET /api/meeting-invites/[slug] exposes no emails, user ids or room email", async () => {
     const invite = await createSecretInvite();
+    // Legacy row with an unregistered member, created before teammate checks.
+    await db
+      .update(meetingInvite)
+      .set({ memberEmails: [MEMBER_USER_EMAIL, SECRET_MEMBER] })
+      .where(eq(meetingInvite.id, invite.id));
 
     const res = await getInviteHandler(
       new Request(`http://localhost:3000/api/meeting-invites/${invite.slug}`),

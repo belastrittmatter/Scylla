@@ -1,5 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteError,
+  MeetingInviteService,
+} from "@/services/meeting-invite";
 import { createShareableBookingLinkSchema } from "../schemas";
 import type { McpToolContext } from "../types";
 import { verifyScope } from "./auth-helpers";
@@ -59,17 +62,26 @@ export function registerInviteTools(server: McpServer, ctx: McpToolContext) {
         }
       }
 
-      const invite = await MeetingInviteService.createInvite({
-        title,
-        description,
-        duration: durationMinutes,
-        organizerUserId: currentUserProfile.id,
-        memberEmails: resolvedMembers,
-        locationType,
-        roomId,
-        isRestricted: allowedGuestEmails.length > 0,
-        allowedEmails: allowedGuestEmails,
-      });
+      let invite;
+      try {
+        invite = await MeetingInviteService.createInvite({
+          title,
+          description,
+          duration: durationMinutes,
+          organizerUserId: currentUserProfile.id,
+          memberEmails: resolvedMembers,
+          locationType,
+          roomId,
+          isRestricted: allowedGuestEmails.length > 0,
+          allowedEmails: allowedGuestEmails,
+        });
+      } catch (err) {
+        if (!(err instanceof MeetingInviteError)) throw err;
+        return {
+          isError: true,
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+        };
+      }
 
       const bookingUrl = `${appUrl}/book/${invite.slug}`;
       const markdownLink = `[Book Meeting: ${invite.title}](${bookingUrl})`;

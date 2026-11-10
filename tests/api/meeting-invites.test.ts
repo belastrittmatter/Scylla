@@ -66,7 +66,7 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
       description: "Discussing quarterly UI architecture",
       duration: 30,
       organizerUserId,
-      memberEmails: ["colleague@example.com"],
+      memberEmails: [],
       locationType: "room",
       roomId: testRoomId,
       isRestricted: true,

@@ -371,6 +371,22 @@ describe("MCP Tools & Utilities Suite", () => {
       expect(parsed.duration).toBe(45);
       expect(parsed.locationType).toBe("meet");
     }, 15000);
+
+    it("rejects members who are not the organizer's teammates", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["create_shareable_booking_link"];
+
+      const res = await tool.handler({
+        title: "Leak Attempt",
+        memberEmails: ["stranger-94@other-tenant.com"],
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.content[0].text).toContain("members of your teams");
+    }, 15000);
   });
 
   describe("book_meeting tool with smart attendee resolution", () => {
