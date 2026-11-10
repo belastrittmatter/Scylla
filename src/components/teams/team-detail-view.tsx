@@ -46,6 +46,7 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
         onUpdate={async (id, data) => {
           const updated = await updateTeam(id, data);
           if (updated.slug !== team.slug) {
+            invalidateTaskWorkspaceCache();
             router.replace(`/teams/${updated.slug}?tab=${tab}`);
           }
           return updated;

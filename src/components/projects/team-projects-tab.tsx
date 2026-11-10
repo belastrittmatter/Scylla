@@ -17,6 +17,7 @@ import { useProjects, type ProjectItem } from "@/hooks/use-projects";
 import { CreateProjectDialog } from "./create-project-dialog";
 import { EditProjectDialog } from "./edit-project-dialog";
 import { ProjectRow } from "./project-row";
+import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
 type Props = {
   teamId: string;
@@ -83,13 +84,21 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
         teamId={teamId}
         open={creating}
         onOpenChange={setCreating}
-        onCreateProject={createProject}
+        onCreateProject={async (data) => {
+          const created = await createProject(data);
+          invalidateTaskWorkspaceCache();
+          return created;
+        }}
       />
       <EditProjectDialog
         project={editing}
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
-        onUpdateProject={updateProject}
+        onUpdateProject={async (id, data) => {
+          const updated = await updateProject(id, data);
+          invalidateTaskWorkspaceCache();
+          return updated;
+        }}
       />
       <ConfirmDialog
         open={!!deleting}
@@ -97,7 +106,11 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
         title={`Delete ${deleting?.name ?? "project"}?`}
         description="This permanently deletes the project."
         confirmLabel="Delete"
-        onConfirm={() => (deleting ? deleteProject(deleting.id) : undefined)}
+        onConfirm={async () => {
+          if (!deleting) return;
+          await deleteProject(deleting.id);
+          invalidateTaskWorkspaceCache();
+        }}
       />
     </div>
   );
