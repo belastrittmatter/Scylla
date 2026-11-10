@@ -29,7 +29,7 @@ export async function PATCH(req: Request, context: RouteParams) {
       );
     }
 
-    if (existing.organizerUserId !== callerId && existing.userId !== callerId) {
+    if (!BookingService.canModify(existing, callerId)) {
       return Response.json(
         {
           error: "Forbidden: You are not authorized to reschedule this booking",
@@ -98,7 +98,7 @@ export async function DELETE(req: Request, context: RouteParams) {
       );
     }
 
-    if (existing.organizerUserId !== callerId && existing.userId !== callerId) {
+    if (!BookingService.canModify(existing, callerId)) {
       return Response.json(
         { error: "Forbidden: You are not authorized to cancel this booking" },
         { status: 403 },

@@ -6,7 +6,7 @@ import {
   type Team,
   type TeamMember,
 } from "@/db/schema";
-import { eq, and, inArray, or } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { slugify } from "@/lib/utils";
 import {
   CreateTeamSchema,
@@ -82,12 +82,32 @@ export class TeamService {
     return record as TeamWithMembers;
   }
 
-  public static async isTeamAdminOrOwner(
+  /**
+   * Canonical team id for an id or slug. An exact id always wins, so a team
+   * whose slug equals another team's id can never stand in for it.
+   */
+  public static async resolveTeamId(
     teamIdOrSlug: string,
+  ): Promise<string | null> {
+    const byId = await db.query.team.findFirst({
+      where: eq(team.id, teamIdOrSlug),
+      columns: { id: true },
+    });
+    if (byId) return byId.id;
+    const bySlug = await db.query.team.findFirst({
+      where: eq(team.slug, teamIdOrSlug),
+      columns: { id: true },
+    });
+    return bySlug?.id ?? null;
+  }
+
+  /** Matches by team id only; resolve slugs with resolveTeamId first. */
+  public static async isTeamAdminOrOwner(
+    teamId: string,
     userId: string,
   ): Promise<boolean> {
     const teamRecord = await db.query.team.findFirst({
-      where: or(eq(team.id, teamIdOrSlug), eq(team.slug, teamIdOrSlug)),
+      where: eq(team.id, teamId),
       columns: { id: true, ownerId: true },
     });
     if (!teamRecord) return false;
@@ -104,12 +124,13 @@ export class TeamService {
     return membership?.role === "owner" || membership?.role === "admin";
   }
 
+  /** Matches by team id only; resolve slugs with resolveTeamId first. */
   public static async isTeamMember(
-    teamIdOrSlug: string,
+    teamId: string,
     userId: string,
   ): Promise<boolean> {
     const teamRecord = await db.query.team.findFirst({
-      where: or(eq(team.id, teamIdOrSlug), eq(team.slug, teamIdOrSlug)),
+      where: eq(team.id, teamId),
       columns: { id: true, ownerId: true },
     });
     if (!teamRecord) return false;

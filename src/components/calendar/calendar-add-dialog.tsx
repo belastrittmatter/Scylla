@@ -383,7 +383,6 @@ export function CalendarAddDialog({
             startTime: slot.start,
             endTime: slot.end,
             attendees: attendees.length > 0 ? attendees : undefined,
-            organizerUserId: session?.user?.id || "usr_alex_rivera",
           });
 
           createdBookings.push(booking);
