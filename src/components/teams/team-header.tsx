@@ -10,6 +10,8 @@ import { EditTeamDialog } from "./edit-team-dialog";
 type Props = {
   team: TeamItem;
   canManage: boolean;
+  /** Only the owner may delete; the API rejects admins. */
+  canDelete: boolean;
   onUpdate: (
     id: string,
     data: { name?: string; slug?: string; description?: string },
@@ -17,7 +19,13 @@ type Props = {
   onDelete: () => Promise<void>;
 };
 
-export function TeamHeader({ team, canManage, onUpdate, onDelete }: Props) {
+export function TeamHeader({
+  team,
+  canManage,
+  canDelete,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [editing, setEditing] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
 
@@ -40,12 +48,16 @@ export function TeamHeader({ team, canManage, onUpdate, onDelete }: Props) {
               icon: <Pencil />,
               onSelect: () => setEditing(true),
             },
-            {
-              label: "Delete",
-              icon: <Trash2 />,
-              destructive: true,
-              onSelect: () => setDeleting(true),
-            },
+            ...(canDelete
+              ? [
+                  {
+                    label: "Delete",
+                    icon: <Trash2 />,
+                    destructive: true,
+                    onSelect: () => setDeleting(true),
+                  },
+                ]
+              : []),
           ]}
         />
       )}

@@ -43,6 +43,7 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
       <TeamHeader
         team={current}
         canManage={canManage}
+        canDelete={current.ownerId === userId}
         onUpdate={async (id, data) => {
           const updated = await updateTeam(id, data);
           if (updated.slug !== team.slug) {
