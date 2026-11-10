@@ -337,6 +337,15 @@ describe("MCP Tools & Utilities Suite", () => {
   });
 
   describe("create_shareable_booking_link tool", () => {
+    it("refuses to create a link without an authenticated user", async () => {
+      const server = await createCalendarMcpServer({ scopes: ["*"] });
+      const tool = getRegisteredTools(server)["create_shareable_booking_link"];
+
+      const res = await tool.handler({ title: "Orphan Link" });
+
+      expect(res.isError).toBe(true);
+    });
+
     it("generates a shareable booking link with slug and markdown link", async () => {
       const server = await createCalendarMcpServer({
         sub: testUserId,

@@ -35,6 +35,18 @@ export function registerInviteTools(server: McpServer, ctx: McpToolContext) {
         ctx.getAccessToken(),
         ctx.getCurrentUser(),
       ]);
+      // getCurrentUser() returns a placeholder profile when unauthenticated.
+      if (!ctx.userId) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: "Error: Could not resolve the signed-in user to own this booking link.",
+            },
+          ],
+        };
+      }
 
       // Resolve memberEmails in case nicknames are passed
       const resolvedRaw = await Promise.all(
@@ -51,7 +63,7 @@ export function registerInviteTools(server: McpServer, ctx: McpToolContext) {
         title,
         description,
         duration: durationMinutes,
-        organizerUserId: currentUserProfile.id || "organizer",
+        organizerUserId: currentUserProfile.id,
         memberEmails: resolvedMembers,
         locationType,
         roomId,
