@@ -22,6 +22,12 @@ export interface CreateProjectActionPayload {
   name: string;
   description?: string | null;
   color?: string | null;
+  githubRepo?: string | null;
+  createNewRepo?: {
+    name: string;
+    isPrivate?: boolean;
+    description?: string | null;
+  };
 }
 
 export interface CreateTaskActionPayload {

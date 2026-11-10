@@ -36,6 +36,7 @@ export class ProjectService {
         teamId: validated.teamId,
         status: validated.status,
         color: validated.color,
+        githubRepo: validated.githubRepo || null,
       })
       .returning();
 
@@ -80,6 +81,7 @@ export class ProjectService {
         teamId: project.teamId,
         status: project.status,
         color: project.color,
+        githubRepo: project.githubRepo,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         teamName: team.name,
@@ -114,6 +116,7 @@ export class ProjectService {
         teamId: project.teamId,
         status: project.status,
         color: project.color,
+        githubRepo: project.githubRepo,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         teamName: team.name,
@@ -137,6 +140,7 @@ export class ProjectService {
         teamId: project.teamId,
         status: project.status,
         color: project.color,
+        githubRepo: project.githubRepo,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
         teamName: team.name,
@@ -170,6 +174,8 @@ export class ProjectService {
       updateData.description = validated.description;
     if (validated.status !== undefined) updateData.status = validated.status;
     if (validated.color !== undefined) updateData.color = validated.color;
+    if (validated.githubRepo !== undefined)
+      updateData.githubRepo = validated.githubRepo;
 
     const [updated] = await db
       .update(project)

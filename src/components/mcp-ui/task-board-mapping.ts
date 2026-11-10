@@ -25,6 +25,12 @@ export function toTaskItem(t: KanbanTask): TaskItem {
     position: 0,
     createdAt: now,
     updatedAt: now,
+    githubIssueNumber: null,
+    githubIssueUrl: null,
+    githubBranch: null,
+    githubPrNumber: null,
+    githubPrUrl: null,
+    githubPrStatus: null,
     assignee: name
       ? {
           id: name,

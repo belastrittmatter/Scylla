@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { task, team, teamMember, project, type Task } from "@/db/schema";
+import { task, team, project, type Task } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
   CreateTaskSchema,
@@ -16,23 +16,24 @@ import {
 } from "./task-session-service";
 import { TaskQueryService } from "./task-query-service";
 import { TeamService } from "@/services/team/team-service";
-import { canMutateTasks } from "./task-permissions";
+import {
+  validateCreateTaskGithubRules,
+  validateUpdateTaskGithubRules,
+  populateTaskGithubFields,
+} from "./task-mutation-helper";
+import {
+  assertTaskCreationAccess,
+  assertAssigneeBelongsToTeam,
+} from "./task-validation-helper";
 
-/** `not_member` must be reported like a missing task so ids can't be probed. */
-export type TaskWriteAccess = "allowed" | "forbidden" | "not_member";
+import {
+  TaskAccessService,
+  TaskAccessError,
+  type TaskWriteAccess,
+} from "./task-access-service";
 
-/** Thrown by task mutations; `not_member` reads as "not found" so ids can't be probed. */
-export class TaskAccessError extends Error {
-  constructor(
-    readonly access: Exclude<TaskWriteAccess, "allowed">,
-    message: string,
-  ) {
-    super(message);
-    this.name = "TaskAccessError";
-  }
-}
-
-export { MIN_TASK_SESSION_DURATION_SECONDS };
+export type { TaskWriteAccess };
+export { TaskAccessError, MIN_TASK_SESSION_DURATION_SECONDS };
 
 export class TaskService {
   public static async createTask(input: CreateTaskInput): Promise<Task> {
@@ -66,37 +67,21 @@ export class TaskService {
       throw new Error(`Team with id "${validated.teamId}" not found`);
     }
 
-    if (validated.creatorId) {
-      const access = await TaskService.getWriteAccess(
-        validated,
-        validated.creatorId,
+    await assertTaskCreationAccess(validated.teamId, validated.creatorId);
+    if (
+      validated.projectId &&
+      (!projectRecord || projectRecord.teamId !== validated.teamId)
+    ) {
+      throw new Error(
+        `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
       );
-      if (access === "forbidden") {
-        throw new Error("Forbidden: Viewer role cannot create tasks");
-      }
-      if (access === "not_member") {
-        throw new Error("Forbidden: Creator is not a member of this team");
-      }
     }
-
-    if (validated.projectId) {
-      if (!projectRecord || projectRecord.teamId !== validated.teamId) {
-        throw new Error(
-          `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
-        );
-      }
-    }
-
     if (validated.assigneeId) {
-      const isMember = await TeamService.isTeamMember(
-        validated.teamId,
+      await assertAssigneeBelongsToTeam(validated.teamId, validated.assigneeId);
+      await validateCreateTaskGithubRules(
         validated.assigneeId,
+        projectRecord?.githubRepo,
       );
-      if (!isMember) {
-        throw new Error(
-          `User "${validated.assigneeId}" is not a member of team "${validated.teamId}"`,
-        );
-      }
     }
 
     const position =
@@ -106,22 +91,22 @@ export class TaskService {
           ? existing[0].position + 1
           : 0;
 
-    const [newTask] = await db
-      .insert(task)
-      .values({
-        title: validated.title,
-        description: validated.description,
-        status: validated.status,
-        priority: validated.priority,
-        teamId: validated.teamId,
-        projectId: validated.projectId,
-        creatorId: validated.creatorId,
-        assigneeId: validated.assigneeId,
-        dueDate: validated.dueDate,
-        position,
-        estimatedMinutes: validated.estimatedMinutes ?? 60,
-      })
-      .returning();
+    const taskValues: typeof task.$inferInsert = {
+      title: validated.title,
+      description: validated.description,
+      status: validated.status,
+      priority: validated.priority,
+      teamId: validated.teamId,
+      projectId: validated.projectId,
+      creatorId: validated.creatorId,
+      assigneeId: validated.assigneeId,
+      dueDate: validated.dueDate,
+      position,
+      estimatedMinutes: validated.estimatedMinutes ?? 60,
+    };
+    populateTaskGithubFields(taskValues, validated);
+
+    const [newTask] = await db.insert(task).values(taskValues).returning();
 
     if (validated.status === "in_progress") {
       await TaskSessionService.startTaskSession(
@@ -182,6 +167,10 @@ export class TaskService {
           `User "${validated.assigneeId}" is not a member of team "${existing.teamId}"`,
         );
       }
+      await validateUpdateTaskGithubRules(
+        validated.assigneeId,
+        validated.projectId || existing.projectId,
+      );
     }
 
     if (
@@ -214,6 +203,7 @@ export class TaskService {
       updateData.position = validated.position;
     if (validated.estimatedMinutes !== undefined)
       updateData.estimatedMinutes = validated.estimatedMinutes;
+    populateTaskGithubFields(updateData, validated);
 
     const [updated] = await db
       .update(task)
@@ -238,49 +228,23 @@ export class TaskService {
     return TaskSessionService.getTaskTimeSessions(taskId);
   }
 
-  /** Single write-permission check for create/update/delete (see task-permissions). */
   public static async getWriteAccess(
     target: Pick<Task, "teamId">,
     userId: string,
   ): Promise<TaskWriteAccess> {
-    const [teamRecord, membership] = await Promise.all([
-      db.query.team.findFirst({
-        where: eq(team.id, target.teamId),
-        columns: { ownerId: true },
-      }),
-      db.query.teamMember.findFirst({
-        where: and(
-          eq(teamMember.teamId, target.teamId),
-          eq(teamMember.userId, userId),
-        ),
-        columns: { role: true },
-      }),
-    ]);
-    const isTeamOwner = teamRecord?.ownerId === userId;
-    if (!isTeamOwner && !membership) return "not_member";
-    const allowed = canMutateTasks({
-      role: membership?.role,
-      isTeamOwner,
-    });
-    return allowed ? "allowed" : "forbidden";
+    return TaskAccessService.getWriteAccess(target, userId);
   }
 
-  /** Throws TaskAccessError unless `userId` may mutate tasks of `target`'s team. */
   public static async assertWriteAccess(
     target: Pick<Task, "id" | "teamId">,
     userId: string,
     forbiddenMessage: string,
   ): Promise<void> {
-    const access = await TaskService.getWriteAccess(target, userId);
-    if (access === "not_member") {
-      throw new TaskAccessError(
-        access,
-        `Task with id "${target.id}" not found`,
-      );
-    }
-    if (access === "forbidden") {
-      throw new TaskAccessError(access, forbiddenMessage);
-    }
+    return TaskAccessService.assertWriteAccess(
+      target,
+      userId,
+      forbiddenMessage,
+    );
   }
 
   public static async deleteTask(
@@ -315,9 +279,9 @@ export class TaskService {
     return TaskWorkspaceService.getWorkspaceData(currentUserId);
   }
 
-  public static async getTaskComments(taskId: string) {
+  public static async getTaskComments(taskId: string, userId?: string) {
     const { TaskWorkspaceService } = await import("./task-workspace-service");
-    return TaskWorkspaceService.getTaskComments(taskId);
+    return TaskWorkspaceService.getTaskComments(taskId, userId);
   }
 
   public static async createTaskComment(payload: {
