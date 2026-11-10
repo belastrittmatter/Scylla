@@ -11,10 +11,9 @@ export async function resolveTeamAndVerifyAccess(
   userId: string,
   requiredRole?: "owner" | "admin" | "member" | "viewer",
 ): Promise<TeamWithMembers> {
-  // Exact id first (seeded ids aren't UUIDs), then slug; callers act on the returned team.id.
-  const matched =
-    (await TeamService.getTeamById(teamIdOrSlug)) ??
-    (await TeamService.getTeamBySlug(teamIdOrSlug));
+  // Same resolution as Server Actions: exact id wins, then slug; callers act on the returned team.id.
+  const teamId = await TeamService.resolveTeamId(teamIdOrSlug);
+  const matched = teamId ? await TeamService.getTeamById(teamId) : null;
 
   if (!matched) {
     throw new Error(`Team '${teamIdOrSlug}' not found.`);
