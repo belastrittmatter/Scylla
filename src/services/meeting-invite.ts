@@ -268,13 +268,17 @@ export class MeetingInviteService {
       throw createErr;
     }
 
+    // Public endpoint: confirmation fields only, never attendee or allow-list emails.
     return {
-      booking: createdBooking,
-      invite: {
-        ...invite,
-        bookingId: createdBooking.id,
-        isActive: false,
+      booking: {
+        id: createdBooking.id,
+        title: createdBooking.title,
+        startTime: createdBooking.startTime,
+        endTime: createdBooking.endTime,
+        meetingUrl: createdBooking.meetingUrl,
+        status: createdBooking.status,
       },
+      invite: toPublicInviteDetails(details).invite,
     };
   }
 }

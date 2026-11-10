@@ -157,11 +157,6 @@ export function BookingDetailsSidebar({
               >
                 <span className="bg-muted-foreground h-2 w-2 rounded-full" />
                 <span className="font-medium">{m.name}</span>
-                {m.email ? (
-                  <span className="text-muted-foreground font-mono text-[11px]">
-                    ({m.email})
-                  </span>
-                ) : null}
               </div>
             ))}
           </div>

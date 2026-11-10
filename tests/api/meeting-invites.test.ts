@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll } from "bun:test";
 import { MeetingInviteService } from "@/services/meeting-invite";
 import { db } from "@/db";
-import { user, meetingRoom } from "@/db/schema";
+import { user, meetingRoom, booking } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
   let organizerUserId: string;
@@ -136,7 +137,11 @@ describe("Meeting Invite Service - Room Selection & Access Restriction", () => {
 
     expect(result).toBeDefined();
     expect(result.booking).toBeDefined();
-    expect(result.booking.roomId).toBe(testRoomId);
+    const [row] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, result.booking.id));
+    expect(row.roomId).toBe(testRoomId);
     expect(result.booking.title).toContain("Alice Partner");
   });
 

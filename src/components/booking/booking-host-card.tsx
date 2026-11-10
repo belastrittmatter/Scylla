@@ -9,7 +9,7 @@ interface BookingHostCardProps {
   host: {
     id: string;
     name: string;
-    email: string;
+    email?: string;
     image?: string | null;
   };
   eventType: {
@@ -51,7 +51,9 @@ export function BookingHostCard({ host, eventType }: BookingHostCardProps) {
           <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
             {host.name}
           </h3>
-          <p className="text-[11px] text-neutral-400">{host.email}</p>
+          {host.email && (
+            <p className="text-[11px] text-neutral-400">{host.email}</p>
+          )}
         </div>
       </div>
 

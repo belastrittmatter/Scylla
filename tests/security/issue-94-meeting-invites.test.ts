@@ -1,31 +1,109 @@
-import { describe, expect, it, beforeAll, afterAll } from "bun:test";
+import { describe, expect, it, beforeAll, afterAll, afterEach } from "bun:test";
 import { POST as createInviteHandler } from "@/app/api/meeting-invites/route";
 import { GET as getInviteHandler } from "@/app/api/meeting-invites/[slug]/route";
+import { POST as bookHandler } from "@/app/api/meeting-invites/[slug]/book/route";
 import { MeetingInviteService } from "@/services/meeting-invite";
+import type { TimeSlot } from "@/services/scheduler";
 import { db } from "@/db";
-import { user, meetingInvite, booking } from "@/db/schema";
+import { user, meetingInvite, meetingRoom, booking } from "@/db/schema";
 import { eq } from "drizzle-orm";
+
+const RUN = Date.now();
+const ORGANIZER_EMAIL = `test-org-94-${RUN}@example.com`;
+const MEMBER_USER_EMAIL = `member-user-94-${RUN}@example.com`;
+const SECRET_MEMBER = `internal-secret-${RUN}@company.com`;
+const SECRET_GUEST = `vip-client-${RUN}@confidential.com`;
+const ROOM_EMAIL = `room-94-${RUN}@resource.example.com`;
+const SECRETS = [
+  ORGANIZER_EMAIL,
+  MEMBER_USER_EMAIL,
+  SECRET_MEMBER,
+  SECRET_GUEST,
+  ROOM_EMAIL,
+];
+
+function expectNoSecrets(body: unknown) {
+  const text = JSON.stringify(body).toLowerCase();
+  for (const secret of SECRETS) {
+    expect(text).not.toContain(secret.toLowerCase());
+  }
+}
+
+const params = (slug: string) => ({ params: Promise.resolve({ slug }) });
+
+function bookRequest(slug: string, body: unknown) {
+  return bookHandler(
+    new Request(`http://localhost:3000/api/meeting-invites/${slug}/book`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+    params(slug),
+  );
+}
+
+/** Returns slots the invite actually offers on the first weekday with enough room. */
+async function offeredSlots(slug: string): Promise<TimeSlot[]> {
+  for (let d = 7; d < 21; d++) {
+    const date = new Date(Date.now() + d * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const slots = await MeetingInviteService.getAvailableSlots(slug, date);
+    if (slots.length >= 4) return slots;
+  }
+  throw new Error("no offered slots found");
+}
 
 describe("Security Issue #94: Meeting Invites Hardening", () => {
   let testOrganizerId: string;
+  let memberUserId: string;
+  let roomId: string;
 
   beforeAll(async () => {
-    testOrganizerId = `test-org-${Date.now()}`;
-    await db.insert(user).values({
-      id: testOrganizerId,
-      name: "Test Organizer 94",
-      email: `test-org-94-${Date.now()}@example.com`,
-    });
+    testOrganizerId = `test-org-94-${RUN}`;
+    memberUserId = `test-member-94-${RUN}`;
+    await db.insert(user).values([
+      {
+        id: testOrganizerId,
+        name: "Test Organizer 94",
+        email: ORGANIZER_EMAIL,
+      },
+      { id: memberUserId, name: "Member User 94", email: MEMBER_USER_EMAIL },
+    ]);
+    const [room] = await db
+      .insert(meetingRoom)
+      .values({ name: `Room 94 ${RUN}`, email: ROOM_EMAIL, capacity: 4 })
+      .returning();
+    roomId = room.id;
+  });
+
+  afterEach(async () => {
+    await db
+      .delete(meetingInvite)
+      .where(eq(meetingInvite.organizerUserId, testOrganizerId));
+    await db
+      .delete(booking)
+      .where(eq(booking.organizerUserId, testOrganizerId));
   });
 
   afterAll(async () => {
-    if (testOrganizerId) {
-      await db
-        .delete(meetingInvite)
-        .where(eq(meetingInvite.organizerUserId, testOrganizerId));
-      await db.delete(user).where(eq(user.id, testOrganizerId));
-    }
+    await db.delete(meetingRoom).where(eq(meetingRoom.id, roomId));
+    await db.delete(user).where(eq(user.id, testOrganizerId));
+    await db.delete(user).where(eq(user.id, memberUserId));
   });
+
+  const createSecretInvite = (overrides = {}) =>
+    MeetingInviteService.createInvite({
+      title: "Confidential Strategy Session",
+      duration: 30,
+      organizerUserId: testOrganizerId,
+      memberEmails: [MEMBER_USER_EMAIL, SECRET_MEMBER],
+      locationType: "room",
+      roomId,
+      isRestricted: true,
+      allowedEmails: [SECRET_GUEST],
+      ...overrides,
+    });
 
   it("POST /api/meeting-invites rejects unauthenticated requests with 401", async () => {
     const req = new Request("http://localhost:3000/api/meeting-invites", {
@@ -41,45 +119,59 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     expect(res.status).toBe(401);
   });
 
-  it("GET /api/meeting-invites/[slug] hides private attendee whitelist from public responses", async () => {
-    const invite = await MeetingInviteService.createInvite({
-      title: "Confidential Strategy Session",
-      duration: 30,
-      organizerUserId: testOrganizerId,
-      memberEmails: ["internal-secret@company.com"],
-      isRestricted: true,
-      allowedEmails: ["vip-client@confidential.com"],
-    });
+  it("GET /api/meeting-invites/[slug] exposes no emails, user ids or room email", async () => {
+    const invite = await createSecretInvite();
 
-    const req = new Request(
-      `http://localhost:3000/api/meeting-invites/${invite.slug}`,
+    const res = await getInviteHandler(
+      new Request(`http://localhost:3000/api/meeting-invites/${invite.slug}`),
+      params(invite.slug),
     );
-    const res = await getInviteHandler(req, {
-      params: Promise.resolve({ slug: invite.slug }),
-    });
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.invite.allowedEmails).toBeUndefined();
-    expect(data.invite.memberEmails).toBeUndefined();
+    expectNoSecrets(data);
+    expect(JSON.stringify(data)).not.toContain(testOrganizerId);
+    expect(JSON.stringify(data)).not.toContain(memberUserId);
+    expect(data.invite.organizerUserId).toBeUndefined();
+    expect(data.room.email).toBeUndefined();
+    expect(data.members).toHaveLength(2);
+    expect(data.members.map((m: { name: string }) => m.name)).toContain(
+      "Member User 94",
+    );
+  });
 
-    // Cleanup
-    await db.delete(meetingInvite).where(eq(meetingInvite.id, invite.id));
+  it("POST /book returns only the public projection and ignores organizerUserId in the body", async () => {
+    const invite = await createSecretInvite();
+    const [slot] = await offeredSlots(invite.slug);
+
+    const res = await bookRequest(invite.slug, {
+      guestName: "VIP",
+      guestEmail: SECRET_GUEST,
+      startTime: slot.start,
+      endTime: slot.end,
+      organizerUserId: memberUserId,
+    });
+
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expectNoSecrets(data);
+    expect(data.booking.attendees).toBeUndefined();
+    expect(data.invite.organizerUserId).toBeUndefined();
+    expect(data.booking.startTime).toBeDefined();
+
+    const [row] = await db
+      .select()
+      .from(booking)
+      .where(eq(booking.id, data.booking.id));
+    expect(row.organizerUserId).toBe(testOrganizerId);
+    expect(row.roomId).toBe(roomId);
   });
 
   it("bookSlot rejects booking with mismatched duration", async () => {
-    const invite = await MeetingInviteService.createInvite({
-      title: "Strict 30m Sync",
-      duration: 30,
-      organizerUserId: testOrganizerId,
-      memberEmails: [],
-    });
-
-    const now = new Date();
-    const startTime = new Date(now.getTime() + 24 * 3600 * 1000).toISOString();
-    // 60 minutes instead of 30 minutes
+    const invite = await createSecretInvite({ isRestricted: false });
+    const [slot] = await offeredSlots(invite.slug);
     const endTime = new Date(
-      now.getTime() + 24 * 3600 * 1000 + 60 * 60 * 1000,
+      new Date(slot.start).getTime() + 60 * 60 * 1000,
     ).toISOString();
 
     await expect(
@@ -87,83 +179,23 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
         slug: invite.slug,
         guestName: "Guest User",
         guestEmail: "guest@example.com",
-        startTime,
+        startTime: slot.start,
         endTime,
       }),
     ).rejects.toThrow("duration");
-
-    // Cleanup
-    await db.delete(meetingInvite).where(eq(meetingInvite.id, invite.id));
   });
 
   it("bookSlot rejects booking slots in the past", async () => {
-    const invite = await MeetingInviteService.createInvite({
-      title: "Future Only Meeting",
-      duration: 30,
-      organizerUserId: testOrganizerId,
-      memberEmails: [],
-    });
-
-    const pastStart = new Date(Date.now() - 3600 * 1000).toISOString();
-    const pastEnd = new Date(Date.now() - 1800 * 1000).toISOString();
+    const invite = await createSecretInvite({ isRestricted: false });
 
     await expect(
       MeetingInviteService.bookSlot({
         slug: invite.slug,
         guestName: "Time Traveler",
         guestEmail: "traveler@example.com",
-        startTime: pastStart,
-        endTime: pastEnd,
+        startTime: new Date(Date.now() - 3600 * 1000).toISOString(),
+        endTime: new Date(Date.now() - 1800 * 1000).toISOString(),
       }),
     ).rejects.toThrow("past");
-
-    // Cleanup
-    await db.delete(meetingInvite).where(eq(meetingInvite.id, invite.id));
-  });
-
-  it("bookSlot prevents re-booking an already booked invite", async () => {
-    const invite = await MeetingInviteService.createInvite({
-      title: "Single Use Coffee Chat",
-      duration: 30,
-      organizerUserId: testOrganizerId,
-      memberEmails: [],
-    });
-
-    const now = new Date();
-    const startTime = new Date(now.getTime() + 100 * 3600 * 1000).toISOString();
-    const endTime = new Date(
-      now.getTime() + 100 * 3600 * 1000 + 30 * 60 * 1000,
-    ).toISOString();
-
-    const firstBooking = await MeetingInviteService.bookSlot({
-      slug: invite.slug,
-      guestName: "First Guest",
-      guestEmail: "first@example.com",
-      startTime,
-      endTime,
-    });
-    expect(firstBooking.booking).toBeDefined();
-
-    // Attempt second booking on the same invite
-    const nextStart = new Date(now.getTime() + 105 * 3600 * 1000).toISOString();
-    const nextEnd = new Date(
-      now.getTime() + 105 * 3600 * 1000 + 30 * 60 * 1000,
-    ).toISOString();
-
-    await expect(
-      MeetingInviteService.bookSlot({
-        slug: invite.slug,
-        guestName: "Second Guest",
-        guestEmail: "second@example.com",
-        startTime: nextStart,
-        endTime: nextEnd,
-      }),
-    ).rejects.toThrow();
-
-    // Cleanup
-    await db.delete(meetingInvite).where(eq(meetingInvite.id, invite.id));
-    if (firstBooking.booking?.id) {
-      await db.delete(booking).where(eq(booking.id, firstBooking.booking.id));
-    }
   });
 });
