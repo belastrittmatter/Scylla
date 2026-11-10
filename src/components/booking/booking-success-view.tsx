@@ -132,7 +132,7 @@ export function BookingSuccessView({
                   className="border-border gap-1.5 px-2.5 py-1"
                 >
                   <span className="bg-muted-foreground h-2 w-2 rounded-full" />
-                  {m.name || m.email}
+                  {m.name}
                 </Badge>
               ))}
               <Badge

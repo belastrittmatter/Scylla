@@ -337,6 +337,15 @@ describe("MCP Tools & Utilities Suite", () => {
   });
 
   describe("create_shareable_booking_link tool", () => {
+    it("refuses to create a link without an authenticated user", async () => {
+      const server = await createCalendarMcpServer({ scopes: ["*"] });
+      const tool = getRegisteredTools(server)["create_shareable_booking_link"];
+
+      const res = await tool.handler({ title: "Orphan Link" });
+
+      expect(res.isError).toBe(true);
+    });
+
     it("generates a shareable booking link with slug and markdown link", async () => {
       const server = await createCalendarMcpServer({
         sub: testUserId,
@@ -361,6 +370,22 @@ describe("MCP Tools & Utilities Suite", () => {
       );
       expect(parsed.duration).toBe(45);
       expect(parsed.locationType).toBe("meet");
+    }, 15000);
+
+    it("rejects members who are not the organizer's teammates", async () => {
+      const server = await createCalendarMcpServer({
+        sub: testUserId,
+        scopes: ["*"],
+      });
+      const tool = getRegisteredTools(server)["create_shareable_booking_link"];
+
+      const res = await tool.handler({
+        title: "Leak Attempt",
+        memberEmails: ["stranger-94@other-tenant.com"],
+      });
+
+      expect(res.isError).toBe(true);
+      expect(res.content[0].text).toContain("members of your teams");
     }, 15000);
   });
 

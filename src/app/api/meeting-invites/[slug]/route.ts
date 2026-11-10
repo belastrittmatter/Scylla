@@ -1,4 +1,7 @@
-import { MeetingInviteService } from "@/services/meeting-invite";
+import {
+  MeetingInviteService,
+  toPublicInviteDetails,
+} from "@/services/meeting-invite";
 
 interface RouteParams {
   params: Promise<{ slug: string }> | { slug: string };
@@ -22,15 +25,11 @@ export async function GET(_req: Request, context: RouteParams) {
       );
     }
 
-    return Response.json(details, { status: 200 });
+    return Response.json(toPublicInviteDetails(details), { status: 200 });
   } catch (err) {
+    console.error("Meeting invite lookup failed:", err);
     return Response.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch meeting invite details",
-      },
+      { error: "Failed to fetch meeting invite details" },
       { status: 500 },
     );
   }

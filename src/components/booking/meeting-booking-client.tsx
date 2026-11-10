@@ -121,6 +121,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
           startTime: selectedSlot.start,
           endTime: selectedSlot.end,
           notes: guestNotes.trim() || undefined,
+          timeZone,
         }),
       });
 

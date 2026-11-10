@@ -49,6 +49,35 @@ function normalizeAttendees(
 }
 
 export class BookingService {
+  /** The organizer's Google access token, the account their events are created with. */
+  public static async getOrganizerToken(
+    organizerUserId: string,
+  ): Promise<string | undefined> {
+    try {
+      const userAccounts = await db
+        .select()
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, organizerUserId),
+            eq(account.providerId, "google"),
+          ),
+        )
+        .limit(1);
+
+      if (userAccounts.length > 0) {
+        return (
+          (await GoogleCalendarService.refreshAccountToken(userAccounts[0])) ||
+          userAccounts[0].accessToken ||
+          undefined
+        );
+      }
+    } catch (tokenErr) {
+      console.warn("Could not retrieve organizer Google token:", tokenErr);
+    }
+    return undefined;
+  }
+
   /**
    * Creates a new booking atomically:
    * 1. Creates a Google Calendar event with a Google Meet conference link.
@@ -57,6 +86,8 @@ export class BookingService {
    */
   public static async createBooking(
     payload: CreateBookingPayload,
+    // Pass a transaction to make the insert part of the caller's conflict check.
+    executor: Pick<typeof db, "insert"> = db,
   ): Promise<Booking> {
     const start = new Date(payload.startTime);
     const end = new Date(payload.endTime);
@@ -76,36 +107,7 @@ export class BookingService {
         ? RoomService.getRoomById(payload.roomId)
         : Promise.resolve(null),
       payload.organizerUserId
-        ? (async () => {
-            try {
-              const userAccounts = await db
-                .select()
-                .from(account)
-                .where(
-                  and(
-                    eq(account.userId, payload.organizerUserId),
-                    eq(account.providerId, "google"),
-                  ),
-                )
-                .limit(1);
-
-              if (userAccounts.length > 0) {
-                return (
-                  (await GoogleCalendarService.refreshAccountToken(
-                    userAccounts[0],
-                  )) ||
-                  userAccounts[0].accessToken ||
-                  undefined
-                );
-              }
-            } catch (tokenErr) {
-              console.warn(
-                "Could not retrieve organizer Google token:",
-                tokenErr,
-              );
-            }
-            return undefined;
-          })()
+        ? this.getOrganizerToken(payload.organizerUserId)
         : Promise.resolve(undefined),
     ]);
     const roomEmail = room?.email;
@@ -129,7 +131,7 @@ export class BookingService {
 
     try {
       // 2. Persist booking to database
-      const [newBooking] = await db
+      const [newBooking] = await executor
         .insert(booking)
         .values({
           title: payload.title,
@@ -151,7 +153,11 @@ export class BookingService {
     } catch (err) {
       // If DB persistence fails, rollback the Google Calendar event
       if (gcalEvent.id) {
-        await GoogleCalendarService.deleteEvent(gcalEvent.id).catch(() => {});
+        await GoogleCalendarService.deleteEvent(
+          gcalEvent.id,
+          "primary",
+          organizerToken,
+        ).catch(() => {});
       }
       throw err;
     }
