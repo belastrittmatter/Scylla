@@ -330,7 +330,10 @@ describe("Domain Services", () => {
         endTime: new Date(now.getTime() + 94 * 3600 * 1000 + 15 * 60 * 1000),
       });
 
-      const cancelled = await BookingService.cancelSeries(seriesId);
+      const cancelled = await BookingService.cancelSeries({
+        seriesId,
+        callerId: "usr_alex_rivera",
+      });
       expect(cancelled.length).toBe(2);
       expect(cancelled.every((b) => b.status === "cancelled")).toBe(true);
 
@@ -361,7 +364,10 @@ describe("Domain Services", () => {
       });
 
       // Cancel the entire series by passing bookingA's ID
-      const result = await BookingService.cancelSeriesByBooking(bookingA.id);
+      const result = await BookingService.cancelSeriesByBooking({
+        bookingId: bookingA.id,
+        callerId: "usr_alex_rivera",
+      });
       expect(result.length).toBe(2);
 
       const checkA = await BookingService.getBookingById(bookingA.id);

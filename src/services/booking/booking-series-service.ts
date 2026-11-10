@@ -9,40 +9,50 @@ import { escapeLike } from "@/utils/sql-utils";
 export { escapeLike };
 
 export interface CancelSeriesOptions {
+  seriesId: string;
+  callerId: string;
   reason?: string;
-  callerUserId?: string;
+  bookingId?: never;
+}
+
+export interface CancelBookingSeriesOptions {
+  bookingId: string;
+  callerId: string;
+  reason?: string;
+  seriesId?: never;
+}
+
+function assertCallerId(callerId: string | undefined): void {
+  if (!callerId || !callerId.trim()) {
+    throw new Error("Caller user ID is required to cancel a series");
+  }
 }
 
 export class BookingSeriesService {
-  public static async cancelSeries(
-    seriesId: string,
-    reason?: string,
-    ownerUserId?: string,
-  ): Promise<Booking[]> {
+  public static async cancelSeries({
+    seriesId,
+    callerId,
+    reason,
+  }: CancelSeriesOptions): Promise<Booking[]> {
     if (!seriesId || !seriesId.trim()) {
       throw new Error("Series ID is required");
     }
-    if (ownerUserId !== undefined && !ownerUserId.trim()) {
-      throw new Error("Owner user ID cannot be empty");
-    }
+    assertCallerId(callerId);
 
     const cleanSeriesId = seriesId.trim();
     const escaped = escapeLike(cleanSeriesId);
     const pattern = `%<!--series:${escaped}-->%`;
 
-    const conditions = [
-      ne(booking.status, "cancelled"),
-      sql`${booking.description} LIKE ${pattern} ESCAPE '\\'`,
-    ];
-
-    if (ownerUserId) {
-      conditions.push(eq(booking.organizerUserId, ownerUserId));
-    }
-
     const matchingBookings = await db
       .select()
       .from(booking)
-      .where(and(...conditions));
+      .where(
+        and(
+          ne(booking.status, "cancelled"),
+          sql`${booking.description} LIKE ${pattern} ESCAPE '\\'`,
+          eq(booking.organizerUserId, callerId),
+        ),
+      );
 
     if (matchingBookings.length === 0) {
       return [];
@@ -76,39 +86,17 @@ export class BookingSeriesService {
   }
 
   public static async cancelSeriesByBooking(
-    id: string,
+    options: CancelSeriesOptions | CancelBookingSeriesOptions,
     cancelSingleFn: (bookingId: string, reason?: string) => Promise<Booking>,
-    optionsOrReason?: CancelSeriesOptions | string,
-    callerUserIdParam?: string,
   ): Promise<Booking[]> {
-    let reason: string | undefined;
-    let callerId: string | undefined;
+    const { callerId, reason } = options;
+    assertCallerId(callerId);
 
-    if (
-      optionsOrReason &&
-      typeof optionsOrReason === "object" &&
-      !("length" in optionsOrReason)
-    ) {
-      reason = optionsOrReason.reason;
-      callerId = optionsOrReason.callerUserId;
-    } else if (typeof optionsOrReason === "string") {
-      reason = optionsOrReason;
-      callerId = callerUserIdParam;
-      if (!callerId && /^[0-9a-f-]{36}$/i.test(reason)) {
-        callerId = reason;
-        reason = undefined;
-      }
-    } else {
-      callerId = callerUserIdParam;
+    if (options.seriesId !== undefined) {
+      return this.cancelSeries(options);
     }
 
-    if (id.startsWith("series_")) {
-      if (!callerId) {
-        throw new Error("Authentication required to cancel series");
-      }
-      return this.cancelSeries(id, reason, callerId);
-    }
-
+    const id = options.bookingId;
     const cleanId = id.replace(/^gcal-/, "");
     const targetBooking = await BookingQueryService.getBookingById(id);
     if (!targetBooking) {
@@ -120,8 +108,7 @@ export class BookingSeriesService {
       return [];
     }
 
-    const organizerId = targetBooking.organizerUserId;
-    if (callerId && organizerId && organizerId !== callerId) {
+    if (targetBooking.organizerUserId !== callerId) {
       throw new Error(
         "Forbidden: Only the meeting organizer may cancel this booking series",
       );
@@ -131,11 +118,11 @@ export class BookingSeriesService {
       /<!--series:([a-zA-Z0-9_-]+)-->/,
     );
     if (seriesMatch && seriesMatch[1]) {
-      const seriesCancelled = await this.cancelSeries(
-        seriesMatch[1],
+      const seriesCancelled = await this.cancelSeries({
+        seriesId: seriesMatch[1],
+        callerId,
         reason,
-        organizerId || callerId,
-      );
+      });
       if (seriesCancelled.length > 0) {
         return seriesCancelled;
       }

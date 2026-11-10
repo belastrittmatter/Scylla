@@ -109,11 +109,10 @@ export async function DELETE(req: Request, context: RouteParams) {
     const allSeries = url.searchParams.get("allSeries") === "true";
 
     if (allSeries) {
-      const cancelled = await BookingService.cancelSeriesByBooking(
-        id,
-        undefined,
+      const cancelled = await BookingService.cancelSeriesByBooking({
+        bookingId: id,
         callerId,
-      );
+      });
       if (cancelled.length === 0) {
         return Response.json(
           { error: `Booking with ID ${id} not found` },

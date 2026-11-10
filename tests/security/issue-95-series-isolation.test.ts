@@ -56,10 +56,10 @@ describe("Issue #95 Series Cancellation Isolation", () => {
     try {
       // Attacker attempts to cancel the series by cancelling their own booking with allSeries
       // Using callerId = attackerUser.id
-      await BookingService.cancelSeriesByBooking(
-        attackerBooking.id,
-        attackerUser.id,
-      );
+      await BookingService.cancelSeriesByBooking({
+        bookingId: attackerBooking.id,
+        callerId: attackerUser.id,
+      });
 
       // Victim's booking MUST STILL BE CONFIRMED!
       const [reloadedVictim] = await db
@@ -133,11 +133,10 @@ describe("Issue #95 Series Cancellation Isolation", () => {
     try {
       // Attacker attempts to cancel victim's booking directly
       await expect(
-        BookingService.cancelSeriesByBooking(
-          victimBooking.id,
-          undefined,
-          attackerUser.id,
-        ),
+        BookingService.cancelSeriesByBooking({
+          bookingId: victimBooking.id,
+          callerId: attackerUser.id,
+        }),
       ).rejects.toThrow(/Forbidden/i);
 
       // Victim booking remains confirmed
@@ -191,19 +190,19 @@ describe("Issue #95 Series Cancellation Isolation", () => {
     try {
       // Attacker constructs a series ID consisting of wildcard underscores matching same length
       const wildcardUnderscores = "series_alpha_beta_" + "_".repeat(13);
-      const cancelledUnderscore = await BookingService.cancelSeries(
-        wildcardUnderscores,
-        "test wildcard",
-        testUser.id,
-      );
+      const cancelledUnderscore = await BookingService.cancelSeries({
+        seriesId: wildcardUnderscores,
+        reason: "test wildcard",
+        callerId: testUser.id,
+      });
       expect(cancelledUnderscore.length).toBe(0);
 
       // Attacker tries % wildcard
-      const cancelledPercent = await BookingService.cancelSeries(
-        "series_%",
-        "test wildcard",
-        testUser.id,
-      );
+      const cancelledPercent = await BookingService.cancelSeries({
+        seriesId: "series_%",
+        reason: "test wildcard",
+        callerId: testUser.id,
+      });
       expect(cancelledPercent.length).toBe(0);
 
       // Verify the booking is still confirmed
@@ -325,20 +324,20 @@ test("C2: literal backslash, percent, and underscore in seriesId do not cancel o
   try {
     // Attacker tries literal backslash and % in middle of queried id
     const trickyId = "series_legit\\%normal";
-    const cancelledTricky = await BookingService.cancelSeries(
-      trickyId,
-      "test tricky",
-      testUser.id,
-    );
+    const cancelledTricky = await BookingService.cancelSeries({
+      seriesId: trickyId,
+      reason: "test tricky",
+      callerId: testUser.id,
+    });
     expect(cancelledTricky.length).toBe(0);
 
     // Unescaped, `%` would match "_normal_" and cancel the target.
     const suffix = legitimateSeriesId.split("_").pop();
-    const cancelledInteriorPercent = await BookingService.cancelSeries(
-      `series_legit%${suffix}`,
-      "test interior percent",
-      testUser.id,
-    );
+    const cancelledInteriorPercent = await BookingService.cancelSeries({
+      seriesId: `series_legit%${suffix}`,
+      reason: "test interior percent",
+      callerId: testUser.id,
+    });
     expect(cancelledInteriorPercent.length).toBe(0);
 
     // Verify the booking is still confirmed
@@ -348,10 +347,21 @@ test("C2: literal backslash, percent, and underscore in seriesId do not cancel o
       .where(eq(booking.id, targetBooking.id));
     expect(reloaded.status).toBe("confirmed");
 
-    // Calling cancelSeries without ownerUserId must throw
+    // Calling cancelSeries with an empty or missing callerId must throw
     await expect(
-      BookingService.cancelSeries(legitimateSeriesId, "test no owner", ""),
-    ).rejects.toThrow(/Owner user ID/i);
+      BookingService.cancelSeries({
+        seriesId: legitimateSeriesId,
+        callerId: "",
+      }),
+    ).rejects.toThrow(/Caller user ID/i);
+    await expect(
+      // @ts-expect-error callerId is required at the type level
+      BookingService.cancelSeries({ seriesId: legitimateSeriesId }),
+    ).rejects.toThrow(/Caller user ID/i);
+    await expect(
+      // @ts-expect-error callerId is required at the type level
+      BookingService.cancelSeriesByBooking({ bookingId: targetBooking.id }),
+    ).rejects.toThrow(/Caller user ID/i);
   } finally {
     await db
       .delete(booking)
@@ -441,8 +451,9 @@ test("C1: non-organizer attendee cannot cancel entire series", async () => {
   try {
     // Attendee tries to cancel the organizer's entire series
     await expect(
-      BookingService.cancelSeriesByBooking(seriesBooking.id, {
-        callerUserId: attendee.id,
+      BookingService.cancelSeriesByBooking({
+        bookingId: seriesBooking.id,
+        callerId: attendee.id,
       }),
     ).rejects.toThrow(
       /Only the meeting organizer may cancel this booking series/i,

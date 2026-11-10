@@ -12,7 +12,11 @@ import {
   BookingQueryService,
   type BookingAttendee,
 } from "./booking/booking-query-service";
-import { BookingSeriesService } from "./booking/booking-series-service";
+import {
+  BookingSeriesService,
+  type CancelBookingSeriesOptions,
+  type CancelSeriesOptions,
+} from "./booking/booking-series-service";
 
 export type { BookingAttendee };
 
@@ -272,24 +276,16 @@ export class BookingService {
   }
 
   public static async cancelSeries(
-    seriesId: string,
-    reason?: string,
-    ownerUserId?: string,
+    options: CancelSeriesOptions,
   ): Promise<Booking[]> {
-    return BookingSeriesService.cancelSeries(seriesId, reason, ownerUserId);
+    return BookingSeriesService.cancelSeries(options);
   }
 
   public static async cancelSeriesByBooking(
-    id: string,
-    optionsOrReason?:
-      import("./booking/booking-series-service").CancelSeriesOptions | string,
-    callerUserId?: string,
+    options: CancelSeriesOptions | CancelBookingSeriesOptions,
   ): Promise<Booking[]> {
-    return BookingSeriesService.cancelSeriesByBooking(
-      id,
-      (bookingId, r) => this.cancel(bookingId, r),
-      optionsOrReason,
-      callerUserId,
+    return BookingSeriesService.cancelSeriesByBooking(options, (bookingId, r) =>
+      this.cancel(bookingId, r),
     );
   }
 
