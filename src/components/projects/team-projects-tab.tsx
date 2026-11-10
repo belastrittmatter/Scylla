@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { FolderKanban, Plus } from "lucide-react";
+import { CircleAlert, FolderKanban, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { plural } from "@/lib/plural";
 import {
   Empty,
+  EmptyContent,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -33,6 +34,7 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
     createProject,
     updateProject,
     deleteProject,
+    refresh,
   } = useProjects(teamId);
   const [creating, setCreating] = React.useState(false);
   const [editing, setEditing] = React.useState<ProjectItem | null>(null);
@@ -57,6 +59,20 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
       </div>
       {isLoading ? (
         <Skeleton className="h-32 w-full" />
+      ) : error ? (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Couldn&apos;t load projects.</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button size="sm" variant="outline" onClick={() => refresh()}>
+              Try again
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : projects.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
