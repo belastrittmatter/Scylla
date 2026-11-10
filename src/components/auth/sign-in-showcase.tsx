@@ -285,8 +285,9 @@ const SCENES = [
 /** Feature tour: story-style progress tabs over a vignette; each scene remounts so its animations start from 0. */
 export function SignInShowcase({ className }: { className?: string }) {
   const [index, setIndex] = React.useState(0);
+  const [restart, setRestart] = React.useState(0);
 
-  // Depends on index so a click (or tick) restarts the interval and the scene gets a full cycle.
+  // Every selection or tick gives the scene a full autoplay cycle.
   React.useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setTimeout(
@@ -294,7 +295,7 @@ export function SignInShowcase({ className }: { className?: string }) {
       SCENE_MS,
     );
     return () => window.clearTimeout(id);
-  }, [index]);
+  }, [index, restart]);
 
   const { Scene } = SCENES[index];
   return (
@@ -305,7 +306,10 @@ export function SignInShowcase({ className }: { className?: string }) {
             type="button"
             key={scene.title}
             aria-pressed={i === index}
-            onClick={() => setIndex(i)}
+            onClick={() => {
+              setIndex(i);
+              setRestart((value) => value + 1);
+            }}
             className={cn(
               "cursor-pointer text-left",
               i === index
@@ -317,7 +321,7 @@ export function SignInShowcase({ className }: { className?: string }) {
               {i < index && <div className="bg-foreground/40 h-full" />}
               {i === index && (
                 <div
-                  key={index}
+                  key={`${index}-${restart}`}
                   className="animate-in slide-in-from-left-full bg-primary h-full ease-linear motion-reduce:animate-none"
                   style={{ animationDuration: `${SCENE_MS}ms` }}
                 />
@@ -327,7 +331,11 @@ export function SignInShowcase({ className }: { className?: string }) {
           </button>
         ))}
       </div>
-      <div aria-hidden key={index} className="animate-in fade-in duration-500">
+      <div
+        aria-hidden
+        key={`${index}-${restart}`}
+        className="animate-in fade-in duration-500"
+      >
         <Scene />
       </div>
     </div>
