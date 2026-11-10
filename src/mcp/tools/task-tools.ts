@@ -198,7 +198,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       const team = await resolveTeamAndVerifyAccess(
         teamId,
         currentUser.id,
-        "member",
+        "admin",
       );
 
       const project = await ProjectService.createProject({

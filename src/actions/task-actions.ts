@@ -166,10 +166,10 @@ export async function createProjectAction(
     if (!teamId || !role) {
       return { success: false, error: "Access denied" };
     }
-    if (!hasTeamRole(role, "member")) {
+    if (!hasTeamRole(role, "admin")) {
       return {
         success: false,
-        error: "Permission denied: viewers cannot create projects",
+        error: "Permission denied: Team owner or admin role required",
       };
     }
 

@@ -68,19 +68,21 @@ describe("MCP project tools enforce team roles (#99)", () => {
     await db.delete(user).where(inArray(user.id, Object.values(ids)));
   });
 
-  test("create_project rejects viewers and allows members", async () => {
-    const viewer = await callTool(ids.viewer, "create_project", {
-      teamId,
-      name: "Viewer project",
-    });
-    expect(viewer.isError).toBe(true);
-    expect(viewer.content[0].text).toMatch(/viewer is read-only/);
+  test("create_project requires admin", async () => {
+    for (const who of [ids.viewer, ids.member]) {
+      const res = await callTool(who, "create_project", {
+        teamId,
+        name: "Denied project",
+      });
+      expect(res.isError).toBe(true);
+      expect(res.content[0].text).toMatch(/admin role required/);
+    }
 
-    const member = await callTool(ids.member, "create_project", {
+    const admin = await callTool(ids.admin, "create_project", {
       teamId,
-      name: "Member project",
+      name: "Admin project",
     });
-    expect(member.isError).toBeFalsy();
+    expect(admin.isError).toBeFalsy();
   });
 
   test("update_project requires admin", async () => {

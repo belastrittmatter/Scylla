@@ -351,13 +351,40 @@ describe("Task Server Actions with Core Domain Services", () => {
       await db.delete(user).where(eq(user.id, ownerId));
     });
 
-    test("createProjectAction rejects viewers", async () => {
-      const res = await createProjectAction({
+    test("createProjectAction requires admin (viewer and member denied)", async () => {
+      for (const role of ["viewer", "member"] as const) {
+        await TeamService.updateMemberRole(
+          viewerTeamId,
+          actingUserId,
+          role,
+          ownerId,
+        );
+        const res = await createProjectAction({
+          teamId: viewerTeamId,
+          name: `${role} project`,
+        });
+        expect(res.success).toBe(false);
+        expect(res.error).toMatch(/admin role required/);
+      }
+
+      await TeamService.updateMemberRole(
+        viewerTeamId,
+        actingUserId,
+        "admin",
+        ownerId,
+      );
+      const admin = await createProjectAction({
         teamId: viewerTeamId,
-        name: "Viewer Project",
+        name: "Admin project",
       });
-      expect(res.success).toBe(false);
-      expect(res.error).toMatch(/viewer/i);
+      expect(admin.success).toBe(true);
+
+      await TeamService.updateMemberRole(
+        viewerTeamId,
+        actingUserId,
+        "viewer",
+        ownerId,
+      );
     });
 
     test("createTaskCommentAction rejects viewers", async () => {
