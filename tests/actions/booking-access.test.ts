@@ -118,16 +118,13 @@ describe("agenda action authorization", () => {
     expect(agenda).toHaveBeenCalledWith("session-user", "2026-11-20");
   });
 
-  test("preserves explicit IDs in the actual no-session test fallback", async () => {
+  test("rejects callers without a session", async () => {
     const agenda = spyOn(BookingService, "getAgenda").mockResolvedValue([]);
     spies.push(agenda);
-    expect((await getAgendaAction("2026-11-20", "other-user")).success).toBe(
-      true,
-    );
-    expect(agenda).toHaveBeenCalledWith("other-user", "2026-11-20");
-  });
-
-  test("requires an ID when no session exists", async () => {
-    expect((await getAgendaAction("2026-11-20")).success).toBe(false);
+    expect(await getAgendaAction("2026-11-20", "other-user")).toEqual({
+      success: false,
+      error: "Unauthorized: Active user session required",
+    });
+    expect(agenda).not.toHaveBeenCalled();
   });
 });

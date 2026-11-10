@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import {
   searchTeammatesAction,
   getRoomsAction,
@@ -8,14 +8,18 @@ import {
   rescheduleBookingAction,
   cancelBookingAction,
 } from "../../src/actions";
-import { resolveActionUserId } from "../../src/actions/auth-helper";
+import { mockSessionUser } from "../test-utils/mock-session";
 import { db } from "../../src/db";
 import { meetingRoom } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
 
 describe("Server Actions Layer", () => {
+  let session: ReturnType<typeof mockSessionUser>;
+  afterAll(() => session?.mockRestore());
+
   beforeAll(async () => {
     await seedDatabase();
+    session = mockSessionUser("usr_alex_rivera");
     const testRooms = [
       {
         name: "Room Alpha",
@@ -176,10 +180,14 @@ describe("Server Actions Layer", () => {
       expect(result.error).toBeDefined();
     });
 
-    test("returns error when userId is missing and no session present", async () => {
+    test("defaults to the session user when userId is omitted", async () => {
       const result = await getAgendaAction("2026-10-20");
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.success).toBe(true);
+    });
+
+    test("rejects another user's agenda", async () => {
+      const result = await getAgendaAction("2026-10-20", "usr_test_user");
+      expect(result).toEqual({ success: false, error: "Access denied" });
     });
   });
 
@@ -240,14 +248,17 @@ describe("Server Actions Layer", () => {
         true,
       );
 
-      const agendaAttendee = await getAgendaAction(
-        "2026-10-20",
-        "usr_test_user",
-      );
-      expect(agendaAttendee.success).toBe(true);
-      expect(agendaAttendee.data!.some((b) => b.id === createdBookingId)).toBe(
-        true,
-      );
+      const attendeeSession = mockSessionUser("usr_test_user");
+      try {
+        const agendaAttendee = await getAgendaAction("2026-10-20");
+        expect(agendaAttendee.success).toBe(true);
+        expect(
+          agendaAttendee.data!.some((b) => b.id === createdBookingId),
+        ).toBe(true);
+      } finally {
+        attendeeSession.mockRestore();
+        session = mockSessionUser("usr_alex_rivera");
+      }
     });
 
     test("rescheduleBookingAction updates booking time", async () => {
@@ -326,25 +337,6 @@ describe("Server Actions Layer", () => {
       const cancelRes = await cancelBookingAction(foreignBooking.id);
       expect(cancelRes.success).toBe(false);
       expect(cancelRes.error).toMatch(/Access denied|Unauthorized/i);
-    });
-  });
-
-  describe("resolveActionUserId security hardening", () => {
-    test("fails closed when NODE_ENV and BUN_ENV are not development or test", async () => {
-      const env = process.env as Record<string, string | undefined>;
-      const origNodeEnv = env.NODE_ENV;
-      const origBunEnv = env.BUN_ENV;
-      try {
-        delete env.NODE_ENV;
-        delete env.BUN_ENV;
-        expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
-
-        env.NODE_ENV = "production";
-        expect(resolveActionUserId()).rejects.toThrow("Unauthorized");
-      } finally {
-        env.NODE_ENV = origNodeEnv;
-        env.BUN_ENV = origBunEnv;
-      }
     });
   });
 });

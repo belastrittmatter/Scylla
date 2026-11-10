@@ -24,11 +24,7 @@ import {
   CreateBookingPayloadSchema,
   ReschedulePayloadSchema,
 } from "./schemas";
-import {
-  resolveActionUserId,
-  getSessionUserId,
-  type ActionResult,
-} from "./auth-helper";
+import { resolveActionUserId, type ActionResult } from "./auth-helper";
 
 async function verifyBookingAccess(
   b: BookingRecord,
@@ -133,26 +129,13 @@ export async function getAgendaAction(
       };
     }
 
-    let targetUserId = parseResult.data.userId;
-    if (!targetUserId) {
-      const sessionUserId = await getSessionUserId();
-      if (!sessionUserId) {
-        return {
-          success: false,
-          error: "User ID is required when unauthenticated",
-        };
-      }
-      targetUserId = sessionUserId;
-    } else {
-      const resolvedUserId = await resolveActionUserId(targetUserId);
-      if (targetUserId !== resolvedUserId) {
-        return { success: false, error: "Access denied" };
-      }
-      targetUserId = resolvedUserId;
+    const sessionUserId = await resolveActionUserId();
+    if (parseResult.data.userId && parseResult.data.userId !== sessionUserId) {
+      return { success: false, error: "Access denied" };
     }
 
     const agenda = await BookingService.getAgenda(
-      targetUserId,
+      sessionUserId,
       parseResult.data.dateIso,
     );
     return { success: true, data: agenda };
@@ -177,7 +160,8 @@ export async function createBookingAction(
     }
 
     const data = parseResult.data;
-    const sessionUserId = await resolveActionUserId(data.organizerUserId);
+    // organizerUserId from the client is ignored: the organizer is the caller.
+    const sessionUserId = await resolveActionUserId();
 
     const bookingResult = await BookingService.createBooking({
       ...data,

@@ -5,7 +5,8 @@ import { user } from "../../src/db/schema";
 import { seedDefaultWorkspace } from "../../src/services/task-seed";
 import { TeamService } from "../../src/services/team/team-service";
 import { TaskService } from "../../src/services/task/task-service";
-import { resolveActionUserId } from "../../src/actions/auth-helper";
+import { seedDatabase } from "../../src/db/seed";
+import { mockSessionUser } from "../test-utils/mock-session";
 import {
   getWorkspaceDataAction,
   createTaskAction,
@@ -20,9 +21,12 @@ describe("Task Server Actions with Core Domain Services", () => {
   let testTeamId: string;
   let testProjectId: string;
   let testTaskId: string;
+  const actingUserId = "usr_alex_rivera";
+  let session: ReturnType<typeof mockSessionUser>;
 
   beforeAll(async () => {
-    const actingUserId = await resolveActionUserId();
+    await seedDatabase();
+    session = mockSessionUser(actingUserId);
     await seedDefaultWorkspace(actingUserId);
     const tempTeam = await TeamService.createTeam({
       name: `Action Test Team ${Date.now()}`,
@@ -33,6 +37,7 @@ describe("Task Server Actions with Core Domain Services", () => {
   });
 
   afterAll(async () => {
+    session?.mockRestore();
     if (testTeamId) {
       await TeamService.deleteTeam(testTeamId);
     }
