@@ -1,19 +1,31 @@
 import { db } from "@/db";
-import { booking, account, type Booking } from "@/db/schema";
-import { eq, and, or, ne, gte, lte, asc, like, inArray } from "drizzle-orm";
+import { booking, type Booking } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { GoogleCalendarService } from "./google-calendar";
 import { RoomService } from "./rooms";
-import { UserService } from "./user";
+import {
+  getOrganizerToken,
+  normalizeAttendees,
+  sanitizeBookingDescription,
+} from "./booking/booking-token-helper";
+import {
+  BookingQueryService,
+  type BookingAttendee,
+} from "./booking/booking-query-service";
+import {
+  BookingSeriesService,
+  type CancelBookingSeriesOptions,
+  type CancelSeriesOptions,
+} from "./booking/booking-series-service";
 
-export interface BookingAttendee {
-  email: string;
-  name?: string;
-  status?: string;
-}
+export type { BookingAttendee };
 
 export interface CreateBookingPayload {
   title: string;
   description?: string;
+  seriesId?: string;
+  /** @deprecated Ignored: descriptions are always stripped of series markers. */
+  sanitizeDescription?: boolean;
   eventTypeId?: string;
   organizerUserId: string;
   roomId?: string;
@@ -32,51 +44,9 @@ export interface ReschedulePayload {
   description?: string;
 }
 
-function normalizeAttendees(
-  attendees?: Array<string | BookingAttendee>,
-): BookingAttendee[] {
-  if (!attendees) return [];
-  return attendees.map((a) => {
-    if (typeof a === "string") {
-      return { email: a.trim().toLowerCase(), status: "needsAction" };
-    }
-    return {
-      email: a.email.trim().toLowerCase(),
-      name: a.name,
-      status: a.status || "needsAction",
-    };
-  });
-}
-
 export class BookingService {
-  /** The organizer's Google access token, the account their events are created with. */
-  public static async getOrganizerToken(
-    organizerUserId: string,
-  ): Promise<string | undefined> {
-    try {
-      const userAccounts = await db
-        .select()
-        .from(account)
-        .where(
-          and(
-            eq(account.userId, organizerUserId),
-            eq(account.providerId, "google"),
-          ),
-        )
-        .limit(1);
-
-      if (userAccounts.length > 0) {
-        return (
-          (await GoogleCalendarService.refreshAccountToken(userAccounts[0])) ||
-          userAccounts[0].accessToken ||
-          undefined
-        );
-      }
-    } catch (tokenErr) {
-      console.warn("Could not retrieve organizer Google token:", tokenErr);
-    }
-    return undefined;
-  }
+  /** The organizer's Google token; kept on the class for existing callers. */
+  public static getOrganizerToken = getOrganizerToken;
 
   /**
    * Creates a new booking atomically:
@@ -101,22 +71,41 @@ export class BookingService {
 
     const normalized = normalizeAttendees(payload.attendees);
 
-    // Resolve room email and organizer's Google OAuth access token in parallel
     const [room, organizerToken] = await Promise.all([
       payload.roomId
         ? RoomService.getRoomById(payload.roomId)
         : Promise.resolve(null),
-      payload.organizerUserId
-        ? this.getOrganizerToken(payload.organizerUserId)
-        : Promise.resolve(undefined),
+      getOrganizerToken(payload.organizerUserId),
     ]);
+
+    if (payload.roomId && !room) {
+      throw new Error(`Room with ID ${payload.roomId} not found`);
+    }
+
+    if (room && !room.isActive) {
+      throw new Error(`Room "${room.name}" is currently inactive`);
+    }
+
+    if (room && room.capacity && normalized.length > room.capacity) {
+      throw new Error(
+        `Room "${room.name}" capacity of ${room.capacity} exceeded by attendee count (${normalized.length})`,
+      );
+    }
+
     const roomEmail = room?.email;
 
-    // 1. Create Google Calendar event with conference link
+    const cleanDesc = sanitizeBookingDescription(payload.description);
+    let finalDescription = cleanDesc;
+    if (payload.seriesId) {
+      finalDescription = cleanDesc
+        ? `${cleanDesc}\n\n<!--series:${payload.seriesId}-->`
+        : `<!--series:${payload.seriesId}-->`;
+    }
+
     const gcalEvent = await GoogleCalendarService.createEvent(
       {
         title: payload.title,
-        description: payload.description,
+        description: finalDescription,
         start,
         end,
         attendees: normalized.map((a) => ({
@@ -130,12 +119,11 @@ export class BookingService {
     );
 
     try {
-      // 2. Persist booking to database
       const [newBooking] = await executor
         .insert(booking)
         .values({
           title: payload.title,
-          description: payload.description,
+          description: finalDescription,
           eventTypeId: payload.eventTypeId,
           organizerUserId: payload.organizerUserId,
           roomId: payload.roomId,
@@ -151,7 +139,6 @@ export class BookingService {
 
       return newBooking;
     } catch (err) {
-      // If DB persistence fails, rollback the Google Calendar event
       if (gcalEvent.id) {
         await GoogleCalendarService.deleteEvent(
           gcalEvent.id,
@@ -163,10 +150,6 @@ export class BookingService {
     }
   }
 
-  /**
-   * Reschedules an existing booking to new start and end times,
-   * updating both the Google Calendar event and database record.
-   */
   public static async reschedule(
     id: string,
     payload: ReschedulePayload,
@@ -206,23 +189,43 @@ export class BookingService {
       payload.projectId !== undefined ? payload.projectId : existing.projectId;
     const targetTitle =
       payload.title !== undefined ? payload.title : existing.title;
+
+    const cleanDesc =
+      payload.description !== undefined
+        ? sanitizeBookingDescription(payload.description)
+        : undefined;
+    const existingSeriesMatch = existing.description?.match(
+      /<!--series:[a-zA-Z0-9_-]+-->/,
+    );
     const targetDescription =
       payload.description !== undefined
-        ? payload.description
+        ? existingSeriesMatch
+          ? cleanDesc
+            ? `${cleanDesc}\n\n${existingSeriesMatch[0]}`
+            : existingSeriesMatch[0]
+          : cleanDesc || null
         : existing.description;
 
-    // Sync changes to Google Calendar
+    const organizerToken = await getOrganizerToken(existing.organizerUserId);
+
     if (existing.gcalEventId) {
-      await GoogleCalendarService.updateEvent(existing.gcalEventId, {
-        start,
-        end,
-        roomEmail,
-        title: targetTitle,
-        description: targetDescription || undefined,
-      });
+      await GoogleCalendarService.updateEvent(
+        existing.gcalEventId,
+        {
+          start,
+          end,
+          roomEmail,
+          title: targetTitle,
+          // "" clears the Google description; undefined would leave it untouched.
+          description:
+            targetDescription ??
+            (payload.description !== undefined ? "" : undefined),
+          attendees: existing.attendees,
+        },
+        organizerToken,
+      );
     }
 
-    // Update database record
     const [updated] = await db
       .update(booking)
       .set({
@@ -234,36 +237,33 @@ export class BookingService {
         description: targetDescription,
         updatedAt: new Date(),
       })
-      .where(eq(booking.id, id))
+      .where(eq(booking.id, existing.id))
       .returning();
 
     return updated;
   }
 
-  /**
-   * Cancels a booking, updates its status to 'cancelled', and deletes the Google Calendar event.
-   */
-  public static async cancel(id: string): Promise<Booking> {
-    const cleanId = id.replace(/^gcal-/, "");
+  public static async cancel(id: string, reason?: string): Promise<Booking> {
     const existing = await this.getBookingById(id);
     if (!existing) {
-      // Check if pure Google Calendar event
-      try {
-        await GoogleCalendarService.deleteEvent(cleanId);
-      } catch {}
       throw new Error(`Booking with ID ${id} not found`);
     }
 
+    const organizerToken = await getOrganizerToken(existing.organizerUserId);
+
     if (existing.gcalEventId) {
-      await GoogleCalendarService.deleteEvent(existing.gcalEventId).catch(
-        () => {},
-      );
+      await GoogleCalendarService.deleteEvent(
+        existing.gcalEventId,
+        "primary",
+        organizerToken,
+      ).catch(() => {});
     }
 
     const [cancelled] = await db
       .update(booking)
       .set({
         status: "cancelled",
+        cancellationReason: reason || null,
         updatedAt: new Date(),
       })
       .where(eq(booking.id, existing.id))
@@ -272,146 +272,29 @@ export class BookingService {
     return cancelled;
   }
 
-  /**
-   * Cancels all bookings in a recurring series identified by seriesId,
-   * updates their status to 'cancelled', and deletes their Google Calendar events.
-   */
-  public static async cancelSeries(seriesId: string): Promise<Booking[]> {
-    if (!seriesId || !seriesId.trim()) {
-      throw new Error("Series ID is required");
-    }
-
-    const matchingBookings = await db
-      .select()
-      .from(booking)
-      .where(
-        and(
-          ne(booking.status, "cancelled"),
-          like(booking.description, `%<!--series:${seriesId}-->%`),
-        ),
-      );
-
-    if (matchingBookings.length === 0) {
-      return [];
-    }
-
-    // Delete Google Calendar events in parallel
-    await Promise.all(
-      matchingBookings.map((b) => {
-        if (b.gcalEventId) {
-          return GoogleCalendarService.deleteEvent(b.gcalEventId).catch(
-            () => {},
-          );
-        }
-        return Promise.resolve();
-      }),
-    );
-
-    const ids = matchingBookings.map((b) => b.id);
-    const cancelled = await db
-      .update(booking)
-      .set({
-        status: "cancelled",
-        updatedAt: new Date(),
-      })
-      .where(inArray(booking.id, ids))
-      .returning();
-
-    return cancelled;
+  public static async cancelSeries(
+    options: CancelSeriesOptions,
+  ): Promise<Booking[]> {
+    return BookingSeriesService.cancelSeries(options);
   }
 
-  /**
-   * Cancels all bookings belonging to the series of a given booking ID.
-   * If the booking is not part of a series, cancels just that booking.
-   */
-  public static async cancelSeriesByBooking(id: string): Promise<Booking[]> {
-    if (id.startsWith("series_")) {
-      return this.cancelSeries(id);
-    }
-
-    const cleanId = id.replace(/^gcal-/, "");
-    const targetBooking = await this.getBookingById(id);
-    if (!targetBooking) {
-      // Check if pure Google Calendar event without DB row
-      try {
-        await GoogleCalendarService.deleteEvent(cleanId);
-      } catch (gcalErr) {
-        console.warn("Could not delete gcal event:", gcalErr);
-      }
-      return [];
-    }
-
-    // 1. Check if description has explicit seriesId tag
-    const seriesMatch = targetBooking.description?.match(
-      /<!--series:([a-zA-Z0-9_-]+)-->/,
+  public static async cancelSeriesByBooking(
+    options: CancelSeriesOptions | CancelBookingSeriesOptions,
+  ): Promise<Booking[]> {
+    return BookingSeriesService.cancelSeriesByBooking(options, (bookingId, r) =>
+      this.cancel(bookingId, r),
     );
-    if (seriesMatch && seriesMatch[1]) {
-      const seriesCancelled = await this.cancelSeries(seriesMatch[1]);
-      if (seriesCancelled.length > 0) {
-        return seriesCancelled;
-      }
-    }
-
-    const cancelledSingle = await this.cancel(targetBooking.id);
-    return [cancelledSingle];
   }
 
-  /**
-   * Retrieves user agenda for a specified date (all confirmed bookings
-   * where user is organizer or attendee).
-   */
+  public static async getBookingById(id: string): Promise<Booking | null> {
+    return BookingQueryService.getBookingById(id);
+  }
+
   public static async getAgenda(
     userId: string,
     date: Date | string,
   ): Promise<Booking[]> {
-    const target = new Date(date);
-    if (isNaN(target.getTime())) {
-      throw new Error("Invalid date provided for agenda");
-    }
-
-    const dayStart = new Date(
-      target.getFullYear(),
-      target.getMonth(),
-      target.getDate(),
-      0,
-      0,
-      0,
-      0,
-    );
-    const dayEnd = new Date(
-      target.getFullYear(),
-      target.getMonth(),
-      target.getDate(),
-      23,
-      59,
-      59,
-      999,
-    );
-
-    const [userRecord, bookings] = await Promise.all([
-      UserService.getUserById(userId),
-      db
-        .select()
-        .from(booking)
-        .where(
-          and(
-            ne(booking.status, "cancelled"),
-            gte(booking.startTime, dayStart),
-            lte(booking.startTime, dayEnd),
-          ),
-        )
-        .orderBy(asc(booking.startTime)),
-    ]);
-    const userEmail = userRecord?.email?.toLowerCase();
-
-    // Filter where user is organizer or in attendee list
-    return bookings.filter((b) => {
-      if (b.organizerUserId === userId) return true;
-      if (userEmail && b.attendees) {
-        return b.attendees.some((a) => a.email.toLowerCase() === userEmail);
-      }
-      return false;
-    });
+    return BookingQueryService.getAgenda(userId, date);
   }
 
   /**
@@ -424,30 +307,5 @@ export class BookingService {
     userId: string,
   ): boolean {
     return b.organizerUserId === userId || b.userId === userId;
-  }
-
-  /**
-   * Lookup a booking by ID.
-   */
-  public static async getBookingById(id: string): Promise<Booking | null> {
-    const cleanId = id
-      .replace(/^gcal-/, "")
-      .replace(/^attendee-.*?-/, "")
-      .replace(/^busy-.*?-/, "");
-    const results = await db
-      .select()
-      .from(booking)
-      .where(
-        or(
-          eq(booking.id, id),
-          eq(booking.id, cleanId),
-          eq(booking.gcalEventId, id),
-          eq(booking.gcalEventId, cleanId),
-          eq(booking.googleEventId, id),
-          eq(booking.googleEventId, cleanId),
-        ),
-      )
-      .limit(1);
-    return results[0] || null;
   }
 }

@@ -103,6 +103,7 @@ export async function POST(req: Request) {
     const newBooking = await BookingService.createBooking({
       ...data,
       organizerUserId,
+      sanitizeDescription: true,
     });
 
     return Response.json(newBooking, { status: 201 });

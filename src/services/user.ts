@@ -1,8 +1,9 @@
 import { db } from "@/db";
 import { user, teamMember, type User } from "@/db/schema";
-import { eq, or, ilike, and, inArray, sql } from "drizzle-orm";
+import { eq, or, and, inArray, sql } from "drizzle-orm";
 import { GoogleCalendarService } from "@/services/google-calendar";
 import { isFullEmail } from "@/lib/format-person-name";
+import { escapeLike } from "@/utils/sql-utils";
 
 export interface Teammate {
   id: string;
@@ -91,7 +92,7 @@ export class UserService {
 
     // 1. Search database users scoped to the caller's teammates
     try {
-      const searchPattern = `%${trimmed}%`;
+      const searchPattern = `%${escapeLike(trimmed)}%`;
       const dbUsers = await db
         .select()
         .from(user)
@@ -100,8 +101,8 @@ export class UserService {
             inArray(user.id, teammateIds),
             trimmed
               ? or(
-                  ilike(user.name, searchPattern),
-                  ilike(user.email, searchPattern),
+                  sql`${user.name} ILIKE ${searchPattern} ESCAPE '\\'`,
+                  sql`${user.email} ILIKE ${searchPattern} ESCAPE '\\'`,
                 )
               : undefined,
           ),

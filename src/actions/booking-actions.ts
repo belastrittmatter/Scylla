@@ -176,6 +176,7 @@ export async function createBookingAction(
     const bookingResult = await BookingService.createBooking({
       ...data,
       organizerUserId: sessionUserId,
+      sanitizeDescription: true,
     });
     return { success: true, data: bookingResult };
   } catch (err) {
