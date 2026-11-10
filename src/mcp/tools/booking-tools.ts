@@ -27,7 +27,7 @@ async function findOwnedBooking(eventId: string, userId: string | undefined) {
         content: [
           {
             type: "text" as const,
-            text: "Forbidden: Only the meeting organizer may modify this booking",
+            text: "Forbidden: Only the meeting organizer or calendar owner may modify this booking",
           },
         ],
       },
