@@ -693,12 +693,24 @@
   }
 }
 
+/* Progress bar of the active tab, one scene long. */
+.sis-fill {
+  transform-origin: left;
+  animation: sis-fill 10s linear;
+}
+@keyframes sis-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 /* Reduced motion: freeze every scene on its finished state (the component also stops rotating). */
 @media (prefers-reduced-motion: reduce) {
   .sis-stage *,
   .sis-stage *::before,
   .sis-stage *::after,
-  .sis-cap * {
+  .sis-cap *,
+  .sis-fill {
     animation-play-state: paused !important;
     animation-delay: -8s !important;
   }

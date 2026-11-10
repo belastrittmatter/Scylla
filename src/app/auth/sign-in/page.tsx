@@ -64,8 +64,6 @@ export default function SignInPage() {
                 showLastUsed={false}
                 className="mt-8 h-11 w-full text-[15px] shadow-xs [&_svg]:size-5"
               />
-
-              <SignInShowcase className="mt-10" />
             </div>
           </main>
 
@@ -90,31 +88,21 @@ export default function SignInPage() {
 
         <aside
           aria-hidden
-          className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900"
+          className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-950"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:opacity-50" />
-          <div className="absolute inset-0 px-12 pt-16 xl:px-16 xl:pt-20">
-            <p className="max-w-md text-2xl font-semibold leading-snug tracking-tight">
-              Your team&apos;s calendars, rooms and agents.{" "}
+          {/* Light: soft orange wash. Dark: a neutral white lift; orange over near-black reads brown. */}
+          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:bg-[radial-gradient(75%_50%_at_30%_0%,rgb(255_255_255/0.08),transparent_70%)]" />
+          <div className="relative flex h-full flex-col justify-center px-12 py-16 xl:px-16">
+            <p className="max-w-md text-2xl leading-snug font-semibold tracking-tight">
+              Your team&apos;s calendars, tasks and agents.{" "}
               <span className="text-orange-600 dark:text-orange-400">
                 One schedule.
               </span>
             </p>
             <p className="text-muted-foreground mt-3 max-w-md text-sm">
-              Find a time that works for everyone, book the room, and let agents
-              handle the back-and-forth over MCP.
+              A quick look at what Scylla does once you&apos;re in.
             </p>
-            {/* Bleeds off the right and bottom edges so it reads as a peek into the app. */}
-            <Image
-              src="/images/calendar-dashboard-preview.png"
-              alt=""
-              width={1591}
-              height={991}
-              priority
-              // Serve the original PNG; the optimizer's default q75 re-encode visibly softens UI text.
-              unoptimized
-              className="ring-foreground/10 mt-12 w-[200%] max-w-none rounded-xl shadow-2xl ring-1 dark:brightness-90"
-            />
+            <SignInShowcase className="mt-10 max-w-md" />
           </div>
         </aside>
       </div>

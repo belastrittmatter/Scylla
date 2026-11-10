@@ -177,13 +177,13 @@ function GitHub() {
 }
 
 const SCENES = [
-  { title: "Book a meeting by asking", Scene: Book },
-  { title: "Reschedule in one sentence", Scene: Move },
-  { title: "Get your day at a glance", Scene: Briefing },
-  { title: "Tasks that follow GitHub", Scene: GitHub },
+  { title: "Book by asking", Scene: Book },
+  { title: "Reschedule", Scene: Move },
+  { title: "Daily briefing", Scene: Briefing },
+  { title: "GitHub sync", Scene: GitHub },
 ];
 
-/** Decorative loop of product vignettes; each scene remounts so its CSS animation starts from 0. */
+/** Feature tour: story-style progress tabs over a looping vignette; each scene remounts so its CSS animation starts from 0. */
 export function SignInShowcase({ className }: { className?: string }) {
   const [index, setIndex] = React.useState(0);
 
@@ -196,26 +196,32 @@ export function SignInShowcase({ className }: { className?: string }) {
     return () => window.clearInterval(id);
   }, []);
 
-  const { title, Scene } = SCENES[index];
+  const { Scene } = SCENES[index];
   // Theme colours are Tailwind classes so dark: applies; unlayered CSS would always win over them.
   return (
     <div
       aria-hidden
       className={`sis-root [--afg:#c2410c] [--blue:#2563eb] [--ok:#16a34a] [--violet:#7c3aed] dark:[--afg:#fdba74] dark:[--blue:#60a5fa] dark:[--ok:#22c55e] dark:[--violet:#a78bfa] ${className ?? ""}`}
     >
-      <div className="mb-2.5 flex items-center gap-2 text-xs">
-        <span className="text-muted-foreground border-border rounded-full border px-2 py-px text-[10px] font-medium tracking-wide uppercase">
-          Demo
-        </span>
-        <span className="font-medium">{title}</span>
-        <span className="ml-auto flex gap-1">
-          {SCENES.map((scene, i) => (
-            <i
-              key={scene.title}
-              className={`size-1.5 rounded-full ${i === index ? "bg-primary" : "bg-border"}`}
-            />
-          ))}
-        </span>
+      <div className="mb-5 grid grid-cols-4 gap-3 text-[13px]">
+        {SCENES.map((scene, i) => (
+          <div
+            key={scene.title}
+            className={
+              i === index
+                ? "text-foreground font-medium"
+                : "text-muted-foreground"
+            }
+          >
+            <div className="bg-foreground/10 mb-2.5 h-0.5 overflow-hidden rounded-full">
+              {i < index && <div className="bg-foreground/40 h-full" />}
+              {i === index && (
+                <div key={index} className="sis-fill bg-primary h-full" />
+              )}
+            </div>
+            {scene.title}
+          </div>
+        ))}
       </div>
       <Scene key={index} />
     </div>
