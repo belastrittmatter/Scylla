@@ -100,6 +100,17 @@ export async function PATCH(req: Request, context: RouteParams) {
     }
 
     const updated = await ProjectService.updateProject(id, parseResult.data);
+
+    if (parseResult.data.githubRepo && updated.githubRepo?.trim()) {
+      try {
+        const { GithubSyncService } =
+          await import("@/services/github/github-sync-service");
+        await GithubSyncService.syncProjectIssues(updated.id, userId);
+      } catch (syncErr) {
+        console.error("GitHub issue sync on project update error:", syncErr);
+      }
+    }
+
     return Response.json(updated, { status: 200 });
   } catch (err) {
     const message =
@@ -148,11 +159,11 @@ export async function DELETE(req: Request, context: RouteParams) {
     await ProjectService.deleteProject(id);
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {
-    return Response.json(
-      {
-        error: err instanceof Error ? err.message : "Failed to delete project",
-      },
-      { status: 500 },
-    );
+    const message =
+      err instanceof Error ? err.message : "Failed to delete project";
+    if (message.includes("not found")) {
+      return Response.json({ error: message }, { status: 404 });
+    }
+    return Response.json({ error: message }, { status: 500 });
   }
 }

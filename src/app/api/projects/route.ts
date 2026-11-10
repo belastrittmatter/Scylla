@@ -133,7 +133,66 @@ export async function POST(req: Request) {
       );
     }
 
-    const newProject = await ProjectService.createProject(parseResult.data);
+    let targetGithubRepo = parseResult.data.githubRepo?.trim() || null;
+    if (parseResult.data.createNewRepo) {
+      const { validateGithubRepoName } =
+        await import("@/lib/github-validation");
+      const validation = validateGithubRepoName(
+        parseResult.data.createNewRepo.name,
+      );
+      if (!validation.valid) {
+        return Response.json(
+          { error: validation.error || "Invalid GitHub repository name" },
+          { status: 400 },
+        );
+      }
+
+      const { GithubSyncService } =
+        await import("@/services/github/github-sync-service");
+      const createdRepo = await GithubSyncService.createAndSetupRepository(
+        {
+          name: validation.cleanName,
+          description:
+            parseResult.data.createNewRepo.description ||
+            parseResult.data.description,
+          isPrivate: parseResult.data.createNewRepo.isPrivate,
+          projectName: parseResult.data.name,
+        },
+        userId,
+      );
+      targetGithubRepo = createdRepo.fullName;
+    }
+
+    const newProject = await ProjectService.createProject({
+      ...parseResult.data,
+      githubRepo: targetGithubRepo,
+    });
+
+    if (newProject.githubRepo?.trim()) {
+      try {
+        const { GithubIntegrationService } =
+          await import("@/services/github/github-integration-service");
+        await GithubIntegrationService.inviteTeamCollaborators(
+          newProject.teamId,
+          newProject.githubRepo.trim(),
+          userId,
+        );
+      } catch (inviteErr) {
+        console.warn(
+          "Failed to auto-invite team collaborators to GitHub repo:",
+          inviteErr,
+        );
+      }
+
+      try {
+        const { GithubSyncService } =
+          await import("@/services/github/github-sync-service");
+        await GithubSyncService.syncProjectIssues(newProject.id, userId);
+      } catch (syncErr) {
+        console.error("Initial GitHub issue sync error:", syncErr);
+      }
+    }
+
     return Response.json(newProject, { status: 201 });
   } catch (err) {
     if (isUniqueConstraintError(err)) {

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { slugify } from "@/lib/utils";
 import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badge";
+import { GitHubRepoSelector } from "@/components/projects/github-repo-selector";
 import type { ProjectStatus } from "@/services/project/project-types";
 import type { ProjectItem } from "@/hooks/use-projects";
 
@@ -47,6 +48,7 @@ interface EditProjectDialogProps {
       description?: string | null;
       status?: ProjectStatus;
       color?: string | null;
+      githubRepo?: string | null;
     },
   ) => Promise<ProjectItem>;
 }
@@ -65,6 +67,7 @@ function EditProjectForm({
   const [name, setName] = useState(project.name);
   const [slug, setSlug] = useState(project.slug);
   const [description, setDescription] = useState(project.description || "");
+  const [githubRepo, setGithubRepo] = useState(project.githubRepo || "");
   const [status, setStatus] = useState<ProjectStatus>(project.status);
   const [color, setColor] = useState(project.color || PRESET_COLORS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,6 +84,7 @@ function EditProjectForm({
         name: name.trim(),
         slug: slug.trim() ? slugify(slug.trim()) : undefined,
         description: description.trim() || null,
+        githubRepo: githubRepo.trim() || null,
         status,
         color,
       });
@@ -161,6 +165,23 @@ function EditProjectForm({
             </div>
           </div>
         </div>
+        <div className="grid gap-1">
+          <Label
+            htmlFor="edit-proj-github"
+            className="flex items-center gap-1.5"
+          >
+            <svg className="size-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M12 .5C5.73.5.5 5.73.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.07.78 2.15v3.18c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z" />
+            </svg>
+            GitHub Repository (Optional)
+          </Label>
+          <GitHubRepoSelector
+            value={githubRepo}
+            onChange={setGithubRepo}
+            disabled={isSubmitting}
+          />
+        </div>
+
         <div className="grid gap-1">
           <Label htmlFor="edit-proj-desc">Description</Label>
           <Textarea
