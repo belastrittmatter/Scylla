@@ -3,8 +3,8 @@ import { eq } from "drizzle-orm";
 import { POST as mcpPost } from "@/app/api/mcp/route";
 import { auth } from "@/lib/auth";
 import { db, user } from "@/db";
-import { agent, agentHost } from "@/db/schema";
-import { resolveTokenScopes } from "@/services/agent";
+import { agent, agentCapabilityGrant, agentHost } from "@/db/schema";
+import { resolveTokenScopes, revokeMcpClient } from "@/services/agent";
 
 const uid = Math.random().toString(36).slice(2, 7);
 const userId = `usr_agent_auth_${uid}`;
@@ -74,6 +74,33 @@ describe("MCP agent session status (#99)", () => {
       expect(res.status).toBe(401);
       expect((await res.json()).error.message).toContain("revoked");
     }
+  });
+
+  test("revoking an agent also revokes its capability grants", async () => {
+    const agentId = `agent_active_${uid}`;
+    const now = new Date();
+    await db.insert(agentCapabilityGrant).values({
+      id: `grant_${uid}`,
+      agentId,
+      capability: "tasks.write",
+      createdAt: now,
+      updatedAt: now,
+    });
+    // Another user's revoke must not touch this agent's grants.
+    await revokeMcpClient(`usr_someone_else_${uid}`, agentId);
+    const grants = () =>
+      db
+        .select({ status: agentCapabilityGrant.status })
+        .from(agentCapabilityGrant)
+        .where(eq(agentCapabilityGrant.agentId, agentId));
+    expect((await grants())[0].status).toBe("active");
+
+    await revokeMcpClient(userId, agentId);
+    expect((await grants())[0].status).toBe("revoked");
+    await db
+      .update(agent)
+      .set({ status: "active" })
+      .where(eq(agent.id, agentId));
   });
 
   test("active agents reach the MCP server", async () => {
