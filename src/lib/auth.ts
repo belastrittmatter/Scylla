@@ -80,6 +80,9 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
+      // #111: team invites create unverified placeholder users (team-service addTeamMember);
+      // Google must be able to claim them. Safe only while no password sign-up exists.
+      requireLocalEmailVerified: false,
     },
   },
   socialProviders: {
