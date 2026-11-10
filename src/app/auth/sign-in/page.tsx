@@ -64,28 +64,38 @@ export default function SignInPage() {
                 className="mt-8 h-11 w-full text-[15px] shadow-xs [&_svg]:size-5"
               />
 
-              {/* Illustrative: the one thing Scylla adds on top of Google Calendar. */}
-              <div
-                aria-hidden
-                className="bg-card mt-10 rounded-xl border p-4 text-sm shadow-xs"
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-medium">Design review</span>
-                  <span className="text-muted-foreground tabular-nums">
-                    Thu 14:00
-                  </span>
-                </div>
-                <p className="text-muted-foreground mt-1">
-                  Focus Room Alpha · 4 people
-                </p>
-                <div className="text-muted-foreground mt-3 flex items-center gap-2 border-t border-dashed pt-3">
-                  <span className="size-1.5 rounded-full bg-emerald-500" />
-                  Booked by Claude
-                  <span className="ml-auto rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
-                    via MCP
-                  </span>
-                </div>
-              </div>
+              <ol className="mt-10 border-b text-sm">
+                {[
+                  <>
+                    Google asks you to{" "}
+                    <span className="text-foreground font-medium">
+                      allow calendar access
+                    </span>
+                  </>,
+                  <>
+                    First time here? Scylla{" "}
+                    <span className="text-foreground font-medium">
+                      creates your account
+                    </span>
+                  </>,
+                  <>
+                    You land on{" "}
+                    <span className="text-foreground font-medium">
+                      your week
+                    </span>
+                  </>,
+                ].map((step, i) => (
+                  <li
+                    key={i}
+                    className="text-muted-foreground flex gap-4 border-t py-3"
+                  >
+                    <span className="text-muted-foreground/60 w-3 tabular-nums">
+                      {i + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           </main>
 
@@ -112,7 +122,7 @@ export default function SignInPage() {
           aria-hidden
           className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900"
         >
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:24px_24px] opacity-60 dark:opacity-40" />
+          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:opacity-50" />
           <div className="absolute inset-0 px-12 pt-16 xl:px-16 xl:pt-20">
             <p className="max-w-md text-2xl font-semibold leading-snug tracking-tight">
               Your team&apos;s calendars, rooms and agents.{" "}
@@ -131,6 +141,8 @@ export default function SignInPage() {
               width={1591}
               height={991}
               priority
+              // Serve the original PNG; the optimizer's default q75 re-encode visibly softens UI text.
+              unoptimized
               className="ring-foreground/10 mt-12 w-[200%] max-w-none rounded-xl shadow-2xl ring-1 dark:brightness-90"
             />
           </div>
