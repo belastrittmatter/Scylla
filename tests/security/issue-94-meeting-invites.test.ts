@@ -13,6 +13,7 @@ import { POST as bookHandler } from "@/app/api/meeting-invites/[slug]/book/route
 import { POST as slotsHandler } from "@/app/api/meeting-invites/[slug]/slots/route";
 import { MeetingInviteService } from "@/services/meeting-invite";
 import { GoogleCalendarService } from "@/services/google-calendar";
+import { BookingService } from "@/services/booking";
 import type { TimeSlot } from "@/services/scheduler";
 import { db } from "@/db";
 import {
@@ -490,6 +491,54 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
       expect(book.status).toBe(409);
     } finally {
       await db.delete(schedule).where(eq(schedule.userId, testOrganizerId));
+    }
+  });
+
+  it("rolls back the calendar event with the organizer's own Google token", async () => {
+    await db.insert(account).values({
+      id: `acc_${testOrganizerId}`,
+      accountId: testOrganizerId,
+      providerId: "google",
+      userId: testOrganizerId,
+      accessToken: "org-94-token",
+      accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+      updatedAt: new Date(),
+    });
+    const createEvent = spyOn(
+      GoogleCalendarService,
+      "createEvent",
+    ).mockResolvedValue({ id: "evt-94" } as never);
+    const deleteEvent = spyOn(
+      GoogleCalendarService,
+      "deleteEvent",
+    ).mockResolvedValue({} as never);
+    try {
+      const failingInsert = {
+        insert: () => {
+          throw new Error("insert failed");
+        },
+      } as unknown as Parameters<typeof BookingService.createBooking>[1];
+      await expect(
+        BookingService.createBooking(
+          {
+            title: "Rollback",
+            organizerUserId: testOrganizerId,
+            startTime: new Date(Date.now() + 86_400_000),
+            endTime: new Date(Date.now() + 86_400_000 + 1800 * 1000),
+            attendees: [],
+          },
+          failingInsert,
+        ),
+      ).rejects.toThrow("insert failed");
+      expect(deleteEvent).toHaveBeenCalledWith(
+        "evt-94",
+        "primary",
+        "org-94-token",
+      );
+    } finally {
+      createEvent.mockRestore();
+      deleteEvent.mockRestore();
+      await db.delete(account).where(eq(account.id, `acc_${testOrganizerId}`));
     }
   });
 });

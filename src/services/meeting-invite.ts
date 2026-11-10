@@ -278,6 +278,8 @@ export class MeetingInviteService {
       if (createdBooking?.gcalEventId) {
         await GoogleCalendarService.deleteEvent(
           createdBooking.gcalEventId,
+          "primary",
+          await BookingService.getOrganizerToken(invite.organizerUserId),
         ).catch(() => {});
       }
       const code =
