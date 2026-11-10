@@ -107,7 +107,8 @@ export class MeetingInviteService {
       const u = userByEmail.get(email.toLowerCase());
       return u
         ? { id: u.id, name: u.name, email: u.email, image: u.image }
-        : { id: email, name: email.split("@")[0], email, image: null };
+        : // Served publicly: never derive a name from the email.
+          { id: email, name: "Guest", email, image: null };
     });
 
     const organizerProfile = organizer

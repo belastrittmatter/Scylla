@@ -44,6 +44,7 @@ function expectNoSecrets(body: unknown) {
   const text = JSON.stringify(body).toLowerCase();
   for (const secret of SECRETS) {
     expect(text).not.toContain(secret.toLowerCase());
+    expect(text).not.toContain(secret.split("@")[0].toLowerCase());
   }
 }
 
@@ -164,9 +165,10 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
     expect(data.invite.organizerUserId).toBeUndefined();
     expect(data.room.email).toBeUndefined();
     expect(data.members).toHaveLength(2);
-    expect(data.members.map((m: { name: string }) => m.name)).toContain(
+    expect(data.members.map((m: { name: string }) => m.name)).toEqual([
       "Member User 94",
-    );
+      "Guest",
+    ]);
   });
 
   it("POST /book returns only the public projection and ignores organizerUserId in the body", async () => {
@@ -470,7 +472,10 @@ describe("Security Issue #94: Meeting Invites Hardening", () => {
           }).format(new Date(iso)),
         );
 
-      const res = await slotsRequest(invite.slug, { date, timeZone: guestZone });
+      const res = await slotsRequest(invite.slug, {
+        date,
+        timeZone: guestZone,
+      });
       expect(res.status).toBe(200);
       const { slots } = (await res.json()) as { slots: TimeSlot[] };
       expect(slots.length).toBeGreaterThan(0);
