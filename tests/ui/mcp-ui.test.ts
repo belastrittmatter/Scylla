@@ -304,13 +304,14 @@ describe("MCP UI Bridge & Formatting Helpers", () => {
     expect(tasksHtml).toContain('aria-label="Hide Done column"');
     expect(tasksHtml).toContain('aria-label="Show Cancelled column"');
     expect(tasksHtml).toContain("Core · MCP v2");
-    expect(tasksHtml).toContain('draggable="true"');
+    expect(tasksHtml).toContain('draggable="false"');
+    expect(tasksHtml).not.toContain("Move to");
+    expect(tasksHtml).not.toContain("Task actions");
     expect(tasksHtml).toContain("Cancelled");
     expect(tasksHtml).toContain("max-h-[440px]");
     expect(tasksHtml).toContain("overflow-y-auto");
-    // Unstarted task in todo should not render timer or empty progress bar
-    expect(tasksHtml).not.toContain('data-testid="task-timer"');
-    expect(tasksHtml).not.toContain('data-testid="task-progress"');
+    // Unstarted task in todo should not render the tracking bar
+    expect(tasksHtml).not.toContain("Tracking");
 
     const booked = [
       { start: "2026-10-21T02:00:00.000Z", end: "2026-10-21T02:30:00.000Z" },
