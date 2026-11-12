@@ -121,6 +121,7 @@ export async function POST(req: Request) {
       priority: data.priority ?? "medium",
       teamId: data.teamId,
       projectId: data.projectId,
+      parentTaskId: data.parentTaskId,
       creatorId,
       assigneeId: data.assigneeId,
       dueDate,

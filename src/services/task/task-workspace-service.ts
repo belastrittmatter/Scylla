@@ -153,10 +153,26 @@ export class TaskWorkspaceService {
       ]),
     );
 
+    const progressByParent = new Map<
+      string,
+      { total: number; resolved: number }
+    >();
+    for (const t of rawTasks) {
+      if (!t.parentTaskId) continue;
+      const p = progressByParent.get(t.parentTaskId) ?? {
+        total: 0,
+        resolved: 0,
+      };
+      p.total += 1;
+      if (t.status === "done" || t.status === "cancelled") p.resolved += 1;
+      progressByParent.set(t.parentTaskId, p);
+    }
+
     const tasks: TaskWithDetails[] = rawTasks.map((t) => {
       const stats = taskStatsMap.get(t.id);
       return {
         ...t,
+        subTaskProgress: progressByParent.get(t.id),
         assignee: t.assigneeId ? userMap.get(t.assigneeId) || null : null,
         creator: t.creatorId ? userMap.get(t.creatorId) || null : null,
         project: t.projectId ? projectMap.get(t.projectId) || null : null,

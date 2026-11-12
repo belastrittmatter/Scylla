@@ -19,6 +19,7 @@ export function toTaskItem(t: KanbanTask): TaskItem {
     activeSessionStartedAt: t.activeSessionStartedAt,
     // Not in the board payload; the read-only board never displays them.
     projectId: null,
+    parentTaskId: null,
     teamId: "",
     creatorId: "",
     assigneeId: name ?? null,

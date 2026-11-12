@@ -23,6 +23,7 @@ export interface TaskWithDetails extends Task {
   project?: Project | null;
   totalSpentSeconds?: number;
   activeSessionStartedAt?: string | null;
+  subTaskProgress?: { total: number; resolved: number };
 }
 
 export interface WorkspaceData {

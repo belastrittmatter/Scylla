@@ -21,9 +21,20 @@ export class TaskQueryService {
           columns: { id: true, name: true, email: true, image: true },
         },
         project: { columns: { id: true, name: true, slug: true, color: true } },
+        subTasks: { orderBy: [asc(task.position), asc(task.createdAt)] },
       },
     });
-    return (record as TaskWithRelations) ?? null;
+    if (!record) return null;
+    const subTasks = record.subTasks;
+    return {
+      ...record,
+      subTaskProgress: {
+        total: subTasks.length,
+        resolved: subTasks.filter(
+          (s) => s.status === "done" || s.status === "cancelled",
+        ).length,
+      },
+    } as TaskWithRelations;
   }
 
   public static async listTasks(filter: TaskFilterInput): Promise<Task[]> {
