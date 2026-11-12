@@ -78,6 +78,24 @@ describe("Tasks REST API Endpoints", () => {
     createdTaskId = data.id;
   });
 
+  test("POST /api/tasks - creates a sub-task and rejects a missing parent", async () => {
+    const post = (body: object) =>
+      createTaskHandler(
+        new Request("http://localhost:3000/api/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teamId, creatorId: creatorUserId, ...body }),
+        }),
+      );
+    const parent = await (await post({ title: "Parent" })).json();
+    const res = await post({ title: "Child", parentTaskId: parent.id });
+    expect(res.status).toBe(201);
+    expect((await res.json()).parentTaskId).toBe(parent.id);
+
+    const missing = await post({ title: "Orphan", parentTaskId: "nope" });
+    expect(missing.status).toBe(404);
+  });
+
   test("POST /api/tasks - rejects invalid dueDate format with 400", async () => {
     const req = new Request("http://localhost:3000/api/tasks", {
       method: "POST",

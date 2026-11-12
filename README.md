@@ -189,6 +189,12 @@ You can simply tell your agent:
 
   > _"Move task #104 to In Review and note that all unit tests are passing."_
 
+- **Break work into sub-tasks**:
+
+  > _"Create 'Write tests' as a sub-task of task #104, then mark it done when finished."_
+
+  `create_task` (and `POST /api/tasks`) accept `parentTaskId` (one nesting level, same team). `get_task` returns `subTasks` and `subTaskProgress` (`{ total, resolved }`). Resolve a sub-task with `update_task` and `status: "done"`; the parent is not auto-closed.
+
 - **Check availability**:
   > _"What meetings do I have on Thursday?"_ or _"Is the Orion conference room free at 2 PM?"_
 
