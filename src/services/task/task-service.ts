@@ -38,29 +38,36 @@ export class TaskService {
   public static async createTask(input: CreateTaskInput): Promise<Task> {
     const validated = CreateTaskSchema.parse(input);
 
-    const [teamRecord, projectRecord, existing] = await Promise.all([
-      db.query.team.findFirst({
-        where: eq(team.id, validated.teamId),
-      }),
-      validated.projectId
-        ? db.query.project.findFirst({
-            where: eq(project.id, validated.projectId),
-          })
-        : Promise.resolve(null),
-      validated.position === undefined
-        ? db
-            .select({ position: task.position })
-            .from(task)
-            .where(
-              and(
-                eq(task.teamId, validated.teamId),
-                eq(task.status, validated.status),
-              ),
-            )
-            .orderBy(desc(task.position))
-            .limit(1)
-        : Promise.resolve([]),
-    ]);
+    const [teamRecord, projectRecord, parentRecord, existing] =
+      await Promise.all([
+        db.query.team.findFirst({
+          where: eq(team.id, validated.teamId),
+        }),
+        validated.projectId
+          ? db.query.project.findFirst({
+              where: eq(project.id, validated.projectId),
+            })
+          : Promise.resolve(null),
+        validated.parentTaskId
+          ? db.query.task.findFirst({
+              where: eq(task.id, validated.parentTaskId),
+              columns: { teamId: true, parentTaskId: true },
+            })
+          : Promise.resolve(null),
+        validated.position === undefined
+          ? db
+              .select({ position: task.position })
+              .from(task)
+              .where(
+                and(
+                  eq(task.teamId, validated.teamId),
+                  eq(task.status, validated.status),
+                ),
+              )
+              .orderBy(desc(task.position))
+              .limit(1)
+          : Promise.resolve([]),
+      ]);
 
     if (!teamRecord) {
       throw new Error(`Team with id "${validated.teamId}" not found`);
@@ -84,6 +91,17 @@ export class TaskService {
         throw new Error(
           `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
         );
+      }
+    }
+
+    if (validated.parentTaskId) {
+      if (!parentRecord || parentRecord.teamId !== validated.teamId) {
+        throw new Error(
+          `Parent task with id "${validated.parentTaskId}" not found in team "${validated.teamId}"`,
+        );
+      }
+      if (parentRecord.parentTaskId) {
+        throw new Error("A sub-task cannot have its own sub-tasks");
       }
     }
 
@@ -115,6 +133,7 @@ export class TaskService {
         priority: validated.priority,
         teamId: validated.teamId,
         projectId: validated.projectId,
+        parentTaskId: validated.parentTaskId,
         creatorId: validated.creatorId,
         assigneeId: validated.assigneeId,
         dueDate: validated.dueDate,

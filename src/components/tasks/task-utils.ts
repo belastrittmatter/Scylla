@@ -152,6 +152,7 @@ export function createDraftTask(
     status,
     priority: "medium",
     projectId: project?.id ?? null,
+    parentTaskId: null,
     teamId,
     creatorId,
     assigneeId: assignee?.id ?? null,

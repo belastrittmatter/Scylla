@@ -33,6 +33,7 @@ export const CreateTaskSchema = z.object({
   priority: TaskPrioritySchema.default("medium"),
   teamId: z.string().min(1, "Team ID is required"),
   projectId: z.string().min(1).optional(),
+  parentTaskId: z.string().min(1).optional(),
   creatorId: z.string().min(1, "Creator ID is required"),
   assigneeId: z.string().nullable().optional(),
   dueDate: TaskDueDateSchema.nullable().optional(),
@@ -79,6 +80,8 @@ export interface TaskWithRelations extends Task {
     slug: string;
     color?: string | null;
   } | null;
+  subTasks?: Task[];
+  subTaskProgress?: { total: number; resolved: number };
 }
 
 export type {

@@ -291,6 +291,12 @@ export const createTaskSchema = z.object({
     .describe(
       "Project ID or slug (REQUIRED). Every task must belong to a project. If not provided or user did not specify a project, available projects in the team are returned for selection.",
     ),
+  parentTaskId: z
+    .string()
+    .optional()
+    .describe(
+      "Parent task ID: creates this as a sub-task (one level only). Resolve a sub-task with update_task status 'done'.",
+    ),
   assigneeId: z
     .string()
     .optional()

@@ -8,6 +8,7 @@ import {
   integer,
   jsonb,
   uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
@@ -763,6 +764,11 @@ export const task = pgTable(
     projectId: text("project_id").references(() => project.id, {
       onDelete: "cascade",
     }),
+    // Self-reference: one level of nesting; deleting a parent keeps its children.
+    parentTaskId: text("parent_task_id").references(
+      (): AnyPgColumn => task.id,
+      { onDelete: "set null" },
+    ),
     teamId: text("team_id")
       .notNull()
       .references(() => team.id, { onDelete: "cascade" }),
@@ -784,6 +790,7 @@ export const task = pgTable(
   (table) => [
     index("task_team_id_idx").on(table.teamId),
     index("task_project_id_idx").on(table.projectId),
+    index("task_parent_task_id_idx").on(table.parentTaskId),
     index("task_assignee_id_idx").on(table.assigneeId),
     index("task_status_idx").on(table.status),
     index("task_priority_idx").on(table.priority),
@@ -1087,6 +1094,12 @@ export const taskRelations = relations(task, ({ one, many }) => ({
     references: [user.id],
     relationName: "taskAssignee",
   }),
+  parent: one(task, {
+    fields: [task.parentTaskId],
+    references: [task.id],
+    relationName: "taskSubTasks",
+  }),
+  subTasks: many(task, { relationName: "taskSubTasks" }),
   comments: many(taskComment),
   timeSessions: many(taskTimeSession),
 }));

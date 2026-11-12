@@ -3,6 +3,7 @@ import { createCalendarMcpServer } from "@/app/api/mcp/route";
 import { db, user } from "@/db";
 import { eq, inArray } from "drizzle-orm";
 import { TeamService } from "@/services/team/team-service";
+import { ProjectService } from "@/services/project/project-service";
 import { TaskService } from "@/services/task/task-service";
 
 interface RegisteredToolDef {
@@ -136,5 +137,42 @@ describe("MCP Task CRUD & Comments Suite", () => {
     // 8. Verify deleted task can no longer be retrieved
     const verifyGet = await ownerTools["get_task"].handler({ taskId: task.id });
     expect(verifyGet.isError).toBe(true);
+  });
+  it("create_task accepts parentTaskId and get_task reports sub-task progress", async () => {
+    const team = await TeamService.createTeam({
+      name: `Sub Task Team ${Math.random().toString(36).substring(2, 7)}`,
+      ownerId,
+    });
+    const project = await ProjectService.createProject({
+      teamId: team.id,
+      name: "Sub Task Project",
+      slug: `sub-task-${Math.random().toString(36).substring(2, 7)}`,
+    });
+    const parent = await TaskService.createTask({
+      teamId: team.id,
+      title: "Parent",
+      status: "todo",
+      priority: "medium",
+      creatorId: ownerId,
+    });
+    const tools = getTools(
+      await createCalendarMcpServer({ sub: ownerId, scopes: ["*"] }),
+    );
+
+    const created = await tools["create_task"].handler({
+      title: "Child",
+      teamId: team.id,
+      projectId: project.id,
+      parentTaskId: parent.id,
+    });
+    expect(created.isError).toBeFalsy();
+    const child = JSON.parse(created.content[0].text).task;
+    expect(child.parentTaskId).toBe(parent.id);
+
+    await tools["update_task"].handler({ taskId: child.id, status: "done" });
+    const got = JSON.parse(
+      (await tools["get_task"].handler({ taskId: parent.id })).content[0].text,
+    );
+    expect(got.task.subTaskProgress).toEqual({ total: 1, resolved: 1 });
   });
 });

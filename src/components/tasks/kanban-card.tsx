@@ -108,7 +108,7 @@ export function KanbanCard({
         </button>
       </h4>
 
-      {(priority || task.dueDate || running) && (
+      {(priority || task.dueDate || running || task.subTaskProgress) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
           {priority && (
             <span className={priority.className}>{priority.label}</span>
@@ -126,6 +126,14 @@ export function KanbanCard({
             >
               <CalendarClock className="size-3" />
               {dateLabel}
+            </span>
+          )}
+          {task.subTaskProgress && (
+            <span
+              className="text-muted-foreground"
+              aria-label={`${task.subTaskProgress.resolved} of ${task.subTaskProgress.total} sub-tasks resolved`}
+            >
+              {task.subTaskProgress.resolved}/{task.subTaskProgress.total}
             </span>
           )}
           <KanbanCardTime task={task} />
