@@ -19,7 +19,7 @@ import { useTeamAssignees } from "./use-team-assignees";
 import { useTeams } from "@/hooks/use-teams";
 import { useScopedTasks } from "./use-scoped-tasks";
 import { makeCanEditTask } from "./task-selectors";
-import { INITIAL_TASK_FILTERS } from "./task-types";
+import { INITIAL_TASK_FILTERS, type TaskDraftDates } from "./task-types";
 import type { TaskFilters, TaskStatus, Team } from "./task-types";
 
 export function TaskDashboard() {
@@ -103,8 +103,8 @@ export function TaskDashboard() {
   // shortcut: outside a team the drawer has no team picker, so new tasks land in the first team; add a picker if users ask.
   const draftTeamId = teamId || teams[0]?.id || "";
   const addTask = canEdit({ teamId: draftTeamId })
-    ? (status: TaskStatus = "todo") =>
-        editor.openDraft(status, draftTeamId, projectId)
+    ? (status: TaskStatus = "todo", dates?: TaskDraftDates) =>
+        editor.openDraft(status, draftTeamId, projectId, dates)
     : undefined;
 
   return (

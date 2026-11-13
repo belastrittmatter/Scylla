@@ -32,11 +32,30 @@ export class TaskAccessError extends Error {
   }
 }
 
+/** Thrown when a task's startDate is later than its dueDate. */
+export class TaskDateRangeError extends Error {
+  constructor() {
+    super("startDate must be on or before dueDate");
+    this.name = "TaskDateRangeError";
+  }
+}
+
+/** Both dates set → start must not be after due; a null/absent date imposes no constraint. */
+function assertDateOrder(
+  start: Date | null | undefined,
+  due: Date | null | undefined,
+): void {
+  if (start && due && start.getTime() > due.getTime()) {
+    throw new TaskDateRangeError();
+  }
+}
+
 export { MIN_TASK_SESSION_DURATION_SECONDS };
 
 export class TaskService {
   public static async createTask(input: CreateTaskInput): Promise<Task> {
     const validated = CreateTaskSchema.parse(input);
+    assertDateOrder(validated.startDate, validated.dueDate);
 
     const [teamRecord, projectRecord, existing] = await Promise.all([
       db.query.team.findFirst({
@@ -118,6 +137,7 @@ export class TaskService {
         creatorId: validated.creatorId,
         assigneeId: validated.assigneeId,
         dueDate: validated.dueDate,
+        startDate: validated.startDate ?? null,
         position,
         estimatedMinutes: validated.estimatedMinutes ?? 60,
       })
@@ -160,6 +180,14 @@ export class TaskService {
       currentUserId,
       "Forbidden: Viewer role cannot update tasks",
     );
+
+    const effectiveStart =
+      validated.startDate !== undefined
+        ? validated.startDate
+        : existing.startDate;
+    const effectiveDue =
+      validated.dueDate !== undefined ? validated.dueDate : existing.dueDate;
+    assertDateOrder(effectiveStart, effectiveDue);
 
     if (validated.projectId !== undefined && validated.projectId !== null) {
       const projectRecord = await db.query.project.findFirst({
@@ -210,6 +238,8 @@ export class TaskService {
     if (validated.assigneeId !== undefined)
       updateData.assigneeId = validated.assigneeId;
     if (validated.dueDate !== undefined) updateData.dueDate = validated.dueDate;
+    if (validated.startDate !== undefined)
+      updateData.startDate = validated.startDate;
     if (validated.position !== undefined)
       updateData.position = validated.position;
     if (validated.estimatedMinutes !== undefined)

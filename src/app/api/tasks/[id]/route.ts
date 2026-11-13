@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { TaskService, TaskAccessError } from "@/services/task/task-service";
+import {
+  TaskService,
+  TaskAccessError,
+  TaskDateRangeError,
+} from "@/services/task/task-service";
 import { TeamService } from "@/services/team/team-service";
 import { UpdateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
@@ -106,6 +110,9 @@ export async function PATCH(req: Request, context: RouteParams) {
   } catch (err) {
     const denied = taskAccessErrorResponse(err);
     if (denied) return denied;
+    if (err instanceof TaskDateRangeError) {
+      return Response.json({ error: err.message }, { status: 400 });
+    }
     const message =
       err instanceof Error ? err.message : "Failed to update task";
     if (message.includes("not found")) {

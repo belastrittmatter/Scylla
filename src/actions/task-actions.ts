@@ -112,6 +112,11 @@ export async function updateTaskAction(
       : parsedData.dueDate === null
         ? null
         : undefined;
+    const startDate = parsedData.startDate
+      ? new Date(parsedData.startDate)
+      : parsedData.startDate === null
+        ? null
+        : undefined;
 
     const userId = await resolveActionUserId();
     const existingTask = await TaskService.getTaskById(idParse.data);
@@ -137,7 +142,7 @@ export async function updateTaskAction(
 
     const updated = await TaskService.updateTask(
       idParse.data,
-      { ...parsedData, dueDate },
+      { ...parsedData, dueDate, startDate },
       userId,
     );
     return { success: true, data: updated };
@@ -218,6 +223,11 @@ export async function createTaskAction(
       : parsedData.dueDate === null
         ? null
         : undefined;
+    const startDate = parsedData.startDate
+      ? new Date(parsedData.startDate)
+      : parsedData.startDate === null
+        ? null
+        : undefined;
 
     const created = await TaskService.createTask({
       title: parsedData.title,
@@ -229,6 +239,7 @@ export async function createTaskAction(
       creatorId,
       assigneeId: parsedData.assigneeId ?? null,
       dueDate,
+      startDate,
       estimatedMinutes: parsedData.estimatedMinutes ?? 60,
     });
     return { success: true, data: created };

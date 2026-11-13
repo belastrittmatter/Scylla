@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import {
@@ -18,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaskDatePicker } from "./task-date-picker";
+import { TaskDrawerDateFields } from "./task-drawer-date-fields";
+import { TaskDrawerEstimateField } from "./task-drawer-estimate-field";
 import { AssigneeCombobox } from "./assignee-combobox";
 import {
   TASK_FORM_STATUSES,
@@ -35,6 +29,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
     status,
     priority,
     assigneeId,
+    startDateStr,
     dueDateStr,
     estimatedMinutes,
     users,
@@ -43,6 +38,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
     onStatusChange,
     onPriorityChange,
     onAssigneeChange,
+    onStartDateChange,
     onDueDateChange,
     onEstimatedMinutesChange,
   } = props;
@@ -126,59 +122,28 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
         </Field>
       </div>
 
-      <Field>
-        <FieldLabel>Assignee</FieldLabel>
-        <AssigneeCombobox
-          users={users}
-          assigneeId={assigneeId}
-          onAssigneeChange={onAssigneeChange}
-        />
-      </Field>
-
       <div className="grid grid-cols-2 gap-3">
         <Field>
-          <FieldLabel>Deadline Due Date</FieldLabel>
-          <TaskDatePicker value={dueDateStr} onChange={onDueDateChange} />
+          <FieldLabel>Assignee</FieldLabel>
+          <AssigneeCombobox
+            users={users}
+            assigneeId={assigneeId}
+            onAssigneeChange={onAssigneeChange}
+          />
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="task-estimate">Estimated Time</FieldLabel>
-          <InputGroup className="h-9">
-            <InputGroupInput
-              id="task-estimate"
-              type="number"
-              min={0}
-              step={15}
-              value={estimatedMinutes || ""}
-              onChange={(e) =>
-                onEstimatedMinutesChange(
-                  Math.max(0, parseInt(e.target.value, 10) || 0),
-                )
-              }
-              placeholder="e.g. 60"
-              className="text-sm"
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupText className="text-xs">mins</InputGroupText>
-            </InputGroupAddon>
-          </InputGroup>
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
-            <span>Presets:</span>
-            {[30, 60, 120, 240].map((mins) => (
-              <Button
-                key={mins}
-                type="button"
-                variant={estimatedMinutes === mins ? "default" : "outline"}
-                size="xs"
-                onClick={() => onEstimatedMinutesChange(mins)}
-                className="h-5 px-1.5 text-xs font-medium"
-              >
-                {mins < 60 ? `${mins}m` : `${mins / 60}h`}
-              </Button>
-            ))}
-          </div>
-        </Field>
+        <TaskDrawerEstimateField
+          estimatedMinutes={estimatedMinutes}
+          onEstimatedMinutesChange={onEstimatedMinutesChange}
+        />
       </div>
+
+      <TaskDrawerDateFields
+        startDateStr={startDateStr}
+        dueDateStr={dueDateStr}
+        onStartDateChange={onStartDateChange}
+        onDueDateChange={onDueDateChange}
+      />
 
       <Field>
         <FieldLabel htmlFor="task-description">
