@@ -5,8 +5,6 @@ import {
   addDays,
   differenceInCalendarDays,
   format,
-  isSameDay,
-  isWeekend,
   startOfWeek,
 } from "date-fns";
 import {
@@ -16,23 +14,31 @@ import {
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import { getVisibleDays } from "./task-timeline";
+import {
+  TaskTimelineDayColumns,
+  TaskTimelineDayHeader,
+} from "./task-timeline-day-grid";
 import { BAND, buildGroups, DAYS } from "./task-timeline-groups";
 import { TaskTimelineNamePane } from "./task-timeline-name-pane";
 import { TaskTimelineToolbar } from "./task-timeline-toolbar";
 import { TaskTimelineBars } from "./task-timeline-row";
 import type { TaskItem } from "./task-types";
+import { useTimelineDragCreate } from "./use-timeline-drag-create";
 
 interface TaskTimelineViewProps {
   tasks: TaskItem[];
   getContextLabel?: (task: TaskItem) => string | null;
   onSelectTask: (task: TaskItem) => void;
+  /** Set to enable drag-to-create on empty grid space (first day 09:00 → last day 18:00). */
+  onCreateRange?: (startDate: Date, dueDate: Date) => void;
 }
 
-/** Gantt-style view: createdAt → dueDate bars on a horizontally scrollable day grid. */
+/** Gantt-style view: startDate (or createdAt) → dueDate bars on a horizontally scrollable day grid. */
 export function TaskTimelineView({
   tasks,
   getContextLabel,
   onSelectTask,
+  onCreateRange,
 }: TaskTimelineViewProps) {
   const [colW, setColW] = React.useState(36);
   const [label, setLabel] = React.useState("");
@@ -50,6 +56,12 @@ export function TaskTimelineView({
   };
   const groups = buildGroups(tasks, start, getContextLabel);
   const unscheduled = tasks.filter((t) => !t.dueDate && t.status !== "done");
+  const { range, handlers } = useTimelineDragCreate({
+    colW,
+    days: DAYS,
+    rangeStart: start,
+    onCreateRange,
+  });
 
   const updateLabel = React.useCallback(() => {
     const el = scroller.current;
@@ -91,8 +103,6 @@ export function TaskTimelineView({
     setColW(next);
   };
 
-  const shade = (d: Date) => isWeekend(d) && "bg-muted/40";
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <TaskTimelineToolbar
@@ -125,47 +135,21 @@ export function TaskTimelineView({
               className="h-full overflow-x-auto"
             >
               <div
-                className="relative min-h-full"
+                className="relative min-h-full select-none"
                 style={{ width: DAYS * colW }}
+                {...handlers}
               >
-                {/* Day columns behind the rows: weekend shading and the today line. */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 grid"
-                  style={gridStyle}
-                >
-                  {dayList.map((d) => (
-                    <span
-                      key={d.getTime()}
-                      className={cn(
-                        "border-border/40 relative border-l",
-                        shade(d),
-                      )}
-                    >
-                      {isSameDay(d, today) && (
-                        <span className="bg-primary absolute inset-y-0 left-1/2 w-0.5" />
-                      )}
-                    </span>
-                  ))}
-                </div>
-                <div
-                  className="relative grid h-8 border-b text-xs"
-                  style={gridStyle}
-                >
-                  {dayList.map((d) => (
-                    <span
-                      key={d.getTime()}
-                      title={format(d, "EEE, MMM d")}
-                      className={cn(
-                        "text-muted-foreground flex items-center justify-center truncate",
-                        shade(d),
-                        isSameDay(d, today) && "text-primary font-semibold",
-                      )}
-                    >
-                      {format(d, colW > 36 ? "EEE d" : "d")}
-                    </span>
-                  ))}
-                </div>
+                <TaskTimelineDayColumns
+                  dayList={dayList}
+                  today={today}
+                  gridStyle={gridStyle}
+                />
+                <TaskTimelineDayHeader
+                  dayList={dayList}
+                  today={today}
+                  colW={colW}
+                  gridStyle={gridStyle}
+                />
                 {[...groups].map(([name, rows]) => (
                   <React.Fragment key={name}>
                     {name && (
@@ -181,6 +165,16 @@ export function TaskTimelineView({
                     ))}
                   </React.Fragment>
                 ))}
+                {range && (
+                  <div
+                    aria-hidden
+                    className="bg-primary/10 border-primary/40 pointer-events-none absolute inset-y-0 border-x"
+                    style={{
+                      left: range.first * colW,
+                      width: (range.last - range.first + 1) * colW,
+                    }}
+                  />
+                )}
               </div>
             </div>
           </ResizablePanel>

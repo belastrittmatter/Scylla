@@ -7,6 +7,7 @@ import type {
   TaskStatus,
   Project,
   TaskUser,
+  TaskDraftDates,
 } from "./task-types";
 
 // Palette for user avatar styling
@@ -144,6 +145,7 @@ export function createDraftTask(
   creatorId: string,
   project: Project | null,
   assignee?: TaskUser | null,
+  dates?: TaskDraftDates,
 ): TaskItem {
   return {
     id: `draft-${Date.now()}`,
@@ -155,7 +157,8 @@ export function createDraftTask(
     teamId,
     creatorId,
     assigneeId: assignee?.id ?? null,
-    dueDate: null,
+    startDate: dates?.startDate ?? null,
+    dueDate: dates?.dueDate ?? null,
     position: 0,
     estimatedMinutes: 60,
     totalSpentSeconds: 0,
@@ -208,6 +211,45 @@ export function inputToDueDate(value: string): Date | null {
 
 export function dueDateToInput(date: Date | string | null | undefined): string {
   return date ? format(new Date(date), "yyyy-MM-dd") : "";
+}
+
+/** Picker value (`yyyy-MM-dd`) -> local 09:00 (start of the working day). */
+export function inputToStartDate(value: string): Date | null {
+  return value ? new Date(`${value}T09:00:00`) : null;
+}
+
+export function startDateToInput(
+  date: Date | string | null | undefined,
+): string {
+  return date ? format(new Date(date), "yyyy-MM-dd") : "";
+}
+
+/** Error when both picker values are set and the start day is after the due day. */
+export function getTaskDateRangeError(
+  startDateStr: string,
+  dueDateStr: string,
+): string | null {
+  if (!startDateStr || !dueDateStr) return null;
+  return startDateStr > dueDateStr
+    ? "Start date must be on or before the due date"
+    : null;
+}
+
+/** Server-action payload: dates as ISO strings (or null), estimate defaulted. */
+export function buildTaskSavePayload(item: TaskItem): Omit<
+  TaskItem,
+  "dueDate" | "startDate" | "estimatedMinutes"
+> & {
+  dueDate: string | null;
+  startDate: string | null;
+  estimatedMinutes: number;
+} {
+  return {
+    ...item,
+    dueDate: item.dueDate ? new Date(item.dueDate).toISOString() : null,
+    startDate: item.startDate ? new Date(item.startDate).toISOString() : null,
+    estimatedMinutes: item.estimatedMinutes ?? 60,
+  };
 }
 
 /** Undo a partial optimistic delete: bring `failedIds` back, keep everything else as it is now. */

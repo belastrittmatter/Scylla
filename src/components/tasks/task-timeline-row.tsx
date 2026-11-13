@@ -76,7 +76,7 @@ export function TaskTimelineBars({
   gridStyle,
   onSelect,
 }: TaskTimelineRowProps & {
-  /** Normal createdAt → dueDate bar. */
+  /** Normal startDate (or createdAt) → dueDate bar. */
   span?: TimelineSpan;
   /** Overdue slip (task due before the window): left edge → today. */
   slip?: Omit<TimelineSpan, "clipped">;
@@ -96,6 +96,7 @@ export function TaskTimelineBars({
     >
       {slip && (
         <span
+          data-timeline-bar
           className={cn(
             BAR,
             "bg-destructive/15 border-destructive/40 text-destructive rounded-l-none border-l-0",
@@ -109,6 +110,7 @@ export function TaskTimelineBars({
         <Tooltip>
           <TooltipTrigger
             render={<span />}
+            data-timeline-bar
             className={cn(
               BAR,
               "text-foreground/80 gap-1",
@@ -124,8 +126,11 @@ export function TaskTimelineBars({
             )}
           </TooltipTrigger>
           <TooltipContent>
-            {task.title}: Created {day(task.createdAt)} → Due{" "}
-            {day(task.dueDate)}
+            {task.title}:{" "}
+            {task.startDate
+              ? `Start ${day(task.startDate)}`
+              : `Created ${day(task.createdAt)}`}{" "}
+            → Due {day(task.dueDate)}
           </TooltipContent>
         </Tooltip>
       )}

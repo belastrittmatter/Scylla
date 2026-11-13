@@ -5,7 +5,7 @@ import {
 } from "@/components/tasks/task-utils";
 import { TeamService } from "@/services/team/team-service";
 import { ProjectService } from "@/services/project/project-service";
-import { TaskService } from "@/services/task/task-service";
+import { TaskService, TaskDateRangeError } from "@/services/task/task-service";
 import { db, user } from "@/db";
 import { taskTimeSession } from "@/db/schema";
 import { inArray, sql } from "drizzle-orm";
@@ -29,6 +29,7 @@ import {
   resolveTeamAndVerifyAccess,
   resolveUserId,
   verifyScope,
+  formatToolError,
 } from "./auth-helpers";
 
 function parseAndValidateDate(
@@ -378,6 +379,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                     creatorId: t.creatorId,
                     assigneeId: t.assigneeId,
                     dueDate: t.dueDate,
+                    startDate: t.startDate,
                     position: t.position,
                     estimatedMinutes: t.estimatedMinutes ?? 60,
                     totalSpentSeconds: s?.totalSpentSeconds ?? 0,
@@ -401,7 +403,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
     "create_task",
     {
       description:
-        "Create a task with title, description, status, assignee, deadline, and required project (returns available project options if not specified).",
+        "Create a task with title, description, status, assignee, optional start date, deadline, and required project (returns available project options if not specified).",
       inputSchema: createTaskSchema,
     },
     async ({
@@ -413,6 +415,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       projectId,
       assigneeId,
       dueDate,
+      startDate,
       estimatedMinutes,
     }) => {
       const scopeErr = verifyScope(ctx, "tasks.write");
@@ -470,19 +473,32 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       }
 
       const parsedDueDate = parseAndValidateDate(dueDate, "dueDate");
+      let parsedStartDate: Date | null | undefined;
+      try {
+        parsedStartDate = parseAndValidateDate(startDate, "startDate");
+      } catch (err) {
+        return formatToolError(err);
+      }
 
-      const newTask = await TaskService.createTask({
-        teamId: team.id,
-        title,
-        description,
-        status,
-        priority,
-        projectId: resolvedProject.id,
-        creatorId: currentUser.id,
-        assigneeId: resolvedAssigneeId,
-        dueDate: parsedDueDate ?? undefined,
-        estimatedMinutes: estimatedMinutes ?? 60,
-      });
+      let newTask: Awaited<ReturnType<typeof TaskService.createTask>>;
+      try {
+        newTask = await TaskService.createTask({
+          teamId: team.id,
+          title,
+          description,
+          status,
+          priority,
+          projectId: resolvedProject.id,
+          creatorId: currentUser.id,
+          assigneeId: resolvedAssigneeId,
+          dueDate: parsedDueDate ?? undefined,
+          startDate: parsedStartDate ?? undefined,
+          estimatedMinutes: estimatedMinutes ?? 60,
+        });
+      } catch (err) {
+        if (err instanceof TaskDateRangeError) return formatToolError(err);
+        throw err;
+      }
 
       return {
         content: [
@@ -503,6 +519,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                   creatorId: newTask.creatorId,
                   assigneeId: newTask.assigneeId,
                   dueDate: newTask.dueDate,
+                  startDate: newTask.startDate,
                   position: newTask.position,
                   createdAt: newTask.createdAt,
                 },
@@ -536,6 +553,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       projectId,
       assigneeId,
       dueDate,
+      startDate,
       estimatedMinutes,
     }) => {
       const scopeErr = verifyScope(ctx, "tasks.write");
@@ -621,21 +639,34 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
       }
 
       const parsedDueDate = parseAndValidateDate(dueDate, "dueDate");
+      let parsedStartDate: Date | null | undefined;
+      try {
+        parsedStartDate = parseAndValidateDate(startDate, "startDate");
+      } catch (err) {
+        return formatToolError(err);
+      }
 
-      const updatedTask = await TaskService.updateTask(
-        taskId,
-        {
-          title,
-          description,
-          status,
-          priority,
-          projectId: resolvedProjectId,
-          assigneeId: resolvedAssigneeId,
-          dueDate: parsedDueDate,
-          estimatedMinutes,
-        },
-        currentUser.id,
-      );
+      let updatedTask: Awaited<ReturnType<typeof TaskService.updateTask>>;
+      try {
+        updatedTask = await TaskService.updateTask(
+          taskId,
+          {
+            title,
+            description,
+            status,
+            priority,
+            projectId: resolvedProjectId,
+            assigneeId: resolvedAssigneeId,
+            dueDate: parsedDueDate,
+            startDate: parsedStartDate,
+            estimatedMinutes,
+          },
+          currentUser.id,
+        );
+      } catch (err) {
+        if (err instanceof TaskDateRangeError) return formatToolError(err);
+        throw err;
+      }
 
       return {
         content: [
@@ -655,6 +686,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
                   projectName: resolvedProjectName,
                   assigneeId: updatedTask.assigneeId,
                   dueDate: updatedTask.dueDate,
+                  startDate: updatedTask.startDate,
                   updatedAt: updatedTask.updatedAt,
                 },
               },
@@ -741,6 +773,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
           priority: t.priority,
           assigneeName: assignee?.name || assignee?.email || null,
           dueDate: t.dueDate,
+          startDate: t.startDate,
           estimatedMinutes: t.estimatedMinutes ?? 60,
           totalSpentSeconds: stats?.totalSpentSeconds ?? 0,
           activeSessionStartedAt: stats?.activeSessionStartedAt ?? null,
@@ -878,6 +911,7 @@ export function registerTaskTools(server: McpServer, ctx: McpToolContext) {
             projectId: t.projectId,
             assigneeId: t.assigneeId,
             dueDate: t.dueDate,
+            startDate: t.startDate,
             estimatedMinutes: estMinutes,
             activeSessionStartedAt: stats.activeSessionStartedAt,
             elapsedSessionSeconds,

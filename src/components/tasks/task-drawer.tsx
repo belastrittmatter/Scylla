@@ -1,17 +1,18 @@
 "use client";
 
 import * as React from "react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-} from "@/components/ui/drawer";
+import { toast } from "sonner";
+import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { dueDateToInput, inputToDueDate } from "./task-utils";
+import {
+  dueDateToInput,
+  getTaskDateRangeError,
+  inputToDueDate,
+  inputToStartDate,
+  startDateToInput,
+} from "./task-utils";
 import { TaskDrawerForm } from "./task-drawer-form";
+import { TaskDrawerHeader } from "./task-drawer-header";
 import { TaskCommentSection } from "./task-comment-section";
 import { TaskDrawerDeleteButton } from "./task-drawer-delete-button";
 import type {
@@ -63,6 +64,9 @@ function TaskDrawerInner({
   const [assigneeId, setAssigneeId] = React.useState<string>(
     task.assigneeId || "unassigned",
   );
+  const [startDateStr, setStartDateStr] = React.useState(
+    startDateToInput(task.startDate),
+  );
   const [dueDateStr, setDueDateStr] = React.useState(
     dueDateToInput(task.dueDate),
   );
@@ -74,6 +78,11 @@ function TaskDrawerInner({
 
   const handleSave = async () => {
     if (readOnly || !title.trim() || isSaving) return;
+    const rangeError = getTaskDateRangeError(startDateStr, dueDateStr);
+    if (rangeError) {
+      toast.error(rangeError);
+      return;
+    }
 
     const matchedAssignee =
       assigneeId === "unassigned"
@@ -88,6 +97,7 @@ function TaskDrawerInner({
       priority,
       assigneeId: assigneeId === "unassigned" ? null : assigneeId,
       assignee: matchedAssignee,
+      startDate: inputToStartDate(startDateStr),
       dueDate: inputToDueDate(dueDateStr),
       estimatedMinutes,
       updatedAt: new Date(),
@@ -120,21 +130,7 @@ function TaskDrawerInner({
         className="flex h-full w-full flex-col sm:max-w-md"
       >
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-6">
-          <DrawerHeader className="border-b border-border p-0 pb-3 text-left">
-            <DrawerTitle className="text-lg font-semibold text-foreground">
-              {isDraft ? "Create Task" : "Task Details"}
-            </DrawerTitle>
-            <DrawerDescription className="text-xs text-muted-foreground">
-              {isDraft
-                ? "Enter task details, priority, assignee, and target deadline."
-                : "Update task metadata, priority, assignee, and target deadline."}{" "}
-              Press{" "}
-              <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-muted-foreground">
-                ⌘+Enter
-              </kbd>{" "}
-              to save.
-            </DrawerDescription>
-          </DrawerHeader>
+          <TaskDrawerHeader isDraft={isDraft} />
 
           <fieldset disabled={readOnly} className="contents">
             <TaskDrawerForm
@@ -143,6 +139,7 @@ function TaskDrawerInner({
               status={status}
               priority={priority}
               assigneeId={assigneeId}
+              startDateStr={startDateStr}
               dueDateStr={dueDateStr}
               estimatedMinutes={estimatedMinutes}
               users={users}
@@ -151,6 +148,7 @@ function TaskDrawerInner({
               onStatusChange={setStatus}
               onPriorityChange={setPriority}
               onAssigneeChange={setAssigneeId}
+              onStartDateChange={setStartDateStr}
               onDueDateChange={setDueDateStr}
               onEstimatedMinutesChange={setEstimatedMinutes}
             />

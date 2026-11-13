@@ -13,6 +13,7 @@ export interface UpdateTaskActionPayload {
   priority?: string;
   assigneeId?: string | null;
   dueDate?: string | Date | null;
+  startDate?: string | Date | null;
   position?: number;
   estimatedMinutes?: number | null;
 }
@@ -33,5 +34,6 @@ export interface CreateTaskActionPayload {
   projectId?: string | null;
   assigneeId?: string | null;
   dueDate?: string | Date | null;
+  startDate?: string | Date | null;
   estimatedMinutes?: number | null;
 }

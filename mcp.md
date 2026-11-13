@@ -26,6 +26,7 @@
    - 3.3 Database Architecture: 8 OAuth 2.1 Tables
    - 3.4 Production MCP Tools Catalog (10 Business Tools)
    - 3.5 Token-to-User Identity Mapping & Google Calendar Integration
+   - 3.6 Task Start Dates & Timeline Drag-to-Create
 4. [Section 4: Technical Case Study — Demystifying `missing oauth query`](#section-4-technical-case-study--demystifying-missing-oauth-query)
    - 4.1 Incident Context & Error Manifestation
    - 4.2 Deep Dive into `@better-auth/oauth-provider` Internals
@@ -393,6 +394,18 @@ When a tool is invoked by an AI Agent:
 3. The authenticated session reveals `session.user.id`.
 4. The service fetches the user's stored Google OAuth 2.0 Refresh Token from the `accounts` table.
 5. Google Calendar operations are executed **strictly under the authenticated user's Google account**.
+
+---
+
+### 3.6 Task Start Dates & Timeline Drag-to-Create
+
+Tasks carry an optional `startDate` next to `dueDate`, so a task can span a planned date range instead of only a deadline.
+
+- **MCP tools:** `create_task` and `update_task` accept an optional `startDate` string (ISO timestamp or `YYYY-MM-DD`), parsed exactly like `dueDate`. Omitting it means no start date on create and "unchanged" on update; passing an empty string to `update_task` clears it.
+- **Ordering rule:** when both dates are set, `startDate` must be on or before `dueDate` (on update, the stored value is used for whichever field is omitted). An unparseable or out-of-order `startDate` makes the tool return an error result (`isError: true`) mentioning `startDate`, and nothing is created or updated.
+- **Outputs:** every task payload that includes `dueDate` (`create_task`, `update_task`, `list_tasks`, `get_task_board`, `get_active_tasks`) also includes `startDate` (or `null`).
+- **Other entry points:** the REST task routes and the `createTaskAction` / `updateTaskAction` server actions accept the same optional `startDate` field with the same validation; server actions report violations as `{ success: false, error }`.
+- **Web timeline:** each task bar starts at `startDate` when set, otherwise at `createdAt`. Dragging across empty day columns opens the create-task drawer prefilled with a start of 09:00 on the first day and a due date of 18:00 on the last day.
 
 ---
 

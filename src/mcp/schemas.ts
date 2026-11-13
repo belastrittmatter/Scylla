@@ -299,6 +299,12 @@ export const createTaskSchema = z.object({
     .string()
     .optional()
     .describe("Task deadline / due date (ISO timestamp or YYYY-MM-DD)"),
+  startDate: z
+    .string()
+    .optional()
+    .describe(
+      "Optional start date (ISO timestamp or YYYY-MM-DD); must be on or before dueDate",
+    ),
   estimatedMinutes: z
     .number()
     .int()
@@ -333,6 +339,12 @@ export const updateTaskSchema = z.object({
     .string()
     .optional()
     .describe("New due date (ISO timestamp or YYYY-MM-DD)"),
+  startDate: z
+    .string()
+    .optional()
+    .describe(
+      "Optional start date (ISO timestamp or YYYY-MM-DD); must be on or before dueDate",
+    ),
   estimatedMinutes: z
     .number()
     .int()

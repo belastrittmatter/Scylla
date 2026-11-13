@@ -5,8 +5,14 @@ import { toast } from "sonner";
 import { updateTaskAction, createTaskAction } from "@/actions";
 import { getPersonInitials } from "@/lib/format-person-name";
 import { withStatus } from "./task-move";
-import { createDraftTask } from "./task-utils";
-import type { Project, TaskItem, TaskStatus, TaskUser } from "./task-types";
+import { buildTaskSavePayload, createDraftTask } from "./task-utils";
+import type {
+  Project,
+  TaskDraftDates,
+  TaskItem,
+  TaskStatus,
+  TaskUser,
+} from "./task-types";
 
 type UseTaskEditorArgs = {
   projects: Project[];
@@ -36,7 +42,12 @@ export type TaskEditor = {
   selectedTask: TaskItem | null;
   isDrawerOpen: boolean;
   openTask: (task: TaskItem) => void;
-  openDraft: (status: TaskStatus, teamId: string, projectId: string) => void;
+  openDraft: (
+    status: TaskStatus,
+    teamId: string,
+    projectId: string,
+    dates?: TaskDraftDates,
+  ) => void;
   saveTask: (item: TaskItem) => Promise<boolean>;
   closeDrawer: () => void;
 };
@@ -56,7 +67,12 @@ export function useTaskEditor({
     setIsDrawerOpen(true);
   }, []);
 
-  const openDraft = (status: TaskStatus, teamId: string, projectId: string) => {
+  const openDraft = (
+    status: TaskStatus,
+    teamId: string,
+    projectId: string,
+    dates?: TaskDraftDates,
+  ) => {
     const currentUser =
       users.find((u) => u.id === sessionUser?.id) ||
       (sessionUser ? toTaskUser(sessionUser) : users[0] || null);
@@ -68,17 +84,14 @@ export function useTaskEditor({
         sessionUser?.id || users[0]?.id || "",
         project,
         currentUser,
+        dates,
       ),
     );
   };
 
   /** Resolves true once persisted; on failure toasts and resolves false (drawer stays open). */
   const saveTask = async (item: TaskItem): Promise<boolean> => {
-    const payload = {
-      ...item,
-      dueDate: item.dueDate ? new Date(item.dueDate).toISOString() : null,
-      estimatedMinutes: item.estimatedMinutes ?? 60,
-    };
+    const payload = buildTaskSavePayload(item);
     const isDraft = item.id.startsWith("draft-");
     try {
       const res = isDraft
