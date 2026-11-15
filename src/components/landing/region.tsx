@@ -61,20 +61,43 @@ export function LandingRegion() {
         svgOptions: { color: ACCENT, radius: 0.9 },
       });
     }
-    const points = map.getPoints();
+    const points = map.getPoints() as Array<{
+      x: number;
+      y: number;
+      lat: number;
+      lng: number;
+      svgOptions?: { color: string };
+    }>;
     const minX = 1;
     const maxX = 98.5;
     const minY = 3;
     const maxY = 42; // crop empty southern ocean
-    const dots = points.map(
-      (p: { x: number; y: number; svgOptions?: unknown }) => ({
-        x01: (p.x - minX) / (maxX - minX),
-        y01: (p.y - minY) / (maxY - minY),
-        pin: Boolean(p.svgOptions),
-      }),
-    );
+
+    const toGrid = (p: { x: number; y: number }) => ({
+      x01: (p.x - minX) / (maxX - minX),
+      y01: (p.y - minY) / (maxY - minY),
+    });
+    const dots = points.map((p) => ({
+      ...toGrid(p),
+      pin: Boolean(p.svgOptions),
+    }));
+
+    // City labels derive from the same grid point as their pin, so the
+    // label can never drift off the map (project identically to dots).
+    const pinPoints = points.filter((p) => p.svgOptions);
+    const cityLabels = CITIES.map((city) => {
+      const nearest = pinPoints.reduce(
+        (best, p) => {
+          const d = (p.lat - city.lat) ** 2 + (p.lng - city.lng) ** 2;
+          return d < best.d ? { d, p } : best;
+        },
+        { d: Infinity, p: pinPoints[0] },
+      ).p;
+      return { name: city.name, ...toGrid(nearest) };
+    });
 
     let canvasDots: Array<{ x: number; y: number; pin: boolean }> = [];
+    let canvasLabels: Array<{ x: number; y: number; name: string }> = [];
 
     const layout = () => {
       const rect = wrap.getBoundingClientRect();
@@ -94,6 +117,11 @@ export function LandingRegion() {
         x: padX + d.x01 * usableW,
         y: padY + d.y01 * usableH,
         pin: d.pin,
+      }));
+      canvasLabels = cityLabels.map((l) => ({
+        x: padX + l.x01 * usableW,
+        y: padY + l.y01 * usableH,
+        name: l.name,
       }));
     };
 
@@ -165,30 +193,17 @@ export function LandingRegion() {
         }
       }
 
-      // City labels next to pins
+      // City labels next to their pins (same projection as the dots)
       ctx.font = "500 11px system-ui, sans-serif";
       ctx.textBaseline = "middle";
-      for (const city of CITIES) {
-        const lng01 = (city.lng - -180) / 360;
-        const x = width * 0.06 + lng01 * (width * 0.88);
-        const latY = Math.asinh(Math.tan((city.lat * Math.PI) / 180));
-        const lat01 =
-          (Math.log(Math.tan((90 + city.lat) * (Math.PI / 360))) /
-            (Math.PI / 180)) *
-          -1;
-        const y =
-          height * 0.1 +
-          ((lat01 - minY01()) / (maxY01() - minY01())) * (height * 0.8);
+      for (const label of canvasLabels) {
+        if (label.x / width > progress) continue;
         ctx.fillStyle = "rgba(234, 88, 12, 0.95)";
-        ctx.fillText(city.name, x + 9, y);
+        ctx.fillText(label.name, label.x + 9, label.y);
       }
 
       raf = requestAnimationFrame(frame);
     };
-
-    // Web-Mercator y bounds matching the dotted map crop
-    const minY01 = () => -0.72;
-    const maxY01 = () => 0.75;
 
     raf = requestAnimationFrame(frame);
 

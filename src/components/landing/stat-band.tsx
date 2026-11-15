@@ -56,7 +56,7 @@ export function LandingStatBand() {
                       className="text-6xl sm:text-7xl font-medium text-[#18181b] dark:text-[#fbfbfb] tracking-[-0.03em] tabular-nums"
                       data-count={stat.value}
                     >
-                      0
+                      {stat.value}
                     </span>
                     <span className="text-2xl font-medium text-[#ea580c]">
                       {stat.suffix}

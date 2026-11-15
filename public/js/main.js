@@ -55,8 +55,7 @@
       document.readyState === "complete" ||
       document.readyState === "interactive"
     ) {
-      const id = setTimeout(fn, 0);
-      timers.push(id);
+      timers.push(setTimeout(fn, 0));
     } else {
       document.addEventListener("DOMContentLoaded", fn);
       cleanups.push(() => document.removeEventListener("DOMContentLoaded", fn));
@@ -212,9 +211,6 @@
 
     const isPinnedActive = () =>
       ScrollTrigger.getAll().some((st) => st.pin && st.isActive);
-    // Refreshing while the user is scrolled inside an active pin drops the
-    // pin state (element scrolls away until the spacer ends). Defer every
-    // dynamic-content refresh until the pin range is over.
     const safeRefresh = () => {
       if (isPinnedActive()) {
         refreshQueued = true;
@@ -354,11 +350,7 @@
         if (thumbnail) {
           tl.fromTo(
             thumbnail,
-            {
-              ...sharedFrom,
-              scale: 0.95,
-              transformOrigin: "bottom left",
-            },
+            { ...sharedFrom, scale: 0.95, transformOrigin: "bottom left" },
             { ...sharedTo, scale: 1 },
             "-=0.5",
           );
@@ -401,12 +393,12 @@
         const counters = statBand.querySelectorAll("[data-count]");
         const tl = pausedTimeline();
         counters.forEach((el) => {
-          const target = Number(el.getAttribute("data-count")) || 0;
+          el.textContent = "0"; // the animation owns the zero state
           const state = { value: 0 };
           tl.to(
             state,
             {
-              value: target,
+              value: Number(el.getAttribute("data-count")) || 0,
               duration: 1.4,
               ease: "power2.out",
               onUpdate: () => {
@@ -419,45 +411,52 @@
         bindRevealTrigger(statBand, tl);
       }
 
-      const tourStage = document.querySelector("[data-tour-stage]");
-      const tourPanel = document.querySelector("[data-tour-panel]");
-      if (tourPanel) {
-        const images = tourPanel.querySelectorAll("[data-tour-image]");
-        const progress = tourPanel.querySelector("[data-tour-progress]");
-        const steps = tourPanel.querySelectorAll("[data-tour-step]");
-        const total = 1600;
-        const tl = gsap.timeline({
-          defaults: { ease: "none" },
-          scrollTrigger: {
-            trigger: tourStage,
-            start: "top top",
-            end: `+=${total}`,
-            pin: true,
-            anticipatePin: 1,
-            scrub: 0.6,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              const step = Math.min(3, Math.floor(self.progress * 3) + 1);
-              tourStage.setAttribute("data-active-step", String(step));
-            },
-          },
-        });
-        images.forEach((img, i) => {
-          tl.to(img, { opacity: 1, duration: 0.2, ease: "none" }, i / 3);
-        });
-        if (progress) {
-          tl.to(progress, { width: "100%", ease: "none", duration: 1 }, 0);
-        }
-        tl.eventCallback("onUpdate", () => {
-          const active = Number(
-            tourStage.getAttribute("data-active-step") || "1",
-          );
-          steps.forEach((s, i) => {
-            s.classList.toggle("opacity-100", i + 1 === active);
-            s.classList.toggle("opacity-40", i + 1 !== active);
+      mm.add("(min-width: 1024px)", () => {
+        const tourStage = document.querySelector("[data-tour-stage]");
+        const tourPanel = document.querySelector("[data-tour-panel]");
+        if (tourPanel) {
+          const images = tourPanel.querySelectorAll("[data-tour-image]");
+          gsap.set(images, {
+            position: "absolute",
+            inset: 0,
+            opacity: (i) => (i === 0 ? 1 : 0),
           });
-        });
-      }
+          const progress = tourPanel.querySelector("[data-tour-progress]");
+          const steps = tourPanel.querySelectorAll("[data-tour-step]");
+          const total = 1600;
+          const tl = gsap.timeline({
+            defaults: { ease: "none" },
+            scrollTrigger: {
+              trigger: tourStage,
+              start: "top top",
+              end: `+=${total}`,
+              pin: true,
+              anticipatePin: 1,
+              scrub: 0.6,
+              invalidateOnRefresh: true,
+              onUpdate: (self) => {
+                const step = Math.min(3, Math.floor(self.progress * 3) + 1);
+                tourStage.setAttribute("data-active-step", String(step));
+              },
+            },
+          });
+          images.forEach((img, i) => {
+            tl.to(img, { opacity: 1, duration: 0.2, ease: "none" }, i / 3);
+          });
+          if (progress) {
+            tl.to(progress, { width: "100%", ease: "none", duration: 1 }, 0);
+          }
+          tl.eventCallback("onUpdate", () => {
+            const active = Number(
+              tourStage.getAttribute("data-active-step") || "1",
+            );
+            steps.forEach((s, i) => {
+              s.classList.toggle("opacity-100", i + 1 === active);
+              s.classList.toggle("opacity-40", i + 1 !== active);
+            });
+          });
+        }
+      });
 
       const waveField = document.querySelector("[data-wave-field]");
       if (waveField) {
@@ -518,9 +517,8 @@
             { ...sharedTo, x: 0 },
             "-=0.4",
           );
-        if (button) {
+        if (button)
           tl.fromTo(button, { ...sharedFrom }, { ...sharedTo }, "-=0.4");
-        }
         const activityLines = appSection.querySelectorAll(
           "[data-activity-line]",
         );
@@ -542,12 +540,7 @@
         if (thumbnail) {
           tl.fromTo(
             thumbnail,
-            {
-              x: 40,
-              opacity: 0,
-              scale: 0.92,
-              transformOrigin: "top right",
-            },
+            { x: 40, opacity: 0, scale: 0.92, transformOrigin: "top right" },
             {
               x: 0,
               opacity: 1,
@@ -581,8 +574,6 @@
       );
 
       ScrollTrigger.refresh();
-      // Dynamic imports (live kanban cards) and images shift layout after
-      // init — re-sync pin positions a few times as things settle.
       const refreshAt = (ms) => timers.push(setTimeout(safeRefresh, ms));
       if (document.readyState !== "complete") {
         window.addEventListener("load", safeRefresh, { once: true });
@@ -605,7 +596,7 @@
         ro.disconnect();
       });
       const onScrollEnd = () => {
-        if (refreshQueued) {
+        if (refreshQueued && !isPinnedActive()) {
           refreshQueued = false;
           ScrollTrigger.refresh();
         }
@@ -661,9 +652,8 @@
       onUpdate: (self) => {
         const currentScroll = self.scroll();
 
-        if (currentScroll > 0) {
-          header.classList.add("sticky-header");
-        } else {
+        if (currentScroll > 0) header.classList.add("sticky-header");
+        else {
           header.classList.remove("sticky-header");
         }
 

@@ -3773,6 +3773,14 @@ html.gsap-pending [data-count]:not(.played) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  /* Marquee fallback: wrap every agent into view, drop the duplicate */
+  .scylla-landing .marquee-track {
+    flex-wrap: wrap;
+    width: auto;
+  }
+  .scylla-landing .marquee-track [aria-hidden="true"] {
+    display: none;
+  }
   .scylla-landing .hero-title-inner,
   .scylla-landing .hero-shot {
     transform: none !important;

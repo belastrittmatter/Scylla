@@ -148,10 +148,10 @@ function FeatureCell({ feature }: { feature: CalendarFeature }) {
       <div className="h-full flex flex-col p-6 md:p-7">
         {/* Feature Preview — live MCP card or screenshot */}
         <div
-          className={`overflow-hidden rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#fafafa] dark:bg-[#18181b] ${feature.imageHeightClass} w-full shrink-0 ${feature.live ? "dark" : ""}`}
+          className={`rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#fafafa] dark:bg-[#18181b] ${feature.imageHeightClass} w-full shrink-0 ${feature.live ? "dark overflow-y-auto" : "overflow-hidden"}`}
         >
           {feature.live ? (
-            <div className="h-full w-full [&>*]:h-full [&>*]:w-full">
+            <div className="w-full">
               {feature.liveKey === "schedule" ? (
                 <LiveScheduleApp initialData={MOCK_SCHEDULE_DATA} />
               ) : (

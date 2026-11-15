@@ -73,7 +73,8 @@ export default async function MarketingLayout({
     >
       <script
         dangerouslySetInnerHTML={{
-          __html: "document.documentElement.classList.add('gsap-pending');",
+          __html:
+            "if (location.pathname === '/') document.documentElement.classList.add('gsap-pending');",
         }}
       />
 

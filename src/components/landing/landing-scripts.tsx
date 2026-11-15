@@ -3,6 +3,39 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 
+const CDN_GSAP_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js";
+
+// Shared across effect restarts: whichever run resolves the CDN (or its
+// local fallback) wins, and every waiting effect proceeds. A second
+// execution of the vendor bundle would overwrite window.gsap.
+let gsapLoadPromise: Promise<boolean> | null = null;
+
+function ensureGsap(w: {
+  gsap?: unknown;
+  ScrollTrigger?: unknown;
+}): Promise<boolean> {
+  if (w.gsap && w.ScrollTrigger) return Promise.resolve(true);
+  if (!gsapLoadPromise) {
+    gsapLoadPromise = new Promise<boolean>((resolve) => {
+      const cdn = document.createElement("script");
+      cdn.src = CDN_GSAP_URL;
+      cdn.async = false;
+      cdn.onload = () => resolve(true);
+      cdn.onerror = () => {
+        const local = document.createElement("script");
+        local.src = "/js/gsap-all.min.js";
+        local.async = false;
+        local.onload = () => resolve(true);
+        local.onerror = () => resolve(false);
+        document.body.appendChild(local);
+      };
+      document.body.appendChild(cdn);
+    });
+  }
+  return gsapLoadPromise;
+}
+
 interface GsapWindow extends Window {
   gsap?: {
     registerPlugin?: (...plugins: unknown[]) => void;
@@ -66,10 +99,7 @@ export function LandingScripts() {
     document.documentElement.classList.add("scylla-landing-page");
     document.body.classList.add("scylla-landing-page");
 
-    const scripts = [
-      "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
-      "/js/main.js",
-    ];
+    const scripts = [CDN_GSAP_URL, "/js/main.js"];
 
     // Clean up any previous landing script state before re-initializing
     if (typeof w.__scyllaLandingCleanup === "function") {
@@ -88,66 +118,34 @@ export function LandingScripts() {
     const loadScript = (index: number) => {
       if (!mounted || index >= scripts.length) return;
       const src = scripts[index];
-      const isMain = src === "/js/main.js";
 
-      if (isMain) {
-        ensureGsapPluginsRegistered(w);
-      } else {
-        const isAlreadyLoaded =
-          src.includes("gsap") && Boolean(w.gsap && w.ScrollTrigger);
-        if (isAlreadyLoaded) {
-          ensureGsapPluginsRegistered(w);
-          loadScript(index + 1);
-          return;
-        }
-
-        const inFlight = document.querySelector(
-          `script[src="${src}"]`,
-        ) as HTMLScriptElement | null;
-        if (inFlight) {
-          if (inFlight.getAttribute("data-loaded") === "true") {
-            ensureGsapPluginsRegistered(w);
-            loadScript(index + 1);
-          } else {
-            inFlight.addEventListener(
-              "load",
-              () => {
-                ensureGsapPluginsRegistered(w);
-                if (mounted) loadScript(index + 1);
-              },
-              { once: true },
-            );
-          }
-          return;
-        }
+      if (src === CDN_GSAP_URL) {
+        // Singleton promise: effect restarts and double mounts share one
+        // load, and the local fallback result reaches every waiting caller.
+        ensureGsap(w).then((ok) => {
+          if (ok) ensureGsapPluginsRegistered(w);
+          else document.documentElement.classList.remove("gsap-pending");
+          if (mounted) loadScript(index + 1);
+        });
+        return;
       }
 
       const s = document.createElement("script");
       s.src = src;
       s.async = false;
       s.setAttribute("data-landing-script", "true");
-      if (isMain) {
+      if (src === "/js/main.js") {
         s.setAttribute("data-landing-main", "true");
+        // Fail open: without main.js the gsap-pending class would keep the
+        // hero and CTA hidden forever.
+        s.onerror = () => {
+          document.documentElement.classList.remove("gsap-pending");
+        };
       }
       s.onload = () => {
-        s.setAttribute("data-loaded", "true");
         ensureGsapPluginsRegistered(w);
         if (mounted) loadScript(index + 1);
       };
-      if (src.includes("cdnjs.cloudflare.com")) {
-        // CDN unreachable (offline / blocked region): fall back to the
-        // self-hosted GSAP bundle so animations still initialize.
-        s.onerror = () => {
-          const local = document.createElement("script");
-          local.src = "/js/gsap-all.min.js";
-          local.async = false;
-          local.onload = () => {
-            ensureGsapPluginsRegistered(w);
-            if (mounted) loadScript(index + 1);
-          };
-          document.body.appendChild(local);
-        };
-      }
       document.body.appendChild(s);
     };
 

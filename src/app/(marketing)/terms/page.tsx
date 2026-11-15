@@ -35,7 +35,7 @@ export default function TermsOfServicePage() {
                 <FileText className="size-5 text-orange-400" />
                 Agreement to Terms
               </h2>
-              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed">
+              <p className="text-[#a1a1aa] leading-relaxed">
                 These Terms of Service (&ldquo;Terms&rdquo;) constitute a
                 legally binding agreement between you (&ldquo;User&rdquo;,
                 &ldquo;you&rdquo;) and Scylla (&ldquo;Scylla&rdquo;,
@@ -45,7 +45,7 @@ export default function TermsOfServicePage() {
                 (MCP) APIs, you agree to be bound by these Terms. If you do not
                 agree to these Terms, you must not access or use the Service.
               </p>
-              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
+              <p className="text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
                 Your use of the Service is also subject to our{" "}
                 <Link
                   href="/privacy"
@@ -67,7 +67,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 1: Services */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 1. Description of Services
               </h2>
               <p>
@@ -101,7 +101,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 2: Account Registration */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 2. Accounts &amp; Security
               </h2>
               <p>
@@ -119,7 +119,7 @@ export default function TermsOfServicePage() {
                 <CheckCircle2 className="size-5 text-orange-400" />
                 3. Third-Party Integrations &amp; Google Services
               </h2>
-              <p>
+              <p className="text-[#a1a1aa]">
                 When you connect your Google Account or external calendar
                 providers to Scylla, you authorize us to access, retrieve, and
                 synchronize event availability and meeting data in accordance
@@ -132,7 +132,7 @@ export default function TermsOfServicePage() {
                 </Link>
                 .
               </p>
-              <p className="text-[#52525b] dark:text-[#a1a1aa]">
+              <p className="text-[#a1a1aa]">
                 Our integration with Google Calendar complies strictly with the
                 Google API Services User Data Policy, including Limited Use
                 restrictions. You may disconnect third-party services at any
@@ -143,7 +143,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 4: Acceptable Use */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 4. Acceptable Use Policy
               </h2>
               <p>You agree that you will not:</p>
@@ -170,7 +170,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 5: Intellectual Property */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 5. Intellectual Property Rights
               </h2>
               <p>
@@ -184,7 +184,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 6: Disclaimers & Limitation of Liability */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 6. Disclaimers &amp; Limitation of Liability
               </h2>
               <p className="text-[#52525b] dark:text-[#a1a1aa]">
@@ -204,7 +204,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 7: Termination */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 7. Termination
               </h2>
               <p>
@@ -216,7 +216,7 @@ export default function TermsOfServicePage() {
 
             {/* Section 8: Contact */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 8. Contact Information
               </h2>
               <p>

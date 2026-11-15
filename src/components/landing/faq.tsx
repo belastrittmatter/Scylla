@@ -79,6 +79,7 @@ export function LandingFaq() {
                     />
                   </button>
                   <div
+                    aria-hidden={!isOpen}
                     className={`grid transition-[grid-template-rows] duration-300 ease-out ${
                       isOpen
                         ? "[grid-template-rows:1fr]"

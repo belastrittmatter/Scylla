@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
                 <Lock className="size-5 text-orange-400" />
                 Commitment to User Privacy
               </h2>
-              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed">
+              <p className="text-[#a1a1aa] leading-relaxed">
                 At Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;,
                 &ldquo;us&rdquo;, or &ldquo;our&rdquo;), we take your privacy
                 and data security seriously. This Privacy Policy describes how
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
                 synchronization services, and Model Context Protocol (MCP)
                 integrations (collectively, the &ldquo;Service&rdquo;).
               </p>
-              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
+              <p className="text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
                 Please also review our{" "}
                 <Link
                   href="/terms"
@@ -66,7 +66,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 1 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 1. Information We Collect
               </h2>
               <p>
@@ -75,7 +75,7 @@ export default function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-[#52525b] dark:text-[#a1a1aa]">
                 <li>
-                  <strong className="text-offWhite">
+                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
                     Account Information:
                   </strong>{" "}
                   When you register or sign in via Google OAuth or email, we
@@ -83,7 +83,7 @@ export default function PrivacyPolicyPage() {
                   organization details.
                 </li>
                 <li>
-                  <strong className="text-offWhite">
+                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
                     Task &amp; Workspace Data:
                   </strong>{" "}
                   Kanban task titles, descriptions, due dates, priority tags,
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
                   create in Scylla.
                 </li>
                 <li>
-                  <strong className="text-offWhite">
+                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
                     Connected Calendar Data:
                   </strong>{" "}
                   Calendar IDs, event titles, scheduled timestamps, attendees,
@@ -103,7 +103,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 2: Google User Data Disclosures (MANDATORY FOR GOOGLE VERIFICATION) */}
             <div className="space-y-4 p-6 rounded-2xl border border-orange-500/30 bg-orange-500/[0.04]">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight flex items-center gap-2">
                 <RefreshCw className="size-5 text-orange-400" />
                 2. Google Calendar API &amp; User Data Policy Compliance
               </h2>
@@ -114,7 +114,7 @@ export default function PrivacyPolicyPage() {
               </p>
               <div className="space-y-3 text-[#3f3f46] dark:text-[#d4d4d8]">
                 <p>
-                  <strong className="text-offWhite">
+                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
                     How We Use Google Data:
                   </strong>{" "}
                   We access your Google Calendar solely to calculate mutual
@@ -123,7 +123,7 @@ export default function PrivacyPolicyPage() {
                   invites on your behalf.
                 </p>
                 <p>
-                  <strong className="text-offWhite">
+                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
                     Google API Limited Use Disclosure:
                   </strong>{" "}
                   Scylla&apos;s use and transfer of information received from
@@ -165,7 +165,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 3 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 3. How We Use Your Information
               </h2>
               <p>
@@ -196,7 +196,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 4 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 4. Data Storage, Security &amp; Retention
               </h2>
               <p>
@@ -215,7 +215,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 5 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 5. Your Data Rights &amp; Choices
               </h2>
               <p>
@@ -240,7 +240,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 6 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 6. Contact Us
               </h2>
               <p>

@@ -35,7 +35,7 @@ export default function AiPolicyPage() {
                 <Shield className="size-5 text-orange-400" />
                 Human-in-the-Loop &amp; Open Standards
               </h2>
-              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed">
+              <p className="text-[#a1a1aa] leading-relaxed">
                 Scylla integrates with the open Model Context Protocol (MCP) to
                 allow authorized AI coding agents (such as Claude Desktop,
                 Cursor, and Windsurf) to assist you with scheduling, meeting
@@ -43,7 +43,7 @@ export default function AiPolicyPage() {
                 maintain 100% control, ownership, and visibility over any action
                 an AI assistant performs.
               </p>
-              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
+              <p className="text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
                 For complete details regarding our data collection practices and
                 user rights, please consult our{" "}
                 <Link
@@ -64,7 +64,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 1. Zero Unauthorized Model Training
               </h2>
               <p>
@@ -75,7 +75,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 2. Explicit Authorization for Agent Actions
               </h2>
               <p>
@@ -87,7 +87,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 3. Google Calendar API Isolation
               </h2>
               <p>
@@ -108,7 +108,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
                 4. Questions &amp; Support
               </h2>
               <p>
