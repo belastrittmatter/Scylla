@@ -1,6 +1,7 @@
 export { LandingScripts } from "./landing-scripts";
 export { LandingHeader } from "./header";
 export { LandingHero } from "./hero";
+export { LandingGithubStarsBadge } from "./github-stars-badge";
 export { LandingTaskBoardPreview } from "./task-board-preview";
 export { LandingProcessSteps } from "./process-steps";
 export { LandingUseCases } from "./use-cases";

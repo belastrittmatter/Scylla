@@ -1,9 +1,10 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
+import { LandingGithubStarsBadge } from "@/components/landing/github-stars-badge";
+import { getGitHubRepoStars } from "@/lib/github-stars";
 
-export function LandingHero() {
+export async function LandingHero() {
+  const stars = await getGitHubRepoStars();
+
   return (
     <>
       <div className="header-innerHeight">
@@ -65,6 +66,7 @@ export function LandingHero() {
                 >
                   Explore Live Calendar
                 </Link>
+                <LandingGithubStarsBadge stars={stars} />
               </div>
             </div>
             {/* Dashboard Thumbnail Wrapper with Backlight Bloom rising behind it */}
