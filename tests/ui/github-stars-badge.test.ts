@@ -20,6 +20,7 @@ mock.module("@/lib/github-stars", () => ({
 const { LandingGithubStarsBadge } =
   await import("@/components/landing/github-stars-badge");
 const { LandingHero } = await import("@/components/landing/hero");
+const { LandingHeader } = await import("@/components/landing/header");
 
 const ROOT_DIR = process.cwd();
 const REPO_URL = "https://github.com/belastrittmatter/Scylla";
@@ -68,18 +69,31 @@ describe("GitHub stars badge", () => {
   });
 });
 
-describe("Landing hero GitHub badge wiring", () => {
-  it("renders the badge inside the hero call-to-action row", async () => {
-    const html = await renderToHtml(React.createElement(LandingHero));
+describe("Landing header stars badge wiring", () => {
+  it("renders the badge in the header next to the sign-in CTA", async () => {
+    const html = await renderToHtml(
+      React.createElement(LandingHeader, { stars: 19 }),
+    );
 
     expect(html).toContain(`href="${REPO_URL}"`);
-    expect(html).toContain('aria-label="42 stars on GitHub"');
+    expect(html).toContain('aria-label="19 stars on GitHub"');
     expect(html).toContain('href="/auth/sign-in"');
   });
 
-  it("converts the hero to an async server component that fetches stars", () => {
+  it("keeps the hero free of the stars badge and star fetch", () => {
     const heroSource = readFileSync(
       join(ROOT_DIR, "src/components/landing/hero.tsx"),
+      "utf8",
+    );
+
+    expect(heroSource).not.toContain('"use client"');
+    expect(heroSource).not.toContain("getGitHubRepoStars");
+    expect(heroSource).not.toContain("LandingGithubStarsBadge");
+  });
+
+  it("has the marketing layout fetch stars and pass them to the header", () => {
+    const layoutSource = readFileSync(
+      join(ROOT_DIR, "src/app/(marketing)/layout.tsx"),
       "utf8",
     );
     const badgeSource = readFileSync(
@@ -87,9 +101,31 @@ describe("Landing hero GitHub badge wiring", () => {
       "utf8",
     );
 
-    expect(heroSource).not.toContain('"use client"');
-    expect(heroSource).toContain("getGitHubRepoStars");
-    expect(heroSource).toContain("LandingGithubStarsBadge");
+    expect(layoutSource).toContain("getGitHubRepoStars");
+    expect(layoutSource).toContain("LandingHeader");
+    expect(layoutSource).toContain("stars={stars}");
     expect(badgeSource).toContain("GITHUB_REPO_URL");
+  });
+
+  it("renders a theme toggle button that uses next-themes", async () => {
+    const html = await renderToHtml(
+      React.createElement(LandingHeader, { stars: 19 }),
+    );
+
+    expect(html).toContain("theme-toggle");
+
+    const toggleSource = readFileSync(
+      join(ROOT_DIR, "src/components/landing/theme-toggle.tsx"),
+      "utf8",
+    );
+    expect(toggleSource).toContain("useTheme");
+  });
+});
+
+describe("Landing hero stays a server component", () => {
+  it("still renders the hero without client-side scripts", async () => {
+    const html = await renderToHtml(React.createElement(LandingHero));
+
+    expect(html).toContain('href="/auth/sign-in"');
   });
 });

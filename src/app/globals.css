@@ -2341,9 +2341,6 @@ body.scylla-landing-page {
     padding-inline: calc(var(--spacing) * 10);
   }
 }
-:where(.scylla-landing) #smooth-content {
-  will-change: transform;
-}
 :where(.scylla-landing) .button-primary {
   background: linear-gradient(to bottom, #f97316 0%, #ea580c 51%, #c2410c 100%);
   background-size: auto 200%;
@@ -3108,4 +3105,677 @@ body.scylla-landing-page {
 }
 :where(.scylla-landing) .sticky-card {
   will-change: transform;
+}
+
+/* ============================================================
+   SCYLLA LANDING — "Agent era" reskin (Cloudflare-inspired)
+   Override layer. Plain .scylla-landing selectors outrank the
+   zero-specificity :where(.scylla-landing) rules above.
+   Theme-aware via --sl-* custom properties + next-themes .dark.
+   ============================================================ */
+
+.scylla-landing {
+  /* Theme tokens (light) */
+  --sl-bg: #ffffff;
+  --sl-surface: #ffffff;
+  --sl-ink: #18181b;
+  --sl-muted: #52525b;
+  --sl-muted-strong: #3f3f46;
+  --sl-line: #e4e4e7;
+  --sl-chip: #f4f4f5;
+  --sl-frame: #fafafa;
+  --sl-dot: #e4e4e7;
+  --sl-tick-border: #b9b9c0;
+  --sl-header-bg: rgba(255, 255, 255, 0.85);
+  --sl-header-bg-sticky: rgba(255, 255, 255, 0.92);
+
+  /* Brand */
+  --color-primary: #ea580c;
+
+  /* !important outranks the legacy #09090b rule in the original theme block */
+  background-color: var(--sl-bg) !important;
+  color: var(--sl-ink) !important;
+  font-family: var(--font-bureau), var(--font-sans), system-ui, sans-serif;
+  font-weight: 400;
+
+  /* Cloudflare-style dot grid across the page */
+  background-image: radial-gradient(circle, var(--sl-dot) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.dark .scylla-landing,
+.scylla-landing.dark {
+  --sl-bg: #09090b;
+  --sl-surface: #0e0e11;
+  --sl-ink: #fbfbfb;
+  --sl-muted: #a1a1aa;
+  --sl-muted-strong: #d4d4d8;
+  --sl-line: #222227;
+  --sl-chip: #16161b;
+  --sl-frame: #141418;
+  --sl-dot: #1c1c21;
+  --sl-tick-border: #3f3f46;
+  --sl-header-bg: rgba(9, 9, 11, 0.85);
+  --sl-header-bg-sticky: rgba(9, 9, 11, 0.92);
+}
+
+/* Display type: Kunst Grotesk for headings, Apercu Mono for chips */
+.scylla-landing h1,
+.scylla-landing h2,
+.scylla-landing h3 {
+  font-family: var(--font-bureau), system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.scylla-landing .mono-chip {
+  font-family: var(--font-maple), ui-monospace, monospace;
+}
+
+.scylla-landing .hero-title em {
+  font-family: var(--font-maple), ui-monospace, monospace;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.18em;
+  text-decoration-color: rgba(255, 217, 138, 0.9);
+}
+
+html.scylla-landing-page,
+body.scylla-landing-page {
+  background-color: var(--sl-bg, #ffffff);
+  color: var(--sl-ink, #18181b);
+}
+
+.dark .scylla-landing-page,
+html.dark.scylla-landing-page,
+body.dark.scylla-landing-page {
+  background-color: #09090b;
+  color: #fbfbfb;
+}
+
+.scylla-landing #smooth-wrapper,
+.scylla-landing #smooth-content,
+.scylla-landing section {
+  background-color: transparent;
+}
+
+/* Template grayscale/opacity filters no longer apply */
+.scylla-landing [data-glow-shape],
+.scylla-landing img[src*="shape"],
+.scylla-landing video[data-news-video] {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* --- Structure ---------------------------------------------------- */
+
+.scylla-landing .border-container {
+  border-left: 1px solid var(--sl-line);
+  border-right: 1px solid var(--sl-line);
+  border-color: var(--sl-line);
+}
+
+.scylla-landing .section-bottom-border {
+  border-bottom: 0;
+}
+
+/* Hero spacer runs full-bleed — suppress its vertical guides */
+.scylla-landing .header-innerHeight .border-container {
+  border-left: 0;
+  border-right: 0;
+}
+
+.scylla-landing .gradient-border {
+  background: var(--sl-line);
+}
+
+.scylla-landing .gradient-text {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+  color: var(--sl-ink);
+  will-change: transform, opacity;
+}
+
+/* --- Buttons ------------------------------------------------------ */
+
+.scylla-landing .button-primary {
+  background: #ea580c;
+  background-size: auto;
+  color: #ffffff;
+  border-radius: 9999px;
+  box-shadow: none;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.scylla-landing .button-primary:hover {
+  background: #c2410c;
+  background-position: initial;
+  box-shadow: 0 6px 18px -6px rgba(234, 88, 12, 0.55);
+}
+.scylla-landing .button-primary:active {
+  transform: scale(0.97);
+}
+
+.scylla-landing .button-secondary {
+  background: var(--sl-surface);
+  color: var(--sl-ink);
+  border: 1px solid var(--sl-line);
+  border-radius: 9999px;
+  box-shadow: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+.scylla-landing .button-secondary:hover {
+  border-color: var(--sl-tick-border);
+}
+.scylla-landing .button-secondary:active {
+  transform: scale(0.97);
+}
+
+/* White pill CTA on orange panels (Cloudflare "Start building for free") */
+.scylla-landing .button-white {
+  background: #ffffff;
+  color: #18181b;
+  border-radius: 9999px;
+  box-shadow: none;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.scylla-landing .button-white:hover {
+  box-shadow: 0 8px 24px -8px rgba(60, 12, 0, 0.45);
+}
+.scylla-landing .button-white:active {
+  transform: scale(0.97);
+}
+
+/* White variants inside orange hero/CTA panels */
+.scylla-landing .on-orange .button-secondary,
+.scylla-landing .hero-ctas .button-secondary {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+}
+.scylla-landing .on-orange .button-secondary:hover,
+.scylla-landing .hero-ctas .button-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+/* --- Header stars pill + theme toggle ------------------------------ */
+
+.scylla-landing .stars-pill {
+  border: 1px solid var(--sl-line);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--sl-ink);
+  padding: 8px 14px;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: 1.25rem;
+  font-weight: 500;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+.scylla-landing .stars-pill:hover {
+  border-color: var(--sl-tick-border);
+  background: var(--sl-chip);
+}
+.scylla-landing .stars-pill:active {
+  transform: scale(0.97);
+}
+
+.scylla-landing .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--sl-line);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--sl-ink);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+.scylla-landing .theme-toggle:hover {
+  border-color: var(--sl-tick-border);
+  background: var(--sl-chip);
+}
+.scylla-landing .theme-toggle:active {
+  transform: scale(0.94);
+}
+.scylla-landing .theme-toggle:focus-visible,
+.scylla-landing .stars-pill:focus-visible {
+  outline: 2px solid #ea580c;
+  outline-offset: 2px;
+}
+
+/* --- Badge / label chip ------------------------------------------ */
+
+.scylla-landing .badge-button {
+  border-color: var(--sl-line);
+  background-color: var(--sl-chip);
+  color: var(--sl-muted);
+}
+.scylla-landing .badge-button .animate-pulse,
+.scylla-landing .badge-button .bg-orange-500 {
+  background-color: #ea580c;
+}
+
+/* --- Header ------------------------------------------------------- */
+
+.scylla-landing .header-area {
+  border-bottom: 1px solid var(--sl-line);
+  background-color: var(--sl-header-bg);
+}
+.scylla-landing .header-area.sticky-header {
+  background-color: var(--sl-header-bg-sticky);
+  box-shadow: 0 1px 0 var(--sl-line);
+}
+
+/* Mobile dropdown menu */
+.scylla-landing .main-menu {
+  background-color: var(--sl-surface);
+  border-color: var(--sl-line);
+  box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.25);
+}
+
+/* --- Hero --------------------------------------------------------- */
+
+.scylla-landing .hero-panel {
+  position: relative;
+  overflow: hidden;
+  max-width: 1480px;
+  margin-inline: auto;
+  min-height: 820px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f04e23 0%, #e8480f 55%, #c2400f 100%);
+  color: #ffffff;
+}
+.scylla-landing .hero-panel::before {
+  /* Cloudflare-style dense halftone dot matrix over the gradient */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.12) 1px,
+    transparent 1.2px
+  );
+  background-size: 8px 8px;
+  pointer-events: none;
+}
+.scylla-landing .hero-bloom {
+  position: absolute;
+  left: 50%;
+  bottom: -22%;
+  width: 150%;
+  height: 70%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse 46% 52% at 50% 100%,
+    rgba(255, 226, 170, 1) 0%,
+    rgba(255, 190, 110, 0.6) 36%,
+    rgba(240, 90, 25, 0) 72%
+  );
+  pointer-events: none;
+}
+.scylla-landing .hero-label {
+  color: rgba(255, 255, 255, 0.92);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(4px);
+}
+.scylla-landing .hero-label::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #ffd98a;
+  box-shadow: 0 0 8px rgba(255, 217, 138, 0.9);
+}
+.scylla-landing .hero-title {
+  overflow: hidden;
+  color: #ffffff;
+  font-family: var(--font-bureau), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.scylla-landing .hero-title-inner {
+  display: block;
+  will-change: transform, opacity;
+}
+.scylla-landing .hero-sub {
+  color: rgba(255, 255, 255, 0.88);
+}
+.scylla-landing .hero-shot {
+  position: relative;
+  border-radius: 14px 14px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 0;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 -18px 60px rgba(90, 20, 0, 0.28);
+  will-change: transform, opacity;
+}
+.scylla-landing .hero-shot img {
+  display: block;
+  border-radius: 10px 10px 0 0;
+}
+
+/* --- Corner ticks (blueprint crosshair motif) ---------------------- */
+
+.scylla-landing .tick {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: var(--sl-bg);
+  border: 1px solid var(--sl-tick-border);
+  pointer-events: none;
+  transform-origin: center;
+  z-index: 1;
+}
+.scylla-landing .tick-tl {
+  top: -5px;
+  left: -5px;
+}
+.scylla-landing .tick-tr {
+  top: -5px;
+  right: -5px;
+}
+.scylla-landing .tick-bl {
+  bottom: -5px;
+  left: -5px;
+}
+.scylla-landing .tick-br {
+  bottom: -5px;
+  right: -5px;
+}
+
+/* Hairline table: wrapper paints the rule color, gap-px shows seams */
+.scylla-landing .hairline-grid {
+  background: var(--sl-line);
+  border: 1px solid var(--sl-line);
+  position: relative;
+}
+.scylla-landing .hairline-grid > * {
+  background: var(--sl-surface);
+  transition: background-color 180ms ease;
+}
+.scylla-landing .hairline-grid > *:hover:not(.solid-orange) {
+  background: var(--sl-chip);
+}
+
+/* Solid orange contrast block (integrations) */
+.scylla-landing .solid-orange {
+  background: linear-gradient(180deg, #f04e23 0%, #dd4512 100%);
+  color: #ffffff;
+  transition:
+    filter 600ms ease,
+    box-shadow 600ms ease,
+    transform 600ms ease;
+}
+.scylla-landing .solid-orange:hover {
+  filter: brightness(1.1) saturate(1.05);
+  box-shadow: 0 24px 60px -18px rgba(120, 30, 0, 0.6);
+  transform: translateY(-3px);
+}
+
+/* --- CTA banner ---------------------------------------------------- */
+
+.scylla-landing .cta-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(115deg, #e8480f 0%, #d14310 55%, #b93b0e 100%);
+  color: #ffffff;
+}
+.scylla-landing .cta-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.08) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+  pointer-events: none;
+}
+.scylla-landing .cta-panel::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -40%;
+  width: 120%;
+  height: 80%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse 50% 55% at 50% 100%,
+    rgba(255, 196, 120, 0.5) 0%,
+    rgba(255, 149, 79, 0.25) 40%,
+    rgba(232, 72, 15, 0) 72%
+  );
+  pointer-events: none;
+}
+
+/* --- Footer -------------------------------------------------------- */
+
+.scylla-landing .footer-rule {
+  border-top: 1px dashed var(--sl-tick-border);
+}
+
+/* --- Cards --------------------------------------------------------- */
+
+.scylla-landing .feature-card {
+  background: var(--sl-surface);
+  border: 1px solid var(--sl-line);
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+.scylla-landing .feature-card:hover {
+  border-color: var(--sl-tick-border);
+  box-shadow: 0 10px 28px -18px rgba(0, 0, 0, 0.35);
+}
+
+.scylla-landing .icon-tile {
+  background: rgba(234, 88, 12, 0.08);
+  border: 1px solid rgba(234, 88, 12, 0.25);
+  color: #ea580c;
+}
+
+.scylla-landing .icon-tile-solid {
+  background: #ea580c;
+  border: 1px solid #ea580c;
+  color: #ffffff;
+}
+
+/* --- Links --------------------------------------------------------- */
+
+.scylla-landing footer a {
+  transition: color 160ms ease;
+}
+
+/* --- GSAP pending state ---------------------------------------------
+   Elements animated by public/js/main.js start hidden via this html-level
+   class, added by a pre-paint inline script (before React hydrates) so the
+   GSAP setup never mutates hydrated attributes (dev hydration diffs).
+   Each timeline adds .played to its targets the moment it starts, handing
+   visibility control over to GSAP's inline styles. */
+.gsap-pending
+  :is(
+    [data-subtitle],
+    [data-title],
+    [data-excerpt],
+    [data-button],
+    [data-list],
+    [data-thumbnail],
+    [data-sttr-card],
+    [data-tick],
+    [data-kanban-preview],
+    [data-news-title],
+    [data-news-excerpt],
+    [data-news-button],
+    [data-activity-line],
+    [data-card] .sticky-card > div,
+    .hero-bloom
+  ):not(.played) {
+  opacity: 0;
+}
+html.gsap-pending [data-count]:not(.played) {
+  opacity: 1; /* counters show 0 until counted up */
+}
+
+/* --- Kanban preview: hide vertical scrollbars, keep horizontal ------ */
+
+.scylla-landing [data-kanban-preview] *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+/* Board row keeps its horizontal scrollbar */
+.scylla-landing [data-kanban-preview] .overflow-x-auto::-webkit-scrollbar {
+  display: block;
+  height: 8px;
+}
+.scylla-landing
+  [data-kanban-preview]
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
+}
+.scylla-landing
+  [data-kanban-preview]
+  .overflow-x-auto::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+.scylla-landing [data-kanban-preview] .overflow-y-auto {
+  scrollbar-width: none;
+}
+
+/* --- Agent logo marquee -------------------------------------------- */
+
+.scylla-landing .marquee {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 12%,
+    black 88%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 12%,
+    black 88%,
+    transparent
+  );
+}
+.scylla-landing .marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 32s linear infinite;
+}
+.scylla-landing .marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.scylla-landing .agent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-bureau), system-ui, sans-serif;
+  font-weight: 500;
+  color: var(--sl-muted);
+  border: 1px solid var(--sl-line);
+  border-radius: 9999px;
+  padding: 10px 20px;
+  white-space: nowrap;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+.scylla-landing .agent-chip:hover {
+  box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.35);
+}
+.scylla-landing .agent-chip:hover {
+  color: var(--sl-ink);
+  border-color: var(--sl-tick-border);
+  transform: translateY(-2px);
+}
+
+/* --- Agent activity terminal card ----------------------------------- */
+
+.scylla-landing .activity-card {
+  background: #17171b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  color: #e4e4e7;
+  box-shadow: 0 24px 60px -24px rgba(60, 12, 0, 0.55);
+  overflow: hidden;
+}
+.scylla-landing .activity-line {
+  font-family: var(--font-maple), ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(228, 228, 231, 0.85);
+  will-change: transform, opacity;
+}
+.scylla-landing .activity-line .ok {
+  color: #4ade80;
+}
+.scylla-landing .activity-line .hl {
+  color: #fb923c;
+}
+
+/* --- Reduced motion: land everything in final state ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .scylla-landing *,
+  .scylla-landing *::before,
+  .scylla-landing *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .scylla-landing .hero-title-inner,
+  .scylla-landing .hero-shot {
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }

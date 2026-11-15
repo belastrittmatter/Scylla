@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <section className="section-bottom-border bg-[#09090b] relative z-1 overflow-hidden pt-10">
+    <section className="section-bottom-border relative z-1 overflow-hidden pt-10">
       <div className="container">
         <div className="border-container section-spacing-lg">
           {/* Header */}
@@ -22,20 +22,20 @@ export default function PrivacyPolicyPage() {
             <h1 className="gradient-text text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
               Privacy Policy
             </h1>
-            <p className="mt-3 text-offWhite/60 text-sm sm:text-base">
+            <p className="mt-3 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base">
               Last Updated: November 1, 2026 &bull; Effective Immediately
             </p>
           </div>
 
           {/* Policy Content Container */}
-          <div className="max-w-[840px] mx-auto text-offWhite/80 text-sm sm:text-base leading-relaxed space-y-10">
+          <div className="max-w-[840px] mx-auto text-[#3f3f46] dark:text-[#d4d4d8] text-sm sm:text-base leading-relaxed space-y-10">
             {/* Overview Box */}
-            <div className="p-6 rounded-2xl border border-white/10 bg-[#121215] space-y-3">
+            <div className="p-6 rounded-2xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] space-y-3">
               <h2 className="text-offWhite font-semibold text-lg flex items-center gap-2">
                 <Lock className="size-5 text-orange-400" />
                 Commitment to User Privacy
               </h2>
-              <p className="text-offWhite/70 leading-relaxed">
+              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed">
                 At Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;,
                 &ldquo;us&rdquo;, or &ldquo;our&rdquo;), we take your privacy
                 and data security seriously. This Privacy Policy describes how
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
                 synchronization services, and Model Context Protocol (MCP)
                 integrations (collectively, the &ldquo;Service&rdquo;).
               </p>
-              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
+              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
                 Please also review our{" "}
                 <Link
                   href="/terms"
@@ -73,7 +73,7 @@ export default function PrivacyPolicyPage() {
                 We collect information you provide directly to us, as well as
                 information collected automatically when you use our Service:
               </p>
-              <ul className="list-disc pl-6 space-y-2 text-offWhite/70">
+              <ul className="list-disc pl-6 space-y-2 text-[#52525b] dark:text-[#a1a1aa]">
                 <li>
                   <strong className="text-offWhite">
                     Account Information:
@@ -112,7 +112,7 @@ export default function PrivacyPolicyPage() {
                 to provide automated multi-person schedule comparison and
                 bi-directional event synchronization.
               </p>
-              <div className="space-y-3 text-offWhite/80">
+              <div className="space-y-3 text-[#3f3f46] dark:text-[#d4d4d8]">
                 <p>
                   <strong className="text-offWhite">
                     How We Use Google Data:
@@ -138,7 +138,7 @@ export default function PrivacyPolicyPage() {
                   </a>
                   , including the Limited Use requirements.
                 </p>
-                <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
+                <ul className="list-disc pl-6 space-y-1.5 text-[#52525b] dark:text-[#a1a1aa]">
                   <li>
                     We do <strong>NOT</strong> sell your Google user data to
                     third parties.
@@ -172,7 +172,7 @@ export default function PrivacyPolicyPage() {
                 We use the collected information for the following specific
                 purposes:
               </p>
-              <ul className="list-disc pl-6 space-y-2 text-offWhite/70">
+              <ul className="list-disc pl-6 space-y-2 text-[#52525b] dark:text-[#a1a1aa]">
                 <li>
                   To provide, maintain, and optimize our core task management,
                   visual time-blocking, and calendar scheduling platform.
@@ -222,7 +222,7 @@ export default function PrivacyPolicyPage() {
                 Depending on your jurisdiction (including GDPR and CCPA/CPRA),
                 you have the right to:
               </p>
-              <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
+              <ul className="list-disc pl-6 space-y-1.5 text-[#52525b] dark:text-[#a1a1aa]">
                 <li>
                   Access, download, or export a copy of your personal data.
                 </li>
@@ -248,7 +248,7 @@ export default function PrivacyPolicyPage() {
                 Privacy Policy or your data, please contact our Data Protection
                 Officer at:
               </p>
-              <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
+              <div className="p-5 rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] flex items-center gap-3">
                 <Mail className="size-5 text-orange-400" />
                 <span className="text-offWhite font-mono text-sm">
                   privacy@scylla.app

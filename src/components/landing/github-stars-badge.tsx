@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import { GITHUB_REPO_URL } from "@/lib/github-stars";
+import { GITHUB_REPO_URL } from "@/lib/github-repo";
 
 function formatStarCount(count: number): string {
   return new Intl.NumberFormat("en", { notation: "compact" }).format(count);
@@ -16,10 +16,13 @@ export function LandingGithubStarsBadge({ stars }: { stars: number | null }) {
       href={GITHUB_REPO_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className="button-secondary cursor-pointer !py-3.5 px-6 text-sm inline-flex items-center justify-center gap-2"
+      className="stars-pill inline-flex items-center justify-center gap-1.5"
       aria-label={label}
     >
-      <Star className="size-4 fill-current" aria-hidden="true" />
+      <Star
+        className="size-3.5 fill-[#ea580c] text-[#ea580c]"
+        aria-hidden="true"
+      />
       {stars === null ? "GitHub" : formatStarCount(stars)}
     </a>
   );

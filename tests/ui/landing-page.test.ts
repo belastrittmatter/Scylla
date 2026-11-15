@@ -3,7 +3,6 @@ import { renderToString } from "react-dom/server";
 import { describe, it, expect } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import MarketingLayout from "@/app/(marketing)/layout";
 import { LandingHeader } from "@/components/landing/header";
 import { LandingCtaBanner } from "@/components/landing/cta-banner";
 import { LandingFooter } from "@/components/landing/footer";
@@ -159,15 +158,12 @@ describe("Landing Page & Review Fixes", () => {
       join(ROOT_DIR, "src/components/landing/landing-scripts.tsx"),
       "utf8",
     );
-    const layoutHtml = renderToString(
-      React.createElement(
-        MarketingLayout,
-        null,
-        React.createElement("div", null, "content"),
-      ),
+    const layoutSource = readFileSync(
+      join(ROOT_DIR, "src/app/(marketing)/layout.tsx"),
+      "utf8",
     );
 
-    expect(layoutHtml).not.toContain('href="/css/landing.css"');
+    expect(layoutSource).not.toContain('href="/css/landing.css"');
     expect(landingScripts).toContain(
       "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
     );
@@ -190,6 +186,23 @@ describe("Landing Page & Review Fixes", () => {
     expect(globalsCss).toContain(":where(.scylla-landing)");
     expect(globalsCss).toContain(".scylla-landing [data-kanban-preview]");
     expect(globalsCss).not.toContain('url("/fonts/');
+  });
+
+  it("loads the Cloudflare reference fonts via next/font/local in the marketing layout", () => {
+    const layoutSource = readFileSync(
+      join(ROOT_DIR, "src/app/(marketing)/layout.tsx"),
+      "utf8",
+    );
+
+    expect(layoutSource).toContain("localFont");
+    expect(layoutSource).toContain("stk-bureau-sans-book.otf");
+    expect(layoutSource).toContain("stk-bureau-sans-regular.otf");
+    expect(layoutSource).toContain("maple-mono-nf-italic.woff2");
+    expect(layoutSource).toContain("maple-mono-nf-regular.woff2");
+    expect(layoutSource).toContain("--font-bureau");
+    expect(layoutSource).toContain("--font-maple");
+    expect(layoutSource).not.toContain("--font-kunst");
+    expect(layoutSource).not.toContain("--font-apercu-mono");
   });
 
   it("configures db:seed to use bun run src/db/seed.ts in package.json", () => {

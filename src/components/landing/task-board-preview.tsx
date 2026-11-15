@@ -11,7 +11,7 @@ const InteractiveTaskBoardApp = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-[480px] w-full items-center justify-center bg-neutral-900/60 rounded-xl text-sm text-neutral-400">
+      <div className="flex h-[700px] w-full items-center justify-center bg-neutral-900/60 rounded-xl text-sm text-neutral-400">
         <span className="size-2 rounded-full bg-orange-500 animate-ping mr-2" />
         Mounting interactive MCP Kanban board...
       </div>
@@ -43,9 +43,6 @@ const MOCK_MCP_KANBAN_DATA: TaskBoardData = {
       assigneeName: "Olivia Chen",
       estimatedMinutes: 90,
       totalSpentSeconds: 3450,
-      activeSessionStartedAt: new Date(
-        Date.now() - 1000 * 60 * 24 - 1000 * 37,
-      ).toISOString(),
       dueDate: "2026-11-18",
     },
     {
@@ -73,19 +70,43 @@ const MOCK_MCP_KANBAN_DATA: TaskBoardData = {
   ],
 };
 
+/**
+ * The ticking "live session" timestamp is computed in the browser only.
+ * The kanban app mounts client-side (ssr: false), so this never reaches
+ * server HTML and cannot cause a hydration mismatch.
+ */
+const ACTIVE_SESSION_STARTED_AT =
+  typeof window === "undefined"
+    ? null
+    : new Date(Date.now() - 1000 * 60 * 24 - 1000 * 37).toISOString();
+
+function useKanbanPreviewData(): TaskBoardData {
+  return React.useMemo(() => {
+    if (!ACTIVE_SESSION_STARTED_AT) return MOCK_MCP_KANBAN_DATA;
+    return {
+      ...MOCK_MCP_KANBAN_DATA,
+      tasks: (MOCK_MCP_KANBAN_DATA.tasks ?? []).map((task) =>
+        task.id === "tsk-02"
+          ? { ...task, activeSessionStartedAt: ACTIVE_SESSION_STARTED_AT }
+          : task,
+      ),
+    };
+  }, []);
+}
+
 export function LandingTaskBoardPreview() {
   return (
-    <section className="section-bottom-border relative z-10 bg-[#09090b]">
+    <section className="relative z-10">
       <div className="container">
         <div className="border-container section-spacing-lg">
           <div
-            className="flex justify-between items-center gap-8 sm:gap-12 flex-col lg:flex-row"
+            className="flex justify-between items-center gap-10 sm:gap-12 flex-col lg:flex-row"
             data-container="trail-section"
           >
-            {/* Interactive MCP Kanban UI Window (Replaced static video with live interactive UI) */}
+            {/* Interactive MCP Kanban UI window — dark product screenshot on white */}
             <div
               data-kanban-preview=""
-              className="dark lg:max-w-[620px] xl:max-w-[660px] w-full rounded-[18px] border border-white/10 bg-[#121215] shadow-2xl overflow-hidden transition-all duration-300 hover:border-white/20 text-foreground"
+              className="dark lg:max-w-[620px] xl:max-w-[660px] w-full rounded-[16px] border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] shadow-[0_24px_60px_-30px_rgba(24,24,27,0.45)] overflow-hidden transition-all duration-300 hover:border-[#b9b9c0] text-foreground"
               style={
                 {
                   "--color-primary": "var(--primary)",
@@ -94,7 +115,7 @@ export function LandingTaskBoardPreview() {
                 } as React.CSSProperties
               }
             >
-              <InteractiveTaskBoardApp initialData={MOCK_MCP_KANBAN_DATA} />
+              <InteractiveTaskBoardApp initialData={useKanbanPreviewData()} />
             </div>
 
             {/* Content text */}
@@ -105,60 +126,51 @@ export function LandingTaskBoardPreview() {
               </span>
               <h2
                 data-title=""
-                className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] font-semibold -tracking-[0.4px] !leading-[1.12]"
+                className="text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] font-semibold -tracking-[0.4px] !leading-[1.12] text-[#18181b] dark:text-[#fbfbfb]"
               >
                 Turn Sprint Backlogs into Deep-Work Reality
               </h2>
               <p
                 data-excerpt=""
-                className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base leading-relaxed"
+                className="mt-4 md:mt-5 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base leading-relaxed"
               >
                 Prioritize sprints with zero overhead. Drag tasks across
                 customizable workflow columns, track deep-work sessions with
                 active sub-second timers, and automatically connect deliverables
                 to calendar timelines.
               </p>
-              <img
-                data-line-top=""
-                className="my-5 lg:my-8"
-                src="/images/gradient-border.svg"
-                alt="gradient Border"
-              />
               <ul
                 data-list=""
-                className="font-medium text-offWhite/80 space-y-3.5 text-sm sm:text-base"
+                className="mt-6 font-medium text-[#3f3f46] dark:text-[#d4d4d8] space-y-3.5 text-sm sm:text-base"
               >
                 <li className="flex items-center gap-3">
-                  <img src="/images/list-check.svg" alt="check" />
+                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
                   <span>
                     Interactive drag-and-drop Kanban with priority states &amp;
                     assignees.
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <img src="/images/list-check.svg" alt="check" />
+                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
                   <span>
                     Sub-second live session timers &amp; team velocity metrics.
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <img src="/images/list-check.svg" alt="check" />
+                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
                   <span>
                     Seamless 1-click scheduling: lock tasks into calendar focus
                     blocks.
                   </span>
                 </li>
               </ul>
-              <img
-                data-line-bottom=""
-                className="my-5 lg:my-8"
-                src="/images/gradient-border.svg"
-                alt="gradient Border"
-              />
-              <div data-button="" className="flex flex-wrap items-center gap-4">
+              <div
+                data-button=""
+                className="mt-8 flex flex-wrap items-center gap-4"
+              >
                 <Link
                   prefetch={false}
-                  className="button-primary inline-flex items-center justify-center px-[22px] py-3 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/20 cursor-pointer"
+                  className="button-primary inline-flex items-center justify-center px-[22px] py-3 font-medium text-sm leading-normal rounded-full text-center cursor-pointer"
                   href="/tasks"
                 >
                   Open Interactive Task Board

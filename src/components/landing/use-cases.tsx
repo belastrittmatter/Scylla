@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { CornerTicks } from "@/components/landing/corner-ticks";
 import {
   Bot,
   CalendarCheck2,
@@ -72,7 +73,7 @@ const USE_CASES: UseCaseItem[] = [
 
 export function LandingUseCases() {
   return (
-    <section className="section-bottom-border bg-[#09090b]">
+    <section className="relative">
       <div className="container">
         <div className="border-container section-spacing-lg">
           {/* Section Title */}
@@ -85,13 +86,13 @@ export function LandingUseCases() {
               Smart Calendar Capabilities
             </span>
             <h2
-              className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] !leading-[1.2] font-semibold -tracking-[0.4px] overflow-hidden"
+              className="text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] !leading-[1.2] font-semibold -tracking-[0.4px] text-[#18181b] dark:text-[#fbfbfb] overflow-hidden"
               data-title=""
             >
               Built for Modern Productive Teams
             </h2>
             <p
-              className="mt-4 md:mt-5 text-offWhite/80 overflow-hidden"
+              className="mt-4 md:mt-5 text-[#52525b] dark:text-[#a1a1aa] overflow-hidden"
               data-excerpt=""
             >
               Experience an intelligent scheduling engine designed to eliminate
@@ -100,37 +101,33 @@ export function LandingUseCases() {
             </p>
           </div>
 
+          {/* Hairline capability table with corner ticks */}
           <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+            className="hairline-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px relative"
             data-sttr-wrapper=""
           >
+            <CornerTicks />
             {USE_CASES.map((item, index) => {
               const IconComp = item.icon;
               return (
-                <div
-                  key={index}
-                  className="px-5 pt-5 pb-6 md:pb-10 bg-blue rounded-20 border border-lineColor/70 relative group border-moving before:rounded-xl sm:before:rounded-2xl lg:before:rounded-[20px] z-1 useCase-card transition-all duration-300 hover:border-white/30"
-                  data-sttr-card=""
-                >
+                <div key={index} data-sttr-card="" className="relative">
                   <Link
                     prefetch={false}
-                    className="block cursor-pointer"
+                    className="feature-card block cursor-pointer rounded-none border-0 border-[#e4e4e7] dark:border-[#27272a] !border-b-0 h-full px-6 pt-6 pb-8 transition-shadow"
                     href={item.link}
                   >
                     <div className="flex items-center justify-between gap-5">
-                      <div className="w-11 h-11 flex items-center justify-center bg-orange-500/10 border border-orange-500/20 rounded-[10px]">
-                        <IconComp className="size-5 text-orange-400" />
+                      <div className="icon-tile w-11 h-11 flex items-center justify-center rounded-[10px]">
+                        <IconComp className="size-5" />
                       </div>
-
-                      <div className="py-1 px-2.5 bg-white/5 border border-white/10 rounded-[8px] text-[11px] font-mono text-neutral-400 group-hover:text-white group-hover:border-white/20 transition-colors">
+                      <div className="py-1 px-2.5 bg-[#f4f4f5] dark:bg-[#26262b] border border-[#e4e4e7] dark:border-[#27272a] rounded-full text-[11px] font-medium text-[#52525b] dark:text-[#a1a1aa]">
                         {item.tag}
                       </div>
                     </div>
-                    <h3 className="text-xl text-offWhite font-medium leading-normal mt-7.5">
+                    <h3 className="text-xl text-[#18181b] dark:text-[#fbfbfb] font-medium leading-normal mt-7.5">
                       {item.title}
                     </h3>
-                    <div className="my-4 gradient-border w-full h-[1px]"></div>
-                    <p className="text-offWhite/60 text-sm leading-relaxed">
+                    <p className="mt-4 text-[#52525b] dark:text-[#a1a1aa] text-sm leading-relaxed">
                       {item.description}
                     </p>
                   </Link>

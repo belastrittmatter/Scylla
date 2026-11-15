@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AiPolicyPage() {
   return (
-    <section className="section-bottom-border bg-[#09090b] relative z-1 overflow-hidden pt-10">
+    <section className="section-bottom-border relative z-1 overflow-hidden pt-10">
       <div className="container">
         <div className="border-container section-spacing-lg">
           {/* Header */}
@@ -22,20 +22,20 @@ export default function AiPolicyPage() {
             <h1 className="gradient-text text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
               AI &amp; MCP Protocol Policy
             </h1>
-            <p className="mt-3 text-offWhite/60 text-sm sm:text-base">
+            <p className="mt-3 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base">
               Last Updated: November 1, 2026 &bull; Model Context Protocol
               Standard
             </p>
           </div>
 
           {/* Content */}
-          <div className="max-w-[840px] mx-auto text-offWhite/80 text-sm sm:text-base leading-relaxed space-y-10">
-            <div className="p-6 rounded-2xl border border-white/10 bg-[#121215] space-y-3">
+          <div className="max-w-[840px] mx-auto text-[#3f3f46] dark:text-[#d4d4d8] text-sm sm:text-base leading-relaxed space-y-10">
+            <div className="p-6 rounded-2xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] space-y-3">
               <h2 className="text-offWhite font-semibold text-lg flex items-center gap-2">
                 <Shield className="size-5 text-orange-400" />
                 Human-in-the-Loop &amp; Open Standards
               </h2>
-              <p className="text-offWhite/70 leading-relaxed">
+              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed">
                 Scylla integrates with the open Model Context Protocol (MCP) to
                 allow authorized AI coding agents (such as Claude Desktop,
                 Cursor, and Windsurf) to assist you with scheduling, meeting
@@ -43,7 +43,7 @@ export default function AiPolicyPage() {
                 maintain 100% control, ownership, and visibility over any action
                 an AI assistant performs.
               </p>
-              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
+              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
                 For complete details regarding our data collection practices and
                 user rights, please consult our{" "}
                 <Link
@@ -115,7 +115,7 @@ export default function AiPolicyPage() {
                 For questions regarding our AI policy or MCP implementation,
                 please contact our team at:
               </p>
-              <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
+              <div className="p-5 rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] flex items-center gap-3">
                 <Mail className="size-5 text-orange-400" />
                 <span className="text-offWhite font-mono text-sm">
                   ai-policy@scylla.app

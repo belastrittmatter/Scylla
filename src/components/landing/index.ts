@@ -1,6 +1,13 @@
 export { LandingScripts } from "./landing-scripts";
 export { LandingHeader } from "./header";
 export { LandingHero } from "./hero";
+export { LandingAgentCloud } from "./agent-cloud";
+export { LandingFaq } from "./faq";
+export { LandingScrollTop } from "./scroll-top";
+export { LandingComparison } from "./comparison";
+export { LandingProductTour } from "./product-tour";
+export { LandingRegion } from "./region";
+export { LandingStatBand } from "./stat-band";
 export { LandingGithubStarsBadge } from "./github-stars-badge";
 export { LandingTaskBoardPreview } from "./task-board-preview";
 export { LandingProcessSteps } from "./process-steps";
@@ -9,3 +16,4 @@ export { LandingIntegrations } from "./integrations";
 export { LandingCtaBanner } from "./cta-banner";
 export { LandingFooter } from "./footer";
 export { Calendar as LandingCalendar } from "./calendar";
+export { LandingHydrationSentinel } from "./hydration-sentinel";

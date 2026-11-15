@@ -1,7 +1,7 @@
 import { cacheLife } from "next/cache";
 import { z } from "zod";
 
-export const GITHUB_REPO_URL = "https://github.com/belastrittmatter/Scylla";
+export { GITHUB_REPO_URL } from "./github-repo";
 
 const GITHUB_REPO_API_URL =
   "https://api.github.com/repos/belastrittmatter/Scylla";

@@ -57,19 +57,15 @@ export function LandingScripts() {
     }
 
     let mounted = true;
+    const w = window as unknown as GsapWindow;
     let hydrationTimer: ReturnType<typeof setTimeout> | null = null;
     let rafId: number | null = null;
 
-    // Ensure page background stays dark (#09090B) during smooth scrolling on marketing routes
-    // without mutating the root `.dark` class owned by next-themes.
-    const prevHtmlBg = document.documentElement.style.backgroundColor;
-    const prevBodyBg = document.body.style.backgroundColor;
+    // Mark the landing route so scoped CSS controls the page background
+    // (light/dark handled by the .dark class owned by next-themes).
     document.documentElement.classList.add("scylla-landing-page");
     document.body.classList.add("scylla-landing-page");
-    document.documentElement.style.backgroundColor = "#09090b";
-    document.body.style.backgroundColor = "#09090b";
 
-    const w = window as unknown as GsapWindow;
     const scripts = [
       "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/all.min.js",
       "/js/main.js",
@@ -138,6 +134,20 @@ export function LandingScripts() {
         ensureGsapPluginsRegistered(w);
         if (mounted) loadScript(index + 1);
       };
+      if (src.includes("cdnjs.cloudflare.com")) {
+        // CDN unreachable (offline / blocked region): fall back to the
+        // self-hosted GSAP bundle so animations still initialize.
+        s.onerror = () => {
+          const local = document.createElement("script");
+          local.src = "/js/gsap-all.min.js";
+          local.async = false;
+          local.onload = () => {
+            ensureGsapPluginsRegistered(w);
+            if (mounted) loadScript(index + 1);
+          };
+          document.body.appendChild(local);
+        };
+      }
       document.body.appendChild(s);
     };
 
@@ -192,8 +202,6 @@ export function LandingScripts() {
         "scylla-landing-page",
         "menu-overlay",
       );
-      document.documentElement.style.backgroundColor = prevHtmlBg || "";
-      document.body.style.backgroundColor = prevBodyBg || "";
       document.documentElement.style.removeProperty("height");
       document.documentElement.style.removeProperty("overflow");
       document.body.style.removeProperty("height");

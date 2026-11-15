@@ -1,10 +1,6 @@
 import Link from "next/link";
-import { LandingGithubStarsBadge } from "@/components/landing/github-stars-badge";
-import { getGitHubRepoStars } from "@/lib/github-stars";
 
-export async function LandingHero() {
-  const stars = await getGitHubRepoStars();
-
+export function LandingHero() {
   return (
     <>
       <div className="header-innerHeight">
@@ -14,34 +10,29 @@ export async function LandingHero() {
       </div>
       {/* Banner Area Start */}
       <section
-        className="section-bottom-border relative z-1 overflow-hidden"
+        className="relative z-1 pt-3 sm:pt-4 pb-3 sm:pb-4"
         data-hero-section=""
       >
-        <img
-          src="/images/banner-bg.webp"
-          alt=""
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-none h-auto min-h-full object-cover opacity-60 mix-blend-screen"
-          style={{
-            filter: "grayscale(100%) contrast(1.2)",
-          }}
-        />
-        <div className="container">
-          <div className="border-container pt-12 sm:pt-16 lg:pt-20 relative z-1">
-            <div className="max-w-[560px] md:max-w-[720px] lg:max-w-[840px] mx-auto text-center">
-              <span data-subtitle="" className="badge-button">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse inline-block" />
+        {/* Panel sized like the Cloudflare reference: ~1480px wide, ~720px tall */}
+        <div className="px-2 sm:px-3">
+          <div className="hero-panel w-full px-5 sm:px-10 lg:px-16 pt-16 sm:pt-20 lg:pt-24 pb-0">
+            <div className="hero-bloom" aria-hidden="true" />
+            <div className="relative z-1 max-w-[820px] mx-auto text-center w-full pb-[190px] sm:pb-[230px] lg:pb-[260px]">
+              <span data-subtitle="" className="hero-label text-sm font-medium">
                 AI-Powered Task &amp; Calendar Engine
               </span>
               <h1
                 data-title=""
-                className="font-semibold !leading-[1.12] gradient-text text-3xl sm:text-5xl lg:text-6xl xl:text-[64px] tracking-[-0.025em] mt-5"
+                className="hero-title !leading-[1.16] text-3xl sm:text-5xl lg:text-6xl xl:text-[64px] mt-5"
               >
-                Master Your Tasks. Harmonize Every Schedule with{" "}
-                <span className="italic font-normal">Scylla</span>
+                <span className="hero-title-inner">
+                  Master Your Tasks. Harmonize Every Schedule with{" "}
+                  <em>Scylla</em>
+                </span>
               </h1>
               <p
                 data-excerpt=""
-                className="mt-4 md:mt-5 font-normal text-sm sm:text-base lg:text-lg !leading-[1.65] tracking-[0.1px] text-offWhite/80 max-w-[700px] mx-auto"
+                className="hero-sub mt-5 md:mt-6 font-normal text-sm sm:text-base lg:text-lg !leading-[1.7] tracking-[0.1px] max-w-[820px] mx-auto"
               >
                 The unified workspace bridging visual Kanban boards, sub-second
                 deep-work timers, and intelligent multi-person calendar
@@ -50,11 +41,11 @@ export async function LandingHero() {
               </p>
               <div
                 data-button=""
-                className="mt-6 sm:mt-8 lg:mt-10 flex flex-wrap items-center justify-center gap-4"
+                className="hero-ctas mt-7 sm:mt-8 lg:mt-9 flex flex-wrap items-center justify-center gap-4"
               >
                 <Link
                   prefetch={false}
-                  className="button-primary inline-flex items-center justify-center px-7 py-3.5 text-white font-medium text-sm leading-normal rounded-[10px] relative z-1 overflow-hidden text-center shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all cursor-pointer"
+                  className="button-white inline-flex items-center justify-center px-7 py-3.5 font-medium text-sm leading-normal text-center cursor-pointer"
                   href="/auth/sign-in"
                 >
                   Get Started Free
@@ -66,17 +57,21 @@ export async function LandingHero() {
                 >
                   Explore Live Calendar
                 </Link>
-                <LandingGithubStarsBadge stars={stars} />
               </div>
             </div>
-            {/* Dashboard Thumbnail Wrapper with Backlight Bloom rising behind it */}
-            <div data-thumbnail="" className="relative mt-10 lg:mt-11.5">
-              <div className="home-banner-dashboard relative z-1 rounded-t-[20px] overflow-hidden p-1 sm:p-2.5 !pb-0 border border-white/10 border-b-0 bg-gradient-to-b from-white/10 to-transparent glowing-border">
-                <img
-                  className="rounded-t-[20px] w-full"
-                  src="/images/calendar-dashboard-preview.png"
-                  alt="Scylla Task & Calendar dashboard preview"
-                />
+            {/* Dashboard preview rises from the panel's bottom edge */}
+            <div
+              data-thumbnail=""
+              className="absolute inset-x-0 bottom-0 z-1 mx-auto max-w-[1000px] px-4"
+            >
+              <div className="hero-shot p-1 sm:p-2 !pb-0">
+                <div className="max-h-[180px] overflow-hidden rounded-t-[10px] sm:max-h-[240px]">
+                  <img
+                    className="w-full"
+                    src="/images/calendar-dashboard-preview.png"
+                    alt="Scylla Task & Calendar dashboard preview"
+                  />
+                </div>
               </div>
             </div>
           </div>

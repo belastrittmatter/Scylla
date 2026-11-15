@@ -1,12 +1,93 @@
 "use client";
 
+import * as React from "react";
+import dynamic from "next/dynamic";
+import { CornerTicks } from "@/components/landing/corner-ticks";
+
+const LiveScheduleApp = dynamic(
+  () => import("@/components/mcp-ui/schedule-app").then((m) => m.ScheduleApp),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full min-h-[220px] items-center justify-center bg-[#121215] rounded-xl text-xs text-neutral-400">
+        loading live schedule…
+      </div>
+    ),
+  },
+);
+
+// Demo payloads for the live MCP cards (the bridge resolves instantly
+// with these instead of waiting on a server connection).
+const MOCK_SCHEDULE_DATA = {
+  currentUser: { name: "Alex Rivera", email: "alex@scylla.so" },
+  targetUser: { name: "Olivia Chen", email: "olivia@scylla.so" },
+  allAttendees: ["Olivia Chen"],
+  dateStr: "2026-11-20",
+  durationMinutes: 45,
+  mutualSlots: [
+    { start: "2026-11-20T09:00:00+07:00", end: "2026-11-20T09:45:00+07:00" },
+    { start: "2026-11-20T10:30:00+07:00", end: "2026-11-20T11:15:00+07:00" },
+    { start: "2026-11-20T14:00:00+07:00", end: "2026-11-20T14:45:00+07:00" },
+  ],
+  rooms: [
+    {
+      id: "room-focus-alpha",
+      name: "Focus Room Alpha",
+      email: "focus-room-alpha@scylla.so",
+      capacity: 8,
+      officeLocation: "HCMC",
+    },
+  ],
+  suggestedTitle: "Sprint Review",
+  suggestedAgenda: "Weekly demo + Q4 planning checkpoint",
+};
+
+const MOCK_AGENDA_DATA = {
+  user: { name: "Alex Rivera", email: "alex@scylla.so" },
+  baseDate: "2026-11-20",
+  events: [
+    {
+      id: "ev-1",
+      title: "Daily Standup",
+      start: "2026-11-20T09:00:00+07:00",
+      end: "2026-11-20T09:15:00+07:00",
+    },
+    {
+      id: "ev-2",
+      title: "Deep Work — Pricing Engine",
+      start: "2026-11-20T10:00:00+07:00",
+      end: "2026-11-20T12:00:00+07:00",
+    },
+    {
+      id: "ev-3",
+      title: "Sprint Review",
+      start: "2026-11-20T14:00:00+07:00",
+      end: "2026-11-20T15:00:00+07:00",
+      meetingUrl: "https://meet.google.com/demo-scylla",
+    },
+  ],
+};
+
+const LiveAgendaApp = dynamic(
+  () => import("@/components/mcp-ui/agenda-app").then((m) => m.AgendaApp),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full min-h-[220px] items-center justify-center bg-[#121215] rounded-xl text-xs text-neutral-400">
+        loading live agenda…
+      </div>
+    ),
+  },
+);
+
 interface CalendarFeature {
   title: string;
   description: string;
   imageSrc: string;
   imageAlt: string;
-  wrapperWidthClass: string;
   imageHeightClass: string;
+  live?: boolean;
+  liveKey?: "schedule" | "agenda";
 }
 
 const ROW_ONE_FEATURES: CalendarFeature[] = [
@@ -16,8 +97,9 @@ const ROW_ONE_FEATURES: CalendarFeature[] = [
       "Drag pending backlog tasks directly onto your hourly calendar timeline. Lock in focused deep work blocks with automatic duration snapping and live status updates.",
     imageSrc: "/images/calendar/why-chose-01.jpg",
     imageAlt: "Visual drag and drop time blocking on Scylla Calendar",
-    wrapperWidthClass: "sm:max-w-[699px] w-full",
     imageHeightClass: "h-[300px] sm:h-[370px] lg:h-[420px]",
+    live: true,
+    liveKey: "schedule",
   },
   {
     title: "Instant Two-Way Calendar Sync",
@@ -25,7 +107,6 @@ const ROW_ONE_FEATURES: CalendarFeature[] = [
       "Real-time bidirectional sync with Google Calendar and Microsoft Outlook. Any change made in Scylla or external apps reflects instantly with zero lag.",
     imageSrc: "/images/calendar/why-chose-02.png",
     imageAlt: "Real-time two-way sync with Google Calendar and Outlook",
-    wrapperWidthClass: "sm:max-w-[481px] w-full",
     imageHeightClass: "h-[300px] sm:h-[370px] lg:h-[420px]",
   },
 ];
@@ -37,8 +118,9 @@ const ROW_TWO_FEATURES: CalendarFeature[] = [
       "Layer teammates' schedules to spot mutual free slots instantly without asking around or comparing multiple calendars.",
     imageSrc: "/images/calendar/why-chose-03.jpg",
     imageAlt: "Team availability overlay showing mutual free slots",
-    wrapperWidthClass: "sm:max-w-[339px] w-full",
     imageHeightClass: "h-[220px] sm:h-[260px] md:h-[280px]",
+    live: true,
+    liveKey: "agenda",
   },
   {
     title: "Project-Linked Meetings",
@@ -47,7 +129,6 @@ const ROW_TWO_FEATURES: CalendarFeature[] = [
     imageSrc: "/images/calendar/why-chose-04.png",
     imageAlt:
       "Project-linked meetings connecting calendar events to deliverables",
-    wrapperWidthClass: "sm:max-w-[339px] w-full",
     imageHeightClass: "h-[220px] sm:h-[260px] md:h-[280px]",
   },
   {
@@ -57,39 +138,42 @@ const ROW_TWO_FEATURES: CalendarFeature[] = [
     imageSrc: "/images/calendar/why-chose-05.jpg",
     imageAlt:
       "Personalized 1-click booking link widget with Google Meet generation",
-    wrapperWidthClass: "sm:max-w-[481px] w-full",
     imageHeightClass: "h-[220px] sm:h-[260px] md:h-[280px]",
   },
 ];
 
-function FeatureCard({ feature }: { feature: CalendarFeature }) {
+function FeatureCell({ feature }: { feature: CalendarFeature }) {
   return (
-    <div
-      className={`${feature.wrapperWidthClass} flex flex-col`}
-      data-sttr-card=""
-    >
-      <div className="p-4 sm:p-5 rounded-20 border border-lineColor/70 bg-gradient-to-b from-white/[0.04] to-transparent relative z-1 overflow-hidden h-full flex flex-col justify-between hover:border-white/20 transition-all duration-300">
-        {/* Feature Image Preview */}
+    <div data-sttr-card="" className="relative">
+      <div className="h-full flex flex-col p-6 md:p-7">
+        {/* Feature Preview — live MCP card or screenshot */}
         <div
-          className={`overflow-hidden rounded-xl md:rounded-2xl border border-white/10 bg-black/40 ${feature.imageHeightClass} w-full shrink-0`}
+          className={`overflow-hidden rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#fafafa] dark:bg-[#18181b] ${feature.imageHeightClass} w-full shrink-0 ${feature.live ? "dark" : ""}`}
         >
-          <img
-            className="w-full h-full object-cover object-center hover:scale-[1.02] transition-transform duration-500 select-none"
-            src={feature.imageSrc}
-            alt={feature.imageAlt}
-            loading="lazy"
-          />
+          {feature.live ? (
+            <div className="h-full w-full [&>*]:h-full [&>*]:w-full">
+              {feature.liveKey === "schedule" ? (
+                <LiveScheduleApp initialData={MOCK_SCHEDULE_DATA} />
+              ) : (
+                <LiveAgendaApp initialData={MOCK_AGENDA_DATA} />
+              )}
+            </div>
+          ) : (
+            <img
+              className="w-full h-full object-cover object-center select-none"
+              src={feature.imageSrc}
+              alt={feature.imageAlt}
+              loading="lazy"
+            />
+          )}
         </div>
 
         {/* Feature Content */}
-        <div className="pt-5 md:py-5 flex-1 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl !leading-tight font-medium sm:tracking-[0.2px] text-offWhite min-h-[2.75rem] flex items-center">
-              {feature.title}
-            </h3>
-            <div className="my-4 gradient-border w-full h-[1px]" />
-          </div>
-          <p className="text-offWhite/60 text-sm sm:text-base leading-relaxed">
+        <div className="pt-5 flex-1 flex flex-col">
+          <h3 className="text-xl !leading-tight font-medium text-[#18181b] dark:text-[#fbfbfb] min-h-[2.75rem] flex items-center">
+            {feature.title}
+          </h3>
+          <p className="mt-3 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base leading-relaxed">
             {feature.description}
           </p>
         </div>
@@ -101,7 +185,7 @@ function FeatureCard({ feature }: { feature: CalendarFeature }) {
 export function Calendar() {
   return (
     <section
-      className="section-bottom-border bg-[#09090b]"
+      className="relative"
       id="calendar-features"
       data-container="calendar-features"
     >
@@ -113,17 +197,17 @@ export function Calendar() {
             data-section-title=""
           >
             <span className="badge-button mb-5" data-subtitle="">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block mr-1.5" />
               Scylla Smart Calendar
             </span>
             <h2
-              className="gradient-text text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] !leading-[1.2] font-semibold -tracking-[0.4px]"
+              className="text-3xl sm:text-4xl lg:text-5xl xl:text-[51px] !leading-[1.2] font-semibold -tracking-[0.4px] text-[#18181b] dark:text-[#fbfbfb]"
               data-title=""
             >
               Visual Scheduling Designed for Deep Work
             </h2>
             <p
-              className="mt-4 md:mt-5 text-offWhite/80 text-sm sm:text-base lg:text-lg"
+              className="mt-4 md:mt-5 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base lg:text-lg"
               data-excerpt=""
             >
               Connect your tasks directly to your timeline. Say goodbye to
@@ -132,25 +216,27 @@ export function Calendar() {
             </p>
           </div>
 
-          {/* Bento Grid */}
-          <div className="flex flex-col gap-5">
-            {/* Row 1: 2 Cards (Large + Medium) */}
+          {/* Hairline bento table with corner ticks */}
+          <div className="flex flex-col gap-6">
+            {/* Row 1: 2 cells */}
             <div
-              className="grid sm:grid-cols-2 lg:flex gap-5 items-stretch"
+              className="hairline-grid grid sm:grid-cols-2 gap-px relative"
               data-sttr-wrapper=""
             >
+              <CornerTicks />
               {ROW_ONE_FEATURES.map((feature) => (
-                <FeatureCard key={feature.title} feature={feature} />
+                <FeatureCell key={feature.title} feature={feature} />
               ))}
             </div>
 
-            {/* Row 2: 3 Cards (Small + Small + Medium) */}
+            {/* Row 2: 3 cells */}
             <div
-              className="grid sm:grid-cols-2 md:flex gap-5 items-stretch"
+              className="hairline-grid grid sm:grid-cols-2 lg:grid-cols-3 gap-px relative"
               data-sttr-wrapper=""
             >
+              <CornerTicks />
               {ROW_TWO_FEATURES.map((feature) => (
-                <FeatureCard key={feature.title} feature={feature} />
+                <FeatureCell key={feature.title} feature={feature} />
               ))}
             </div>
           </div>

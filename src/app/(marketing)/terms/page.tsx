@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <section className="section-bottom-border bg-[#09090b] relative z-1 overflow-hidden pt-12 sm:pt-16 lg:pt-20">
+    <section className="section-bottom-border relative z-1 overflow-hidden pt-12 sm:pt-16 lg:pt-20">
       <div className="container">
         <div className="border-container section-spacing-lg">
           {/* Header */}
@@ -22,20 +22,20 @@ export default function TermsOfServicePage() {
             <h1 className="gradient-text text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
               Terms of Service
             </h1>
-            <p className="mt-3 text-offWhite/60 text-sm sm:text-base">
+            <p className="mt-3 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base">
               Last Updated: November 1, 2026 &bull; Effective Immediately
             </p>
           </div>
 
           {/* Terms Content Container */}
-          <div className="max-w-[840px] mx-auto text-offWhite/80 text-sm sm:text-base leading-relaxed space-y-10">
+          <div className="max-w-[840px] mx-auto text-[#3f3f46] dark:text-[#d4d4d8] text-sm sm:text-base leading-relaxed space-y-10">
             {/* Agreement Box */}
-            <div className="p-6 rounded-2xl border border-white/10 bg-[#121215] space-y-3">
+            <div className="p-6 rounded-2xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] space-y-3">
               <h2 className="text-offWhite font-semibold text-lg flex items-center gap-2">
                 <FileText className="size-5 text-orange-400" />
                 Agreement to Terms
               </h2>
-              <p className="text-offWhite/70 leading-relaxed">
+              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed">
                 These Terms of Service (&ldquo;Terms&rdquo;) constitute a
                 legally binding agreement between you (&ldquo;User&rdquo;,
                 &ldquo;you&rdquo;) and Scylla (&ldquo;Scylla&rdquo;,
@@ -45,7 +45,7 @@ export default function TermsOfServicePage() {
                 (MCP) APIs, you agree to be bound by these Terms. If you do not
                 agree to these Terms, you must not access or use the Service.
               </p>
-              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
+              <p className="text-[#52525b] dark:text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
                 Your use of the Service is also subject to our{" "}
                 <Link
                   href="/privacy"
@@ -74,7 +74,7 @@ export default function TermsOfServicePage() {
                 Scylla provides an intelligent, unified productivity workspace
                 including:
               </p>
-              <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
+              <ul className="list-disc pl-6 space-y-1.5 text-[#52525b] dark:text-[#a1a1aa]">
                 <li>
                   Interactive Kanban boards, task timelines, sprint backlogs,
                   and milestone tracking.
@@ -114,7 +114,7 @@ export default function TermsOfServicePage() {
             </div>
 
             {/* Section 3: Google Calendar & Third-Party Services */}
-            <div className="space-y-4 p-6 rounded-2xl border border-white/10 bg-[#121215]">
+            <div className="space-y-4 p-6 rounded-2xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215]">
               <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight flex items-center gap-2">
                 <CheckCircle2 className="size-5 text-orange-400" />
                 3. Third-Party Integrations &amp; Google Services
@@ -132,7 +132,7 @@ export default function TermsOfServicePage() {
                 </Link>
                 .
               </p>
-              <p className="text-offWhite/70">
+              <p className="text-[#52525b] dark:text-[#a1a1aa]">
                 Our integration with Google Calendar complies strictly with the
                 Google API Services User Data Policy, including Limited Use
                 restrictions. You may disconnect third-party services at any
@@ -147,7 +147,7 @@ export default function TermsOfServicePage() {
                 4. Acceptable Use Policy
               </h2>
               <p>You agree that you will not:</p>
-              <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
+              <ul className="list-disc pl-6 space-y-1.5 text-[#52525b] dark:text-[#a1a1aa]">
                 <li>
                   Use the Service to transmit unsolicited commercial
                   communications (&ldquo;spam&rdquo;) or fraudulent calendar
@@ -187,14 +187,14 @@ export default function TermsOfServicePage() {
               <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
                 6. Disclaimers &amp; Limitation of Liability
               </h2>
-              <p className="text-offWhite/70">
+              <p className="text-[#52525b] dark:text-[#a1a1aa]">
                 THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS
                 AVAILABLE&rdquo; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS
                 OR IMPLIED. TO THE FULLEST EXTENT PERMITTED BY LAW, SCYLLA
                 DISCLAIMS ALL WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR
                 A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
               </p>
-              <p className="text-offWhite/70">
+              <p className="text-[#52525b] dark:text-[#a1a1aa]">
                 IN NO EVENT SHALL SCYLLA BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
                 SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF OR IN
                 CONNECTION WITH YOUR USE OF THE SERVICE, CALENDAR
@@ -223,7 +223,7 @@ export default function TermsOfServicePage() {
                 If you have questions regarding these Terms of Service, please
                 reach out to:
               </p>
-              <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
+              <div className="p-5 rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] flex items-center gap-3">
                 <Mail className="size-5 text-orange-400" />
                 <span className="text-offWhite font-mono text-sm">
                   legal@scylla.app

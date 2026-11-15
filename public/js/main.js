@@ -9,33 +9,46 @@
   const cleanups = [];
   let gsapCtx = null;
   let mm = null;
+  let refreshQueued = false;
 
   function registerGsapPlugins() {
     if (
       typeof gsap !== "undefined" &&
       typeof gsap.registerPlugin === "function"
     ) {
-      const gsapPlugins = [
+      const p = [
         typeof ScrollTrigger !== "undefined" ? ScrollTrigger : null,
         typeof ScrollSmoother !== "undefined" ? ScrollSmoother : null,
         typeof DrawSVGPlugin !== "undefined" ? DrawSVGPlugin : null,
         typeof MorphSVGPlugin !== "undefined" ? MorphSVGPlugin : null,
         typeof SplitText !== "undefined" ? SplitText : null,
       ].filter(Boolean);
-      if (gsapPlugins.length > 0) {
-        gsap.registerPlugin(...gsapPlugins);
-      }
-      if (gsap.core && typeof gsap.core.globals === "function") {
-        if (typeof ScrollTrigger !== "undefined") {
-          gsap.core.globals("ScrollTrigger", ScrollTrigger);
-        }
-        if (typeof ScrollSmoother !== "undefined") {
-          gsap.core.globals("ScrollSmoother", ScrollSmoother);
-        }
-      }
+      if (p.length > 0) gsap.registerPlugin(...p);
     }
   }
   registerGsapPlugins();
+
+  function prefersReducedMotion() {
+    return (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+
+  function whenHydrated(fn) {
+    const done = () => {
+      const h = window.__scyllaHydration;
+      return Boolean(h && h.shell && h.page);
+    };
+    if (done()) return fn();
+    const iv = setInterval(() => {
+      if (done()) {
+        clearInterval(iv);
+        fn();
+      }
+    }, 40);
+    timers.push(iv);
+  }
 
   function onReady(fn) {
     if (
@@ -50,80 +63,70 @@
     }
   }
 
-  // Mobile header menu toggle
   function menuToggle() {
-    const menuToggleBtn = document.querySelector(".menuToggle");
-    const mainMenu = document.querySelector(".main-menu");
-    if (!(menuToggleBtn && mainMenu)) return;
-
+    const btn = document.querySelector(".menuToggle");
+    const menu = document.querySelector(".main-menu");
+    if (!(btn && menu)) return;
     const onToggleClick = () => {
-      menuToggleBtn.classList.toggle("is-active");
-      mainMenu.classList.toggle("menu-active");
+      btn.classList.toggle("is-active");
+      menu.classList.toggle("menu-active");
       document.body.classList.toggle("menu-overlay");
     };
-
     const onDocClick = (e) => {
-      const clickedInsideMenu = mainMenu.contains(e.target);
-      const clickedToggle = menuToggleBtn.contains(e.target);
-      if (clickedInsideMenu || clickedToggle) return;
-
-      menuToggleBtn.classList.remove("is-active");
-      mainMenu.classList.remove("menu-active");
+      if (menu.contains(e.target) || btn.contains(e.target)) return;
+      btn.classList.remove("is-active");
+      menu.classList.remove("menu-active");
       document.body.classList.remove("menu-overlay");
     };
-
-    menuToggleBtn.addEventListener("click", onToggleClick);
+    btn.addEventListener("click", onToggleClick);
     document.addEventListener("click", onDocClick);
     cleanups.push(() => {
-      menuToggleBtn.removeEventListener("click", onToggleClick);
+      btn.removeEventListener("click", onToggleClick);
       document.removeEventListener("click", onDocClick);
     });
   }
   menuToggle();
 
-  // Footer Menu (mobile accordion)
   onReady(function () {
-    const menuToggles = document.querySelectorAll(".footer-menu-toggle");
-    const menuLists = document.querySelectorAll(".footer-menu-list");
-
-    function isMobile() {
-      return window.matchMedia("(max-width: 640px)").matches;
-    }
-
-    menuToggles.forEach((toggleBtn, index) => {
-      const onFooterToggle = function () {
+    const toggles = document.querySelectorAll(".footer-menu-toggle");
+    const lists = document.querySelectorAll(".footer-menu-list");
+    const isMobile = () => window.matchMedia("(max-width: 640px)").matches;
+    toggles.forEach((btn, i) => {
+      const onToggle = () => {
         if (!isMobile()) return;
-
-        const correspondingMenuList = menuLists[index];
-        toggleBtn.classList.toggle("active");
-        if (correspondingMenuList) {
-          correspondingMenuList.classList.toggle("active");
-        }
-
-        menuToggles.forEach((otherMenuToggle, otherIndex) => {
-          if (otherIndex !== index) {
-            otherMenuToggle.classList.remove("active");
-            if (menuLists[otherIndex]) {
-              menuLists[otherIndex].classList.remove("active");
-            }
+        btn.classList.toggle("active");
+        if (lists[i]) lists[i].classList.toggle("active");
+        toggles.forEach((other, j) => {
+          if (j !== i) {
+            other.classList.remove("active");
+            if (lists[j]) lists[j].classList.remove("active");
           }
         });
       };
-      toggleBtn.addEventListener("click", onFooterToggle);
-      cleanups.push(() =>
-        toggleBtn.removeEventListener("click", onFooterToggle),
-      );
+      btn.addEventListener("click", onToggle);
+      cleanups.push(() => btn.removeEventListener("click", onToggle));
     });
-
-    const onFooterResize = function () {
+    const onResize = () => {
       if (!isMobile()) {
-        menuToggles.forEach((btn) => btn.classList.remove("active"));
-        menuLists.forEach((list) => list.classList.remove("active"));
+        toggles.forEach((b) => b.classList.remove("active"));
+        lists.forEach((l) => l.classList.remove("active"));
       }
     };
-    window.addEventListener("resize", onFooterResize);
-    cleanups.push(() => window.removeEventListener("resize", onFooterResize));
+    window.addEventListener("resize", onResize);
+    cleanups.push(() => window.removeEventListener("resize", onResize));
   });
+
+  function pausedTimeline(vars) {
+    const tl = gsap.timeline({ paused: true, ...vars });
+    tl.eventCallback("onStart", () => {
+      tl.getChildren(false, true, false).forEach((tw) => {
+        tw.targets().forEach((t) => {
+          if (t instanceof Element) t.classList.add("played");
+        });
+      });
+    });
+    return tl;
+  }
 
   function bindRevealTrigger(triggerEl, tl) {
     ScrollTrigger.create({
@@ -136,30 +139,98 @@
       onEnter: () => tl.play(),
       onEnterBack: () => tl.play(),
       onRefresh: (self) => {
-        if (self.progress > 0 || self.isActive) {
-          tl.play();
-        }
+        if (self.progress > 0 || self.isActive) tl.play();
       },
+    });
+  }
+
+  const sharedFrom = { y: 28, opacity: 0 };
+  const sharedTo = {
+    y: 0,
+    opacity: 1,
+    duration: 0.5,
+    ease: "power2.out",
+    clearProps: "transform",
+  };
+
+  function addTicksToTimeline(wrapper, tl, position) {
+    const ticks = wrapper.querySelectorAll("[data-tick]");
+    if (ticks.length)
+      tl.fromTo(
+        ticks,
+        { scale: 0, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.35,
+          ease: "back.out(2)",
+          stagger: 0.05,
+          clearProps: "transform",
+        },
+        position,
+      );
+  }
+
+  function initHeroTimeline() {
+    const hero = document.querySelector("[data-hero-section]");
+    if (!hero) return;
+
+    const title = hero.querySelector("[data-title]");
+    const label = hero.querySelector("[data-subtitle]");
+    const excerpt = hero.querySelector("[data-excerpt]");
+    const buttonRow = hero.querySelector("[data-button]");
+    const thumbnail = hero.querySelector("[data-thumbnail]");
+    const bloom = hero.querySelector(".hero-bloom");
+
+    const tl = pausedTimeline({ defaults: { ease: "power3.out" } });
+    tl.play();
+    if (title) tl.from(title, { y: 28, opacity: 0, duration: 0.85 }, 0.15);
+    if (label) tl.from(label, { y: 14, opacity: 0, duration: 0.45 }, 0.4);
+    if (excerpt) tl.from(excerpt, { y: 18, opacity: 0, duration: 0.55 }, 0.52);
+    if (buttonRow)
+      tl.from(buttonRow, { y: 16, opacity: 0, duration: 0.45 }, 0.68);
+    if (bloom)
+      tl.from(bloom, { opacity: 0, duration: 1.4, ease: "power2.inOut" }, 0.2);
+    if (thumbnail)
+      tl.from(thumbnail, { y: 56, opacity: 0, duration: 0.85 }, 0.8);
+  }
+
+  function finalizeCounters() {
+    document.documentElement.classList.remove("gsap-pending");
+    document.querySelectorAll("[data-count]").forEach((el) => {
+      el.textContent = String(Number(el.getAttribute("data-count")) || 0);
     });
   }
 
   function initAnimations() {
     if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") {
+      finalizeCounters();
       return;
     }
     registerGsapPlugins();
+    gsap.defaults({ immediateRender: false });
+
+    const isPinnedActive = () =>
+      ScrollTrigger.getAll().some((st) => st.pin && st.isActive);
+    // Refreshing while the user is scrolled inside an active pin drops the
+    // pin state (element scrolls away until the spacer ends). Defer every
+    // dynamic-content refresh until the pin range is over.
+    const safeRefresh = () => {
+      if (isPinnedActive()) {
+        refreshQueued = true;
+        return;
+      }
+      ScrollTrigger.refresh();
+    };
+
+    if (prefersReducedMotion()) {
+      finalizeCounters();
+      return;
+    }
 
     gsapCtx = gsap.context(() => {
-      const sharedFrom = { y: 32, opacity: 0 };
-      const sharedTo = {
-        y: 0,
-        opacity: 1,
-        duration: 0.55,
-        ease: "power2.out",
-        clearProps: "transform",
-      };
+      initHeroTimeline();
 
-      // 1.2 => Sticky card animation
       mm = gsap.matchMedia();
       mm.add("(min-width: 767px)", () => {
         const cards = gsap.utils.toArray(".sticky-card");
@@ -183,19 +254,18 @@
         });
       });
 
-      // 1.3 => Reusable section heading animation
       const demoHeading = document.querySelectorAll("[data-section-title]");
       if (demoHeading.length) {
         demoHeading.forEach((section) => {
           const subtitle = section.querySelector("[data-subtitle]");
           const title = section.querySelector("[data-title]");
           const excerpt = section.querySelector("[data-excerpt]");
-          const tl = gsap.timeline({ paused: true });
+          const tl = pausedTimeline();
 
           if (subtitle) {
             tl.fromTo(
               subtitle,
-              { ...sharedFrom, scale: 0.95 },
+              { ...sharedFrom, scale: 0.97 },
               { ...sharedTo, scale: 1 },
               0,
             );
@@ -211,48 +281,41 @@
         });
       }
 
-      // 1.4 => Multiple glass card section
       const sttrWrapper = document.querySelectorAll("[data-sttr-wrapper]");
       if (sttrWrapper.length) {
         sttrWrapper.forEach((wrapper) => {
           const sttrCards = wrapper.querySelectorAll("[data-sttr-card]");
-          const tl = gsap.timeline({ paused: true });
-          if (sttrCards) {
-            sttrCards.forEach((sttrCard) => {
-              tl.fromTo(
-                sttrCard,
-                { y: 36, opacity: 0 },
-                {
-                  y: 0,
-                  opacity: 1,
-                  ease: "power2.out",
-                  duration: 0.45,
-                  stagger: 0.03,
-                  clearProps: "transform",
-                },
-                "-=0.35",
-              );
-            });
+          const tl = pausedTimeline();
+          if (sttrCards.length) {
+            tl.fromTo(
+              sttrCards,
+              { y: 30, opacity: 0 },
+              {
+                y: 0,
+                opacity: 1,
+                ease: "power2.out",
+                duration: 0.45,
+                stagger: 0.05,
+                clearProps: "transform",
+              },
+              0,
+            );
           }
+          addTicksToTimeline(wrapper, tl, 0.25);
           bindRevealTrigger(wrapper, tl);
         });
       }
 
-      // 1.5 => Newsletter / CTA glass card section
-      const newsletterWrapper = document.querySelectorAll(
-        "[data-newsletter-wrapper]",
-      );
-      if (newsletterWrapper.length) {
-        newsletterWrapper.forEach((wrapper) => {
+      document
+        .querySelectorAll("[data-newsletter-wrapper]")
+        .forEach((wrapper) => {
           const title = wrapper.querySelector("[data-news-title]");
           const excerpt = wrapper.querySelector("[data-news-excerpt]");
           const button = wrapper.querySelector("[data-news-button]");
-          const video = wrapper.querySelector("[data-news-video]");
-          const tl = gsap.timeline({ paused: true });
-
+          const tl = pausedTimeline();
           tl.fromTo(
             wrapper,
-            { y: 36, opacity: 0 },
+            { y: 32, opacity: 0 },
             {
               y: 0,
               opacity: 1,
@@ -262,92 +325,48 @@
             },
             0,
           );
-          if (video) {
-            tl.fromTo(
-              video,
-              { x: 40, opacity: 0 },
-              {
-                x: 0,
-                opacity: 1,
-                ease: "power2.out",
-                duration: 0.55,
-                clearProps: "transform",
-              },
-              "-=0.4",
-            );
-          }
-          if (title) {
-            tl.fromTo(title, sharedFrom, { ...sharedTo }, "-=0.4");
-          }
-          if (excerpt) {
-            tl.fromTo(excerpt, sharedFrom, { ...sharedTo }, "-=0.4");
-          }
-          if (button) {
-            tl.fromTo(button, { ...sharedFrom }, { ...sharedTo }, "-=0.4");
-          }
-
+          if (title) tl.fromTo(title, sharedFrom, { ...sharedTo }, "-=0.35");
+          if (excerpt) tl.fromTo(excerpt, sharedFrom, { ...sharedTo }, "-=0.4");
+          if (button) tl.fromTo(button, sharedFrom, { ...sharedTo }, "-=0.4");
           bindRevealTrigger(wrapper, tl);
         });
-      }
 
-      // 3.2 => Task board preview ("trail-section") animation
       const homeV1Trail = document.querySelector(
         '[data-container="trail-section"]',
       );
       if (homeV1Trail) {
-        const thumbnail = homeV1Trail.querySelector("[data-video]");
+        const thumbnail = homeV1Trail.querySelector("[data-kanban-preview]");
         const title = homeV1Trail.querySelector("[data-title]");
         const excerpt = homeV1Trail.querySelector("[data-excerpt]");
-        const topLine = homeV1Trail.querySelector("[data-line-top]");
         const list = homeV1Trail.querySelector("[data-list]");
-        const bottomLine = homeV1Trail.querySelector("[data-line-bottom]");
         const button = homeV1Trail.querySelector("[data-button]");
-        const tl = gsap.timeline({ paused: true });
+        const tl = pausedTimeline();
 
-        const trailFrom = { y: 36, opacity: 0 };
-        const trailTo = {
-          y: 0,
-          opacity: 1,
-          duration: 0.55,
-          ease: "power2.out",
-          clearProps: "transform",
-        };
-
-        if (title) {
-          tl.fromTo(title, { ...trailFrom }, { ...trailTo }, 0);
-        }
+        [
+          [title, 0],
+          [excerpt, "-=0.4"],
+          [list, "-=0.4"],
+          [button, "-=0.4"],
+        ].forEach(([el, pos]) => {
+          if (el)
+            tl.fromTo(el, { x: -24, opacity: 0 }, { ...sharedTo, x: 0 }, pos);
+        });
         if (thumbnail) {
           tl.fromTo(
             thumbnail,
             {
-              ...trailFrom,
+              ...sharedFrom,
               scale: 0.95,
               transformOrigin: "bottom left",
             },
-            { ...trailTo, scale: 1 },
-            "-=0.4",
+            { ...sharedTo, scale: 1 },
+            "-=0.5",
           );
-        }
-        if (excerpt) {
-          tl.fromTo(excerpt, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
-        if (topLine) {
-          tl.fromTo(topLine, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
-        if (list) {
-          tl.fromTo(list, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
-        if (bottomLine) {
-          tl.fromTo(bottomLine, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
-        if (button) {
-          tl.fromTo(button, { ...trailFrom }, { ...trailTo }, "-=0.4");
         }
 
         bindRevealTrigger(homeV1Trail, tl);
       }
 
-      // 3.3 => Process steps area animation
       const processArea = document.querySelector(
         '[data-container="process-area"]',
       );
@@ -357,33 +376,112 @@
         const cardBoxes = processArea.querySelectorAll(
           "[data-card] .sticky-card > div",
         );
-        const tl = gsap.timeline({ paused: true });
+        const tl = pausedTimeline();
 
-        const trailFrom = { x: -36, opacity: 0 };
-        const trailTo = {
-          x: 0,
-          opacity: 1,
-          duration: 0.55,
-          ease: "power2.out",
-          clearProps: "transform",
-        };
-
-        if (title) {
-          tl.fromTo(title, { ...trailFrom }, { ...trailTo }, 0);
-        }
-        if (excerpt) {
-          tl.fromTo(excerpt, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
+        if (title)
+          tl.fromTo(title, { x: -28, opacity: 0 }, { ...sharedTo, x: 0 }, 0);
+        if (excerpt)
+          tl.fromTo(
+            excerpt,
+            { x: -28, opacity: 0 },
+            { ...sharedTo, x: 0 },
+            "-=0.4",
+          );
         if (cardBoxes.length) {
           cardBoxes.forEach((box) => {
-            tl.fromTo(box, { ...sharedFrom }, { ...sharedTo }, "-=0.4");
+            tl.fromTo(box, sharedFrom, { ...sharedTo }, "-=0.4");
           });
         }
 
         bindRevealTrigger(processArea, tl);
       }
 
-      // 3.4 => Integrations ("apps-section") animation
+      const statBand = document.querySelector("[data-stat-band]");
+      if (statBand) {
+        const counters = statBand.querySelectorAll("[data-count]");
+        const tl = pausedTimeline();
+        counters.forEach((el) => {
+          const target = Number(el.getAttribute("data-count")) || 0;
+          const state = { value: 0 };
+          tl.to(
+            state,
+            {
+              value: target,
+              duration: 1.4,
+              ease: "power2.out",
+              onUpdate: () => {
+                el.textContent = String(Math.round(state.value));
+              },
+            },
+            0.2,
+          );
+        });
+        bindRevealTrigger(statBand, tl);
+      }
+
+      const tourStage = document.querySelector("[data-tour-stage]");
+      const tourPanel = document.querySelector("[data-tour-panel]");
+      if (tourPanel) {
+        const images = tourPanel.querySelectorAll("[data-tour-image]");
+        const progress = tourPanel.querySelector("[data-tour-progress]");
+        const steps = tourPanel.querySelectorAll("[data-tour-step]");
+        const total = 1600;
+        const tl = gsap.timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            trigger: tourStage,
+            start: "top top",
+            end: `+=${total}`,
+            pin: true,
+            anticipatePin: 1,
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const step = Math.min(3, Math.floor(self.progress * 3) + 1);
+              tourStage.setAttribute("data-active-step", String(step));
+            },
+          },
+        });
+        images.forEach((img, i) => {
+          tl.to(img, { opacity: 1, duration: 0.2, ease: "none" }, i / 3);
+        });
+        if (progress) {
+          tl.to(progress, { width: "100%", ease: "none", duration: 1 }, 0);
+        }
+        tl.eventCallback("onUpdate", () => {
+          const active = Number(
+            tourStage.getAttribute("data-active-step") || "1",
+          );
+          steps.forEach((s, i) => {
+            s.classList.toggle("opacity-100", i + 1 === active);
+            s.classList.toggle("opacity-40", i + 1 !== active);
+          });
+        });
+      }
+
+      const waveField = document.querySelector("[data-wave-field]");
+      if (waveField) {
+        const cols = waveField.querySelectorAll("[data-wave-col]");
+        const tl = pausedTimeline();
+        tl.fromTo(
+          cols,
+          { scaleY: 0 },
+          {
+            scaleY: 1,
+            transformOrigin: "bottom center",
+            duration: 0.7,
+            ease: "power3.out",
+            stagger: 0.012,
+            clearProps: "transform",
+          },
+          0.1,
+        );
+        bindRevealTrigger(
+          waveField.closest("[data-sttr-wrapper]") || waveField,
+          tl,
+        );
+      }
+
       const appSection = document.querySelector(
         '[data-container="apps-section"]',
       );
@@ -392,22 +490,11 @@
         const excerpt = appSection.querySelector("[data-excerpt]");
         const button = appSection.querySelector("[data-button]");
         const thumbnail = appSection.querySelector("[data-thumbnail]");
-        const bgShape = appSection.querySelector("[data-bg-shape]");
-        const glowShape = appSection.querySelector("[data-glow-shape]");
-        const tl = gsap.timeline({ paused: true });
-
-        const trailFrom = { x: -36, opacity: 0 };
-        const trailTo = {
-          x: 0,
-          opacity: 1,
-          duration: 0.55,
-          ease: "power2.out",
-          clearProps: "transform",
-        };
+        const tl = pausedTimeline();
 
         tl.fromTo(
           appSection,
-          { y: 36, opacity: 0 },
+          { y: 32, opacity: 0 },
           {
             y: 0,
             opacity: 1,
@@ -417,14 +504,40 @@
           },
           0,
         );
-        if (title) {
-          tl.fromTo(title, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
-        if (excerpt) {
-          tl.fromTo(excerpt, { ...trailFrom }, { ...trailTo }, "-=0.4");
-        }
+        if (title)
+          tl.fromTo(
+            title,
+            { x: -28, opacity: 0 },
+            { ...sharedTo, x: 0 },
+            "-=0.4",
+          );
+        if (excerpt)
+          tl.fromTo(
+            excerpt,
+            { x: -28, opacity: 0 },
+            { ...sharedTo, x: 0 },
+            "-=0.4",
+          );
         if (button) {
-          tl.fromTo(button, { ...trailFrom }, { ...trailTo }, "-=0.4");
+          tl.fromTo(button, { ...sharedFrom }, { ...sharedTo }, "-=0.4");
+        }
+        const activityLines = appSection.querySelectorAll(
+          "[data-activity-line]",
+        );
+        if (activityLines.length) {
+          tl.fromTo(
+            activityLines,
+            { y: 10, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.35,
+              stagger: 0.12,
+              ease: "power2.out",
+              clearProps: "transform",
+            },
+            "-=0.4",
+          );
         }
         if (thumbnail) {
           tl.fromTo(
@@ -446,39 +559,37 @@
             "-=0.4",
           );
         }
-        if (bgShape) {
-          tl.fromTo(
-            bgShape,
-            { y: 36, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.55,
-              ease: "power2.out",
-              clearProps: "transform",
-            },
-            "-=0.4",
-          );
-        }
-        if (glowShape) {
-          tl.fromTo(
-            glowShape,
-            { x: 36, opacity: 0 },
-            {
-              x: 0,
-              opacity: 1,
-              duration: 0.55,
-              ease: "power2.out",
-              clearProps: "transform",
-            },
-            "-=0.4",
-          );
-        }
+        addTicksToTimeline(appSection, tl, "-=0.4");
 
         bindRevealTrigger(appSection, tl);
       }
 
+      const spotlightCells = document.querySelectorAll("[data-spotlight]");
+      const onSpotlightMove = (e) => {
+        const cell =
+          e.target && e.target.closest
+            ? e.target.closest("[data-spotlight]")
+            : null;
+        if (!cell) return;
+        const rect = cell.getBoundingClientRect();
+        cell.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+        cell.style.setProperty("--my", `${e.clientY - rect.top}px`);
+      };
+      document.addEventListener("pointermove", onSpotlightMove);
+      cleanups.push(() =>
+        document.removeEventListener("pointermove", onSpotlightMove),
+      );
+
       ScrollTrigger.refresh();
+      // Dynamic imports (live kanban cards) and images shift layout after
+      // init — re-sync pin positions a few times as things settle.
+      const refreshAt = (ms) => timers.push(setTimeout(safeRefresh, ms));
+      if (document.readyState !== "complete") {
+        window.addEventListener("load", safeRefresh, { once: true });
+      }
+      refreshAt(400);
+      refreshAt(1000);
+      refreshAt(2200);
     });
 
     const smoothContent = document.querySelector("#smooth-content");
@@ -486,27 +597,35 @@
       let refreshTimeout = null;
       const ro = new ResizeObserver(() => {
         if (refreshTimeout) clearTimeout(refreshTimeout);
-        refreshTimeout = setTimeout(() => {
-          if (typeof ScrollTrigger !== "undefined") {
-            ScrollTrigger.refresh();
-          }
-        }, 100);
+        refreshTimeout = setTimeout(safeRefresh, 100);
       });
       ro.observe(smoothContent);
       cleanups.push(() => {
         if (refreshTimeout) clearTimeout(refreshTimeout);
         ro.disconnect();
       });
+      const onScrollEnd = () => {
+        if (refreshQueued) {
+          refreshQueued = false;
+          ScrollTrigger.refresh();
+        }
+      };
+      ScrollTrigger.addEventListener("scrollEnd", onScrollEnd);
+      cleanups.push(() =>
+        ScrollTrigger.removeEventListener("scrollEnd", onScrollEnd),
+      );
     }
   }
 
   onReady(() => {
     document.body.classList.remove("overflow-hidden");
+  });
+
+  whenHydrated(() => {
     initAnimations();
   });
 
-  // Sticky Header hide/show on scroll
-  onReady(() => {
+  whenHydrated(() => {
     const header = document.querySelector(".header-area");
     const bodyTarget = document.querySelector(
       ".header-innerHeight .border-container",
@@ -527,7 +646,11 @@
       header.style.removeProperty("transform");
     });
 
-    if (typeof ScrollTrigger === "undefined" || typeof gsap === "undefined") {
+    if (
+      typeof ScrollTrigger === "undefined" ||
+      typeof gsap === "undefined" ||
+      prefersReducedMotion()
+    ) {
       return;
     }
 
