@@ -78,7 +78,11 @@ export function ChaosPile() {
         const H = box.clientHeight;
         const els = [...box.children] as HTMLElement[];
 
-        const engine = Engine.create({ gravity: { y: 1.2 } });
+        // Sleeping stops resting bodies from micro-jittering on real devices.
+        const engine = Engine.create({
+          gravity: { y: 1.2 },
+          enableSleeping: true,
+        });
         const bodies = els.map((el, i) =>
           Bodies.rectangle(
             el.offsetLeft + el.offsetWidth / 2,
@@ -97,6 +101,7 @@ export function ChaosPile() {
         Composite.add(engine.world, [
           ...bodies,
           Bodies.rectangle(W / 2, H + 50, W * 2, 100, wall),
+          Bodies.rectangle(W / 2, -50, W * 2, 100, wall),
           Bodies.rectangle(-50, H / 2, 100, H * 4, wall),
           Bodies.rectangle(W + 50, H / 2, 100, H * 4, wall),
         ]);
@@ -117,11 +122,19 @@ export function ChaosPile() {
           );
         }
 
+        // Move with translate (compositor only) instead of left/top (layout every frame).
+        const sizes = els.map((el) => [
+          el.offsetWidth / 2,
+          el.offsetHeight / 2,
+        ]);
+        els.forEach((el) => {
+          el.style.left = "0";
+          el.style.top = "0";
+        });
         Events.on(engine, "afterUpdate", () => {
           bodies.forEach(({ position, angle }, i) => {
             const el = els[i];
-            el.style.left = `${position.x - el.offsetWidth / 2}px`;
-            el.style.top = `${position.y - el.offsetHeight / 2}px`;
+            el.style.translate = `${position.x - sizes[i][0]}px ${position.y - sizes[i][1]}px`;
             el.style.rotate = `${angle}rad`;
           });
         });
@@ -147,7 +160,7 @@ export function ChaosPile() {
       ref={boxRef}
       role="img"
       aria-label="Chat threads, calendar conflicts, room sheets, Meet links and tickets, all at once"
-      className="relative mt-6 h-[380px] cursor-grab overflow-x-clip touch-pan-y select-none active:cursor-grabbing"
+      className="relative mt-6 h-[380px] cursor-grab touch-pan-y [contain:layout_paint] [overflow-anchor:none] select-none active:cursor-grabbing"
     >
       {FRAGMENTS.map(({ icon: Icon, text, x, y, deg }) => (
         <div
