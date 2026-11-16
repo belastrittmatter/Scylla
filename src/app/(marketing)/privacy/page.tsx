@@ -10,32 +10,32 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <section className="section-bottom-border relative z-1 overflow-hidden pt-10">
-      <div className="container">
-        <div className="border-container section-spacing-lg">
+    <section>
+      <div className="mx-auto w-full max-w-[1200px] border-x border-dashed border-line px-5 sm:px-10">
+        <div className="py-20 sm:py-28">
           {/* Header */}
           <div className="max-w-[800px] mx-auto text-center mb-12 sm:mb-16">
-            <span className="badge-button mb-4 inline-block">
-              <Shield className="size-3.5 text-orange-400 inline-block mr-1.5" />
+            <span className="mb-5 inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-code text-xs text-ink-2">
+              <Shield className="size-3.5 text-ember inline-block mr-1.5" />
               Legal &amp; Trust
             </span>
-            <h1 className="gradient-text text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight">
               Privacy Policy
             </h1>
-            <p className="mt-3 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base">
+            <p className="mt-3 text-ink-2 text-sm sm:text-base">
               Last Updated: November 1, 2026 &bull; Effective Immediately
             </p>
           </div>
 
           {/* Policy Content Container */}
-          <div className="max-w-[840px] mx-auto text-[#3f3f46] dark:text-[#d4d4d8] text-sm sm:text-base leading-relaxed space-y-10">
+          <div className="max-w-[840px] mx-auto text-ink-2 text-sm sm:text-base leading-relaxed space-y-10">
             {/* Overview Box */}
-            <div className="p-6 rounded-2xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] space-y-3">
-              <h2 className="text-offWhite font-semibold text-lg flex items-center gap-2">
-                <Lock className="size-5 text-orange-400" />
+            <div className="p-6 rounded-2xl border border-line bg-surface space-y-3">
+              <h2 className="text-ink font-medium text-lg flex items-center gap-2">
+                <Lock className="size-5 text-ember" />
                 Commitment to User Privacy
               </h2>
-              <p className="text-[#a1a1aa] leading-relaxed">
+              <p className="text-ink-2 leading-relaxed">
                 At Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;,
                 &ldquo;us&rdquo;, or &ldquo;our&rdquo;), we take your privacy
                 and data security seriously. This Privacy Policy describes how
@@ -44,18 +44,18 @@ export default function PrivacyPolicyPage() {
                 synchronization services, and Model Context Protocol (MCP)
                 integrations (collectively, the &ldquo;Service&rdquo;).
               </p>
-              <p className="text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
+              <p className="text-ink-2 leading-relaxed text-xs sm:text-sm pt-2 border-t border-line">
                 Please also review our{" "}
                 <Link
                   href="/terms"
-                  className="text-orange-400 underline hover:text-orange-300"
+                  className="text-ember underline hover:text-ember-deep"
                 >
                   Terms of Service
                 </Link>{" "}
                 and{" "}
                 <Link
                   href="/ai-policy"
-                  className="text-orange-400 underline hover:text-orange-300"
+                  className="text-ember underline hover:text-ember-deep"
                 >
                   AI &amp; MCP Policy
                 </Link>{" "}
@@ -66,24 +66,22 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 1 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 1. Information We Collect
               </h2>
               <p>
                 We collect information you provide directly to us, as well as
                 information collected automatically when you use our Service:
               </p>
-              <ul className="list-disc pl-6 space-y-2 text-[#52525b] dark:text-[#a1a1aa]">
+              <ul className="list-disc pl-6 space-y-2 text-ink-2">
                 <li>
-                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
-                    Account Information:
-                  </strong>{" "}
+                  <strong className="text-ink">Account Information:</strong>{" "}
                   When you register or sign in via Google OAuth or email, we
                   collect your name, email address, profile picture, and
                   organization details.
                 </li>
                 <li>
-                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
+                  <strong className="text-ink">
                     Task &amp; Workspace Data:
                   </strong>{" "}
                   Kanban task titles, descriptions, due dates, priority tags,
@@ -91,9 +89,7 @@ export default function PrivacyPolicyPage() {
                   create in Scylla.
                 </li>
                 <li>
-                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
-                    Connected Calendar Data:
-                  </strong>{" "}
+                  <strong className="text-ink">Connected Calendar Data:</strong>{" "}
                   Calendar IDs, event titles, scheduled timestamps, attendees,
                   conference call URLs, and availability status necessary to
                   detect schedule conflicts and book meetings.
@@ -102,9 +98,9 @@ export default function PrivacyPolicyPage() {
             </div>
 
             {/* Section 2: Google User Data Disclosures (MANDATORY FOR GOOGLE VERIFICATION) */}
-            <div className="space-y-4 p-6 rounded-2xl border border-orange-500/30 bg-orange-500/[0.04]">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight flex items-center gap-2">
-                <RefreshCw className="size-5 text-orange-400" />
+            <div className="space-y-4 p-6 rounded-2xl border border-ember/30 bg-ember-soft">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight flex items-center gap-2">
+                <RefreshCw className="size-5 text-ember" />
                 2. Google Calendar API &amp; User Data Policy Compliance
               </h2>
               <p>
@@ -112,18 +108,16 @@ export default function PrivacyPolicyPage() {
                 to provide automated multi-person schedule comparison and
                 bi-directional event synchronization.
               </p>
-              <div className="space-y-3 text-[#3f3f46] dark:text-[#d4d4d8]">
+              <div className="space-y-3 text-ink-2">
                 <p>
-                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
-                    How We Use Google Data:
-                  </strong>{" "}
+                  <strong className="text-ink">How We Use Google Data:</strong>{" "}
                   We access your Google Calendar solely to calculate mutual
                   free/busy times with your teammates, synchronize scheduled
                   tasks with your calendar timeline, and create confirmed event
                   invites on your behalf.
                 </p>
                 <p>
-                  <strong className="text-[#18181b] dark:text-[#fbfbfb]">
+                  <strong className="text-ink">
                     Google API Limited Use Disclosure:
                   </strong>{" "}
                   Scylla&apos;s use and transfer of information received from
@@ -132,13 +126,13 @@ export default function PrivacyPolicyPage() {
                     href="https://developers.google.com/terms/api-services-user-data-policy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-orange-400 underline hover:text-orange-300"
+                    className="text-ember underline hover:text-ember-deep"
                   >
                     Google API Services User Data Policy
                   </a>
                   , including the Limited Use requirements.
                 </p>
-                <ul className="list-disc pl-6 space-y-1.5 text-[#52525b] dark:text-[#a1a1aa]">
+                <ul className="list-disc pl-6 space-y-1.5 text-ink-2">
                   <li>
                     We do <strong>NOT</strong> sell your Google user data to
                     third parties.
@@ -165,21 +159,21 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 3 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 3. How We Use Your Information
               </h2>
               <p>
                 We use the collected information for the following specific
                 purposes:
               </p>
-              <ul className="list-disc pl-6 space-y-2 text-[#52525b] dark:text-[#a1a1aa]">
+              <ul className="list-disc pl-6 space-y-2 text-ink-2">
                 <li>
                   To provide, maintain, and optimize our core task management,
                   visual time-blocking, and calendar scheduling platform.
                 </li>
                 <li>
-                  To synchronize events bidirectionally with Google Calendar,
-                  Microsoft Outlook, and connected workspace tools.
+                  To read availability from and write events to Google Calendar
+                  and connected Google Workspace resources.
                 </li>
                 <li>
                   To enable Model Context Protocol (MCP) server endpoints
@@ -196,7 +190,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 4 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 4. Data Storage, Security &amp; Retention
               </h2>
               <p>
@@ -215,14 +209,14 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 5 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 5. Your Data Rights &amp; Choices
               </h2>
               <p>
                 Depending on your jurisdiction (including GDPR and CCPA/CPRA),
                 you have the right to:
               </p>
-              <ul className="list-disc pl-6 space-y-1.5 text-[#52525b] dark:text-[#a1a1aa]">
+              <ul className="list-disc pl-6 space-y-1.5 text-ink-2">
                 <li>
                   Access, download, or export a copy of your personal data.
                 </li>
@@ -240,7 +234,7 @@ export default function PrivacyPolicyPage() {
 
             {/* Section 6 */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 6. Contact Us
               </h2>
               <p>
@@ -248,9 +242,9 @@ export default function PrivacyPolicyPage() {
                 Privacy Policy or your data, please contact our Data Protection
                 Officer at:
               </p>
-              <div className="p-5 rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] flex items-center gap-3">
-                <Mail className="size-5 text-orange-400" />
-                <span className="text-offWhite font-mono text-sm">
+              <div className="p-5 rounded-xl border border-line bg-surface flex items-center gap-3">
+                <Mail className="size-5 text-ember" />
+                <span className="text-ink font-mono text-sm">
                   privacy@scylla.app
                 </span>
               </div>

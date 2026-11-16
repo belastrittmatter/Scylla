@@ -10,32 +10,32 @@ export const metadata: Metadata = {
 
 export default function AiPolicyPage() {
   return (
-    <section className="section-bottom-border relative z-1 overflow-hidden pt-10">
-      <div className="container">
-        <div className="border-container section-spacing-lg">
+    <section>
+      <div className="mx-auto w-full max-w-[1200px] border-x border-dashed border-line px-5 sm:px-10">
+        <div className="py-20 sm:py-28">
           {/* Header */}
           <div className="max-w-[800px] mx-auto text-center mb-12 sm:mb-16">
-            <span className="badge-button mb-4 inline-block">
-              <Bot className="size-3.5 text-orange-400 inline-block mr-1.5" />
+            <span className="mb-5 inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 font-code text-xs text-ink-2">
+              <Bot className="size-3.5 text-ember inline-block mr-1.5" />
               AI Governance
             </span>
-            <h1 className="gradient-text text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight">
               AI &amp; MCP Protocol Policy
             </h1>
-            <p className="mt-3 text-[#52525b] dark:text-[#a1a1aa] text-sm sm:text-base">
+            <p className="mt-3 text-ink-2 text-sm sm:text-base">
               Last Updated: November 1, 2026 &bull; Model Context Protocol
               Standard
             </p>
           </div>
 
           {/* Content */}
-          <div className="max-w-[840px] mx-auto text-[#3f3f46] dark:text-[#d4d4d8] text-sm sm:text-base leading-relaxed space-y-10">
-            <div className="p-6 rounded-2xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] space-y-3">
-              <h2 className="text-offWhite font-semibold text-lg flex items-center gap-2">
-                <Shield className="size-5 text-orange-400" />
+          <div className="max-w-[840px] mx-auto text-ink-2 text-sm sm:text-base leading-relaxed space-y-10">
+            <div className="p-6 rounded-2xl border border-line bg-surface space-y-3">
+              <h2 className="text-ink font-medium text-lg flex items-center gap-2">
+                <Shield className="size-5 text-ember" />
                 Human-in-the-Loop &amp; Open Standards
               </h2>
-              <p className="text-[#a1a1aa] leading-relaxed">
+              <p className="text-ink-2 leading-relaxed">
                 Scylla integrates with the open Model Context Protocol (MCP) to
                 allow authorized AI coding agents (such as Claude Desktop,
                 Cursor, and Windsurf) to assist you with scheduling, meeting
@@ -43,19 +43,19 @@ export default function AiPolicyPage() {
                 maintain 100% control, ownership, and visibility over any action
                 an AI assistant performs.
               </p>
-              <p className="text-[#a1a1aa] leading-relaxed text-xs sm:text-sm pt-2 border-t border-[#e4e4e7] dark:border-[#27272a]">
+              <p className="text-ink-2 leading-relaxed text-xs sm:text-sm pt-2 border-t border-line">
                 For complete details regarding our data collection practices and
                 user rights, please consult our{" "}
                 <Link
                   href="/privacy"
-                  className="text-orange-400 underline hover:text-orange-300"
+                  className="text-ember underline hover:text-ember-deep"
                 >
                   Privacy Policy
                 </Link>{" "}
                 and{" "}
                 <Link
                   href="/terms"
-                  className="text-orange-400 underline hover:text-orange-300"
+                  className="text-ember underline hover:text-ember-deep"
                 >
                   Terms of Service
                 </Link>
@@ -64,7 +64,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 1. Zero Unauthorized Model Training
               </h2>
               <p>
@@ -75,7 +75,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 2. Explicit Authorization for Agent Actions
               </h2>
               <p>
@@ -87,7 +87,7 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 3. Google Calendar API Isolation
               </h2>
               <p>
@@ -97,7 +97,7 @@ export default function AiPolicyPage() {
                   href="https://developers.google.com/terms/api-services-user-data-policy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-orange-400 underline hover:text-orange-300"
+                  className="text-ember underline hover:text-ember-deep"
                 >
                   Google API Services User Data Policy
                 </a>
@@ -108,16 +108,16 @@ export default function AiPolicyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#18181b] dark:text-[#fbfbfb] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-medium text-ink tracking-tight">
                 4. Questions &amp; Support
               </h2>
               <p>
                 For questions regarding our AI policy or MCP implementation,
                 please contact our team at:
               </p>
-              <div className="p-5 rounded-xl border border-[#e4e4e7] dark:border-[#27272a] bg-[#121215] flex items-center gap-3">
-                <Mail className="size-5 text-orange-400" />
-                <span className="text-offWhite font-mono text-sm">
+              <div className="p-5 rounded-xl border border-line bg-surface flex items-center gap-3">
+                <Mail className="size-5 text-ember" />
+                <span className="text-ink font-mono text-sm">
                   ai-policy@scylla.app
                 </span>
               </div>
