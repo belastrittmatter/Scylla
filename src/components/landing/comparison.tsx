@@ -23,8 +23,13 @@ export function LandingComparison() {
           <h3 className="text-2xl font-medium tracking-[-0.02em] text-ink sm:text-[32px]">
             Without
           </h3>
-          <p className="mt-1 hidden font-code text-xs text-ink-3 [@media(pointer:fine)]:block">
-            go on, drag them around
+          <p className="mt-1 font-code text-xs text-ink-3">
+            <span className="hidden [@media(pointer:fine)]:inline">
+              go on, drag them around
+            </span>
+            <span className="hidden [@media(pointer:coarse)]:inline">
+              tilt your phone
+            </span>
           </p>
           <ChaosPile />
         </div>
