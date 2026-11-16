@@ -2,34 +2,27 @@ import {
   LandingHero,
   LandingAgentCloud,
   LandingStatBand,
-  LandingTaskBoardPreview,
-  LandingProcessSteps,
-  LandingRegion,
-  LandingProductTour,
+  LandingHowItWorks,
   LandingComparison,
-  LandingCalendar,
-  LandingUseCases,
+  LandingFeatures,
   LandingFaq,
   LandingIntegrations,
-  LandingHydrationSentinel,
 } from "@/components/landing";
+import { getGitHubRepoStars } from "@/lib/github-stars";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Cached for an hour ("use cache"), shared with the layout's header call.
+  const stars = await getGitHubRepoStars();
   return (
     <>
-      <LandingHero />
+      <LandingHero stars={stars} />
       <LandingAgentCloud />
       <LandingStatBand />
-      <LandingTaskBoardPreview />
-      <LandingProcessSteps />
-      <LandingRegion />
-      <LandingProductTour />
+      <LandingHowItWorks />
       <LandingComparison />
-      <LandingCalendar />
-      <LandingUseCases />
+      <LandingFeatures />
       <LandingFaq />
       <LandingIntegrations />
-      <LandingHydrationSentinel part="page" />
     </>
   );
 }

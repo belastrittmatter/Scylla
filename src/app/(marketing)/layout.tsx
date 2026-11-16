@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import {
-  LandingScripts,
   LandingHeader,
   LandingCtaBanner,
   LandingFooter,
-  LandingHydrationSentinel,
-  LandingScrollTop,
 } from "@/components/landing";
 import { getGitHubRepoStars } from "@/lib/github-stars";
 
 /**
  * Two-family type system:
- * - STK Bureau Sans (Book / Regular / Book Italic) → body, UI, headlines
- * - Maple Mono NF (Italic + Regular) → emphasis, mono chips, terminal
+ * - STK Bureau Sans (400 / 500 only — never use font-semibold) → body, UI, headlines
+ * - Maple Mono NF (Italic + Regular) → eyebrows, accents, terminal
  */
 const bureauSans = localFont({
   src: [
@@ -69,31 +66,12 @@ export default async function MarketingLayout({
 
   return (
     <div
-      className={`scylla-landing ${bureauSans.variable} ${mapleMono.variable} min-h-screen bg-white text-[#18181b] selection:bg-primary selection:text-white`}
+      className={`landing ${bureauSans.variable} ${mapleMono.variable} min-h-screen overflow-x-clip selection:bg-ember selection:text-white`}
     >
-      <script
-        dangerouslySetInnerHTML={{
-          __html:
-            "if (location.pathname === '/') document.documentElement.classList.add('gsap-pending');",
-        }}
-      />
-
-      {/* Dynamic GSAP, ScrollSmoother, and interactive scripts */}
-      <LandingScripts />
-
-      {/* Sticky header navigation (stars + theme toggle + CTA) */}
       <LandingHeader stars={stars} />
-
-      {/* Smooth scrolling wrapper */}
-      <div id="smooth-wrapper">
-        <div id="smooth-content">
-          {children}
-          <LandingCtaBanner />
-          <LandingFooter />
-          <LandingHydrationSentinel part="shell" />
-          <LandingScrollTop />
-        </div>
-      </div>
+      <main>{children}</main>
+      <LandingCtaBanner stars={stars} />
+      <LandingFooter />
     </div>
   );
 }

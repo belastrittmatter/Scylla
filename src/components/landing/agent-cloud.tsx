@@ -1,6 +1,3 @@
-"use client";
-
-import * as React from "react";
 import {
   siClaude,
   siClaudecode,
@@ -8,107 +5,79 @@ import {
   siCursor,
   siGithubcopilot,
   siGooglegemini,
+  siJetbrains,
+  siMistralai,
+  siPerplexity,
+  siRaycast,
+  siWarp,
   siWindsurf,
+  siZedindustries,
   type SimpleIcon,
 } from "simple-icons";
-import { CornerTicks } from "@/components/landing/corner-ticks";
+import { CornerTicks } from "@/components/landing/primitives";
 
-interface Agent {
-  name: string;
-  icon?: SimpleIcon;
-  monogram?: string;
-}
-
-const AGENTS: Agent[] = [
-  { name: "Claude Desktop", icon: siClaude },
-  { name: "Claude Code", icon: siClaudecode },
-  { name: "Codex", monogram: "Cx" },
-  { name: "ChatGPT", monogram: "GPT" },
-  { name: "Gemini", icon: siGooglegemini },
-  { name: "Copilot", icon: siGithubcopilot },
-  { name: "Cursor", icon: siCursor },
-  { name: "Windsurf", icon: siWindsurf },
-  { name: "Cline", icon: siCline },
-  { name: "ZCode", monogram: "Z" },
-  { name: "Antigravity", monogram: "Ag" },
+// Only clients with a published logo; OpenAI's mark isn't in simple-icons.
+const AGENTS: Array<[string, SimpleIcon]> = [
+  ["Claude", siClaude],
+  ["Claude Code", siClaudecode],
+  ["Gemini", siGooglegemini],
+  ["GitHub Copilot", siGithubcopilot],
+  ["Cursor", siCursor],
+  ["Windsurf", siWindsurf],
+  ["Cline", siCline],
+  ["Zed", siZedindustries],
+  ["JetBrains AI", siJetbrains],
+  ["Warp", siWarp],
+  ["Raycast", siRaycast],
+  ["Perplexity", siPerplexity],
+  ["Le Chat", siMistralai],
 ];
-
-function AgentMark({ agent }: { agent: Agent }) {
-  if (agent.icon) {
-    // currentColor keeps every logo visible on light and dark — brand hexes
-    // like Cursor/Copilot (#000) vanish on dark backgrounds.
-    return (
-      <svg
-        className="size-4 shrink-0"
-        viewBox="0 0 24 24"
-        role="img"
-        aria-hidden="true"
-      >
-        <path d={agent.icon.path} fill="currentColor" />
-      </svg>
-    );
-  }
-  return (
-    <span
-      className="mono-chip flex size-5 shrink-0 items-center justify-center rounded-[5px] border border-[var(--sl-line)] text-[9px] leading-none"
-      aria-hidden="true"
-    >
-      {agent.monogram}
-    </span>
-  );
-}
 
 function Chips({ hidden = false }: { hidden?: boolean }) {
   return (
-    <div className="flex items-center gap-4 pr-4" aria-hidden={hidden}>
-      {AGENTS.map((agent) => (
-        <span key={agent.name} className="agent-chip text-sm">
-          <AgentMark agent={agent} />
-          {agent.name}
-        </span>
+    <ul
+      className="flex shrink-0 items-center gap-3 pr-3"
+      aria-hidden={hidden || undefined}
+    >
+      {AGENTS.map(([name, icon]) => (
+        <li
+          key={name}
+          className="flex h-11 items-center gap-2.5 rounded-full border border-line bg-surface px-4 text-sm whitespace-nowrap text-ink-2"
+        >
+          {/* currentColor keeps black marks (Cursor, Copilot) visible in dark mode */}
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4 shrink-0"
+            aria-hidden="true"
+          >
+            <path d={icon.path} fill="currentColor" />
+          </svg>
+          {name}
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
-/**
- * Logo-cloud block in the spirit of Cloudflare's "trusted by" band —
- * the AI agents Scylla works with through MCP. Infinite marquee that
- * pauses on hover; static under prefers-reduced-motion.
- */
+/** Logo strip of MCP clients; pauses on hover, static under reduced motion. */
 export function LandingAgentCloud() {
   return (
-    <section className="relative" data-agent-cloud="">
-      <div className="container">
-        <div className="border-container pt-14 sm:pt-18 lg:pt-20 pb-16 sm:pb-20 lg:pb-24">
-          <div
-            className="max-w-[620px] mx-auto text-center mb-8 sm:mb-10"
-            data-section-title=""
-          >
-            <h2
-              className="text-xl sm:text-2xl font-medium text-[#18181b] dark:text-[#fbfbfb]"
-              data-title=""
-            >
-              Works with the agents your team already uses
-            </h2>
-            <p
-              className="mt-2 text-[#52525b] dark:text-[#a1a1aa] text-sm"
-              data-excerpt=""
-            >
-              One MCP server — every coding assistant books rooms, files
-              tickets, and reads calendars.
-            </p>
-          </div>
-          <div
-            className="rounded-[16px] border border-[#e4e4e7] bg-[var(--sl-surface)] px-6 py-7 relative dark:border-[#222227]"
-            data-sttr-wrapper=""
-          >
-            <CornerTicks />
-            <div className="marquee relative" data-marquee="">
-              <div className="marquee-track">
-                <Chips />
-                <Chips hidden />
-              </div>
+    <section aria-label="Supported AI assistants">
+      <div className="mx-auto max-w-[1200px] border-x border-dashed border-line px-5 pt-20 pb-6 sm:px-10 sm:pt-24">
+        <div className="text-center">
+          <h2 className="text-xl font-medium tracking-[-0.01em] text-ink sm:text-2xl">
+            Works with the assistants your team already uses
+          </h2>
+          <p className="mt-2 text-sm text-ink-2">
+            One MCP server. Every client can plan, book and update tasks.
+          </p>
+        </div>
+        <div className="relative mt-8 border border-line bg-paper py-6">
+          <CornerTicks />
+          <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+            <div className="marquee flex w-max">
+              <Chips />
+              <Chips hidden />
             </div>
           </div>
         </div>
