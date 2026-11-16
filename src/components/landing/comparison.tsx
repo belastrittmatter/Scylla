@@ -16,7 +16,10 @@ export function LandingComparison() {
         title="One meeting shouldn't need five tools."
       />
 
-      <div className="reveal relative mt-14 grid gap-px border border-line bg-line lg:grid-cols-2">
+      <div
+        data-pile-card
+        className="reveal relative mt-14 grid gap-px border border-line bg-line lg:grid-cols-2"
+      >
         <CornerTicks />
 
         <div className="bg-surface p-7 sm:p-10">

@@ -117,6 +117,7 @@ export function ChaosPile() {
 
     let cleanup = () => {};
     let stopTilt = () => {};
+    let stopMouse = () => {};
     const observer = new IntersectionObserver(
       async ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -131,6 +132,7 @@ export function ChaosPile() {
           MouseConstraint,
           Events,
           Sleeping,
+          Body,
         } = await import("matter-js");
         const W = box.clientWidth;
         const H = box.clientHeight;
@@ -153,33 +155,72 @@ export function ChaosPile() {
               angle: (parseFloat(el.style.rotate) * Math.PI) / 180,
               chamfer: { radius: 8 },
               restitution: 0.25,
-              friction: 0.6,
+              friction: 0.8,
+              frictionStatic: 1,
             },
           ),
         );
+        // World, in box coordinates: a bin (floor at H, side walls) whose walls stop at the
+        // card's top edge (ledge). On desktop, above that edge fragments can move anywhere
+        // within the card's width, and ones dropped beside the box rest on top of the card.
+        // Phones get a closed bin with a ceiling, since tilt can point gravity up.
+        const fine = matchMedia("(pointer: fine)").matches;
+        const rect = box.getBoundingClientRect();
+        const card = box.closest("[data-pile-card]") ?? box;
+        const cardRect = card.getBoundingClientRect();
+        const ledge = fine ? cardRect.top - rect.top : 0;
+        const minX = fine ? cardRect.left - rect.left : 0;
+        const maxX = fine ? cardRect.right - rect.left : W;
+        const T = 4000;
         const wall = { isStatic: true };
+        const block = (x0: number, y0: number, x1: number, y1: number) =>
+          Bodies.rectangle(
+            (x0 + x1) / 2,
+            (y0 + y1) / 2,
+            x1 - x0,
+            y1 - y0,
+            wall,
+          );
         Composite.add(engine.world, [
           ...bodies,
-          Bodies.rectangle(W / 2, H + 50, W * 2, 100, wall),
-          Bodies.rectangle(W / 2, -50, W * 2, 100, wall),
-          Bodies.rectangle(-50, H / 2, 100, H * 4, wall),
-          Bodies.rectangle(W + 50, H / 2, 100, H * 4, wall),
+          block(-T, H, W + T, H + T), // floor
+          block(-T, ledge, 0, H + T), // left of the box, up to the card edge
+          block(W, ledge, W + T, H + T), // right of the box, up to the card edge
+          block(minX - T, ledge - T, minX, ledge), // card edges, all the way up
+          block(maxX, ledge - T, maxX + T, ledge),
+          ...(fine ? [] : [block(-T, -T, W + T, 0)]), // phone ceiling
         ]);
 
         // Drag only with a precise pointer: matter's touch handlers block page scrolling.
-        if (matchMedia("(pointer: fine)").matches) {
+        if (fine) {
           const mouse = Mouse.create(box);
-          box.removeEventListener(
-            "wheel",
-            (mouse as unknown as { mousewheel: EventListener }).mousewheel,
-          );
+          const handlers = mouse as unknown as Record<
+            "mousemove" | "mouseup" | "mousewheel",
+            EventListener
+          >;
+          // Keep page scroll working over the pile.
+          box.removeEventListener("wheel", handlers.mousewheel);
+          // Track the cursor outside the box too, so fragments can be dragged out and released anywhere.
+          addEventListener("mousemove", handlers.mousemove);
+          addEventListener("mouseup", handlers.mouseup);
+          stopMouse = () => {
+            removeEventListener("mousemove", handlers.mousemove);
+            removeEventListener("mouseup", handlers.mouseup);
+          };
           Composite.add(
             engine.world,
             MouseConstraint.create(engine, {
               mouse,
-              constraint: { stiffness: 0.2 },
+              constraint: { stiffness: 0.2, damping: 0.1 },
             }),
           );
+          // Keep the drag target in open space so the cursor never pulls a fragment into a wall.
+          Events.on(engine, "beforeUpdate", () => {
+            const { position } = mouse;
+            position.x = Math.max(minX, Math.min(maxX, position.x));
+            const inBox = position.x >= 0 && position.x <= W;
+            position.y = Math.min(inBox ? H : ledge, position.y);
+          });
         } else {
           const onTilt = ({ beta, gamma }: DeviceOrientationEvent) => {
             if (beta === null || gamma === null) return;
@@ -214,18 +255,39 @@ export function ChaosPile() {
           el.style.left = "0";
           el.style.top = "0";
         });
+        // Backstop against tunnelling: push anything that slipped into a wall back out.
+        // 2px slack: resting contacts sink slightly, correcting those would jitter.
         Events.on(engine, "afterUpdate", () => {
+          for (const body of bodies) {
+            const { min, max } = body.bounds;
+            const inBox = body.position.x >= 0 && body.position.x <= W;
+            const left = inBox && max.y > ledge + 2 ? 0 : minX;
+            const right = inBox && max.y > ledge + 2 ? W : maxX;
+            const floor = inBox ? H : ledge;
+            const dx =
+              min.x < left - 2
+                ? left - min.x
+                : max.x > right + 2
+                  ? right - max.x
+                  : 0;
+            const dy = max.y > floor + 2 ? floor - max.y : 0;
+            if (dx || dy) Body.translate(body, { x: dx, y: dy });
+          }
+        });
+
+        // 120 physics steps/s stays smooth on 120 Hz screens; draw once per frame.
+        const runner = Runner.create({ delta: 1000 / 120 });
+        Events.on(runner, "afterTick", () => {
           bodies.forEach(({ position, angle }, i) => {
             const el = els[i];
             el.style.translate = `${position.x - sizes[i][0]}px ${position.y - sizes[i][1]}px`;
             el.style.rotate = `${angle}rad`;
           });
         });
-
-        const runner = Runner.create();
         Runner.run(runner, engine);
         cleanup = () => {
           stopTilt();
+          stopMouse();
           Runner.stop(runner);
           Engine.clear(engine);
         };
@@ -261,7 +323,7 @@ export function ChaosPile() {
         role="img"
         onClick={askTilt ? enableTilt : undefined}
         aria-label="Chat threads, calendar conflicts, room sheets, Meet links and tickets, all at once"
-        className="relative mt-6 h-[380px] cursor-grab touch-pan-y [contain:layout_paint] [overflow-anchor:none] select-none active:cursor-grabbing"
+        className="relative z-10 mt-6 h-[380px] cursor-grab touch-pan-y [contain:layout] [overflow-anchor:none] select-none active:cursor-grabbing"
       >
         {FRAGMENTS.map(({ icon: Icon, text, x, y, deg, wide }) => (
           <div
