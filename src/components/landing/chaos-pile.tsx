@@ -15,7 +15,8 @@ import {
   Video,
 } from "lucide-react";
 
-// x/y in % of the box, deg = starting tilt. This is also the no-JS / reduced-motion layout.
+// x/y in % of the box, deg = starting tilt; also the no-JS / reduced-motion layout.
+// wide = desktop only, so phones keep enough room for the pile to actually fall.
 const FRAGMENTS = [
   {
     icon: MessageCircle,
@@ -32,13 +33,41 @@ const FRAGMENTS = [
     deg: 2,
   },
   { icon: DoorClosed, text: "Room 3B is taken", x: 8, y: 24, deg: 1 },
-  { icon: Hash, text: "12 unread in #mobile", x: 56, y: 32, deg: -4 },
+  {
+    icon: Hash,
+    text: "12 unread in #mobile",
+    x: 56,
+    y: 32,
+    deg: -4,
+    wide: true,
+  },
   { icon: Link2Off, text: "where's the Meet link?", x: 24, y: 42, deg: -3 },
-  { icon: FileSpreadsheet, text: "rooms_v3_FINAL.xlsx", x: 2, y: 54, deg: 3 },
+  {
+    icon: FileSpreadsheet,
+    text: "rooms_v3_FINAL.xlsx",
+    x: 2,
+    y: 54,
+    deg: 3,
+    wide: true,
+  },
   { icon: Clock, text: "9am… whose 9am?", x: 52, y: 52, deg: 4 },
-  { icon: MailX, text: "Alex declined", x: 30, y: 64, deg: -1 },
-  { icon: Video, text: "two different Meet links", x: 50, y: 74, deg: 2 },
-  { icon: BellRing, text: "Reminder: book a room", x: 6, y: 78, deg: -4 },
+  { icon: MailX, text: "Alex declined", x: 30, y: 64, deg: -1, wide: true },
+  {
+    icon: Video,
+    text: "two different Meet links",
+    x: 50,
+    y: 74,
+    deg: 2,
+    wide: true,
+  },
+  {
+    icon: BellRing,
+    text: "Reminder: book a room",
+    x: 6,
+    y: 78,
+    deg: -4,
+    wide: true,
+  },
   {
     icon: TicketX,
     text: "which ticket was this about?",
@@ -105,21 +134,23 @@ export function ChaosPile() {
         } = await import("matter-js");
         const W = box.clientWidth;
         const H = box.clientHeight;
-        const els = [...box.children] as HTMLElement[];
+        const els = ([...box.children] as HTMLElement[]).filter(
+          (el) => el.offsetWidth > 0,
+        );
 
         // Sleeping stops resting bodies from micro-jittering on real devices.
         const engine = Engine.create({
           gravity: { y: 1.2 },
           enableSleeping: true,
         });
-        const bodies = els.map((el, i) =>
+        const bodies = els.map((el) =>
           Bodies.rectangle(
             el.offsetLeft + el.offsetWidth / 2,
             el.offsetTop + el.offsetHeight / 2,
             el.offsetWidth,
             el.offsetHeight,
             {
-              angle: (FRAGMENTS[i].deg * Math.PI) / 180,
+              angle: (parseFloat(el.style.rotate) * Math.PI) / 180,
               chamfer: { radius: 8 },
               restitution: 0.25,
               friction: 0.6,
@@ -216,27 +247,27 @@ export function ChaosPile() {
   }
 
   return (
-    <div className="relative mt-6">
-      {askTilt && (
-        <button
-          type="button"
-          onClick={enableTilt}
-          className="absolute top-0 right-0 z-10 rounded-full border border-line bg-surface px-3 py-1.5 font-code text-xs text-ink-2"
-        >
-          Tap, then tilt your phone
-        </button>
-      )}
+    <div>
+      <p className="mt-1 font-code text-xs text-ink-3">
+        <span className="hidden [@media(pointer:fine)]:inline">
+          go on, drag them around
+        </span>
+        <span className="hidden [@media(pointer:coarse)]:inline">
+          {askTilt ? "tap the pile, then tilt your phone" : "tilt your phone"}
+        </span>
+      </p>
       <div
         ref={boxRef}
         role="img"
+        onClick={askTilt ? enableTilt : undefined}
         aria-label="Chat threads, calendar conflicts, room sheets, Meet links and tickets, all at once"
-        className="relative h-[380px] cursor-grab touch-pan-y [contain:layout_paint] [overflow-anchor:none] select-none active:cursor-grabbing"
+        className="relative mt-6 h-[380px] cursor-grab touch-pan-y [contain:layout_paint] [overflow-anchor:none] select-none active:cursor-grabbing"
       >
-        {FRAGMENTS.map(({ icon: Icon, text, x, y, deg }) => (
+        {FRAGMENTS.map(({ icon: Icon, text, x, y, deg, wide }) => (
           <div
             key={text}
             style={{ left: `${x}%`, top: `${y}%`, rotate: `${deg}deg` }}
-            className="absolute flex items-center gap-2.5 rounded-lg border border-line bg-paper px-3 py-2 text-xs whitespace-nowrap text-ink-2 shadow-[0_8px_24px_-12px_rgb(0_0_0/0.18)] sm:text-sm"
+            className={`absolute items-center gap-2.5 rounded-lg border border-line bg-paper px-3 py-2 text-xs whitespace-nowrap text-ink-2 shadow-[0_8px_24px_-12px_rgb(0_0_0/0.18)] sm:text-sm ${wide ? "hidden sm:flex" : "flex"}`}
           >
             <Icon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
             {text}
