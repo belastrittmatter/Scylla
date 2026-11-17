@@ -51,7 +51,7 @@ function Avatar({ className }: { className: string }) {
 function Team() {
   return (
     <span className="flex">
-      {["bg-ink", "bg-ink-2", "bg-ink-3", "bg-ember-soft"].map((c) => (
+      {["bg-ink", "bg-ink-2", "bg-ink-3", "bg-ink/20"].map((c) => (
         <Avatar key={c} className={c} />
       ))}
     </span>
@@ -71,9 +71,12 @@ function Done({ className }: { className?: string }) {
   );
 }
 
-/** The only surface in the panel: a flat hairline stage that grows instead of clipping. */
+/**
+ * The only surface in the panel: a flat hairline stage. Every scene is laid out in one grid cell, so the
+ * stage is as tall as the tallest scene's real content and never jumps between scenes.
+ */
 const stage =
-  "bg-surface border-line relative min-h-68 rounded-xl border p-4 text-xs";
+  "bg-surface border-line relative flex-1 rounded-xl border p-4 text-xs";
 /** Ember marks the one result each scene lands on. */
 const result = "text-ember-deep";
 const mono = "font-code text-[11px] tabular-nums";
@@ -101,7 +104,8 @@ function Chat({
 }) {
   return (
     <>
-      <div className={stage}>
+      {/* Bottom-anchored like a chat thread: spare height sits above the question, not under the answer. */}
+      <div className={cn(stage, "flex flex-col justify-end")}>
         <In
           at={0.2}
           className="bg-ink/[0.06] slide-in-from-bottom-2 ml-auto w-fit max-w-[250px] rounded-[14px_14px_4px_14px] px-3 py-2 text-[13px] leading-snug"
@@ -130,12 +134,19 @@ function Chat({
             {step}
           </In>
         ))}
-        <In
-          at={2.6 + steps.length * 1.1}
-          className="border-line slide-in-from-bottom-1 mt-3 ml-[23px] border-t border-dashed pt-3"
-        >
-          {children}
-        </In>
+        {/* The result's slot is reserved from the first frame as a dashed outline; the answer fills it and the outline turns solid. */}
+        <div className="border-line relative mt-3 ml-[23px] rounded-lg border border-dashed px-3 py-2.5">
+          <In
+            at={2.6 + steps.length * 1.1}
+            className="border-line absolute -inset-px rounded-lg border"
+          />
+          <In
+            at={2.6 + steps.length * 1.1}
+            className="slide-in-from-bottom-1 relative"
+          >
+            {children}
+          </In>
+        </div>
       </div>
       <Caption at={3 + steps.length * 1.1}>{caption}</Caption>
     </>
@@ -315,7 +326,6 @@ export function SignInShowcase({ className }: { className?: string }) {
   const paused = stopped || hovered || focused || tabHidden;
   const playState = { animationPlayState: paused ? "paused" : "running" };
 
-  const { Scene } = SCENES[index];
   return (
     <div
       className={className}
@@ -380,15 +390,28 @@ export function SignInShowcase({ className }: { className?: string }) {
           </button>
         ))}
       </div>
-      <div
-        aria-hidden
-        key={`${index}-${restart}`}
-        className={cn(
-          "animate-in fade-in duration-500",
-          paused && "[&_*]:[animation-play-state:paused]",
+      {/* Inactive scenes stay in the cell, invisible and static, only to size it. */}
+      <div aria-hidden className="grid">
+        {SCENES.map(({ title, Scene }, i) =>
+          i === index ? (
+            <div
+              key={`${index}-${restart}`}
+              className={cn(
+                "animate-in fade-in col-start-1 row-start-1 flex flex-col duration-500",
+                paused && "[&_*]:[animation-play-state:paused]",
+              )}
+            >
+              <Scene />
+            </div>
+          ) : (
+            <div
+              key={title}
+              className="invisible col-start-1 row-start-1 flex flex-col [&_*]:animate-none"
+            >
+              <Scene />
+            </div>
+          ),
         )}
-      >
-        <Scene />
       </div>
     </div>
   );
