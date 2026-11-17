@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { UsersRound } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useTeams } from "@/hooks/use-teams";
 import { formatPersonName, getPersonInitials } from "@/lib/format-person-name";
@@ -16,6 +15,9 @@ import {
 import { CalendarPanelCard } from "./calendar-panel-card";
 import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
+
+/** Members listed before "Show all"; selected members always stay visible. */
+const COLLAPSED_MEMBER_COUNT = 8;
 
 type TeamMember = Awaited<ReturnType<typeof apiClient.teams.members>>[number];
 
@@ -43,6 +45,7 @@ export function CalendarTeamPanel({
   const { teams } = useTeams();
   const [pickedTeamId, setPickedTeamId] = React.useState("");
   const [members, setMembers] = React.useState<TeamMember[]>([]);
+  const [showAll, setShowAll] = React.useState(false);
   const teamId = pickedTeamId || teams[0]?.id || "";
   const selectedTeam = teams.find((team) => team.id === teamId);
 
@@ -52,7 +55,9 @@ export function CalendarTeamPanel({
     apiClient.teams
       .members(teamId)
       .then((list) => {
-        if (active) setMembers(list);
+        if (!active) return;
+        setMembers(list);
+        setShowAll(false);
       })
       .catch(() => {
         if (active) setMembers([]);
@@ -72,6 +77,17 @@ export function CalendarTeamPanel({
     (member) => member.user.email.trim().toLowerCase() !== currentEmail,
   );
 
+  const hasSelection = visibleMembers.some((member) =>
+    selectedIds.has(member.user.id),
+  );
+  const listedMembers = showAll
+    ? visibleMembers
+    : visibleMembers.filter(
+        (member, index) =>
+          index < COLLAPSED_MEMBER_COUNT || selectedIds.has(member.user.id),
+      );
+  const hiddenCount = visibleMembers.length - listedMembers.length;
+
   // The card is absent for a user who belongs to no team.
   if (teams.length === 0) return null;
 
@@ -79,7 +95,7 @@ export function CalendarTeamPanel({
     <CalendarPanelCard
       title="Team"
       meta={`${visibleMembers.length} members`}
-      icon={UsersRound}
+      active={hasSelection}
       defaultOpen={defaultOpen}
       bodyClassName="max-h-[220px] overflow-y-auto"
     >
@@ -102,7 +118,7 @@ export function CalendarTeamPanel({
       </Select>
 
       <div className="mt-2 space-y-0.5">
-        {visibleMembers.map((member) => {
+        {listedMembers.map((member) => {
           const name = formatPersonName(member.user.name, member.user.email);
           const item: CalendarAttendeeItem = {
             id: member.user.id,
@@ -131,6 +147,18 @@ export function CalendarTeamPanel({
             />
           );
         })}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="flex h-8 w-full items-center gap-1.5 rounded-md px-1.5 text-left text-xs text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            Show all members
+            <span className="font-code text-[11px] tabular-nums">
+              +{hiddenCount}
+            </span>
+          </button>
+        )}
       </div>
     </CalendarPanelCard>
   );

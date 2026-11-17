@@ -51,6 +51,8 @@ export function CalendarRoomsPanel({
     [selectedAttendees],
   );
 
+  const hasSelection = rooms.some((room) => selectedIds.has(room.id));
+
   const orderedRooms = [...rooms].sort(
     (a, b) => Number(selectedIds.has(b.id)) - Number(selectedIds.has(a.id)),
   );
@@ -59,7 +61,7 @@ export function CalendarRoomsPanel({
     <CalendarPanelCard
       title="Rooms"
       meta={`${rooms.length}`}
-      icon={Building2}
+      active={hasSelection}
       defaultOpen={defaultOpen}
       bodyClassName="max-h-[260px] overflow-y-auto"
     >
@@ -76,10 +78,19 @@ export function CalendarRoomsPanel({
               icon={Building2}
               checked={selectedIds.has(room.id)}
               onToggle={() => onToggleAttendee(room)}
-              meta={
-                room.capacity !== undefined ? String(room.capacity) : undefined
+              sublabel={
+                <>
+                  {room.details}
+                  {room.capacity !== undefined && (
+                    <>
+                      <span aria-hidden> · </span>
+                      <span className="font-code text-[11px] tabular-nums">
+                        {room.capacity} {room.capacity === 1 ? "seat" : "seats"}
+                      </span>
+                    </>
+                  )}
+                </>
               }
-              sublabel={room.details}
             />
           ))
         )}

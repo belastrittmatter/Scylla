@@ -31,6 +31,11 @@ import { apiClient } from "@/lib/api-client";
 import { useSession } from "@/lib/auth-client";
 import { useCalendarSettings } from "@/hooks/use-calendar-settings";
 import { getViewChipLabel } from "./calendar-toolbar-lib";
+import {
+  GOOGLE_EVENT_FALLBACK_COLOR,
+  LOCAL_EVENT_FALLBACK_COLOR,
+} from "./calendar-event-colors";
+
 
 const CalendarAddDialog = dynamic(
   () =>
@@ -198,7 +203,11 @@ export function CalendarDashboard() {
             start: new Date(ev.start),
             end: new Date(ev.end),
             recurringEventId: seriesId,
-            color: ev.color || (ev.source === "google" ? "#0284c7" : "#ea580c"),
+            color:
+              ev.color ||
+              (ev.source === "google"
+                ? GOOGLE_EVENT_FALLBACK_COLOR
+                : LOCAL_EVENT_FALLBACK_COLOR),
             data: {
               category: ev.category || "shared",
               location:
@@ -327,26 +336,26 @@ export function CalendarDashboard() {
     [syncCalendar],
   );
 
+  const weekChipLabel = getViewChipLabel(viewInfo.view, viewInfo.date);
+
   return (
-    <div className="flex min-h-[calc(100svh-57px)] w-full flex-col gap-5 p-6">
-      <header className="flex flex-wrap items-start gap-4">
-        <div>
+    <div className="flex w-full flex-col gap-4 p-4 sm:gap-5 sm:p-6 lg:h-full lg:min-h-0">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold tracking-tight">Calendar</h1>
-            <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              {getViewChipLabel(
-                viewInfo.view,
-                viewInfo.date,
-                settings.weekStartsOn,
-              )}
-            </span>
+            {weekChipLabel && (
+              <span className="hidden rounded-[4px] border px-1.5 py-px font-code text-[11px] tabular-nums text-muted-foreground md:inline-block">
+                {weekChipLabel}
+              </span>
+            )}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Plan meetings across your team and rooms.
           </p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="relative w-52">
+        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
+          <div className="relative min-w-0 flex-1 sm:w-52 sm:flex-none">
             <Search
               aria-hidden
               className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
@@ -358,14 +367,14 @@ export function CalendarDashboard() {
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search events"
               aria-label="Search events"
-              className="h-8 pl-8 pr-12 text-xs"
+              className="h-8 pl-8 text-xs sm:pr-12"
             />
-            <span
+            <kbd
               aria-hidden
-              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground"
+              className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-[4px] border px-1 font-code sm:block text-[10px] leading-4 text-muted-foreground"
             >
               ⌘K
-            </span>
+            </kbd>
           </div>
           <Button
             variant="ghost"
@@ -380,16 +389,16 @@ export function CalendarDashboard() {
               setSelectedSlotRange(null);
               setIsAddOpen(true);
             }}
-            className="gap-1.5"
+            className="shrink-0 gap-1.5 max-sm:w-8 max-sm:px-0"
           >
             <Plus />
-            Add event
+            <span className="sr-only sm:not-sr-only">Add event</span>
           </Button>
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="order-last flex min-w-0 flex-col gap-4 lg:order-none">
+      <div className="grid gap-4 sm:gap-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="order-last flex min-w-0 flex-col divide-y self-start overflow-hidden rounded-lg border bg-card lg:order-none lg:max-h-full lg:overflow-y-auto">
           <CalendarTeamPanel
             selectedAttendees={selectedAttendees}
             onToggleAttendee={handleToggleAttendee}
@@ -408,7 +417,18 @@ export function CalendarDashboard() {
           />
         </div>
 
-        <div className="order-first flex h-[calc(100svh-12rem)] min-h-[560px] min-w-0 flex-col overflow-hidden rounded-[10px] border bg-card shadow-sm lg:order-none">
+        {/* Sized to its content, capped by the space left: the card ends under
+            the last hour row and the grid scrolls inside once it is taller. A
+            grid (not flex) container lets the 1fr row clamp to max-height, so
+            the time grid's own scroller gets a definite height. Month view is
+            a fill-the-space layout, so it takes the whole cap. */}
+        <div
+          className={`order-first grid max-h-[max(480px,calc(100svh-10rem))] min-w-0 grid-rows-[minmax(0,1fr)] self-start overflow-hidden rounded-lg border bg-card lg:order-none lg:max-h-full ${
+            viewInfo.view === "month"
+              ? "h-[max(480px,calc(100svh-10rem))] lg:h-full"
+              : ""
+          }`}
+        >
           <EventCalendar<CustomEventData>
             key={`cal-${settings.defaultView}-${settings.weekStartsOn}-${settings.dayStartHour}-${settings.dayEndHour}-${settings.showWeekends}-${settings.slotDuration}-${settings.timeFormat}-${settings.showNowIndicator}`}
             events={displayedEvents}
@@ -436,7 +456,7 @@ export function CalendarDashboard() {
               weekends: settings.showWeekends,
               nowIndicator: settings.showNowIndicator,
             }}
-            todayClassName="bg-primary/[0.02]"
+            todayClassName="bg-transparent border-b-0"
             onSelectSlot={handleSelectSlot}
             onSlotClick={handleSlotClick}
             onEventUpdate={handleEventUpdate}
@@ -446,34 +466,49 @@ export function CalendarDashboard() {
               timeGridHeader: "border-border/70",
               timeGutter: "w-18 border-border/70",
               dayColumn: "border-border/70",
-              allDaySection: "border-border/70 bg-muted/20",
-              timeGutterLabel: "text-muted-foreground/70",
-              event:
-                "rounded-lg border shadow-2xs transition-all hover:shadow-xs",
+              allDaySection: "border-border/70",
+              allDayLabel: "text-[11px]",
+              timeGutterLabel:
+                "font-code text-[11px] tabular-nums text-muted-foreground",
+              event: "rounded-md border transition-colors",
+              // Near-black on ember passes AA in both themes; white does not.
+              monthDayNumber:
+                "tabular-nums group-data-today/ec-cell:font-semibold group-data-today/ec-cell:text-foreground dark:group-data-today/ec-cell:text-primary-foreground",
             }}
             onEventClick={(occurrence) => {
               setSelectedEvent(occurrence.event);
               setIsDetailOpen(true);
             }}
-            renderDayHeader={({ day, isToday }) => {
-              const isHighlighted = isToday;
-              const dayName =
-                format(day, "EEE") === "Thu" ? "Thur" : format(day, "EEE");
+            renderDayHeader={({ day, view, isToday }) => {
+              const dayName = format(day, "EEE");
               const dayNumber = format(day, "d");
 
+              // Month columns are weekdays, not dates: each cell carries its
+              // own number, so the header names the weekday only.
+              if (view === "month") {
+                return (
+                  <div className="flex items-center justify-center py-2.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {dayName}
+                    </span>
+                  </div>
+                );
+              }
+
               return (
-                <div className="flex items-center justify-center py-2.5">
+                <div className="flex items-center justify-center gap-1.5 py-2.5">
                   <span
-                    className={`text-xs ${isHighlighted ? "font-semibold text-primary" : "font-medium text-muted-foreground"}`}
+                    className={`text-xs ${isToday ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}
                   >
                     {dayName}
                   </span>
-                  {isHighlighted ? (
-                    <span className="shadow-2xs ml-1.5 flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground ring-2 ring-primary/20">
+                  {isToday ? (
+                    // Near-black on ember passes AA in both themes; white does not.
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold tabular-nums text-foreground dark:text-primary-foreground">
                       {dayNumber}
                     </span>
                   ) : (
-                    <span className="ml-1.5 text-xs font-medium text-foreground">
+                    <span className="text-xs font-medium tabular-nums text-foreground">
                       {dayNumber}
                     </span>
                   )}
@@ -484,16 +519,19 @@ export function CalendarDashboard() {
               settings.showNowIndicator
                 ? ({ time }) => (
                     <div className="relative flex w-full items-center">
-                      <div className="w-18 shrink-0 pr-2.5 text-right">
-                        <span className="text-[11px] font-semibold text-primary">
+                      <div className="w-18 shrink-0 pr-2 text-right">
+                        <span className="rounded-[4px] bg-card px-1 font-code text-[11px] font-medium tabular-nums text-foreground">
                           {format(
                             time,
                             settings.timeFormat === "24h" ? "HH:mm" : "h:mm a",
-                          )}{" "}
-                          •
+                          )}
                         </span>
                       </div>
-                      <div className="flex-1 border-b-2 border-primary" />
+                      <span
+                        aria-hidden
+                        className="-ml-1 size-2 shrink-0 rounded-full bg-primary"
+                      />
+                      <div className="h-0.5 flex-1 bg-primary" />
                     </div>
                   )
                 : () => null

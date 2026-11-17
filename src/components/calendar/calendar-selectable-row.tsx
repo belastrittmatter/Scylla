@@ -30,21 +30,21 @@ export function CalendarSelectableRow({
       onClick={onToggle}
       aria-pressed={checked}
       className={cn(
-        "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/60",
+        "flex w-full items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/50",
         checked && "bg-accent/40",
       )}
     >
       {avatar ??
         (Icon && (
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <span className="flex size-6 shrink-0 items-center justify-center text-muted-foreground">
             <Icon aria-hidden className="size-3.5" />
           </span>
         ))}
       <span className="min-w-0 flex-1">
-        <span className="flex min-w-0 items-center gap-1.5">
+        <span className="flex min-w-0 items-baseline gap-1.5">
           <span className="truncate text-sm font-medium">{label}</span>
           {meta && (
-            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="shrink-0 font-code text-[11px] tabular-nums text-muted-foreground">
               {meta}
             </span>
           )}

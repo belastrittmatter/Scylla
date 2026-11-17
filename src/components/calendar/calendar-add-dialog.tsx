@@ -44,6 +44,7 @@ import {
   CalendarRepeatOptions,
   type RepeatFrequency,
 } from "./calendar-repeat-options";
+import { LOCAL_EVENT_FALLBACK_COLOR } from "./calendar-event-colors";
 
 interface CalendarAddDialogProps {
   open: boolean;
@@ -387,7 +388,7 @@ export function CalendarAddDialog({
             title: booking.title,
             start: new Date(booking.startTime),
             end: new Date(booking.endTime),
-            color: "#0284c7",
+            color: LOCAL_EVENT_FALLBACK_COLOR,
             recurringEventId: seriesId,
             data: {
               category: "shared",

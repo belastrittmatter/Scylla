@@ -39,10 +39,12 @@ describe("getRangeLabel", () => {
 
 describe("getViewChipLabel", () => {
   test("week uses the ISO week number", () => {
-    expect(getViewChipLabel("week", WED, 1)).toBe("Week 45");
+    expect(getViewChipLabel("week", WED)).toBe("W45");
   });
 
-  test("other views fall back to the range label", () => {
-    expect(getViewChipLabel("month", WED, 1)).toBe("November 2026");
+  test("other views do not repeat the toolbar range label", () => {
+    expect(getViewChipLabel("month", WED)).toBeNull();
+    expect(getViewChipLabel("day", WED)).toBeNull();
+    expect(getViewChipLabel("agenda", WED)).toBeNull();
   });
 });

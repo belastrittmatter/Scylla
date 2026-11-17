@@ -32,12 +32,15 @@ export function getRangeLabel(
   return format(date, "EEEE, MMMM d, yyyy");
 }
 
-/** Compact label for the page-header chip: "Week 45" or the visible range. */
+/**
+ * Compact week marker for the page header ("W45"), shown only in week view.
+ * The toolbar range label is the single full-date label, so every other view
+ * returns null instead of repeating it.
+ */
 export function getViewChipLabel(
   view: CalendarView,
   date: Date,
-  weekStartsOn: 0 | 1,
-): string {
-  if (view === "week") return `Week ${format(date, "II")}`;
-  return getRangeLabel(view, date, weekStartsOn);
+): string | null {
+  if (view === "week") return `W${format(date, "II")}`;
+  return null;
 }

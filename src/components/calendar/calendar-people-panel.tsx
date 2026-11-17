@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, SearchX, Users } from "lucide-react";
+import { Search, SearchX } from "lucide-react";
 import { useUserSearch } from "@/hooks/use-user-search";
 import { formatPersonName, getPersonInitials } from "@/lib/format-person-name";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -76,7 +76,7 @@ export function CalendarPeoplePanel({
     <CalendarPanelCard
       title="People"
       meta={`${selectedPeople.length} selected`}
-      icon={Users}
+      active={selectedPeople.length > 0}
       bodyClassName={
         selectedPeople.length > 0
           ? "max-h-[420px] overflow-y-auto"

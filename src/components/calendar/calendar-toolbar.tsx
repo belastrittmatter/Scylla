@@ -35,13 +35,14 @@ export function CalendarToolbar({
   const rangeLabel = getRangeLabel(view, date, weekStartsOn);
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-1.5 border-b bg-muted/30 px-3">
-      <div className="flex shrink-0 items-center gap-0.5">
+    <div className="flex h-11 shrink-0 items-center gap-2.5 border-b px-3">
+      <div className="flex shrink-0 items-center divide-x rounded-md border">
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={prev}
           aria-label="Previous period"
+          className="rounded-none rounded-l-[5px]"
         >
           <ChevronLeft />
         </Button>
@@ -49,7 +50,7 @@ export function CalendarToolbar({
           variant="ghost"
           size="sm"
           onClick={today}
-          className="px-2 text-xs"
+          className="rounded-none px-2.5 text-xs"
         >
           Today
         </Button>
@@ -58,25 +59,26 @@ export function CalendarToolbar({
           size="icon-sm"
           onClick={next}
           aria-label="Next period"
+          className="rounded-none rounded-r-[5px]"
         >
           <ChevronRight />
         </Button>
       </div>
 
-      <span className="min-w-0 truncate pl-1 text-sm font-semibold tracking-tight">
+      <span className="min-w-0 truncate text-sm font-semibold tracking-tight tabular-nums">
         {rangeLabel}
       </span>
 
-      <div className="ml-auto hidden shrink-0 items-center gap-0.5 rounded-lg bg-muted p-0.5 xl:flex">
+      <div className="ml-auto hidden shrink-0 items-center gap-0.5 rounded-md border p-0.5 xl:flex">
         {VIEWS.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setView(item.id)}
             aria-pressed={view === item.id}
-            className={`h-7 cursor-pointer rounded-md px-2.5 text-xs font-medium transition-colors ${
+            className={`h-6 cursor-pointer rounded-[4px] px-2.5 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 ${
               view === item.id
-                ? "bg-card text-card-foreground shadow-sm ring-1 ring-border/50"
+                ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >

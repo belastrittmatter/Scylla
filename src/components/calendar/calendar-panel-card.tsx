@@ -1,22 +1,28 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CalendarPanelCardProps {
   title: string;
   meta?: string;
-  icon?: LucideIcon;
+  /** Lights the label's dot in ember while the panel holds a selection. */
+  active?: boolean;
   defaultOpen?: boolean;
   bodyClassName?: string;
   children: React.ReactNode;
 }
 
+/**
+ * One collapsible section of the planning rail. Sections carry no frame of
+ * their own: the rail wraps them in a single hairline border and splits them
+ * with dividers. The header mirrors the landing's mono Eyebrow label.
+ */
 export function CalendarPanelCard({
   title,
   meta,
-  icon: Icon,
+  active = false,
   defaultOpen = true,
   bodyClassName,
   children,
@@ -27,23 +33,34 @@ export function CalendarPanelCard({
     <details
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
-      className="group rounded-[10px] border bg-card text-card-foreground shadow-sm"
+      className="group text-card-foreground"
     >
-      <summary className="flex cursor-pointer select-none list-none items-center gap-2 rounded-t-[10px] px-4 py-3 transition-colors hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
-        {Icon && (
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-            <Icon aria-hidden className="size-3.5" />
+      <summary className="flex h-10 cursor-pointer select-none list-none items-center gap-2 px-4 outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+        <span
+          aria-hidden
+          className={cn(
+            "size-1.5 shrink-0 rounded-full transition-colors",
+            active ? "bg-primary" : "bg-muted-foreground/40",
+          )}
+        />
+        <h2 className="font-code text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          {title}
+        </h2>
+        {meta && (
+          <span className="ml-auto font-code text-[11px] tabular-nums text-muted-foreground">
+            {meta}
           </span>
         )}
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <span className="ml-auto text-xs text-muted-foreground">{meta}</span>
         <ChevronRight
           aria-hidden
-          className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90"
+          className={cn(
+            "size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90",
+            !meta && "ml-auto",
+          )}
         />
       </summary>
       <div
-        className={cn("max-h-[200px] overflow-y-auto px-4 pb-4", bodyClassName)}
+        className={cn("max-h-[200px] overflow-y-auto px-3 pb-3", bodyClassName)}
       >
         {children}
       </div>
