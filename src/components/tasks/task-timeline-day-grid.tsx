@@ -31,7 +31,7 @@ export function TaskTimelineDayColumns({
           className={cn("border-border/40 relative border-l", shade(d))}
         >
           {isSameDay(d, today) && (
-            <span className="bg-primary absolute inset-y-0 left-1/2 w-0.5" />
+            <span className="bg-primary absolute top-8 bottom-0 left-1/2 w-0.5" />
           )}
         </span>
       ))}
