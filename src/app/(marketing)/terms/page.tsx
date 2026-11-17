@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileText, CheckCircle2, Scale, Mail } from "lucide-react";
+import { GITHUB_REPO_URL } from "@/lib/github-repo";
+import { FileText, CheckCircle2, Scale, MessageSquare } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Scylla - The AI-Powered Task & Calendar Workspace",
@@ -23,7 +24,7 @@ export default function TermsOfServicePage() {
               Terms of Service
             </h1>
             <p className="mt-3 text-ink-2 text-sm sm:text-base">
-              Last Updated: November 1, 2026 &bull; Effective Immediately
+              Last Updated: November 17, 2026 &bull; Effective Immediately
             </p>
           </div>
 
@@ -221,13 +222,18 @@ export default function TermsOfServicePage() {
               </h2>
               <p>
                 If you have questions regarding these Terms of Service, please
-                reach out to:
+                open an issue on GitHub:
               </p>
               <div className="p-5 rounded-xl border border-line bg-surface flex items-center gap-3">
-                <Mail className="size-5 text-ember" />
-                <span className="text-ink font-mono text-sm">
-                  legal@scylla.app
-                </span>
+                <MessageSquare className="size-5 text-ember" />
+                <a
+                  href={`${GITHUB_REPO_URL}/issues`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink font-mono text-sm underline underline-offset-4 hover:text-ember"
+                >
+                  github.com/belastrittmatter/Scylla/issues
+                </a>
               </div>
             </div>
           </div>

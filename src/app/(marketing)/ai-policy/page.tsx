@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bot, Shield, Mail } from "lucide-react";
+import { GITHUB_REPO_URL } from "@/lib/github-repo";
+import { Bot, Shield, MessageSquare } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "AI & Model Context Protocol Policy | Scylla",
+  title: "AI & MCP Policy | Scylla",
   description:
     "Learn how Scylla utilizes AI agents and Model Context Protocol (MCP) while maintaining strict data governance, user privacy, and zero unauthorized training.",
 };
@@ -20,10 +21,10 @@ export default function AiPolicyPage() {
               AI Governance
             </span>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight">
-              AI &amp; MCP Protocol Policy
+              AI &amp; MCP Policy
             </h1>
             <p className="mt-3 text-ink-2 text-sm sm:text-base">
-              Last Updated: November 1, 2026 &bull; Model Context Protocol
+              Last Updated: November 17, 2026 &bull; Model Context Protocol
               Standard
             </p>
           </div>
@@ -113,13 +114,18 @@ export default function AiPolicyPage() {
               </h2>
               <p>
                 For questions regarding our AI policy or MCP implementation,
-                please contact our team at:
+                please open an issue on GitHub:
               </p>
               <div className="p-5 rounded-xl border border-line bg-surface flex items-center gap-3">
-                <Mail className="size-5 text-ember" />
-                <span className="text-ink font-mono text-sm">
-                  ai-policy@scylla.app
-                </span>
+                <MessageSquare className="size-5 text-ember" />
+                <a
+                  href={`${GITHUB_REPO_URL}/issues`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink font-mono text-sm underline underline-offset-4 hover:text-ember"
+                >
+                  github.com/belastrittmatter/Scylla/issues
+                </a>
               </div>
             </div>
           </div>

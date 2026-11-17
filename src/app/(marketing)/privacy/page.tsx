@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Shield, Lock, RefreshCw, Mail } from "lucide-react";
+import { GITHUB_REPO_URL } from "@/lib/github-repo";
+import { Shield, Lock, RefreshCw, MessageSquare } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Scylla - The AI-Powered Task & Calendar Workspace",
@@ -23,7 +24,7 @@ export default function PrivacyPolicyPage() {
               Privacy Policy
             </h1>
             <p className="mt-3 text-ink-2 text-sm sm:text-base">
-              Last Updated: November 1, 2026 &bull; Effective Immediately
+              Last Updated: November 17, 2026 &bull; Effective Immediately
             </p>
           </div>
 
@@ -238,15 +239,21 @@ export default function PrivacyPolicyPage() {
                 6. Contact Us
               </h2>
               <p>
-                If you have questions, feedback, or requests regarding this
-                Privacy Policy or your data, please contact our Data Protection
-                Officer at:
+                If you have questions or feedback about this Privacy Policy,
+                open an issue on GitHub. Please don&apos;t post personal data
+                there; for requests about your own data, ask for a private
+                follow-up in the issue.
               </p>
               <div className="p-5 rounded-xl border border-line bg-surface flex items-center gap-3">
-                <Mail className="size-5 text-ember" />
-                <span className="text-ink font-mono text-sm">
-                  privacy@scylla.app
-                </span>
+                <MessageSquare className="size-5 text-ember" />
+                <a
+                  href={`${GITHUB_REPO_URL}/issues`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink font-mono text-sm underline underline-offset-4 hover:text-ember"
+                >
+                  github.com/belastrittmatter/Scylla/issues
+                </a>
               </div>
             </div>
           </div>

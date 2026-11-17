@@ -20,9 +20,9 @@ const FOOTER_COLUMNS = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy policy", href: "/privacy" },
-      { label: "Terms of use", href: "/terms" },
-      { label: "AI & MCP policy", href: "/ai-policy" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "AI & MCP Policy", href: "/ai-policy" },
     ],
   },
 ];
