@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, FolderKanban, Users } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { TeamItem } from "@/hooks/use-teams";
 import { plural } from "@/lib/plural";
@@ -9,7 +9,7 @@ export function TeamRow({ team }: { team: TeamItem }) {
     <li>
       <Link
         href={`/teams/${team.slug}`}
-        className="hover:bg-muted/50 flex items-center gap-4 px-4 py-3 transition-colors"
+        className="hover:bg-muted/50 focus-visible:ring-ring/50 flex items-center gap-4 px-4 py-3 outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-inset"
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{team.name}</p>
@@ -17,20 +17,16 @@ export function TeamRow({ team }: { team: TeamItem }) {
             /{team.slug}
           </p>
         </div>
-        <span className="text-muted-foreground hidden items-center gap-1 text-xs sm:flex">
-          <Users className="size-3.5" />
-          {plural(team.memberCount ?? 0, "member")}
-        </span>
-        <span className="text-muted-foreground hidden items-center gap-1 text-xs sm:flex">
-          <FolderKanban className="size-3.5" />
+        <span className="text-muted-foreground hidden font-mono text-xs tabular-nums sm:inline">
+          {plural(team.memberCount ?? 0, "member")} ·{" "}
           {plural(team.projectCount ?? 0, "project")}
         </span>
         {team.role && (
-          <Badge variant="outline" className="capitalize">
+          <Badge variant="meta" className="capitalize">
             {team.role}
           </Badge>
         )}
-        <ChevronRight className="text-muted-foreground size-4" />
+        <ChevronRight aria-hidden className="text-muted-foreground size-4" />
       </Link>
     </li>
   );

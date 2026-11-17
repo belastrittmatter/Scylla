@@ -1,52 +1,62 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { cn } from "cn";
 import type { ProjectStatus } from "@/services/project/project-types";
 
+/**
+ * Status reads from the label and a small dot; no fill washes (taste T3).
+ * Dots stay monochrome tokens so ember keeps meaning "primary action / active state".
+ * `colorClass` is the label tone, `dotClass` the dot.
+ */
 export const PROJECT_STATUS_CONFIG: Record<
   ProjectStatus,
   { label: string; colorClass: string; dotClass: string }
 > = {
   planning: {
     label: "Planning",
-    colorClass:
-      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-    dotClass: "bg-blue-500",
+    colorClass: "text-muted-foreground",
+    dotClass: "border border-foreground/70 bg-transparent",
   },
   active: {
     label: "Active",
-    colorClass:
-      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
-    dotClass: "bg-emerald-500",
+    colorClass: "text-foreground",
+    dotClass: "bg-foreground",
   },
   paused: {
     label: "Paused",
-    colorClass:
-      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-    dotClass: "bg-amber-500",
+    colorClass: "text-muted-foreground",
+    dotClass: "bg-muted-foreground",
   },
   completed: {
     label: "Completed",
-    colorClass:
-      "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800",
-    dotClass: "bg-purple-500",
+    colorClass: "text-muted-foreground",
+    dotClass: "bg-muted-foreground/50",
   },
   archived: {
     label: "Archived",
-    colorClass:
-      "bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700",
-    dotClass: "bg-neutral-400",
+    colorClass: "text-muted-foreground",
+    dotClass: "border border-dashed border-muted-foreground",
   },
 };
 
-export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
+export function ProjectStatusBadge({
+  status,
+  className,
+}: {
+  status: ProjectStatus;
+  className?: string;
+}) {
   const config = PROJECT_STATUS_CONFIG[status] || PROJECT_STATUS_CONFIG.active;
   return (
     <Badge
-      variant="outline"
-      className={`gap-1.5 border px-2 py-0.5 text-xs font-medium ${config.colorClass}`}
+      variant="meta"
+      className={cn("gap-1.5", config.colorClass, className)}
     >
-      <span className={`size-1.5 rounded-full ${config.dotClass}`} />
+      <span
+        aria-hidden
+        className={cn("size-1.5 shrink-0 rounded-full", config.dotClass)}
+      />
       {config.label}
     </Badge>
   );

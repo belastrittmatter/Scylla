@@ -21,7 +21,7 @@ export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
   const [creating, setCreating] = React.useState(false);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6 md:p-8">
+    <div className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 md:p-8">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Teams</h1>
@@ -50,7 +50,7 @@ export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="divide-border divide-y rounded-lg border">
+        <ul className="divide-border divide-y overflow-hidden rounded-lg border">
           {teams.map((t) => (
             <TeamRow key={t.id} team={t} />
           ))}

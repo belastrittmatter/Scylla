@@ -12,6 +12,9 @@ import { TeamMembersTab } from "./team-members-tab";
 import { canManageTeam } from "./team-roles";
 import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
+const TAB_TRIGGER =
+  "h-9 flex-none rounded-none px-0.5 after:bg-primary group-data-horizontal/tabs:after:bottom-[-1px]";
+
 type Props = {
   team: TeamItem;
   role: TeamRole;
@@ -39,7 +42,7 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6 md:p-8">
+    <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6 md:p-8">
       <TeamHeader
         team={current}
         canManage={canManage}
@@ -58,10 +61,18 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
           router.push("/teams");
         }}
       />
-      <Tabs value={tab} onValueChange={changeTab}>
-        <TabsList>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
+      <Tabs value={tab} onValueChange={changeTab} className="gap-5">
+        {/* Resource tabs on a full-width hairline; ember marks the active one. */}
+        <TabsList
+          variant="line"
+          className="border-border h-auto w-full justify-start gap-5 border-b p-0 group-data-horizontal/tabs:h-auto"
+        >
+          <TabsTrigger value="members" className={TAB_TRIGGER}>
+            Members
+          </TabsTrigger>
+          <TabsTrigger value="projects" className={TAB_TRIGGER}>
+            Projects
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="members">
           <TeamMembersTab

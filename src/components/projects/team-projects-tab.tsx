@@ -1,15 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { CircleAlert, FolderKanban, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { plural } from "@/lib/plural";
 import {
   Empty,
   EmptyContent,
+  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,18 +38,16 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
   const [creating, setCreating] = React.useState(false);
   const [editing, setEditing] = React.useState<ProjectItem | null>(null);
   const [deleting, setDeleting] = React.useState<ProjectItem | null>(null);
-
-  React.useEffect(() => {
-    if (error) toast.error(error);
-  }, [error]);
+  // The empty state carries its own "New project"; don't show it twice.
+  const isEmpty = !isLoading && !error && projects.length === 0;
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {plural(projects.length, "project")}
+      <div className="flex min-h-7 items-center justify-between gap-3">
+        <p className="text-muted-foreground font-mono text-xs tabular-nums">
+          {isLoading || error ? "\u00a0" : plural(projects.length, "project")}
         </p>
-        {canManage && (
+        {canManage && !isEmpty && (
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus />
             New project
@@ -58,14 +55,14 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
         )}
       </div>
       {isLoading ? (
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full rounded-lg" />
       ) : error ? (
-        <Empty className="border">
+        <Empty className="border p-6 md:p-8">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CircleAlert />
-            </EmptyMedia>
-            <EmptyTitle>Couldn&apos;t load projects.</EmptyTitle>
+            <EmptyTitle className="text-sm">
+              Couldn&apos;t load projects.
+            </EmptyTitle>
+            <EmptyDescription>{error}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button size="sm" variant="outline" onClick={() => refresh()}>
@@ -73,17 +70,27 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
             </Button>
           </EmptyContent>
         </Empty>
-      ) : projects.length === 0 ? (
-        <Empty className="border">
+      ) : isEmpty ? (
+        <Empty className="border p-6 md:p-8">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <FolderKanban />
-            </EmptyMedia>
-            <EmptyTitle>No projects yet.</EmptyTitle>
+            <EmptyTitle className="text-sm">No projects yet.</EmptyTitle>
+            <EmptyDescription>
+              {canManage
+                ? "Projects group this team's tasks onto one board."
+                : "A team owner or admin can create the first project."}
+            </EmptyDescription>
           </EmptyHeader>
+          {canManage && (
+            <EmptyContent>
+              <Button size="sm" onClick={() => setCreating(true)}>
+                <Plus />
+                New project
+              </Button>
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
-        <ul className="divide-border divide-y rounded-lg border">
+        <ul className="divide-border divide-y overflow-hidden rounded-lg border">
           {projects.map((p) => (
             <ProjectRow
               key={p.id}

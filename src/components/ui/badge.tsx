@@ -18,6 +18,8 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        /** Quiet metadata label (roles, statuses): hairline, mono, no fill in either theme. */
+        meta: "border-border rounded-md bg-transparent font-mono font-normal text-muted-foreground",
       },
     },
     defaultVariants: {

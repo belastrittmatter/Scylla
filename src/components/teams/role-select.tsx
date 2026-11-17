@@ -19,7 +19,7 @@ type RoleSelectProps = {
 export function RoleSelect({ value, onChange, id }: RoleSelectProps) {
   return (
     <Select value={value} onValueChange={(v) => v && onChange(v as TeamRole)}>
-      <SelectTrigger id={id} size="sm" className="w-28 capitalize">
+      <SelectTrigger id={id} size="sm" className="w-28 font-mono text-xs capitalize">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

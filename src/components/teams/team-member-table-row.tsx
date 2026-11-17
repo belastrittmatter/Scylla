@@ -36,20 +36,29 @@ export function TeamMemberTableRow({
 
   return (
     <TableRow>
-      <TableCell>
-        <div className="flex items-center gap-2">
+      <TableCell className="py-2 pl-4 pr-3">
+        <div className="flex min-w-0 items-center gap-2.5">
           <Avatar size="sm">
             <AvatarImage src={member.user?.image || undefined} alt={name} />
             <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
           </Avatar>
-          <span className="font-medium">{name}</span>
-          {isSelf && <Badge variant="outline">You</Badge>}
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="truncate font-medium">{name}</span>
+              {isSelf && <Badge variant="meta">You</Badge>}
+            </div>
+            {member.user?.email && (
+              <p className="text-muted-foreground truncate font-mono text-xs sm:hidden">
+                {member.user.email}
+              </p>
+            )}
+          </div>
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell className="text-muted-foreground hidden truncate px-3 font-mono text-xs sm:table-cell">
         {member.user?.email}
       </TableCell>
-      <TableCell>
+      <TableCell className="px-3">
         {editable ? (
           <RoleSelect
             value={member.role}
@@ -60,12 +69,12 @@ export function TeamMemberTableRow({
             }
           />
         ) : (
-          <Badge variant="secondary" className="capitalize">
+          <Badge variant="meta" className="capitalize">
             {member.role}
           </Badge>
         )}
       </TableCell>
-      <TableCell className="w-10 text-right">
+      <TableCell className="pr-2 text-right">
         {editable && (
           <RowActionsMenu
             label={`Actions for ${name}`}
