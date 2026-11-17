@@ -16,11 +16,15 @@ import {
 } from "@/hooks/use-calendar-settings";
 
 describe("Account & App Settings (Issue #34 & #37)", () => {
-  it("renders symmetrical top-right link in SettingsView without Go to Calendar button", () => {
+  it("renders the shared Settings header with a Preferences | Account tab rail in SettingsView, without Go to Calendar button", () => {
     const html = renderToString(<SettingsView />);
 
+    // One "Settings" header; the tab rail links to the Account section
+    expect(html).toContain(">Settings</h1>");
+    expect(html).toContain('aria-label="Settings sections"');
     expect(html).toContain('href="/account/settings"');
-    expect(html).toContain("Account Settings");
+    expect(html).toContain(">Account</a>");
+    expect(html).toMatch(/aria-current="page"[^>]*>Preferences</);
     // Ensure "Go to Calendar" has been removed as requested
     expect(html).not.toContain("Go to Calendar");
     // Verify the settings rows (label | control) and their sections
@@ -46,9 +50,12 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
       </AuthUIProvider>,
     );
 
+    // Same shared header; the tab rail links back to Preferences
+    expect(html).toContain(">Settings</h1>");
     expect(html).toContain('href="/settings"');
-    expect(html).toContain("Calendar &amp; Display Preferences");
-    expect(html).toContain("Account Settings");
+    expect(html).toContain(">Preferences</a>");
+    expect(html).toMatch(/aria-current="page"[^>]*>Account</);
+    expect(html).not.toContain("Calendar &amp; Display Preferences");
     // Verify structured sections and cards
     expect(html).toContain("Profile");
     expect(html).toContain("Connected Accounts");

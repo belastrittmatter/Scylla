@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cn } from "cn";
 
 /**
@@ -9,35 +10,66 @@ import { cn } from "cn";
  * eyebrow, and thin-bordered groups of hairline-divided label | control rows.
  */
 
+const SETTINGS_TABS = [
+  { id: "preferences", label: "Preferences", href: "/settings" },
+  { id: "account", label: "Account", href: "/account/settings" },
+] as const;
+
+export type SettingsTabId = (typeof SETTINGS_TABS)[number]["id"];
+
+/**
+ * The one header both settings routes share: the "Settings" title, a line
+ * about the current section, and a compact tab rail whose active item carries
+ * the ember underline. The rail sits on the header's bottom hairline.
+ */
 export function SettingsPageHeader({
-  title,
+  active,
   description,
-  action,
 }: {
-  title: React.ReactNode;
+  active: SettingsTabId;
   description?: React.ReactNode;
-  action?: React.ReactNode;
 }) {
   return (
-    <header className="space-y-1 border-b border-border pb-6">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <h1 className="min-w-0 flex-1 basis-40 text-xl font-semibold tracking-tight text-balance text-foreground">
-          {title}
-        </h1>
-        {action ? <div className="shrink-0">{action}</div> : null}
-      </div>
+    <header className="border-b border-border">
+      <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        Settings
+      </h1>
       {description ? (
-        <p className="text-sm text-pretty text-muted-foreground">
+        <p className="mt-1 text-sm text-pretty text-muted-foreground">
           {description}
         </p>
       ) : null}
+      <nav aria-label="Settings sections" className="mt-5 -mb-px flex gap-6">
+        {SETTINGS_TABS.map((tab) => {
+          const isActive = tab.id === active;
+          return (
+            <Link
+              key={tab.id}
+              href={tab.href}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "relative -mx-1 rounded-sm px-1 pb-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+                "after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:rounded-full",
+                isActive
+                  ? "text-foreground after:bg-primary"
+                  : "text-muted-foreground after:bg-transparent hover:text-foreground hover:after:bg-border",
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }
 
 type SectionTone = "default" | "destructive";
 
-/** Mono uppercase section label with a small accent dot (mirrors the landing Eyebrow). */
+/**
+ * Mono uppercase section label with a small accent dot. Same recipe as the
+ * landing Eyebrow (font-code, 0.12em tracking), but on app tokens and as an h2.
+ */
 export function SettingsEyebrow({
   id,
   tone = "default",
@@ -51,7 +83,7 @@ export function SettingsEyebrow({
     <h2
       id={id}
       className={cn(
-        "flex items-center gap-2 font-mono text-xs font-medium tracking-[0.12em] uppercase",
+        "flex items-center gap-2 font-code text-xs tracking-[0.12em] uppercase",
         tone === "destructive" ? "text-destructive" : "text-muted-foreground",
       )}
     >
@@ -70,7 +102,7 @@ export function SettingsEyebrow({
 /**
  * One settings section. `framed` (default) wraps the children in a single
  * 1px-bordered group whose rows are divided by hairlines. Set `framed={false}`
- * when the children already draw their own panels (better-auth-ui cards).
+ * when the children already draw their own panels.
  */
 export function SettingsSection({
   eyebrow,
@@ -259,11 +291,11 @@ export function SegmentedControl<T extends string | number>({
             onClick={() => select(index)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
-              "inline-flex h-7 cursor-pointer items-center justify-center gap-1.5 rounded-[5px] px-2.5 text-xs font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-3.5 [&_svg]:shrink-0",
+              "inline-flex h-7 cursor-pointer items-center justify-center gap-1.5 rounded-sm px-2.5 text-xs font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-3.5 [&_svg]:shrink-0",
               checked
                 ? "bg-background text-foreground ring-1 ring-border"
                 : "text-muted-foreground hover:text-foreground",
-              mono && "font-mono",
+              mono && "font-code",
             )}
           >
             {option.label}

@@ -72,8 +72,8 @@ export function SettingsTimeFormatRow() {
       descriptionId="setting-time-format-help"
       description={
         <>
-          Shows times as <span className="font-mono">2:30 PM</span> or{" "}
-          <span className="font-mono">14:30</span>.
+          Shows times as <span className="font-code">2:30 PM</span> or{" "}
+          <span className="font-code">14:30</span>.
         </>
       }
     >
@@ -181,7 +181,7 @@ export function SettingsWorkingHoursRow() {
     toast.success("End hour updated");
   };
 
-  const triggerClass = "w-28 font-mono text-xs";
+  const triggerClass = "w-28 font-code text-xs";
 
   return (
     <SettingRow

@@ -81,7 +81,7 @@ export function AgentRow({
             </p>
             <p className="text-xs text-muted-foreground">
               Connected{" "}
-              <span className="font-mono">{connectedDate}</span> · Model
+              <span className="font-code">{connectedDate}</span> · Model
               Context Protocol
             </p>
           </div>
@@ -93,10 +93,11 @@ export function AgentRow({
             onClick={() => setIsExpanded((prev) => !prev)}
             aria-expanded={isExpanded}
             aria-controls={isExpanded ? panelId : undefined}
+            aria-label={`${activeCount} granted to ${agent.name}, ${isExpanded ? "hide" : "show"} permissions`}
             className="flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-1.5 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <span>
-              <span className="font-mono">{activeCount}</span> granted
+              <span className="font-code">{activeCount}</span> granted
             </span>
             <ChevronDown
               aria-hidden="true"
@@ -113,6 +114,7 @@ export function AgentRow({
             variant="outline"
             disabled={isRevoking}
             onClick={onRevoke}
+            aria-label={`Revoke Access for ${agent.name}`}
             className="text-xs"
           >
             {isRevoking && (

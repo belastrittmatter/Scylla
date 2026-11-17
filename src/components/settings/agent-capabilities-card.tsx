@@ -113,7 +113,7 @@ export function AgentCapabilitiesCard() {
         <div className="flex items-start gap-2">
           <code
             id="mcp-server-url"
-            className="min-w-0 flex-1 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-xs leading-4 break-all text-foreground select-all"
+            className="min-w-0 flex-1 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-code text-xs leading-4 break-all text-foreground select-all"
           >
             {mcpUrl}
           </code>
@@ -135,16 +135,15 @@ export function AgentCapabilitiesCard() {
       </div>
 
       <div>
-        <div className="flex items-baseline justify-between gap-4 px-4 pt-3.5 pb-2 sm:px-5">
-          <p className="text-sm font-medium text-foreground">
-            Authorized agents
-          </p>
-          {!isLoading ? (
-            <span className="font-mono text-xs text-muted-foreground">
+        <p className="px-4 pt-3.5 pb-2 text-sm font-medium text-foreground sm:px-5">
+          Authorized agents
+          {!isLoading && clients.length > 0 ? (
+            <span className="font-code text-xs font-normal text-muted-foreground">
+              {" · "}
               {clients.length}
             </span>
           ) : null}
-        </div>
+        </p>
 
         {isLoading ? (
           <div className="flex items-center justify-between gap-4 border-t border-border px-4 py-3.5 sm:px-5">

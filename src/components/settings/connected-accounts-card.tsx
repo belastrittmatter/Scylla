@@ -101,7 +101,7 @@ export function ConnectedAccountsCard() {
             <Button
               type="button"
               size="sm"
-              variant={isGoogleConnected ? "outline" : "default"}
+              variant="outline"
               disabled={
                 isActionLoading || (isGoogleConnected && !canUnlinkGoogle)
               }
