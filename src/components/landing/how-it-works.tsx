@@ -78,7 +78,7 @@ const ROWS: Array<{
   },
   {
     name: "Priya",
-    meta: "Ho Chi Minh",
+    meta: "Warsaw",
     busy: [
       [9, 9.5, ""],
       [11, 12.5, "Client call"],

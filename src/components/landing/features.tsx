@@ -36,7 +36,7 @@ const FEATURES = [
   {
     icon: ListChecks,
     title: "Task boards with time tracking",
-    body: "Kanban boards per project, threaded comments on every task and tracked time against each one.",
+    body: "Kanban boards per project, comments on every task and tracked time against each one.",
   },
   {
     icon: ShieldCheck,

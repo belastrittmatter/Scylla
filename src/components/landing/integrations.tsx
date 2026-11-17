@@ -4,7 +4,7 @@ import { CornerTicks, Eyebrow, Section } from "@/components/landing/primitives";
 
 const RUN: Array<{ kind: "call" | "out" | "ok"; text: string }> = [
   { kind: "call", text: 'resolve_user "nick"' },
-  { kind: "out", text: "nick.tran@team.dev · Member" },
+  { kind: "out", text: "nick.tran@example.com · Member" },
   { kind: "call", text: "find_common_meeting_slots attendees=4" },
   { kind: "out", text: "3 slots · Thu 14:00 · Fri 10:30 · Fri 16:00" },
   { kind: "call", text: "book_meeting room=focus-room time=thu-14:00" },
