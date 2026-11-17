@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
-  dueDateToInput,
+  dateToInput,
   filterTasks,
   formatElapsedCompact,
   getQuietPriority,
@@ -74,7 +74,7 @@ describe("due date round-trip", () => {
       "America/Los_Angeles",
     ]) {
       process.env.TZ = tz;
-      expect(dueDateToInput(inputToDueDate("2026-03-10"))).toBe("2026-03-10");
+      expect(dateToInput(inputToDueDate("2026-03-10"))).toBe("2026-03-10");
     }
     expect(inputToDueDate("")).toBeNull();
   });

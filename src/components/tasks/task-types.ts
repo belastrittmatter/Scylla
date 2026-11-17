@@ -21,6 +21,9 @@ export interface TaskItem extends Task {
   activeSessionStartedAt?: string | null;
 }
 
+/** Optional pre-filled dates for a new draft task. */
+export type TaskDraftDates = { startDate: Date | null; dueDate: Date | null };
+
 export type DeadlineHorizon =
   "all" | "overdue" | "today" | "upcoming" | "no_date";
 
@@ -60,6 +63,7 @@ export interface TaskDrawerFormProps {
   status: TaskStatus;
   priority: TaskPriority;
   assigneeId: string;
+  startDateStr: string;
   dueDateStr: string;
   estimatedMinutes: number;
   users: TaskUser[];
@@ -68,6 +72,7 @@ export interface TaskDrawerFormProps {
   onStatusChange: (v: TaskStatus) => void;
   onPriorityChange: (v: TaskPriority) => void;
   onAssigneeChange: (v: string) => void;
+  onStartDateChange: (v: string) => void;
   onDueDateChange: (v: string) => void;
   onEstimatedMinutesChange: (v: number) => void;
 }

@@ -10,7 +10,7 @@ import {
 } from "./task-scope-empty-state";
 import type { TaskScope } from "./task-selectors";
 import type { MoveTask } from "./use-task-board-state";
-import type { TaskItem, TaskStatus } from "./task-types";
+import type { TaskDraftDates, TaskItem, TaskStatus } from "./task-types";
 
 export type TaskViewMode = "board" | "list" | "timeline";
 
@@ -26,7 +26,7 @@ interface TaskScopeContentProps {
   showAssignee: boolean;
   onSelectTask: (task: TaskItem) => void;
   onUpdateStatus: MoveTask;
-  onAddNewTask?: (status: TaskStatus) => void;
+  onAddNewTask?: (status: TaskStatus, dates?: TaskDraftDates) => void;
   onDeleteTasks: (ids: string[]) => Promise<boolean>;
   /** Mirrors the server task write rule; gates delete, move and status affordances. */
   canEditTask: (task: TaskItem) => boolean;
@@ -80,6 +80,12 @@ export function TaskScopeContent({
           tasks={tasks}
           getContextLabel={rowProps.getContextLabel}
           onSelectTask={rowProps.onSelectTask}
+          onCreateRange={
+            onAddNewTask
+              ? (startDate, dueDate) =>
+                  onAddNewTask("todo", { startDate, dueDate })
+              : undefined
+          }
         />
       )}
     </div>

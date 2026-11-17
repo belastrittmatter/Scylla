@@ -13,18 +13,22 @@ export type TaskStatus = z.infer<typeof TaskStatusSchema>;
 export const TaskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
 export type TaskPriority = z.infer<typeof TaskPrioritySchema>;
 
-export const TaskDueDateSchema = z
-  .union([
-    z.date(),
-    z.number(),
-    z.string().refine((val) => !isNaN(Date.parse(val)), {
-      message: "Invalid date format for dueDate",
-    }),
-  ])
-  .transform((val) => (val instanceof Date ? val : new Date(val)))
-  .refine((d) => !isNaN(d.getTime()), {
-    message: "Invalid date for dueDate",
-  });
+const taskDateSchema = (field: "dueDate" | "startDate") =>
+  z
+    .union([
+      z.date(),
+      z.number(),
+      z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: `Invalid date format for ${field}`,
+      }),
+    ])
+    .transform((val) => (val instanceof Date ? val : new Date(val)))
+    .refine((d) => !isNaN(d.getTime()), {
+      message: `Invalid date for ${field}`,
+    });
+
+export const TaskDueDateSchema = taskDateSchema("dueDate");
+export const TaskStartDateSchema = taskDateSchema("startDate");
 
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, "Task title cannot be empty").max(200),
@@ -36,6 +40,7 @@ export const CreateTaskSchema = z.object({
   creatorId: z.string().min(1, "Creator ID is required"),
   assigneeId: z.string().nullable().optional(),
   dueDate: TaskDueDateSchema.nullable().optional(),
+  startDate: TaskStartDateSchema.nullable().optional(),
   position: z.number().int().nonnegative().optional(),
   estimatedMinutes: z.number().int().min(0).max(100000).nullable().optional(),
 });
@@ -49,6 +54,7 @@ export const UpdateTaskSchema = z.object({
   projectId: z.string().nullable().optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: TaskDueDateSchema.nullable().optional(),
+  startDate: TaskStartDateSchema.nullable().optional(),
   position: z.number().int().nonnegative().optional(),
   estimatedMinutes: z.number().int().min(0).max(100000).nullable().optional(),
 });

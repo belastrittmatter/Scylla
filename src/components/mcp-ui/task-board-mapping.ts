@@ -13,6 +13,7 @@ export function toTaskItem(t: KanbanTask): TaskItem {
     description: t.description ?? null,
     status: t.status,
     priority: (t.priority || "medium").toLowerCase(),
+    startDate: null,
     dueDate: due && !Number.isNaN(due.getTime()) ? due : null,
     estimatedMinutes: t.estimatedMinutes ?? null,
     totalSpentSeconds: t.totalSpentSeconds,

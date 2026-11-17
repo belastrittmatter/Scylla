@@ -123,6 +123,7 @@ export const UpdateTaskPayloadSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: z.union([z.string(), z.date()]).nullable().optional(),
+  startDate: z.union([z.string(), z.date()]).nullable().optional(),
   position: z.number().int().optional(),
   estimatedMinutes: z.number().int().min(0).max(100000).nullable().optional(),
 });
@@ -145,6 +146,7 @@ export const CreateTaskPayloadSchema = z.object({
   projectId: z.string().nullable().optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: z.union([z.string(), z.date()]).nullable().optional(),
+  startDate: z.union([z.string(), z.date()]).nullable().optional(),
   estimatedMinutes: z.number().int().min(0).max(100000).nullable().optional(),
 });
 

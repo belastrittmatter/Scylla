@@ -16,12 +16,14 @@ interface TaskDatePickerProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  placeholder?: string;
 }
 
 export function TaskDatePicker({
   value,
   onChange,
   className,
+  placeholder = "Pick target deadline",
 }: TaskDatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -50,7 +52,7 @@ export function TaskDatePicker({
               )}
             >
               <CalendarIcon className="mr-2 size-4 shrink-0 text-muted-foreground" />
-              {dateObj ? format(dateObj, "PPP") : "Pick target deadline"}
+              {dateObj ? format(dateObj, "PPP") : placeholder}
             </Button>
           }
         />

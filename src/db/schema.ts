@@ -773,6 +773,7 @@ export const task = pgTable(
       onDelete: "set null",
     }),
     dueDate: timestamp("due_date"),
+    startDate: timestamp("start_date"),
     position: integer("position").default(0).notNull(),
     estimatedMinutes: integer("estimated_minutes").default(60),
     createdAt: timestamp("created_at").defaultNow().notNull(),

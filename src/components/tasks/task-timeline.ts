@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from "date-fns";
+import { addDays, differenceInCalendarDays } from "date-fns";
 import type { TaskItem } from "./task-types";
 
 type DateLike = Date | string;
@@ -11,19 +11,26 @@ export interface TimelineSpan {
   clipped: boolean;
 }
 
-/** Bar from `createdAt` to the end of `dueDate`'s day, in local days, clamped to the range. */
+/**
+ * Bar from `startDate` (or `createdAt` when no start date is set) to the end of
+ * `dueDate`'s day, in local days, clamped to the range.
+ */
 export function getTimelineSpan(
-  task: { createdAt: DateLike; dueDate: DateLike | null },
+  task: {
+    createdAt: DateLike;
+    dueDate: DateLike | null;
+    startDate?: DateLike | null;
+  },
   rangeStart: Date,
   days: number,
 ): TimelineSpan | null {
   if (!task.dueDate) return null;
   const end = differenceInCalendarDays(new Date(task.dueDate), rangeStart);
-  const created = differenceInCalendarDays(
-    new Date(task.createdAt),
+  const begin = differenceInCalendarDays(
+    new Date(task.startDate || task.createdAt),
     rangeStart,
   );
-  const realStart = Math.min(created, end);
+  const realStart = Math.min(begin, end);
   const start = Math.max(0, realStart);
   const last = Math.min(days - 1, end);
   if (last < 0 || start >= days) return null;
@@ -63,4 +70,30 @@ export function getVisibleDays(
   );
   const last = Math.ceil((scrollLeft + viewportWidth) / colWidth) - 1;
   return { first, last: Math.min(days - 1, Math.max(first, last)) };
+}
+
+/** Day column under an x offset (px from the grid's left edge), clamped to the range. */
+export function getDayIndexAtX(x: number, colW: number, days: number): number {
+  return Math.min(days - 1, Math.max(0, Math.floor(x / colW)));
+}
+
+/** Covered day range of a drag between two day indices, in either direction. */
+export function getDragDayRange(
+  a: number,
+  b: number,
+): { first: number; last: number } {
+  return { first: Math.min(a, b), last: Math.max(a, b) };
+}
+
+/** Draft dates for a drag-created task: first day 09:00 → last day 18:00, local time. */
+export function getDragCreateDates(
+  rangeStart: Date,
+  first: number,
+  last: number,
+): { startDate: Date; dueDate: Date } {
+  const startDate = new Date(addDays(rangeStart, first));
+  startDate.setHours(9, 0, 0, 0);
+  const dueDate = new Date(addDays(rangeStart, last));
+  dueDate.setHours(18, 0, 0, 0);
+  return { startDate, dueDate };
 }

@@ -1,4 +1,4 @@
-import { TaskService } from "@/services/task/task-service";
+import { TaskService, TaskDateRangeError } from "@/services/task/task-service";
 import { TeamService } from "@/services/team/team-service";
 import { CreateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
@@ -124,11 +124,15 @@ export async function POST(req: Request) {
       creatorId,
       assigneeId: data.assigneeId,
       dueDate,
+      startDate: data.startDate ?? undefined,
       estimatedMinutes: data.estimatedMinutes,
     });
 
     return Response.json(newTask, { status: 201 });
   } catch (err) {
+    if (err instanceof TaskDateRangeError) {
+      return Response.json({ error: err.message }, { status: 400 });
+    }
     const message =
       err instanceof Error ? err.message : "Failed to create task";
     if (message.includes("not found")) {
