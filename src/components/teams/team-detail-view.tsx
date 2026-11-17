@@ -13,7 +13,17 @@ import { canManageTeam } from "./team-roles";
 import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
 const TAB_TRIGGER =
-  "h-9 flex-none rounded-none px-0 after:bg-primary group-data-horizontal/tabs:after:bottom-[-1px]";
+  "h-9 flex-none gap-2 rounded-none px-0 after:bg-primary group-data-horizontal/tabs:after:bottom-[-1px]";
+
+/** Resource-tab count: a quiet mono figure beside the label, fed live by the tab. */
+function TabCount({ value }: { value?: number }) {
+  if (value === undefined) return null;
+  return (
+    <span className="text-muted-foreground font-mono text-xs font-normal tabular-nums">
+      {value}
+    </span>
+  );
+}
 
 type Props = {
   team: TeamItem;
@@ -45,11 +55,9 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6 md:p-8">
+    <div className="w-full max-w-4xl space-y-5 p-4 sm:p-6 md:p-8">
       <TeamHeader
         team={current}
-        memberCount={memberCount}
-        projectCount={projectCount}
         canManage={canManage}
         canDelete={current.ownerId === userId}
         onUpdate={async (id, data) => {
@@ -67,16 +75,18 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
         }}
       />
       <Tabs value={tab} onValueChange={changeTab} className="gap-5">
-        {/* Resource tabs on a full-width hairline; ember marks the active one. */}
+        {/* Resource tabs on the landing's dashed blueprint rule; ember marks the active one. */}
         <TabsList
           variant="line"
-          className="border-border h-auto w-full justify-start gap-5 border-b p-0 group-data-horizontal/tabs:h-auto"
+          className="border-border h-auto w-full justify-start gap-6 border-b border-dashed p-0 group-data-horizontal/tabs:h-auto"
         >
           <TabsTrigger value="members" className={TAB_TRIGGER}>
             Members
+            <TabCount value={memberCount} />
           </TabsTrigger>
           <TabsTrigger value="projects" className={TAB_TRIGGER}>
             Projects
+            <TabCount value={projectCount} />
           </TabsTrigger>
         </TabsList>
         <TabsContent value="members">

@@ -5,14 +5,10 @@ import { Pencil, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { RowActionsMenu } from "@/components/layout/row-actions-menu";
 import type { TeamItem } from "@/hooks/use-teams";
-import { plural } from "@/lib/plural";
 import { EditTeamDialog } from "./edit-team-dialog";
 
 type Props = {
   team: TeamItem;
-  /** Live counts from the tabs, falling back to the server's. */
-  memberCount?: number;
-  projectCount?: number;
   canManage: boolean;
   /** Only the owner may delete; the API rejects admins. */
   canDelete: boolean;
@@ -25,8 +21,6 @@ type Props = {
 
 export function TeamHeader({
   team,
-  memberCount,
-  projectCount,
   canManage,
   canDelete,
   onUpdate,
@@ -34,11 +28,6 @@ export function TeamHeader({
 }: Props) {
   const [editing, setEditing] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
-  const meta = [
-    `/${team.slug}`,
-    memberCount !== undefined && plural(memberCount, "member"),
-    projectCount !== undefined && plural(projectCount, "project"),
-  ].filter(Boolean);
 
   return (
     <div className="flex items-start justify-between gap-4">
@@ -46,18 +35,9 @@ export function TeamHeader({
         <h1 className="truncate text-xl font-semibold tracking-tight">
           {team.name}
         </h1>
-        {/* Wraps between items at 390 instead of cutting a count off. */}
-        <p className="text-muted-foreground flex flex-wrap gap-x-2 font-mono text-xs tabular-nums">
-          {meta.map((m, i) => (
-            <span key={i} className="min-w-0 break-all">
-              {i > 0 && (
-                <span aria-hidden className="mr-2">
-                  ·
-                </span>
-              )}
-              {m}
-            </span>
-          ))}
+        {/* Counts live on the tabs; the header only carries the address. */}
+        <p className="text-muted-foreground font-mono text-xs break-all">
+          /{team.slug}
         </p>
         {team.description && (
           <p className="text-muted-foreground pt-1 text-sm">

@@ -5,7 +5,7 @@ import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { plural } from "@/lib/plural";
-import { Skeleton } from "@/components/ui/skeleton";
+import { listHeadClass } from "@/components/ui/list-head";
 import {
   Table,
   TableBody,
@@ -17,13 +17,14 @@ import {
 import type { TeamMemberItem } from "@/hooks/use-teams";
 import { AddMemberDialog } from "./add-member-dialog";
 import { TeamMemberTableRow } from "./team-member-table-row";
+import { MemberTableSkeleton } from "./teams-page-skeleton";
 import { useTeamMembers } from "./use-team-members";
 
 type Props = {
   teamId: string;
   userId: string;
   canManage: boolean;
-  /** Reports the loaded member count (for the page header). */
+  /** Reports the loaded member count (shown on the Members tab). */
   onCountChange?: (count: number) => void;
 };
 
@@ -32,7 +33,7 @@ const PAGE_SIZE = 25;
 /** The filter only earns its space once the list is long enough to scan. */
 const FILTER_THRESHOLD = 10;
 
-const HEAD = "text-muted-foreground h-9 px-3 font-mono text-xs font-normal";
+const HEAD = `${listHeadClass} h-9 px-3`;
 
 function matches(member: TeamMemberItem, query: string) {
   const q = query.toLowerCase();
@@ -64,41 +65,46 @@ export function TeamMembersTab({
     : members;
   const visible = showAll ? filtered : filtered.slice(0, PAGE_SIZE);
   const hidden = filtered.length - visible.length;
+  const showFilter = members.length > FILTER_THRESHOLD;
 
   return (
     <div className="space-y-3">
-      <div className="flex min-h-7 flex-wrap items-center gap-2">
-        <p className="text-muted-foreground mr-auto font-mono text-xs tabular-nums">
-          {isLoading
-            ? " "
-            : trimmed
-              ? `${filtered.length} of ${plural(members.length, "member")}`
-              : plural(members.length, "member")}
-        </p>
-        {members.length > FILTER_THRESHOLD && (
-          <Input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter by name or email"
-            aria-label="Filter members"
-            className="order-last h-7 w-full sm:order-none sm:w-56"
-          />
-        )}
-        {canManage && (
-          <Button size="sm" onClick={() => setAdding(true)}>
-            <UserPlus />
-            Add member
-          </Button>
-        )}
-      </div>
+      {/* The tab carries the total; the toolbar only reads out an active filter. */}
+      {(showFilter || canManage) && (
+        <div className="flex min-h-7 flex-wrap items-center justify-end gap-2">
+          {trimmed && (
+            <p
+              aria-live="polite"
+              className="text-muted-foreground mr-auto font-mono text-xs tabular-nums"
+            >
+              {filtered.length} of {plural(members.length, "member")}
+            </p>
+          )}
+          {showFilter && (
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Filter by name or email"
+              aria-label="Filter members"
+              className="order-last h-7 w-full sm:order-none sm:w-56"
+            />
+          )}
+          {canManage && (
+            <Button size="sm" onClick={() => setAdding(true)}>
+              <UserPlus />
+              Add member
+            </Button>
+          )}
+        </div>
+      )}
       {isLoading ? (
-        <Skeleton className="h-32 w-full rounded-lg" />
+        <MemberTableSkeleton rows={4} />
       ) : (
         <div className="overflow-hidden rounded-lg border">
           <Table className="table-fixed">
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className={`${HEAD} pl-4`}>Name</TableHead>
                 <TableHead className={`${HEAD} hidden w-[38%] sm:table-cell`}>
                   Email

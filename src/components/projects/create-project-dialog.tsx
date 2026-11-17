@@ -13,16 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { slugify } from "@/lib/utils";
 import { FormError } from "@/components/ui/form-error";
-import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badge";
+import { ProjectStatusSelect } from "@/components/projects/project-status-select";
 import {
   DEFAULT_PROJECT_COLOR,
   ProjectColorPicker,
@@ -127,28 +120,11 @@ export function CreateProjectDialog({
             <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-3">
               <div className="grid gap-1">
                 <Label htmlFor="proj-status">Status</Label>
-                <Select
+                <ProjectStatusSelect
+                  id="proj-status"
                   value={status}
-                  onValueChange={(val) =>
-                    val && setStatus(val as ProjectStatus)
-                  }
-                >
-                  <SelectTrigger
-                    id="proj-status"
-                    className="h-9 w-full text-xs"
-                  >
-                    <SelectValue placeholder="Status">
-                      {PROJECT_STATUS_CONFIG[status]?.label || "Active"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planning">Planning</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={setStatus}
+                />
               </div>
               <div className="grid gap-1">
                 <Label id="proj-color-label">Color</Label>

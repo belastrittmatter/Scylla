@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { plural } from "@/lib/plural";
 import {
   Empty,
   EmptyContent,
@@ -11,19 +10,19 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListRows } from "@/components/teams/teams-page-skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useProjects, type ProjectItem } from "@/hooks/use-projects";
 import { CreateProjectDialog } from "./create-project-dialog";
 import { EditProjectDialog } from "./edit-project-dialog";
-import { ProjectRow } from "./project-row";
+import { ProjectListHead, ProjectRow } from "./project-row";
 import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
 type Props = {
   teamId: string;
   teamSlug: string;
   canManage: boolean;
-  /** Reports the loaded project count (for the page header). */
+  /** Reports the loaded project count (shown on the Projects tab). */
   onCountChange?: (count: number) => void;
 };
 
@@ -54,19 +53,17 @@ export function TeamProjectsTab({
 
   return (
     <div className="space-y-3">
-      <div className="flex min-h-7 items-center justify-between gap-3">
-        <p className="text-muted-foreground font-mono text-xs tabular-nums">
-          {isLoading || error ? "\u00a0" : plural(projects.length, "project")}
-        </p>
-        {canManage && !isEmpty && (
+      {/* The tab carries the count; the toolbar is just the primary action. */}
+      {canManage && !isEmpty && (
+        <div className="flex min-h-7 items-center justify-end gap-3">
           <Button size="sm" onClick={() => setCreating(true)}>
             <Plus />
             New project
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       {isLoading ? (
-        <Skeleton className="h-32 w-full rounded-lg" />
+        <ListRows rows={3} />
       ) : error ? (
         <Empty className="border p-6 md:p-8">
           <EmptyHeader>
@@ -101,18 +98,21 @@ export function TeamProjectsTab({
           )}
         </Empty>
       ) : (
-        <ul className="divide-border divide-y overflow-hidden rounded-lg border">
-          {projects.map((p) => (
-            <ProjectRow
-              key={p.id}
-              project={p}
-              teamSlug={teamSlug}
-              canManage={canManage}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-            />
-          ))}
-        </ul>
+        <div className="overflow-hidden rounded-lg border">
+          <ProjectListHead canManage={canManage} />
+          <ul className="divide-border divide-y">
+            {projects.map((p) => (
+              <ProjectRow
+                key={p.id}
+                project={p}
+                teamSlug={teamSlug}
+                canManage={canManage}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+              />
+            ))}
+          </ul>
+        </div>
       )}
       <CreateProjectDialog
         teamId={teamId}

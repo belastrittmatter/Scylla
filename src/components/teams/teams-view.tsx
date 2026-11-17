@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/empty";
 import { useTeams, type TeamItem } from "@/hooks/use-teams";
 import { CreateTeamDialog } from "./create-team-dialog";
-import { TeamRow } from "./team-row";
+import { TeamListHead, TeamRow } from "./team-row";
 
 export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
   const router = useRouter();
@@ -23,8 +23,9 @@ export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
   const isEmpty = teams.length === 0;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 md:p-8">
-      <div className="flex items-start justify-between gap-4">
+    <div className="w-full max-w-4xl space-y-6 p-4 sm:p-6 md:p-8">
+      {/* Page header on the landing's dashed blueprint rule. */}
+      <div className="flex items-start justify-between gap-4 border-b border-dashed pb-5">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight">Teams</h1>
           <p className="text-muted-foreground text-sm">
@@ -32,7 +33,11 @@ export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
           </p>
         </div>
         {!isEmpty && (
-          <Button onClick={() => setCreating(true)}>
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => setCreating(true)}
+          >
             <Plus />
             New team
           </Button>
@@ -57,11 +62,14 @@ export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="divide-border divide-y overflow-hidden rounded-lg border">
-          {teams.map((t) => (
-            <TeamRow key={t.id} team={t} />
-          ))}
-        </ul>
+        <div className="overflow-hidden rounded-lg border">
+          <TeamListHead />
+          <ul className="divide-border divide-y">
+            {teams.map((t) => (
+              <TeamRow key={t.id} team={t} />
+            ))}
+          </ul>
+        </div>
       )}
 
       <CreateTeamDialog
