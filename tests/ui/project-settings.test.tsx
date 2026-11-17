@@ -31,9 +31,9 @@ describe("ProjectSettingsView", () => {
     expect(html).toContain("Core Team");
     expect(html).toContain("acme/widgets");
     expect(html).toContain('href="https://github.com/acme/widgets"');
-    expect(html).toContain("Sync now");
+    expect(html).toContain("Sync issues");
     expect(html).toContain("Team Members");
-    expect(html).toContain("Add Member");
+    expect(html).toContain("Add member");
   });
 
   test("the repository is never in an editable input", () => {
@@ -48,20 +48,20 @@ describe("ProjectSettingsView", () => {
     expect(html).toContain(
       "This project is not linked to a GitHub repository.",
     );
-    expect(html).not.toContain("Sync now");
+    expect(html).not.toContain("Sync issues");
   });
 
   test("a viewer has no sync and no add member", () => {
     const html = view("acme/widgets", "viewer");
-    expect(html).not.toContain("Sync now");
-    expect(html).not.toContain("Add Member");
+    expect(html).not.toContain("Sync issues");
+    expect(html).not.toContain("Add member");
     expect(html).toContain("Open on GitHub");
   });
 
   test("a member can sync but not add members", () => {
     const html = view("acme/widgets", "member");
-    expect(html).toContain("Sync now");
-    expect(html).not.toContain("Add Member");
+    expect(html).toContain("Sync issues");
+    expect(html).not.toContain("Add member");
   });
 });
 
@@ -79,7 +79,7 @@ describe("settings cards on their own", () => {
     const html = renderToString(<ProjectMembersCard teamId="t1" canManage />);
     expect(html).toContain("Team Members");
     expect(html).toContain("Loading members");
-    expect(html).toContain("Add Member");
+    expect(html).toContain("Add member");
   });
 });
 
@@ -161,15 +161,48 @@ describe("ProjectMembersCard member rows", () => {
     expect(html).not.toContain("Loading members");
   });
 
-  test("a manager gets Remove only on non-owner rows", () => {
+  test("a manager gets one named Remove, only on non-owner rows", () => {
     const html = loaded(true);
-    expect(html.match(/Remove/g)).toHaveLength(1);
-    expect(html).toContain("Add Member");
+    expect(html.match(/<button[^>]*aria-label="Remove [^"]*"/g)).toHaveLength(
+      1,
+    );
+    expect(html).toContain('aria-label="Remove Mia Member"');
+    expect(html).not.toContain('aria-label="Remove Olive Owner"');
+    expect(html).toContain("Add member");
   });
 
-  test("without canManage there is no Remove and no Add Member", () => {
+  test("card titles are level-2 headings", () => {
+    const html = loaded(true);
+    expect(html).toContain("<h2>Team Members</h2>");
+    const github = renderToString(
+      <ProjectGithubCard projectId="p1" githubRepo="acme/widgets" canSync />,
+    );
+    expect(github).toContain("<h2>GitHub Repository</h2>");
+  });
+
+  test("a member without a name falls back to the email, shown once", () => {
+    mock.module("@/components/teams/use-team-members", () => ({
+      useTeamMembers: () => ({
+        members: [
+          {
+            ...members[1],
+            user: { id: "u-mem", name: "", email: "mia@example.com" },
+          },
+        ],
+        isLoading: false,
+        addMember: async () => {},
+        updateRole: async () => {},
+        removeMember: async () => {},
+      }),
+    }));
+    const html = renderToString(<ProjectMembersCard teamId="t1" canManage />);
+    expect(html.match(/>mia@example\.com</g)).toHaveLength(1);
+    expect(html).toContain('aria-label="Remove mia@example.com"');
+  });
+
+  test("without canManage there is no Remove and no Add member", () => {
     const html = loaded(false);
     expect(html).not.toContain("Remove");
-    expect(html).not.toContain("Add Member");
+    expect(html).not.toContain("Add member");
   });
 });

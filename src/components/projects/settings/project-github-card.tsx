@@ -12,6 +12,11 @@ type Props = {
   canSync: boolean;
 };
 
+type SyncResponse = {
+  error?: string;
+  data?: { createdCount: number; updatedCount: number };
+};
+
 export function ProjectGithubCard({ projectId, githubRepo, canSync }: Props) {
   const [syncing, setSyncing] = useState(false);
 
@@ -21,8 +26,11 @@ export function ProjectGithubCard({ projectId, githubRepo, canSync }: Props) {
       const res = await fetch(`/api/projects/${projectId}/github-sync`, {
         method: "POST",
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Sync failed");
+      // An HTML error page from a proxy is not JSON; fall back to the status.
+      const json: SyncResponse | null = await res.json().catch(() => null);
+      if (!res.ok || !json?.data) {
+        throw new Error(json?.error || `Sync failed (HTTP ${res.status})`);
+      }
       const { createdCount, updatedCount } = json.data;
       toast.success(`Synced: ${createdCount} new, ${updatedCount} updated`);
     } catch (err) {
@@ -35,7 +43,9 @@ export function ProjectGithubCard({ projectId, githubRepo, canSync }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>GitHub Repository</CardTitle>
+        <CardTitle>
+          <h2>GitHub Repository</h2>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {githubRepo ? (
@@ -43,26 +53,37 @@ export function ProjectGithubCard({ projectId, githubRepo, canSync }: Props) {
             <code className="bg-muted rounded px-2 py-1 text-sm">
               {githubRepo}
             </code>
-            <Button
-              variant="outline"
-              size="sm"
-              render={
-                <a
-                  href={`https://github.com/${githubRepo}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
-              }
-            >
-              <ExternalLink />
-              Open on GitHub
-            </Button>
-            {canSync && (
-              <Button size="sm" onClick={sync} disabled={syncing}>
-                <RefreshCw />
-                {syncing ? "Syncing..." : "Sync now"}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                render={
+                  <a
+                    href={`https://github.com/${githubRepo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                }
+              >
+                <ExternalLink />
+                Open on GitHub
+                <span className="sr-only"> (opens in a new tab)</span>
               </Button>
-            )}
+              {canSync && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={sync}
+                  disabled={syncing}
+                  aria-busy={syncing}
+                >
+                  <RefreshCw
+                    className={syncing ? "motion-safe:animate-spin" : undefined}
+                  />
+                  {syncing ? "Syncing issues…" : "Sync issues"}
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
