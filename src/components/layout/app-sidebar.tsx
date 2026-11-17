@@ -131,7 +131,10 @@ function AccountTrigger({ className, ...props }: React.ComponentProps<"button">)
       type="button"
       aria-label="Account menu"
       className={cn(
-        "flex w-full cursor-pointer items-center gap-1 rounded-md px-1 py-1.5 text-left ring-sidebar-ring outline-hidden transition-colors hover:bg-sidebar-accent/60 focus-visible:ring-2 data-[state=open]:bg-sidebar-accent",
+        // Square, full-bleed row like the nav: avatar centred on the 16px icon column (24px in),
+        // name on the label edge, chevron on the shared trailing axis 24px from the rail.
+        // Collapsed to icons it falls back to the rounded 32px target.
+        "flex w-full cursor-pointer items-center gap-1 rounded-none py-1.5 pr-4 pl-3 text-left ring-sidebar-ring outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-inset hover:bg-sidebar-accent/60 data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:rounded-md group-data-[collapsible=icon]:px-1",
         className,
       )}
       {...props}
@@ -157,7 +160,8 @@ function AccountTrigger({ className, ...props }: React.ComponentProps<"button">)
             <span className="truncate text-sm font-medium text-sidebar-foreground">
               {title}
             </span>
-            <span className="truncate font-code text-xs text-ink-3">
+            {/* ink-2, not ink-3: stays AA on the tinted hover/open fill. */}
+            <span className="truncate font-code text-xs text-muted-foreground">
               {user?.email}
             </span>
           </>
@@ -171,6 +175,10 @@ function AccountTrigger({ className, ...props }: React.ComponentProps<"button">)
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Here (not in the nav) so the mobile sheet remounting doesn't refetch.
   const { teams } = useTeams();
+  const pathname = usePathname();
+  const section = pathname?.split("/").filter(Boolean)[0];
+  // Workspace settings and account settings both live behind the footer row.
+  const settingsActive = section === "settings" || section === "account";
   return (
     <Sidebar
       collapsible="icon"
@@ -230,6 +238,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu className="min-w-0 flex-1">
             <SidebarMenuItem>
               <SidebarMenuButton
+                isActive={settingsActive}
                 tooltip="Settings"
                 render={<Link href="/settings" />}
               >
@@ -241,6 +250,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuItem>
           </SidebarMenu>
 
+          {/* pr-2 + 32px buttons puts the last icon's centre 24px from the rail. */}
           <div className="flex shrink-0 items-center pr-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1 group-data-[collapsible=icon]:pr-0">
             <ThemeToggle />
             <Tooltip>
@@ -275,22 +285,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           aria-hidden
           className="my-2 border-t border-dashed border-sidebar-border group-data-[collapsible=icon]:-mx-2"
         />
-        <div className="px-2 group-data-[collapsible=icon]:px-0">
+        <div>
           <UserButton
             size="default"
             align="start"
             side="top"
             sideOffset={6}
             trigger={<AccountTrigger />}
+            // Settings is the footer row above; the menu holds only what the trigger lacks.
+            disableDefaultLinks
+            localization={{ SIGN_OUT: "Sign out" }}
             classNames={{
               content: {
-                // Match the trigger's width and inset so the menu stays in the sidebar column.
-                base: "w-(--radix-dropdown-menu-trigger-width) min-w-44 max-w-64",
-                user: {
-                  avatar: { base: "hidden" },
-                  title: "font-medium",
-                  subtitle: "font-code text-xs text-ink-3 opacity-100",
-                },
+                // Stay inside the sidebar column. The library's user header (the trigger's
+                // name and email again) and the separator under it are hidden.
+                base: "mx-2 w-[calc(var(--radix-dropdown-menu-trigger-width)-1rem)] min-w-44 max-w-64 [&>[role=separator]:nth-child(2)]:hidden [&>div:first-child]:hidden",
               },
             }}
           />

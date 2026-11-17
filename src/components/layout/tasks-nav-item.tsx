@@ -107,7 +107,8 @@ export function TasksNavItem({
         render={
           <SidebarMenuAction
             aria-label="Toggle task shortcuts"
-            className="data-panel-open:[&>svg]:rotate-90"
+            // right-3: chevron centre 24px from the rail, the footer icons' trailing axis.
+            className="right-3 data-panel-open:[&>svg]:rotate-90"
           />
         }
       >

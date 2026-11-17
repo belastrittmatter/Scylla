@@ -81,16 +81,16 @@ export function HtmlDescriptionEditor({
   };
 
   return (
-    <div className="shadow-xs flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
       {/* Top Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200/80 bg-neutral-50/70 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-800/40">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted px-3 py-2">
         <div className="flex items-center gap-1">
           {TOOLBAR_ITEMS.map((item, idx) => {
             if ("divider" in item && item.divider) {
               return (
                 <div
                   key={idx}
-                  className="mx-1 h-4 w-px bg-neutral-200 dark:bg-neutral-700"
+                  className="mx-1 h-4 w-px bg-border"
                 />
               );
             }
@@ -104,7 +104,7 @@ export function HtmlDescriptionEditor({
                   item.isLink ? handleInsertLink() : runCommand(item.cmd!)
                 }
                 disabled={activeTab !== "visual"}
-                className="rounded-md p-1.5 text-neutral-700 transition-colors hover:bg-neutral-200 disabled:opacity-40 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-40"
               >
                 <Icon className="size-3.5" />
               </button>
@@ -113,14 +113,14 @@ export function HtmlDescriptionEditor({
         </div>
 
         {/* Mode Switcher */}
-        <div className="flex items-center rounded-lg bg-neutral-200/70 p-0.5 dark:bg-neutral-800">
+        <div className="flex items-center rounded-lg bg-border p-0.5">
           <button
             type="button"
             onClick={() => setActiveTab("visual")}
             className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
               activeTab === "visual"
-                ? "shadow-2xs bg-white text-orange-600 dark:bg-neutral-900 dark:text-orange-400"
-                : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400"
+                ? "bg-card text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Eye className="size-3" />
@@ -131,8 +131,8 @@ export function HtmlDescriptionEditor({
             onClick={() => setActiveTab("html")}
             className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-all ${
               activeTab === "html"
-                ? "shadow-2xs bg-white text-orange-600 dark:bg-neutral-900 dark:text-orange-400"
-                : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400"
+                ? "bg-card text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Code className="size-3" />
@@ -148,7 +148,7 @@ export function HtmlDescriptionEditor({
             ref={visualEditorRef}
             contentEditable
             onInput={() => setContent(visualEditorRef.current?.innerHTML || "")}
-            className="max-h-60 min-h-36 overflow-y-auto rounded-lg border border-neutral-200/80 bg-neutral-50/30 p-3 text-xs leading-relaxed text-neutral-800 focus:outline-none focus:ring-1 focus:ring-orange-500/50 dark:border-neutral-800 dark:bg-neutral-900/50 dark:text-neutral-200 [&_a]:text-orange-600 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+            className="max-h-60 min-h-36 overflow-y-auto rounded-lg border border-border bg-background p-3 text-xs leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-ring/50 [&_a]:text-primary [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
           />
         ) : (
           <textarea
@@ -156,14 +156,14 @@ export function HtmlDescriptionEditor({
             onChange={(e) => setContent(e.target.value)}
             rows={6}
             placeholder="<p>Agenda notes...</p>"
-            className="max-h-60 min-h-36 w-full rounded-lg border border-neutral-200/80 bg-neutral-50/30 p-3 font-mono text-xs leading-relaxed text-neutral-800 focus:outline-none focus:ring-1 focus:ring-orange-500/50 dark:border-neutral-800 dark:bg-neutral-900/50 dark:text-neutral-200"
+            className="max-h-60 min-h-36 w-full rounded-lg border border-border bg-background p-3 font-mono text-xs leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-ring/50"
           />
         )}
       </div>
 
       {/* Actions Footer */}
-      <div className="flex items-center justify-between border-t border-neutral-100 bg-neutral-50/50 px-3 py-2 text-xs dark:border-neutral-800 dark:bg-neutral-800/30">
-        <span className="text-[11px] text-neutral-400">
+      <div className="flex items-center justify-between border-t border-border bg-muted px-3 py-2 text-xs">
+        <span className="text-[11px] text-muted-foreground">
           Rich HTML formatting synced with Google Calendar
         </span>
         <div className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export function HtmlDescriptionEditor({
             size="sm"
             onClick={handleSave}
             disabled={isSaving}
-            className="shadow-2xs h-7 gap-1 bg-gradient-to-r from-orange-500 to-amber-500 text-xs font-semibold text-white hover:from-orange-600 hover:to-amber-600"
+            className="h-7 gap-1 text-xs"
           >
             {isSaving ? (
               <>
@@ -193,7 +193,7 @@ export function HtmlDescriptionEditor({
             ) : (
               <>
                 <Check className="size-3" />
-                Save Notes
+                Save notes
               </>
             )}
           </Button>

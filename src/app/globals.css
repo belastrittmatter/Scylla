@@ -85,11 +85,12 @@
   --border: var(--line);
   --input: var(--line-strong);
   --ring: var(--ember);
-  --chart-1: oklch(0.705 0.213 47.604);
-  --chart-2: oklch(0.646 0.222 41.116);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Charts draw from the palette, so they flip with .dark. */
+  --chart-1: var(--ember);
+  --chart-2: var(--ember-deep);
+  --chart-3: var(--ink-2);
+  --chart-4: var(--ink-3);
+  --chart-5: var(--line-strong);
   --radius: 0.625rem;
   /* Sidebar sits one step above the paper in both themes. */
   --sidebar: var(--surface);
@@ -98,7 +99,8 @@
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--tint);
   --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: var(--line);
+  /* Shell frame (sidebar rail, header seam): the stronger line so the dashed rails read on white. */
+  --sidebar-border: var(--line-strong);
   --sidebar-ring: var(--ember);
 }
 
@@ -119,6 +121,8 @@
   --primary: var(--ember);
   --primary-foreground: var(--paper);
   --destructive: oklch(0.704 0.191 22.216);
+  /* Dark seams already read on the regular line. */
+  --sidebar-border: var(--line);
 }
 
 @layer base {
