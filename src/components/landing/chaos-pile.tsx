@@ -89,21 +89,32 @@ const orientationApi = () =>
     ? {}
     : DeviceOrientationEvent) as OrientationPermission;
 
-/** Device tilt (deg) to screen-space gravity, corrected for landscape. */
+/**
+ * Device tilt (deg) to screen-space gravity, corrected for landscape.
+ * Uses the real gravity vector, not raw beta/gamma: an upright phone has two Euler
+ * readings for one pose (beta 60/gamma -90 equals beta 120/gamma 90), and reading
+ * gamma directly flips left and right between them.
+ */
 export function tiltToGravity(
   beta: number,
   gamma: number,
   screenAngle: number,
 ) {
+  const rad = Math.PI / 180;
+  // Gravity in portrait screen space (x right, y down).
+  const px = Math.sin(gamma * rad) * Math.cos(beta * rad);
+  const py = Math.sin(beta * rad);
   const [x, y] =
     screenAngle === 90
-      ? [beta, -gamma]
+      ? [py, -px]
       : screenAngle === 180
-        ? [-gamma, -beta]
+        ? [-px, -py]
         : screenAngle === 270
-          ? [-beta, gamma]
-          : [gamma, beta];
-  const scale = (v: number) => Math.max(-1, Math.min(1, v / 45)) * 1.2;
+          ? [-py, px]
+          : [px, py];
+  // Full strength from a 45° tilt.
+  const scale = (v: number) =>
+    Math.max(-1, Math.min(1, v / Math.SQRT1_2)) * 1.2;
   return { x: scale(x), y: scale(y) };
 }
 export function ChaosPile() {
