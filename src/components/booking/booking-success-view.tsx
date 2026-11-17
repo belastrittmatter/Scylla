@@ -22,6 +22,8 @@ import {
   formatSlotTime,
   formatFullDate,
   buildGoogleCalendarUrl,
+  focusTargetClass,
+  primaryHoverClass,
 } from "./booking-utils";
 
 const chipClass =
@@ -55,11 +57,24 @@ export function BookingSuccessView({
   const rowClass = "text-ink flex items-start gap-3 text-sm";
   const iconClass = "text-ink-3 mt-0.5 size-4 shrink-0";
 
+  // The form unmounts on success; land focus on the confirmation heading.
+  const headingRef = React.useRef<HTMLHeadingElement>(null);
+  React.useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
   return (
     <div className="border-line bg-surface mx-auto max-w-xl rounded-xl border">
       <div className="border-line border-b p-5 sm:p-8">
         <CheckCircle2 className="text-ember size-6" aria-hidden="true" />
-        <h1 className="text-ink mt-4 text-balance text-3xl font-medium leading-tight tracking-[-0.02em]">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className={cn(
+            "text-ink mt-4 text-balance text-3xl font-medium leading-tight tracking-[-0.02em]",
+            focusTargetClass,
+          )}
+        >
           You&apos;re scheduled
         </h1>
         <p className="text-ink-2 mt-2 text-sm">
@@ -149,7 +164,8 @@ export function BookingSuccessView({
             rel="noreferrer"
             className={cn(
               buttonVariants({ variant: "default" }),
-              "h-10 flex-1 gap-2 hover:bg-[color-mix(in_oklch,var(--primary),var(--ink)_15%)]",
+              "h-10 flex-1 gap-2",
+              primaryHoverClass,
             )}
           >
             <CalendarPlus className="size-4" aria-hidden="true" />

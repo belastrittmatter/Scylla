@@ -8,7 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Eyebrow } from "@/components/landing/primitives";
 import type { InviteData, Slot } from "./booking-types";
-import { formatFullDate, formatSlotTime } from "./booking-utils";
+import { cn } from "cn";
+import {
+  focusTargetClass,
+  formatFullDate,
+  formatSlotTime,
+  primaryHoverClass,
+} from "./booking-utils";
 
 interface BookingFormStepProps {
   invite: InviteData;
@@ -39,6 +45,13 @@ export function BookingFormStep({
   onBackToSlots,
   onSubmit,
 }: BookingFormStepProps) {
+  // The slot button the invitee pressed unmounts with the slot step, so focus
+  // moves to this step's summary instead of falling back to <body>.
+  const summaryRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    summaryRef.current?.focus();
+  }, []);
+
   return (
     <div className="max-w-md space-y-6">
       <Button
@@ -51,8 +64,14 @@ export function BookingFormStep({
         Back to available slots
       </Button>
 
-      <div className="space-y-1.5">
-        <Eyebrow as="h2" className="text-ink-2">
+      <div
+        ref={summaryRef}
+        tabIndex={-1}
+        role="group"
+        aria-labelledby="booking-form-heading"
+        className={cn("space-y-1.5", focusTargetClass)}
+      >
+        <Eyebrow as="h2" id="booking-form-heading" className="text-ink-2">
           Selected meeting time
         </Eyebrow>
         <p className="text-ink pt-1 text-base font-medium">
@@ -62,6 +81,12 @@ export function BookingFormStep({
           {formatSlotTime(selectedSlot.start, timeZone)} –{" "}
           {formatSlotTime(selectedSlot.end, timeZone)} · {timeZone}
         </p>
+        {invite.locationType !== "room" && (
+          // Below md the sidebar's meta is one line, so the Meet note lives here.
+          <p className="text-ink-2 text-xs md:hidden">
+            Google Meet link generated on confirmation
+          </p>
+        )}
       </div>
 
       {invite.isRestricted && (
@@ -91,7 +116,7 @@ export function BookingFormStep({
             htmlFor="guestName"
             className="text-ink text-xs font-medium"
           >
-            Your full name <span className="text-destructive">*</span>
+            Your full name
           </Label>
           <Input
             id="guestName"
@@ -109,7 +134,7 @@ export function BookingFormStep({
             htmlFor="guestEmail"
             className="text-ink text-xs font-medium"
           >
-            Your email address <span className="text-destructive">*</span>
+            Your email address
           </Label>
           <Input
             id="guestEmail"
@@ -136,7 +161,7 @@ export function BookingFormStep({
           </Label>
           <Textarea
             id="guestNotes"
-            placeholder="Please share anything that will help prepare for our discussion..."
+            placeholder="Anything to prepare before the call…"
             rows={3}
             value={guestNotes}
             onChange={(e) => setGuestNotes(e.target.value)}
@@ -149,12 +174,12 @@ export function BookingFormStep({
           <Button
             type="submit"
             disabled={isBooking}
-            className="h-11 w-full gap-2 text-sm hover:bg-[color-mix(in_oklch,var(--primary),var(--ink)_15%)]"
+            className={cn("h-11 w-full gap-2 text-sm", primaryHoverClass)}
           >
             {isBooking ? (
               <>
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                Scheduling meeting...
+                Scheduling meeting…
               </>
             ) : (
               "Confirm & schedule meeting"

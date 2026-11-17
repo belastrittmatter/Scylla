@@ -9,7 +9,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/landing/primitives";
 import type { Slot } from "./booking-types";
-import { formatSlotTime, getSlotHour } from "./booking-utils";
+import {
+  focusTargetClass,
+  formatSlotTime,
+  getSlotHour,
+} from "./booking-utils";
 
 interface BookingSlotsStepProps {
   /** False until the invitee's own time zone and today are known (after mount). */
@@ -25,6 +29,11 @@ interface BookingSlotsStepProps {
   /** The invite books a physical room, so free times include the room too. */
   includesRoom?: boolean;
   onSelectSlot: (slot: Slot) => void;
+  /**
+   * Where focus lands when this step mounts after the form step: the start of
+   * the slot picked before (if it is still listed), else the time section.
+   */
+  restoreFocusTo?: string | null;
 }
 
 type SlotsState = "loading" | "error" | "empty" | "ready";
@@ -38,6 +47,17 @@ const SLOT_GROUPS = [
 const subLabelClass =
   "font-code text-ink-2 text-[11px] uppercase tracking-[0.12em]";
 
+/**
+ * Below md the time list sits under the calendar, so after a date tap the
+ * new times would change off-screen: bring the time section up to meet them.
+ */
+function revealTimesOnMobile(target: HTMLElement | null) {
+  if (!target || typeof window === "undefined") return;
+  if (!window.matchMedia("(max-width: 767px)").matches) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
 export function BookingSlotsStep({
   ready,
   selectedDate,
@@ -49,8 +69,10 @@ export function BookingSlotsStep({
   timeZone,
   includesRoom = false,
   onSelectSlot,
+  restoreFocusTo = null,
 }: BookingSlotsStepProps) {
   const rdp = getDefaultClassNames();
+  const timeSectionRef = React.useRef<HTMLElement>(null);
 
   const state: SlotsState =
     !ready || loadingSlots
@@ -84,9 +106,26 @@ export function BookingSlotsStep({
     })).filter((group) => group.slots.length > 0);
   }, [slots, zone]);
 
+  // Returning from the form step: put focus back where the invitee left off.
+  // Runs once on mount; the slots are still loaded when this step remounts.
+  React.useEffect(() => {
+    if (!restoreFocusTo) return;
+    const section = timeSectionRef.current;
+    const slotButton = section?.querySelector<HTMLElement>(
+      `[data-slot-start="${CSS.escape(restoreFocusTo)}"]`,
+    );
+    (slotButton ?? section)?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
-      <section aria-labelledby="booking-date-heading" className="min-w-0">
+    // lg: calendar and times split by a full-height hairline, like the
+    // sidebar; the time list scrolls inside the calendar's height.
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10 lg:-my-8 lg:gap-0 lg:divide-x lg:divide-line">
+      <section
+        aria-labelledby="booking-date-heading"
+        className="min-w-0 lg:py-8 lg:pr-8"
+      >
         <Eyebrow as="h2" id="booking-date-heading" className="text-ink-2">
           Select a date
         </Eyebrow>
@@ -96,10 +135,12 @@ export function BookingSlotsStep({
             mode="single"
             selected={selectedDate}
             onSelect={(date) => {
-              if (date) onSelectDate(date);
+              if (!date) return;
+              onSelectDate(date);
+              revealTimesOnMobile(timeSectionRef.current);
             }}
             disabled={(date) => isBefore(date, startOfToday())}
-            className="mt-4 bg-transparent p-0 tabular-nums [--cell-size:--spacing(10)]"
+            className="mt-3 bg-transparent p-0 tabular-nums [--cell-size:--spacing(9)] md:mt-4 md:[--cell-size:--spacing(10)]"
             classNames={{
               root: cn("w-full md:w-fit", rdp.root),
               caption_label: cn(
@@ -124,24 +165,32 @@ export function BookingSlotsStep({
         ) : (
           <div
             aria-hidden="true"
-            className="bg-paper mt-4 h-73 w-full rounded-lg md:w-[280px]"
+            className="bg-paper mt-3 h-64 w-full rounded-lg md:mt-4 md:h-73 md:w-[280px]"
           />
         )}
       </section>
 
-      <section aria-labelledby="booking-time-heading" className="min-w-0">
-        <div className="flex items-center justify-between gap-4">
+      <section
+        ref={timeSectionRef}
+        tabIndex={-1}
+        aria-labelledby="booking-time-heading"
+        className={cn(
+          "min-w-0 scroll-mt-4 lg:flex lg:h-0 lg:min-h-full lg:flex-col lg:pt-8 lg:pl-8",
+          focusTargetClass,
+        )}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <Eyebrow as="h2" id="booking-time-heading" className="text-ink-2">
             Select a time
           </Eyebrow>
           <p className="text-ink-2 font-code flex min-w-0 items-center gap-1.5 text-xs">
             <Globe className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="sr-only">Time zone:</span>
-            <span className="truncate">{timeZone ?? ""}</span>
+            <span className="[overflow-wrap:anywhere]">{timeZone ?? ""}</span>
           </p>
         </div>
 
-        <p className="text-ink mt-4 min-h-6 text-base font-medium">
+        <p className="text-ink mt-3 min-h-6 text-base font-medium md:mt-4">
           {ready && selectedDate ? format(selectedDate, "EEEE, MMMM d") : ""}
         </p>
         <p className="text-ink-2 font-code mt-0.5 text-xs tabular-nums">
@@ -153,7 +202,7 @@ export function BookingSlotsStep({
           {status}
         </p>
 
-        <div className="mt-5">
+        <div className="mt-3 md:mt-5 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
           {state === "loading" ? (
             <div className="border-line text-ink-2 flex h-32 items-center justify-center gap-2 rounded-lg border border-dashed text-sm">
               <Loader2
@@ -191,15 +240,26 @@ export function BookingSlotsStep({
               </p>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div
+              // lg: an inner scroller capped to the calendar's height that runs
+              // to the card edge, so the next group peeks through the bottom
+              // fade ("more below"); the bottom padding lets the last row clear it.
+              className="space-y-4 md:space-y-5 lg:-mx-1 lg:min-h-0 lg:flex-1 lg:scroll-pt-8 lg:space-y-3 lg:overflow-y-auto lg:px-1 lg:pb-10 lg:[mask-image:linear-gradient(to_bottom,#000_calc(100%-2.5rem),transparent)] lg:[scrollbar-color:var(--line)_transparent] lg:[scrollbar-width:thin] lg:hover:[scrollbar-color:var(--ink-3)_transparent]"
+            >
               {groups.map((group) => {
                 const headingId = `booking-slots-${group.id}`;
                 return (
                   <div key={group.id} role="group" aria-labelledby={headingId}>
-                    <h3 id={headingId} className={subLabelClass}>
+                    <h3
+                      id={headingId}
+                      className={cn(
+                        subLabelClass,
+                        "bg-surface lg:sticky lg:top-0 lg:z-10 lg:py-1.5",
+                      )}
+                    >
                       {group.label}
                     </h3>
-                    <ul className="mt-2 grid grid-cols-3 gap-2 md:grid-cols-2 xl:grid-cols-4">
+                    <ul className="mt-2 grid grid-cols-3 gap-1.5 md:grid-cols-2 md:gap-2 lg:mt-0.5 xl:grid-cols-4">
                       {group.slots.map((slot) => {
                         const start = formatSlotTime(slot.start, zone);
                         const end = formatSlotTime(slot.end, zone);
@@ -208,8 +268,9 @@ export function BookingSlotsStep({
                             <Button
                               variant="outline"
                               onClick={() => onSelectSlot(slot)}
+                              data-slot-start={slot.start}
                               aria-label={`${start} to ${end}`}
-                              className="font-code border-line text-ink-2 hover:border-ember hover:text-ink focus-visible:text-ink h-11 w-full rounded-lg bg-transparent text-sm tabular-nums hover:bg-transparent xl:h-10 dark:bg-transparent dark:hover:bg-transparent"
+                              className="font-code border-line text-ink hover:border-ember h-10 w-full rounded-lg bg-transparent text-sm tabular-nums hover:bg-transparent md:h-11 xl:h-10 dark:bg-transparent dark:hover:bg-transparent"
                             >
                               {start}
                             </Button>

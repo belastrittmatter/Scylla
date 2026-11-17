@@ -38,9 +38,26 @@ export function BookingDetailsSidebar({
   const attendees = members
     .map((m) => m.name)
     .filter((name) => name && name !== organizer?.name);
+  const inRoom = invite.locationType === "room" && room !== null;
+  // Below md the meta collapses to one mono line so the calendar and the
+  // first times reach the first screen; md and up keep the full list.
+  const compactMeta = [
+    `${invite.duration} min`,
+    inRoom ? room.name : "Google Meet",
+    attendees.length > 0 ? `with ${joinNames(attendees)}` : null,
+  ].filter(Boolean);
+  const roomDetail = inRoom
+    ? [
+        room.building
+          ? `${room.building}${room.floor ? ` (Floor ${room.floor})` : ""}`
+          : null,
+        room.capacity ? `${room.capacity} seats` : null,
+        ...(room.features ?? []),
+      ].filter(Boolean)
+    : [];
 
   return (
-    <div className="flex flex-col gap-6 p-5 sm:p-8">
+    <div className="flex flex-col gap-4 p-4 sm:p-8 md:gap-6">
       <div className="flex items-center gap-3">
         <Avatar size="lg">
           {organizer?.image && (
@@ -63,11 +80,11 @@ export function BookingDetailsSidebar({
       </div>
 
       <div>
-        <h1 className="text-ink text-balance text-[28px] font-medium leading-[1.15] tracking-[-0.02em] sm:text-3xl">
+        <h1 className="text-ink text-balance text-2xl font-medium leading-[1.15] tracking-[-0.02em] sm:text-3xl">
           {invite.title}
         </h1>
         {invite.description && (
-          <p className="text-ink-2 mt-2 whitespace-pre-wrap text-pretty text-sm leading-relaxed">
+          <p className="text-ink-2 mt-2 line-clamp-2 whitespace-pre-wrap text-pretty text-sm leading-relaxed md:line-clamp-none">
             {invite.description}
           </p>
         )}
@@ -79,7 +96,18 @@ export function BookingDetailsSidebar({
         )}
       </div>
 
-      <ul className="text-ink space-y-3 text-sm">
+      <div className="md:hidden">
+        <p className="text-ink font-code text-xs leading-relaxed tabular-nums">
+          {compactMeta.join(" · ")}
+        </p>
+        {roomDetail.length > 0 && (
+          <p className="text-ink-2 font-code mt-0.5 text-[11px] leading-relaxed">
+            {roomDetail.join(" · ")}
+          </p>
+        )}
+      </div>
+
+      <ul className="text-ink hidden space-y-3 text-sm md:block">
         <li className="flex items-start gap-3">
           <Clock className={iconClass} aria-hidden="true" />
           <span className="font-code tabular-nums">
@@ -87,7 +115,7 @@ export function BookingDetailsSidebar({
           </span>
         </li>
 
-        {invite.locationType === "room" && room ? (
+        {inRoom ? (
           <li className="flex items-start gap-3">
             <Building2 className={iconClass} aria-hidden="true" />
             <div className="min-w-0 space-y-1">

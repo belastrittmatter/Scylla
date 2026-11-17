@@ -1,5 +1,17 @@
 import type { BookedResult, InviteData, InviteRoom } from "./booking-types";
 
+/**
+ * Hover for the booking flow's ember fills (confirm, add to calendar): the
+ * primary deepened toward ink, so the text keeps its AA contrast on hover in
+ * both themes. --primary comes from the token bridge in src/app/book/layout.tsx.
+ */
+export const primaryHoverClass =
+  "hover:bg-[color-mix(in_oklch,var(--primary),var(--ink)_15%)]";
+
+/** Focus target that only shows a ring for keyboard users. */
+export const focusTargetClass =
+  "rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+
 export const formatSlotTime = (isoString: string, timeZone: string) => {
   try {
     return new Intl.DateTimeFormat("en-US", {

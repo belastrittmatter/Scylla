@@ -68,6 +68,11 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
   const [slotsError, setSlotsError] = React.useState(false);
   const [reloadKey, setReloadKey] = React.useState(0);
   const [selectedSlot, setSelectedSlot] = React.useState<Slot | null>(null);
+  // Set on "Back to available slots" so the slot step can restore focus to
+  // the time the invitee picked; cleared once a new slot is chosen.
+  const [returnSlotStart, setReturnSlotStart] = React.useState<string | null>(
+    null,
+  );
 
   const [guestName, setGuestName] = React.useState("");
   const [guestEmail, setGuestEmail] = React.useState("");
@@ -159,7 +164,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
       }
 
       setBookedResult(data);
-      toast.success("Meeting scheduled successfully!");
+      toast.success("Meeting scheduled");
     } catch (err: unknown) {
       toast.error(
         err instanceof Error ? err.message : "Failed to schedule meeting",
@@ -201,7 +206,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
           members={members}
         />
 
-        <div className="min-w-0 p-5 sm:p-8">
+        <div className="min-w-0 p-4 sm:p-8">
           {!selectedSlot ? (
             <BookingSlotsStep
               ready={ready}
@@ -213,7 +218,11 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
               onRetry={() => setReloadKey((key) => key + 1)}
               timeZone={timeZone}
               includesRoom={invite.locationType === "room"}
-              onSelectSlot={setSelectedSlot}
+              onSelectSlot={(slot) => {
+                setReturnSlotStart(null);
+                setSelectedSlot(slot);
+              }}
+              restoreFocusTo={returnSlotStart}
             />
           ) : (
             <BookingFormStep
@@ -227,7 +236,10 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
               guestNotes={guestNotes}
               setGuestNotes={setGuestNotes}
               isBooking={isBooking}
-              onBackToSlots={() => setSelectedSlot(null)}
+              onBackToSlots={() => {
+                setReturnSlotStart(selectedSlot.start);
+                setSelectedSlot(null);
+              }}
               onSubmit={handleBookingSubmit}
             />
           )}

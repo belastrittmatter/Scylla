@@ -60,7 +60,7 @@ export default function BookingLayout({
         </div>
       </header>
       <main className="flex flex-1 flex-col">
-        <div className="border-line mx-auto w-full max-w-[1200px] flex-1 border-x border-dashed px-4 py-6 sm:px-10 sm:py-12">
+        <div className="border-line mx-auto w-full max-w-[1200px] flex-1 border-x border-dashed px-4 py-4 sm:px-10 sm:py-12">
           {children}
         </div>
       </main>
