@@ -10,15 +10,16 @@ import { initialConsentScopes } from "@/components/consent/consent-scopes";
 import { ALL_MCP_CAPABILITIES } from "@/constants/agent-capabilities";
 
 describe("Consent UI Sub-components (#36 / #43)", () => {
-  it("renders ConsentBrandHeader with title and badge", () => {
-    const html = renderToString(<ConsentBrandHeader badgeLabel="MCP Native" />);
+  it("renders ConsentBrandHeader as the Scylla wordmark linking home", () => {
+    const html = renderToString(<ConsentBrandHeader />);
     expect(html).toContain("Scylla");
-    expect(html).toContain("MCP Native");
+    expect(html).toContain('href="/"');
   });
 
   it("renders ConsentSignInRequired with link to /sign-in", () => {
     const html = renderToString(<ConsentSignInRequired />);
     expect(html).toContain("Sign In Required");
+    expect(html).toMatch(/<h1[^>]*>Sign In Required<\/h1>/);
     expect(html).toContain('href="/sign-in"');
     expect(html).toContain("Sign In to Continue");
   });
@@ -40,6 +41,9 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
     );
     expect(readHtml).toContain(readScope.label);
     expect(readHtml).toContain(readScope.description);
+    expect(readHtml).toContain(readScope.id);
+    expect(readHtml).toContain('role="switch"');
+    expect(readHtml).not.toContain('role="checkbox"');
     expect(readHtml).not.toContain("Destructive");
 
     const deleteHtml = renderToString(
