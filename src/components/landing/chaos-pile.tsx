@@ -110,11 +110,25 @@ export function ChaosPile() {
   const boxRef = useRef<HTMLDivElement>(null);
   const startTilt = useRef<(() => void) | null>(null);
   const [askTilt, setAskTilt] = useState(false);
+  // Bumped on width change: remounts the fragments and rebuilds the walls for the new size.
+  const [run, setRun] = useState(0);
+
+  useEffect(() => {
+    let width = innerWidth;
+    const onResize = () => {
+      if (innerWidth === width) return; // mobile URL bar only changes height
+      width = innerWidth;
+      setRun((r) => r + 1);
+    };
+    addEventListener("resize", onResize);
+    return () => removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const box = boxRef.current;
     if (!box || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    let disposed = false;
     let cleanup = () => {};
     let stopTilt = () => {};
     let stopMouse = () => {};
@@ -134,6 +148,7 @@ export function ChaosPile() {
           Sleeping,
           Body,
         } = await import("matter-js");
+        if (disposed) return; // unmounted while matter-js was loading
         const W = box.clientWidth;
         const H = box.clientHeight;
         const els = ([...box.children] as HTMLElement[]).filter(
@@ -296,10 +311,11 @@ export function ChaosPile() {
     );
     observer.observe(box);
     return () => {
+      disposed = true;
       observer.disconnect();
       cleanup();
     };
-  }, []);
+  }, [run]);
 
   async function enableTilt() {
     setAskTilt(false);
@@ -311,14 +327,15 @@ export function ChaosPile() {
   return (
     <div>
       <p className="mt-1 font-code text-xs text-ink-3">
-        <span className="hidden [@media(pointer:fine)]:inline">
+        <span className="hidden motion-safe:[@media(pointer:fine)]:inline">
           go on, drag them around
         </span>
-        <span className="hidden [@media(pointer:coarse)]:inline">
+        <span className="hidden motion-safe:[@media(pointer:coarse)]:inline">
           {askTilt ? "tap the pile, then tilt your phone" : "tilt your phone"}
         </span>
       </p>
       <div
+        key={run}
         ref={boxRef}
         role="img"
         onClick={askTilt ? enableTilt : undefined}
