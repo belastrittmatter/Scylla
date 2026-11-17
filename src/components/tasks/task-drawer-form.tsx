@@ -62,12 +62,12 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
 
       <div className="grid grid-cols-2 gap-3">
         <Field>
-          <FieldLabel>Status</FieldLabel>
+          <FieldLabel htmlFor="task-status">Status</FieldLabel>
           <Select
             value={status}
             onValueChange={(val) => val && onStatusChange(val as TaskStatus)}
           >
-            <SelectTrigger className="h-9 w-full text-sm">
+            <SelectTrigger id="task-status" className="h-9 w-full text-sm">
               <SelectValue>
                 <span className="flex items-center gap-2">
                   <StatusIcon status={status} />
@@ -93,14 +93,14 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
         </Field>
 
         <Field>
-          <FieldLabel>Priority</FieldLabel>
+          <FieldLabel htmlFor="task-priority">Priority</FieldLabel>
           <Select
             value={priority}
             onValueChange={(val) =>
               val && onPriorityChange(val as TaskPriority)
             }
           >
-            <SelectTrigger className="h-9 w-full text-sm">
+            <SelectTrigger id="task-priority" className="h-9 w-full text-sm">
               <SelectValue>
                 <PriorityLabel
                   value={priority}
@@ -125,8 +125,9 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
 
       <div className="grid grid-cols-2 gap-3">
         <Field>
-          <FieldLabel>Assignee</FieldLabel>
+          <FieldLabel htmlFor="task-assignee">Assignee</FieldLabel>
           <AssigneeCombobox
+            id="task-assignee"
             users={users}
             assigneeId={assigneeId}
             onAssigneeChange={onAssigneeChange}

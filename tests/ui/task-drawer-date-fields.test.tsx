@@ -48,6 +48,23 @@ describe("TaskDrawerDateFields", () => {
     );
   });
 
+  it("names each date picker by its visible label", () => {
+    const html = renderDateFields("2026-11-17", "");
+    expect(html).toContain('id="task-start-date-label"');
+    expect(html).toContain(
+      'aria-labelledby="task-start-date-label task-start-date"',
+    );
+    expect(html).toContain(
+      'aria-labelledby="task-due-date-label task-due-date"',
+    );
+  });
+
+  it("shows a short date and a named clear button", () => {
+    const html = renderDateFields("2026-11-17", "");
+    expect(html).toContain("Nov 17, 2026");
+    expect(html).toContain('aria-label="Clear date"');
+  });
+
   it("does not show the range error when either date is empty", () => {
     expect(renderDateFields("2026-11-12", "")).not.toContain(RANGE_ERROR);
     expect(renderDateFields("", "2026-11-10")).not.toContain(RANGE_ERROR);
@@ -78,6 +95,14 @@ describe("TaskDrawerForm start date", () => {
       />,
     );
   }
+
+  it("points the Status, Priority and Assignee labels at their triggers", () => {
+    const html = renderForm("", "");
+    for (const id of ["task-status", "task-priority", "task-assignee"]) {
+      expect(html).toContain(`for="${id}"`);
+      expect(html).toContain(`id="${id}"`);
+    }
+  });
 
   it("renders the 'Start date' picker alongside the due date picker", () => {
     const html = renderForm("", "");

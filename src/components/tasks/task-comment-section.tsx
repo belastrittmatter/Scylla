@@ -108,7 +108,11 @@ export function TaskCommentSection({
       {/* Input box */}
       {!readOnly && (
         <form onSubmit={handleAddComment} className="mt-1 flex flex-col gap-2">
+          <label htmlFor={`task-comment-${taskId}`} className="sr-only">
+            New comment
+          </label>
           <Textarea
+            id={`task-comment-${taskId}`}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment or status update..."
@@ -116,7 +120,9 @@ export function TaskCommentSection({
             className="min-h-16 resize-none text-xs"
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                // The drawer saves on ⌘+Enter too; keep this one to the comment.
                 e.preventDefault();
+                e.stopPropagation();
                 handleAddComment();
               }
             }}

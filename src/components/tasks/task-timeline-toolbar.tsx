@@ -75,7 +75,7 @@ export function TaskTimelineToolbar({
         onValueChange={(v) => onZoom(v === "64" ? 64 : 36)}
         className="ml-auto shrink-0"
       >
-        <TabsList aria-label="Timeline zoom">
+        <TabsList variant="segmented" aria-label="Timeline zoom">
           {ZOOMS.map((z) => (
             <TabsTrigger key={z.colW} value={String(z.colW)} aria-label={z.label}>
               <span className="sm:hidden">{z.short}</span>

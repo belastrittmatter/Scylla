@@ -25,8 +25,12 @@ export function TaskDrawerDateFields({
     <div className="flex flex-col gap-1.5">
       <div className="grid grid-cols-2 gap-3">
         <Field>
-          <FieldLabel>Start date</FieldLabel>
+          <FieldLabel id="task-start-date-label" htmlFor="task-start-date">
+            Start date
+          </FieldLabel>
           <TaskDatePicker
+            id="task-start-date"
+            labelId="task-start-date-label"
             value={startDateStr}
             onChange={onStartDateChange}
             placeholder="Pick start date"
@@ -34,8 +38,15 @@ export function TaskDrawerDateFields({
         </Field>
 
         <Field>
-          <FieldLabel>Deadline Due Date</FieldLabel>
-          <TaskDatePicker value={dueDateStr} onChange={onDueDateChange} />
+          <FieldLabel id="task-due-date-label" htmlFor="task-due-date">
+            Deadline Due Date
+          </FieldLabel>
+          <TaskDatePicker
+            id="task-due-date"
+            labelId="task-due-date-label"
+            value={dueDateStr}
+            onChange={onDueDateChange}
+          />
         </Field>
       </div>
       {rangeError && (

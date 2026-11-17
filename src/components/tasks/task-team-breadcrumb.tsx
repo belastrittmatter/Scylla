@@ -96,13 +96,20 @@ export function TaskTeamBreadcrumb({
           searchFields={(p) => [p.name, p.slug, p.description]}
           selected={project ?? null}
           onSelect={(p) => onSelectProject(p ?? undefined)}
-          placeholder="All projects"
+          placeholder={
+            <>
+              {/* Short label on phones; the full name stays for screen readers. */}
+              <span aria-hidden="true" className="md:hidden">
+                All
+              </span>
+              <span className="max-md:sr-only">All projects</span>
+            </>
+          }
           searchPlaceholder="Search projects..."
           emptyText="No projects found."
           clearOption={{ label: "All projects" }}
           variant="ghost"
-          // Icon-only below md (label stays for screen readers).
-          className={cn(CRUMB, "max-md:[&>span:first-child]:sr-only")}
+          className={cn(CRUMB, "max-md:max-w-24")}
           renderItem={(p) => (
             <>
               <ProjectDot color={p.color} />

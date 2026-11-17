@@ -13,6 +13,10 @@ import {
 import { cn } from "cn";
 
 interface TaskDatePickerProps {
+  /** Trigger id; with `labelId` the trigger reads as "<label> <date>". */
+  id?: string;
+  /** Id of the visible field label that names this picker. */
+  labelId?: string;
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -20,6 +24,8 @@ interface TaskDatePickerProps {
 }
 
 export function TaskDatePicker({
+  id,
+  labelId,
   value,
   onChange,
   className,
@@ -43,16 +49,26 @@ export function TaskDatePicker({
         <PopoverTrigger
           render={
             <Button
+              id={id}
+              aria-labelledby={labelId && id ? `${labelId} ${id}` : undefined}
               type="button"
               variant="outline"
               size="sm"
               className={cn(
-                "h-9 w-full justify-start px-3 text-left text-sm font-normal",
+                "h-9 w-full min-w-0 justify-start pl-3 text-left text-sm font-normal",
+                // Keep text clear of the absolutely placed clear button.
+                value ? "pr-9" : "pr-3",
                 !value && "text-muted-foreground",
               )}
             >
               <CalendarIcon className="mr-2 size-4 shrink-0 text-muted-foreground" />
-              {dateObj ? format(dateObj, "PPP") : placeholder}
+              {dateObj ? (
+                <span className="truncate font-code text-xs tabular-nums">
+                  {format(dateObj, "MMM d, yyyy")}
+                </span>
+              ) : (
+                <span className="truncate">{placeholder}</span>
+              )}
             </Button>
           }
         />
@@ -74,7 +90,8 @@ export function TaskDatePicker({
         <button
           type="button"
           onClick={() => onChange("")}
-          className="absolute right-2.5 rounded-full p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="absolute right-1.5 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          aria-label="Clear date"
           title="Clear date"
         >
           <X className="size-3.5" />

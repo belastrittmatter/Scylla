@@ -61,33 +61,43 @@ export function TaskHeaderBar({
 }: TaskHeaderBarProps) {
   return (
     <HeaderSlot>
-      {/* Slot items flow into ViewHeader: below md, row 1 = Tasks + pickers, row 2 = tabs + tools. */}
+      {/* Slot items flow into ViewHeader. Left: one path `Tasks / Team ▾ / Project ▾`.
+          Right: scope toggle, then tools. Below md, row 1 = path, row 2 = scope + tools. */}
       <h1 className="order-1 text-sm font-semibold md:order-none">Tasks</h1>
+      {crumbs && (
+        <>
+          <span
+            aria-hidden="true"
+            // -mr-1 offsets the ghost crumb's padding so the "/" sits centered.
+            className="order-1 -mr-1 text-[13px] text-muted-foreground/50 md:order-none"
+          >
+            /
+          </span>
+          <Breadcrumb className="order-2 min-w-0 md:order-none">
+            <BreadcrumbList className="flex-nowrap gap-1 text-[13px] sm:gap-1">
+              {crumbs}
+            </BreadcrumbList>
+          </Breadcrumb>
+        </>
+      )}
       <Tabs
-        className="order-4 md:order-none"
+        className="order-4 md:order-none md:ml-auto"
         value={scope}
         onValueChange={(val) => {
           const next = SCOPE_TABS.find((t) => t.value === val);
           if (next) onScopeChange(next.value);
         }}
       >
-        <TabsList aria-label="Task scope">
+        <TabsList variant="segmented" aria-label="Task scope">
           {SCOPE_TABS.map((t) => (
-            <TabsTrigger key={t.value} value={t.value}>
+            <TabsTrigger key={t.value} value={t.value} className="px-2.5">
               {t.label}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
-      {crumbs && (
-        <Breadcrumb className="order-2 min-w-0 md:order-none">
-          <BreadcrumbList className="flex-nowrap gap-1 text-[13px] sm:gap-1">
-            {crumbs}
-          </BreadcrumbList>
-        </Breadcrumb>
-      )}
       <div aria-hidden className="order-3 basis-full md:hidden" />
-      <div className="order-5 ml-auto flex shrink-0 items-center gap-1.5 md:order-none">
+      <div className="order-5 ml-auto flex shrink-0 items-center gap-1.5 md:order-none md:ml-0 md:border-l md:border-border md:pl-2">
         {/* Collapses to its icon below md; expands while focused or holding a query. */}
         <InputGroup className="w-8 overflow-hidden transition-[width] focus-within:w-40 has-[input:not(:placeholder-shown)]:w-40 md:w-32 xl:w-48">
           <InputGroupAddon align="inline-start">
@@ -108,7 +118,7 @@ export function TaskHeaderBar({
             if (next) onViewModeChange(next);
           }}
         >
-          <TabsList aria-label="Layout">
+          <TabsList variant="segmented" aria-label="Layout">
             {VIEWS.map(({ value, label, Icon }) => (
               <Tooltip key={value}>
                 <TooltipTrigger

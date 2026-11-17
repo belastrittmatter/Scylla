@@ -11,6 +11,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { getOpeningDay, getVisibleDays } from "./task-timeline";
 import {
@@ -40,6 +41,8 @@ export function TaskTimelineView({
   onCreateRange,
 }: TaskTimelineViewProps) {
   const [colW, setColW] = React.useState(36);
+  // Phones need a wider name pane so bands and titles stay readable (3-4 words).
+  const isPhone = useIsMobile();
   const [visible, setVisible] = React.useState<{
     first: number;
     last: number;
@@ -202,13 +205,19 @@ export function TaskTimelineView({
       <div className="bg-background min-h-0 flex-1 overflow-y-auto">
         <ResizablePanelGroup
           direction="horizontal"
-          autoSaveId="task-timeline-pane"
+          // Separate saved layouts so a desktop width never squeezes the phone pane.
+          autoSaveId={isPhone ? "task-timeline-pane-phone" : "task-timeline-pane"}
           style={{ height: "auto", minHeight: "100%", overflow: "visible" }}
         >
-          <ResizablePanel defaultSize={25} minSize={15} maxSize={45}>
+          <ResizablePanel
+            defaultSize={isPhone ? 44 : 25}
+            minSize={isPhone ? 35 : 15}
+            maxSize={isPhone ? 60 : 45}
+          >
             {namePane}
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          {/* Bare 1px rule with a wider invisible hit area; no floating grip. */}
+          <ResizableHandle aria-label="Resize task names" className="after:w-3" />
           <ResizablePanel>
             <div
               ref={scroller}

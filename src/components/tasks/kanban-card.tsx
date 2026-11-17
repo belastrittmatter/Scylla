@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { TaskItem, TaskStatus } from "./task-types";
 import { getDeadlineStatus, getQuietPriority } from "./task-utils";
 import { MONO_META } from "./task-layout";
+import { OverdueMark } from "./task-overdue-mark";
 import { KanbanCardMenu } from "./kanban-card-menu";
 import { KanbanCardTime } from "./kanban-card-time";
 import { StatusIcon } from "./task-status-icon";
@@ -127,6 +128,7 @@ export function KanbanCard({
             >
               <CalendarClock className="size-3" />
               {dateLabel}
+              {deadline.isOverdue && <OverdueMark />}
             </span>
           )}
           <KanbanCardTime task={task} />

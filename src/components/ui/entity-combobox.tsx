@@ -33,6 +33,8 @@ export const sameKey =
     getKey(a) === getKey(b);
 
 export interface EntityComboboxProps<T> extends EntityAccessors<T> {
+  /** Trigger id, so a `<label htmlFor>` can name it. */
+  id?: string;
   selected: T | null;
   /** `null` means the clear option was chosen. */
   onSelect: (item: T | null) => void;
@@ -54,6 +56,7 @@ export interface EntityComboboxProps<T> extends EntityAccessors<T> {
 
 /** Single-select popover: trigger button, search box, list, optional footer. */
 export function EntityCombobox<T>({
+  id,
   items,
   getKey,
   getLabel,
@@ -104,6 +107,7 @@ export function EntityCombobox<T>({
       }
     >
       <ComboboxTrigger
+        id={id}
         render={<Button variant={variant} />}
         className={cn("justify-between", className)}
       >

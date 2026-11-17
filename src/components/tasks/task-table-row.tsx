@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getDeadlineStatus, getQuietPriority } from "./task-utils";
 import { MONO_META } from "./task-layout";
+import { OverdueMark } from "./task-overdue-mark";
 import { StatusIcon } from "./task-status-icon";
 import { TASK_FORM_STATUSES } from "./task-types";
 import type { TaskItem, TaskStatus } from "./task-types";
@@ -159,7 +160,20 @@ export function TaskTableRow({
           deadline.isOverdue ? "text-destructive" : "text-muted-foreground",
         )}
       >
-        {task.dueDate ? format(new Date(task.dueDate), "MMM d") : "—"}
+        {task.dueDate ? (
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            {deadline.isOverdue && (
+              <span
+                aria-hidden="true"
+                className="size-1.5 rotate-45 bg-current sm:hidden"
+              />
+            )}
+            {format(new Date(task.dueDate), "MMM d")}
+            {deadline.isOverdue && <OverdueMark collapse />}
+          </span>
+        ) : (
+          "—"
+        )}
       </TableCell>
 
       {showAssignee && (

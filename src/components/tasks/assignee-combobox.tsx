@@ -23,6 +23,8 @@ function UserAvatar({
 }
 
 interface AssigneeComboboxProps {
+  /** Trigger id, so a field label can point at it. */
+  id?: string;
   users: TaskUser[];
   assigneeId: string;
   onAssigneeChange: (assigneeId: string) => void;
@@ -30,12 +32,14 @@ interface AssigneeComboboxProps {
 
 /** Thin entity-combobox usage: "unassigned" is the sentinel id. */
 export function AssigneeCombobox({
+  id,
   users,
   assigneeId,
   onAssigneeChange,
 }: AssigneeComboboxProps) {
   return (
     <EntityCombobox
+      id={id}
       items={users}
       getKey={(u) => u.id}
       getLabel={(u) => u.name}
