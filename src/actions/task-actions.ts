@@ -24,6 +24,10 @@ import { resolveActionUserId, type ActionResult } from "./auth-helper";
 
 const ASSIGNEE_NOT_MEMBER = "Assignee must be a member of the team";
 
+// null clears the field, undefined leaves it unchanged.
+const toDate = (v?: string | Date | null) =>
+  v ? new Date(v) : v === null ? null : undefined;
+
 export async function getWorkspaceDataAction(): Promise<
   ActionResult<WorkspaceData>
 > {
@@ -107,16 +111,8 @@ export async function updateTaskAction(
       };
 
     const parsedData = payloadParse.data;
-    const dueDate = parsedData.dueDate
-      ? new Date(parsedData.dueDate)
-      : parsedData.dueDate === null
-        ? null
-        : undefined;
-    const startDate = parsedData.startDate
-      ? new Date(parsedData.startDate)
-      : parsedData.startDate === null
-        ? null
-        : undefined;
+    const dueDate = toDate(parsedData.dueDate);
+    const startDate = toDate(parsedData.startDate);
 
     const userId = await resolveActionUserId();
     const existingTask = await TaskService.getTaskById(idParse.data);
@@ -218,16 +214,8 @@ export async function createTaskAction(
     ) {
       return { success: false, error: ASSIGNEE_NOT_MEMBER };
     }
-    const dueDate = parsedData.dueDate
-      ? new Date(parsedData.dueDate)
-      : parsedData.dueDate === null
-        ? null
-        : undefined;
-    const startDate = parsedData.startDate
-      ? new Date(parsedData.startDate)
-      : parsedData.startDate === null
-        ? null
-        : undefined;
+    const dueDate = toDate(parsedData.dueDate);
+    const startDate = toDate(parsedData.startDate);
 
     const created = await TaskService.createTask({
       title: parsedData.title,
