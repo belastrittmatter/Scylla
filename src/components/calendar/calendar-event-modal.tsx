@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { CalendarEventLocationSection } from "./calendar-event-location-section";
 import { CalendarEventAttendeesList } from "./calendar-event-attendees-list";
 import { CalendarCancelPrompt } from "./calendar-cancel-prompt";
+import { mapleMono } from "@/lib/fonts";
 
 type Attendee = NonNullable<CustomEventData["attendees"]>[number];
 
@@ -268,7 +269,9 @@ export function CalendarEventModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto rounded-2xl border bg-card p-6 text-card-foreground shadow-2xl">
+      <DialogContent
+        className={`${mapleMono.variable} max-h-[88vh] max-w-lg overflow-y-auto rounded-lg border bg-card p-5 text-card-foreground shadow-lg`}
+      >
         <DialogHeader className="pb-1">
           <div>
             {isLive ? (
@@ -341,7 +344,7 @@ export function CalendarEventModal({
                   <FolderGit2 className="size-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium text-muted-foreground">
+                  <p className="font-code text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                     Linked project
                   </p>
                   <p className="truncate text-xs font-semibold text-foreground">
@@ -443,9 +446,9 @@ export function CalendarEventModal({
           {/* Description / Agenda */}
           {description && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <h3 className="font-code text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                 Agenda / Notes
-              </label>
+              </h3>
               <div className="max-h-40 overflow-y-auto break-words rounded-lg border bg-muted/40 p-3">
                 <HtmlDescriptionViewer html={description} />
               </div>

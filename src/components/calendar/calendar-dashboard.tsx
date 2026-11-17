@@ -27,7 +27,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, RefreshCw, Search } from "lucide-react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { apiClient } from "@/lib/api-client";
+import { mapleMono } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import { useCalendarSettings } from "@/hooks/use-calendar-settings";
 import { getViewChipLabel } from "./calendar-toolbar-lib";
@@ -71,6 +74,14 @@ export function CalendarDashboard() {
     React.useState<CalendarEvent<CustomEventData> | null>(null);
   const [isDetailOpen, setIsDetailOpen] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  // null until the first response: no connection row before we know.
+  const [googleConnected, setGoogleConnected] = React.useState<
+    boolean | null
+  >(null);
+  // The error toast's Retry reads the latest sync through this ref.
+  const syncCalendarRef = React.useRef<(showSpinner?: boolean) => void>(
+    () => {},
+  );
 
   // Below lg the panels sit under the calendar, so start them collapsed.
   const [compact] = React.useState(
@@ -160,31 +171,22 @@ export function CalendarDashboard() {
         .map((a) => a.email)
         .filter(Boolean);
       try {
-        const calendarData = await apiClient.calendar
-          .getEvents(
-            {
-              userId: activeUserId,
-              attendeeEmails:
-                attendeeEmails.length > 0 ? attendeeEmails : undefined,
-              timeMin: dateRange.start.toISOString(),
-              timeMax: dateRange.end.toISOString(),
-            },
-            { signal: abortController.signal },
-          )
-          .catch((err) => {
-            if (err?.name === "AbortError") return null;
-            return {
-              events: [],
-              workingHours: [],
-              timeZone: "Asia/Ho_Chi_Minh",
-              googleConnected: false,
-            };
-          });
+        const calendarData = await apiClient.calendar.getEvents(
+          {
+            userId: activeUserId,
+            attendeeEmails:
+              attendeeEmails.length > 0 ? attendeeEmails : undefined,
+            timeMin: dateRange.start.toISOString(),
+            timeMax: dateRange.end.toISOString(),
+          },
+          { signal: abortController.signal },
+        );
 
-        // Discard stale or aborted responses so they cannot overwrite newer requests
-        if (!calendarData || requestId !== requestIdRef.current) {
+        // Discard stale responses so they cannot overwrite newer requests
+        if (requestId !== requestIdRef.current) {
           return;
         }
+        setGoogleConnected(calendarData.googleConnected ?? null);
 
         const calendarEvents: CalendarEvent<CustomEventData>[] = (
           calendarData.events || []
@@ -227,9 +229,22 @@ export function CalendarDashboard() {
         });
         setEvents(calendarEvents);
       } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.error("Failed to sync calendar:", err);
+        // Aborted or superseded requests fail silently; a real failure keeps
+        // the events already on screen and says so, with a way to retry.
+        if (
+          (err as Error)?.name === "AbortError" ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
         }
+        console.error("Failed to sync calendar:", err);
+        toast.error("Couldn't load calendar events", {
+          id: "calendar-sync-error",
+          action: {
+            label: "Retry",
+            onClick: () => syncCalendarRef.current(true),
+          },
+        });
       } finally {
         if (requestId === requestIdRef.current) {
           setIsRefreshing(false);
@@ -240,6 +255,7 @@ export function CalendarDashboard() {
   );
 
   React.useEffect(() => {
+    syncCalendarRef.current = (showSpinner) => void syncCalendar(showSpinner);
     queueMicrotask(() => {
       void syncCalendar(false);
     });
@@ -337,9 +353,20 @@ export function CalendarDashboard() {
   );
 
   const weekChipLabel = getViewChipLabel(viewInfo.view, viewInfo.date);
+  const timePattern = settings.timeFormat === "24h" ? "HH:mm" : "h a";
+
+  const openAddEvent = (): void => {
+    setSelectedSlotRange(null);
+    setIsAddOpen(true);
+  };
 
   return (
-    <div className="flex w-full flex-col gap-4 p-4 sm:gap-5 sm:p-6 lg:h-full lg:min-h-0">
+    <div
+      className={cn(
+        mapleMono.variable,
+        "flex w-full flex-col gap-4 p-4 sm:gap-5 sm:p-6 lg:h-full lg:min-h-0",
+      )}
+    >
       <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -385,10 +412,7 @@ export function CalendarDashboard() {
             <RefreshCw className={isRefreshing ? "animate-spin" : undefined} />
           </Button>
           <Button
-            onClick={() => {
-              setSelectedSlotRange(null);
-              setIsAddOpen(true);
-            }}
+            onClick={openAddEvent}
             className="shrink-0 gap-1.5 max-sm:w-8 max-sm:px-0"
           >
             <Plus />
@@ -456,7 +480,9 @@ export function CalendarDashboard() {
               weekends: settings.showWeekends,
               nowIndicator: settings.showNowIndicator,
             }}
-            todayClassName="bg-transparent border-b-0"
+            // Today keeps the plain background; its header cell carries a 2px
+            // ember top rule (inset, so the header row does not shift).
+            todayClassName="bg-transparent border-b-0 data-[slot=event-calendar-day-header]:shadow-[inset_0_2px_0_0_var(--color-primary)]"
             onSelectSlot={handleSelectSlot}
             onSlotClick={handleSlotClick}
             onEventUpdate={handleEventUpdate}
@@ -471,9 +497,56 @@ export function CalendarDashboard() {
               timeGutterLabel:
                 "font-code text-[11px] tabular-nums text-muted-foreground",
               event: "rounded-md border transition-colors",
+              // Date number pinned top-left, on the weekday headers' edge.
+              monthCellFooter: "order-first justify-start px-1.5 pt-1.5 pb-0",
+              monthCellContent: "pt-1",
               // Near-black on ember passes AA in both themes; white does not.
               monthDayNumber:
-                "tabular-nums group-data-today/ec-cell:font-semibold group-data-today/ec-cell:text-foreground dark:group-data-today/ec-cell:text-primary-foreground",
+                "font-code text-xs tabular-nums group-data-today/ec-cell:font-semibold group-data-today/ec-cell:text-foreground dark:group-data-today/ec-cell:text-primary-foreground",
+              noEvents: "min-h-0 items-start justify-start px-4 py-6",
+            }}
+            renderNoEvents={() => (
+              <p className="text-sm text-muted-foreground">
+                Nothing scheduled in this range.{" "}
+                <button
+                  type="button"
+                  onClick={openAddEvent}
+                  className="font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:underline"
+                >
+                  Add event
+                </button>
+              </p>
+            )}
+            // The default gutter skips the day-start label (it would clip at
+            // the grid's top edge); this one sits just inside that edge.
+            renderTimeGutterSlot={({ time, hour, minute }) =>
+              hour === settings.dayStartHour && minute === 0 ? (
+                <span className="relative top-2">
+                  {format(time, timePattern)}
+                </span>
+              ) : undefined
+            }
+            // Solid hairlines mark the hours (the grid's own slot lines);
+            // dashed rules mark the half-hours, echoing the landing's rails.
+            renderDayColumnBackground={({ boundsStartMin, boundsEndMin }) => {
+              const marks: number[] = [];
+              for (
+                let m = Math.floor(boundsStartMin / 60) * 60 + 30;
+                m < boundsEndMin;
+                m += 60
+              ) {
+                if (m > boundsStartMin) marks.push(m);
+              }
+              return marks.map((m) => (
+                <div
+                  key={m}
+                  aria-hidden
+                  className="absolute inset-x-0 border-t border-dashed border-border/70"
+                  style={{
+                    top: `calc(var(--ec-hour-height) * ${(m - boundsStartMin) / 60})`,
+                  }}
+                />
+              ));
             }}
             onEventClick={(occurrence) => {
               setSelectedEvent(occurrence.event);
@@ -487,7 +560,7 @@ export function CalendarDashboard() {
               // own number, so the header names the weekday only.
               if (view === "month") {
                 return (
-                  <div className="flex items-center justify-center py-2.5">
+                  <div className="flex items-center py-2.5">
                     <span className="text-xs font-medium text-muted-foreground">
                       {dayName}
                     </span>
@@ -602,6 +675,26 @@ export function CalendarDashboard() {
           >
             <CalendarToolbar weekStartsOn={settings.weekStartsOn} />
             <CalendarMobileDayLock />
+            {googleConnected === false && (
+              <div className="flex shrink-0 items-center gap-3 border-b px-3 py-1.5 text-xs">
+                <span className="flex shrink-0 items-center gap-1.5 font-code text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <span
+                    aria-hidden
+                    className="size-1.5 rounded-full bg-muted-foreground/40"
+                  />
+                  Google Calendar · not connected
+                </span>
+                <span className="hidden min-w-0 truncate text-muted-foreground md:inline">
+                  Link it to see your Google events here.
+                </span>
+                <Link
+                  href="/account/settings"
+                  className="ml-auto shrink-0 font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:underline"
+                >
+                  Connect
+                </Link>
+              </div>
+            )}
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
               <EventCalendarContent className="flex-1" />
             </div>

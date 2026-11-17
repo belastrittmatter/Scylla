@@ -18,6 +18,8 @@ interface CalendarPanelCardProps {
  * One collapsible section of the planning rail. Sections carry no frame of
  * their own: the rail wraps them in a single hairline border and splits them
  * with dividers. The header mirrors the landing's mono Eyebrow label.
+ * Bodies take their content height: the rail is the only scroller, and long
+ * lists cap themselves with a "Show all" row, so no row is cut at a divider.
  */
 export function CalendarPanelCard({
   title,
@@ -60,10 +62,32 @@ export function CalendarPanelCard({
         />
       </summary>
       <div
-        className={cn("max-h-[200px] overflow-y-auto px-3 pb-3", bodyClassName)}
+        className={cn("px-3 pb-3", bodyClassName)}
       >
         {children}
       </div>
     </details>
+  );
+}
+
+/** The row that lifts a rail list's cap: "Show all <noun> +N". */
+export function CalendarPanelShowAll({
+  noun,
+  hiddenCount,
+  onShowAll,
+}: {
+  noun: string;
+  hiddenCount: number;
+  onShowAll: () => void;
+}): React.ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onShowAll}
+      className="flex h-8 w-full items-center gap-1.5 rounded-md px-1.5 text-left text-xs text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
+      Show all {noun}
+      <span className="font-code text-[11px] tabular-nums">+{hiddenCount}</span>
+    </button>
   );
 }

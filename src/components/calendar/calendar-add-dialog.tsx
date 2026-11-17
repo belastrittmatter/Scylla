@@ -45,6 +45,7 @@ import {
   type RepeatFrequency,
 } from "./calendar-repeat-options";
 import { LOCAL_EVENT_FALLBACK_COLOR } from "./calendar-event-colors";
+import { mapleMono } from "@/lib/fonts";
 
 interface CalendarAddDialogProps {
   open: boolean;
@@ -454,7 +455,9 @@ export function CalendarAddDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-md">
+      <DialogContent
+        className={`${mapleMono.variable} max-h-[90vh] max-w-lg overflow-y-auto sm:max-w-md`}
+      >
         <DialogHeader className="pb-0.5">
           <DialogTitle className="text-base font-semibold">
             New Event

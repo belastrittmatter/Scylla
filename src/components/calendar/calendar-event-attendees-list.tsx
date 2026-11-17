@@ -37,10 +37,10 @@ export function CalendarEventAttendeesList({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
-        <label className="text-xs font-semibold text-foreground">
+        <h3 className="font-code text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
           Attendees
-        </label>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+        </h3>
+        <span className="font-code text-[10px] tabular-nums text-muted-foreground">
           {attendees.length}
         </span>
       </div>

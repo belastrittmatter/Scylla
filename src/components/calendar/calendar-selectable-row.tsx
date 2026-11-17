@@ -44,7 +44,7 @@ export function CalendarSelectableRow({
         <span className="flex min-w-0 items-baseline gap-1.5">
           <span className="truncate text-sm font-medium">{label}</span>
           {meta && (
-            <span className="shrink-0 font-code text-[11px] tabular-nums text-muted-foreground">
+            <span className="shrink-0 rounded-[4px] border px-1 font-code text-[10px] leading-4 text-muted-foreground">
               {meta}
             </span>
           )}
@@ -59,7 +59,9 @@ export function CalendarSelectableRow({
         checked={checked}
         aria-hidden
         tabIndex={-1}
-        className="pointer-events-none ml-auto"
+        // border-input is ~1.3:1 on the light card; muted-foreground/80
+        // clears the 3:1 non-text minimum. Dark keeps the stock border.
+        className="pointer-events-none ml-auto border-muted-foreground/80 dark:not-data-checked:border-input"
       />
     </button>
   );

@@ -7,9 +7,12 @@ import { formatPersonName, getPersonInitials } from "@/lib/format-person-name";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarPanelCard } from "./calendar-panel-card";
+import { CalendarPanelCard, CalendarPanelShowAll } from "./calendar-panel-card";
 import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
+
+/** Results listed before "Show all"; selected people always stay visible. */
+const COLLAPSED_RESULT_COUNT = 6;
 
 interface CalendarPeoplePanelProps {
   selectedAttendees: CalendarAttendeeItem[];
@@ -41,6 +44,7 @@ export function CalendarPeoplePanel({
   const { query, setQuery, results, isLoading, hasLoaded } = useUserSearch({
     limit: 20,
   });
+  const [showAll, setShowAll] = React.useState(false);
 
   const selectedIds = React.useMemo(
     () => new Set(selectedAttendees.map((item) => item.id)),
@@ -67,6 +71,8 @@ export function CalendarPeoplePanel({
       return { item, name };
     })
     .filter(({ item }) => !selectedIds.has(item.id));
+  const listedItems = showAll ? items : items.slice(0, COLLAPSED_RESULT_COUNT);
+  const hiddenCount = items.length - listedItems.length;
 
   const showSkeleton =
     selectedPeople.length === 0 &&
@@ -77,11 +83,6 @@ export function CalendarPeoplePanel({
       title="People"
       meta={`${selectedPeople.length} selected`}
       active={selectedPeople.length > 0}
-      bodyClassName={
-        selectedPeople.length > 0
-          ? "max-h-[420px] overflow-y-auto"
-          : "max-h-[240px] overflow-y-auto"
-      }
     >
       <div className="relative">
         <Search
@@ -91,7 +92,10 @@ export function CalendarPeoplePanel({
         <Input
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setShowAll(false);
+          }}
           placeholder="Search people"
           aria-label="Search people"
           className="h-8 pl-8 text-xs"
@@ -129,7 +133,7 @@ export function CalendarPeoplePanel({
             </div>
           )
         ) : (
-          items.map(({ item, name }) => (
+          listedItems.map(({ item, name }) => (
             <CalendarSelectableRow
               key={item.id}
               label={name}
@@ -144,6 +148,13 @@ export function CalendarPeoplePanel({
               }
             />
           ))
+        )}
+        {!showSkeleton && hiddenCount > 0 && (
+          <CalendarPanelShowAll
+            noun="people"
+            hiddenCount={hiddenCount}
+            onShowAll={() => setShowAll(true)}
+          />
         )}
       </div>
     </CalendarPanelCard>

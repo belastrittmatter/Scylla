@@ -63,7 +63,6 @@ export function CalendarRoomsPanel({
       meta={`${rooms.length}`}
       active={hasSelection}
       defaultOpen={defaultOpen}
-      bodyClassName="max-h-[260px] overflow-y-auto"
     >
       <div className="space-y-0.5">
         {orderedRooms.length === 0 ? (

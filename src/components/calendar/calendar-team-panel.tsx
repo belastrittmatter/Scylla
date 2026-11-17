@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarPanelCard } from "./calendar-panel-card";
+import { CalendarPanelCard, CalendarPanelShowAll } from "./calendar-panel-card";
 import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
@@ -97,7 +97,6 @@ export function CalendarTeamPanel({
       meta={`${visibleMembers.length} members`}
       active={hasSelection}
       defaultOpen={defaultOpen}
-      bodyClassName="max-h-[220px] overflow-y-auto"
     >
       <Select
         value={teamId}
@@ -133,7 +132,9 @@ export function CalendarTeamPanel({
             <CalendarSelectableRow
               key={member.id}
               label={name}
-              sublabel={<span className="capitalize">{member.role}</span>}
+              // "member" is the default role and says nothing; any other
+              // role rides after the name as a quiet mono badge.
+              meta={member.role !== "member" ? member.role : undefined}
               checked={selectedIds.has(item.id)}
               onToggle={() => onToggleAttendee(item)}
               avatar={
@@ -148,16 +149,11 @@ export function CalendarTeamPanel({
           );
         })}
         {hiddenCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="flex h-8 w-full items-center gap-1.5 rounded-md px-1.5 text-left text-xs text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-          >
-            Show all members
-            <span className="font-code text-[11px] tabular-nums">
-              +{hiddenCount}
-            </span>
-          </button>
+          <CalendarPanelShowAll
+            noun="members"
+            hiddenCount={hiddenCount}
+            onShowAll={() => setShowAll(true)}
+          />
         )}
       </div>
     </CalendarPanelCard>
