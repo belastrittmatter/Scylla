@@ -1,11 +1,21 @@
 "use client";
 
+import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import { MONO_META, WORKSPACE_GUTTER } from "./task-layout";
+
+const ZOOMS = [
+  { colW: 64, label: "2 weeks", short: "2w" },
+  { colW: 36, label: "4 weeks", short: "4w" },
+] as const;
 
 interface TaskTimelineToolbarProps {
-  label: string;
+  /** First and last (partially) visible day; null before the first measure. */
+  from: Date | null;
+  to: Date | null;
   colW: number;
   onWeek: (dir: 1 | -1) => void;
   onToday: () => void;
@@ -13,14 +23,20 @@ interface TaskTimelineToolbarProps {
 }
 
 export function TaskTimelineToolbar({
-  label,
+  from,
+  to,
   colW,
   onWeek,
   onToday,
   onZoom,
 }: TaskTimelineToolbarProps) {
   return (
-    <div className="bg-background flex items-center gap-1 border-b px-5 py-1.5">
+    <div
+      className={cn(
+        "bg-background flex items-center gap-1 border-b py-1.5",
+        WORKSPACE_GUTTER,
+      )}
+    >
       <Button
         variant="ghost"
         size="icon-sm"
@@ -40,15 +56,32 @@ export function TaskTimelineToolbar({
       >
         <ChevronRight />
       </Button>
-      <span className="ml-2 text-sm font-medium">{label}</span>
+      {/* One line at every width: the year drops below sm. */}
+      <span
+        className={cn(
+          MONO_META,
+          "ml-2 min-w-0 truncate whitespace-nowrap text-xs text-foreground",
+        )}
+      >
+        {from && to && (
+          <>
+            {format(from, "MMM d")} – {format(to, "MMM d")}
+            <span className="max-sm:hidden">{format(to, ", yyyy")}</span>
+          </>
+        )}
+      </span>
       <Tabs
         value={String(colW)}
         onValueChange={(v) => onZoom(v === "64" ? 64 : 36)}
-        className="ml-auto"
+        className="ml-auto shrink-0"
       >
         <TabsList aria-label="Timeline zoom">
-          <TabsTrigger value="64">2 weeks</TabsTrigger>
-          <TabsTrigger value="36">4 weeks</TabsTrigger>
+          {ZOOMS.map((z) => (
+            <TabsTrigger key={z.colW} value={String(z.colW)} aria-label={z.label}>
+              <span className="sm:hidden">{z.short}</span>
+              <span className="max-sm:hidden">{z.label}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
       </Tabs>
     </div>

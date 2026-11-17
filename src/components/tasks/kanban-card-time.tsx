@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { Timer } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { MONO_META } from "./task-layout";
 import { formatElapsedCompact, parseTimestampMs } from "./task-utils";
 import type { TaskItem } from "./task-types";
 
@@ -22,7 +24,7 @@ export function KanbanCardTime({ task }: { task: TaskItem }) {
     Math.floor((now - parseTimestampMs(task.activeSessionStartedAt)) / 1000),
   );
   return (
-    <span className="flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+    <span className={cn(MONO_META, "flex items-center gap-1 text-muted-foreground")}>
       <Timer className="size-3" />
       {formatElapsedCompact((task.totalSpentSeconds || 0) + active)}
     </span>

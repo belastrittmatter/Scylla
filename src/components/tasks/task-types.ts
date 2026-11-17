@@ -41,20 +41,21 @@ export const INITIAL_TASK_FILTERS: TaskFilters = {
   deadlineHorizon: "all",
 };
 
-/** Single source for status labels and `dot` colours (menus, rows). */
+/** Single source for status labels (menus, rows); icons and tones live in task-status-icon. */
 export const TASK_FORM_STATUSES = [
-  { value: "todo", label: "To Do", dot: "bg-muted-foreground" },
-  { value: "in_progress", label: "In Progress", dot: "bg-blue-500" },
-  { value: "in_review", label: "In Review", dot: "bg-purple-500" },
-  { value: "done", label: "Done", dot: "bg-emerald-500" },
-  { value: "cancelled", label: "Cancelled", dot: "bg-destructive/60" },
+  { value: "todo", label: "To Do" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "in_review", label: "In Review" },
+  { value: "done", label: "Done" },
+  { value: "cancelled", label: "Cancelled" },
 ] as const;
 
+/** Priority labels; urgent/high render through getQuietPriority, never a loud hue. */
 export const TASK_FORM_PRIORITIES = [
-  { value: "urgent", label: "Urgent", color: "text-destructive font-semibold" },
-  { value: "high", label: "High", color: "text-primary font-medium" },
-  { value: "medium", label: "Medium", color: "text-foreground" },
-  { value: "low", label: "Low", color: "text-muted-foreground" },
+  { value: "urgent", label: "Urgent" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
 ] as const;
 
 export interface TaskDrawerFormProps {

@@ -3,6 +3,8 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { WORKSPACE_GUTTER } from "./task-layout";
 import type { TaskFilterDef } from "./task-filter-defs";
 
 interface Chip {
@@ -40,7 +42,12 @@ export function TaskFilterChips({
   if (chips.length === 0) return null;
 
   return (
-    <div className="bg-background flex flex-wrap items-center gap-1.5 border-b px-5 py-1.5">
+    <div
+      className={cn(
+        "bg-background flex flex-wrap items-center gap-1.5 border-b py-1.5",
+        WORKSPACE_GUTTER,
+      )}
+    >
       {chips.map((c) => (
         <Button
           key={c.id}

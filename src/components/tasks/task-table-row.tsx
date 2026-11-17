@@ -18,11 +18,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  getDeadlineStatus,
-  getQuietPriority,
-  getUserAvatarColor,
-} from "./task-utils";
+import { getDeadlineStatus, getQuietPriority } from "./task-utils";
+import { MONO_META } from "./task-layout";
 import { StatusIcon } from "./task-status-icon";
 import { TASK_FORM_STATUSES } from "./task-types";
 import type { TaskItem, TaskStatus } from "./task-types";
@@ -42,7 +39,7 @@ interface TaskTableRowProps {
   selectable?: boolean;
 }
 
-/** Single-line row: status, title + context, priority, due date, assignee. */
+/** Row: status, title + context, priority, due date, assignee. Below sm the project drops under a 2-line title. */
 export function TaskTableRow({
   task,
   onSelectTask,
@@ -75,9 +72,10 @@ export function TaskTableRow({
               checked={selected}
               onCheckedChange={() => onToggleSelect(task.id)}
               aria-label={`Select ${task.title}`}
+              // Hidden until hover only where hover exists; always visible on touch.
               className={cn(
-                "opacity-0 focus-visible:opacity-100 group-hover/row:opacity-100",
-                (anySelected || selected) && "opacity-100",
+                !(anySelected || selected) &&
+                  "focus-visible:opacity-100 group-hover/row:opacity-100 [@media(hover:hover)]:opacity-0",
               )}
             />
           )}
@@ -110,29 +108,34 @@ export function TaskTableRow({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <span aria-label={`Status: ${status.label}`} className="flex px-1">
+          <span
+            aria-label={`Status: ${status.label}`}
+            className="flex size-6 items-center justify-center"
+          >
             <StatusIcon status={task.status as TaskStatus} />
           </span>
         )}
       </TableCell>
 
-      <TableCell className="w-full max-w-0">
-        <div className="flex min-w-0 items-baseline gap-2">
+      <TableCell className="w-full max-w-0 whitespace-normal sm:whitespace-nowrap">
+        <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
           {/* Real button for keyboard access; its click bubbles to the row handler. */}
           <button
             type="button"
             className={cn(
-              "min-w-0 truncate text-left font-medium focus-visible:outline-2 focus-visible:outline-ring",
+              "min-w-0 text-left font-medium focus-visible:outline-2 focus-visible:outline-ring",
               isClosed && "text-muted-foreground",
             )}
           >
-            {task.title}
+            <span className="block leading-snug max-sm:line-clamp-2 sm:truncate">
+              {task.title}
+            </span>
           </button>
           {project && (
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <span className="min-w-0 max-w-[40%] shrink truncate text-xs text-muted-foreground" />
+                  <span className="min-w-0 shrink truncate text-xs text-muted-foreground sm:max-w-[40%]" />
                 }
               >
                 {project}
@@ -151,8 +154,8 @@ export function TaskTableRow({
 
       <TableCell
         className={cn(
-          "text-right text-xs",
-          !showAssignee && "pr-4",
+          MONO_META,
+          "text-right",
           deadline.isOverdue ? "text-destructive" : "text-muted-foreground",
         )}
       >
@@ -160,7 +163,7 @@ export function TaskTableRow({
       </TableCell>
 
       {showAssignee && (
-        <TableCell className="w-0 pr-4">
+        <TableCell className="w-0">
           {task.assignee && (
             <Tooltip>
               <TooltipTrigger render={<span />}>
@@ -169,12 +172,7 @@ export function TaskTableRow({
                     src={task.assignee.avatarUrl}
                     alt={task.assignee.name}
                   />
-                  <AvatarFallback
-                    className={cn(
-                      "text-xs",
-                      getUserAvatarColor(task.assignee.name),
-                    )}
-                  >
+                  <AvatarFallback className="font-code text-[10px]">
                     {task.assignee.initials || "U"}
                   </AvatarFallback>
                 </Avatar>

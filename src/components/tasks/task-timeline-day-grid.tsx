@@ -3,6 +3,7 @@
 import * as React from "react";
 import { format, isSameDay, isWeekend } from "date-fns";
 import { cn } from "@/lib/utils";
+import { MONO_META } from "./task-layout";
 
 interface TaskTimelineDayGridProps {
   dayList: Date[];
@@ -47,7 +48,10 @@ export function TaskTimelineDayHeader({
   gridStyle,
 }: TaskTimelineDayGridProps) {
   return (
-    <div className="relative grid h-8 border-b text-xs" style={gridStyle}>
+    <div
+      className={cn(MONO_META, "relative grid h-8 border-b")}
+      style={gridStyle}
+    >
       {dayList.map((d) => (
         <span
           key={d.getTime()}

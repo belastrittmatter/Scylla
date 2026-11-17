@@ -22,7 +22,7 @@ export function TaskDrawerHeader({ isDraft }: TaskDrawerHeaderProps) {
           ? "Enter task details, priority, assignee, and target deadline."
           : "Update task metadata, priority, assignee, and target deadline."}{" "}
         Press{" "}
-        <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-muted-foreground">
+        <kbd className="rounded border px-1 py-0.5 font-code text-[11px] text-muted-foreground">
           ⌘+Enter
         </kbd>{" "}
         to save.

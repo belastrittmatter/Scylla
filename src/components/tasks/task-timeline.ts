@@ -97,3 +97,30 @@ export function getDragCreateDates(
   dueDate.setHours(18, 0, 0, 0);
   return { startDate, dueDate };
 }
+
+/**
+ * First day column to scroll to on open and on Today: about a third of the
+ * viewport of context before today, reaching back far enough that open overdue
+ * due dates stay in view, while today itself stays visible. Whole columns only.
+ */
+export function getOpeningDay({
+  todayIdx,
+  visibleCols,
+  overdueCols,
+  days,
+}: {
+  todayIdx: number;
+  /** Whole day columns that fit in the viewport. */
+  visibleCols: number;
+  /** Due-day columns of open tasks already past due (inside the range). */
+  overdueCols: number[];
+  days: number;
+}): number {
+  const context = Math.floor(visibleCols / 3);
+  const reach = overdueCols.length
+    ? todayIdx - Math.min(...overdueCols) + 1
+    : 0;
+  const lead = Math.min(Math.max(context, reach), Math.max(0, visibleCols - 2));
+  const lastStart = Math.max(0, days - visibleCols);
+  return Math.min(lastStart, Math.max(0, todayIdx - lead));
+}

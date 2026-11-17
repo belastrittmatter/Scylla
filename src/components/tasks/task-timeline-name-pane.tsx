@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { EYEBROW, WORKSPACE_INSET } from "./task-layout";
 import { BAND, type RowData } from "./task-timeline-groups";
 import { TaskTimelineName } from "./task-timeline-row";
 import type { TaskItem } from "./task-types";
@@ -18,7 +19,7 @@ export function TaskTimelineNamePane({
 }) {
   return (
     <>
-      <div className="text-muted-foreground flex h-8 items-center border-b px-3 text-xs">
+      <div className={cn(EYEBROW, WORKSPACE_INSET, "flex h-8 items-center border-b")}>
         Task
       </div>
       {[...groups].map(([name, rows]) => (
@@ -38,21 +39,25 @@ export function TaskTimelineNamePane({
         </React.Fragment>
       ))}
       {groups.size === 0 && (
-        <p className="text-muted-foreground px-3 py-6 text-sm">
+        <p className={cn(WORKSPACE_INSET, "text-muted-foreground py-6 text-sm")}>
           Nothing scheduled in this range.
         </p>
       )}
       {unscheduled.length > 0 && (
         <details className="border-t">
-          <summary className="text-muted-foreground cursor-pointer px-3 py-2 text-xs font-medium">
-            Unscheduled ({unscheduled.length})
+          <summary className={cn(EYEBROW, WORKSPACE_INSET, "cursor-pointer py-2")}>
+            Unscheduled{" "}
+            <span className="tabular-nums">({unscheduled.length})</span>
           </summary>
           {unscheduled.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => onSelect(t)}
-              className="hover:bg-accent/40 block w-full truncate px-3 py-1.5 text-left text-sm"
+              className={cn(
+                WORKSPACE_INSET,
+                "hover:bg-accent/40 block w-full truncate py-1.5 text-left text-sm",
+              )}
             >
               {t.title}
             </button>

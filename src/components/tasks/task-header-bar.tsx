@@ -62,9 +62,7 @@ export function TaskHeaderBar({
   return (
     <HeaderSlot>
       {/* Slot items flow into ViewHeader: below md, row 1 = Tasks + pickers, row 2 = tabs + tools. */}
-      <span className="order-1 text-[13px] font-medium md:order-none">
-        Tasks
-      </span>
+      <h1 className="order-1 text-sm font-semibold md:order-none">Tasks</h1>
       <Tabs
         className="order-4 md:order-none"
         value={scope}

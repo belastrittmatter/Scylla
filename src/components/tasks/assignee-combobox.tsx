@@ -4,7 +4,6 @@ import { UserX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EntityCombobox } from "@/components/ui/entity-combobox";
 import type { TaskUser } from "./task-types";
-import { getUserAvatarColor } from "./task-utils";
 
 function UserAvatar({
   user,
@@ -16,7 +15,7 @@ function UserAvatar({
   return (
     <Avatar className={`${className} shrink-0`}>
       <AvatarImage src={user.avatarUrl} alt={user.name} />
-      <AvatarFallback className={getUserAvatarColor(user.name)}>
+      <AvatarFallback className="font-code">
         {user.initials || user.name.slice(0, 2).toUpperCase()}
       </AvatarFallback>
     </Avatar>

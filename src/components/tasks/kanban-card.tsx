@@ -6,11 +6,8 @@ import { CalendarClock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { TaskItem, TaskStatus } from "./task-types";
-import {
-  getDeadlineStatus,
-  getQuietPriority,
-  getUserAvatarColor,
-} from "./task-utils";
+import { getDeadlineStatus, getQuietPriority } from "./task-utils";
+import { MONO_META } from "./task-layout";
 import { KanbanCardMenu } from "./kanban-card-menu";
 import { KanbanCardTime } from "./kanban-card-time";
 import { StatusIcon } from "./task-status-icon";
@@ -61,26 +58,29 @@ export function KanbanCard({
     <div
       onClick={() => onSelectTask?.(task)}
       className={cn(
-        "group relative select-none rounded-lg border bg-card p-3 transition-colors hover:border-foreground/25 hover:bg-accent/30",
+        "group relative select-none rounded-md border bg-card p-3 transition-colors hover:border-foreground/25 hover:bg-accent/30",
         isDragging && "shadow-md",
       )}
     >
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <StatusIcon status={task.status as TaskStatus} />
         <span className="min-w-0 flex-1 truncate">{contextLabel}</span>
-        <div className="grid shrink-0 place-items-center" {...stop} {...noDrag}>
+        {/* Pointer devices swap avatar and ⋯ in one cell on hover; touch shows both side by side. */}
+        <div
+          className="flex shrink-0 items-center gap-1 [@media(hover:hover)]:grid [@media(hover:hover)]:place-items-center"
+          {...stop}
+          {...noDrag}
+        >
           {assignee && (
             <Avatar
               title={assignee.name}
               className={cn(
-                "size-5 [grid-area:1/1]",
+                "size-5 [@media(hover:hover)]:[grid-area:1/1]",
                 hasMenu && "group-hover:opacity-0",
               )}
             >
               <AvatarImage src={assignee.avatarUrl} alt={assignee.name} />
-              <AvatarFallback
-                className={cn("text-[10px]", getUserAvatarColor(assignee.name))}
-              >
+              <AvatarFallback className="font-code text-[10px]">
                 {assignee.initials || "U"}
               </AvatarFallback>
             </Avatar>
@@ -95,7 +95,7 @@ export function KanbanCard({
         </div>
       </div>
 
-      <h4 className="mt-1.5 text-sm font-medium leading-snug">
+      <h3 className="mt-1.5 text-sm font-medium leading-snug">
         {/* Real button for keyboard access; its click bubbles to the card handler. */}
         <button
           type="button"
@@ -106,7 +106,7 @@ export function KanbanCard({
         >
           {task.title}
         </button>
-      </h4>
+      </h3>
 
       {(priority || task.dueDate || running) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
@@ -116,6 +116,7 @@ export function KanbanCard({
           {task.dueDate && (
             <span
               className={cn(
+                MONO_META,
                 "flex items-center gap-1",
                 deadline.isOverdue
                   ? "text-destructive"

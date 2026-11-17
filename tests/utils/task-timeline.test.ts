@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  getOpeningDay,
   getOverdueSpan,
   getTimelineSpan,
   getVisibleDays,
@@ -105,5 +106,34 @@ describe("getVisibleDays", () => {
       first: 138,
       last: 139,
     });
+  });
+});
+
+describe("getOpeningDay", () => {
+  test("leaves a third of the viewport before today", () => {
+    expect(
+      getOpeningDay({ todayIdx: 60, visibleCols: 24, overdueCols: [], days: 140 }),
+    ).toBe(52);
+  });
+
+  test("reaches back so overdue due dates stay visible, with a day of margin", () => {
+    expect(
+      getOpeningDay({ todayIdx: 60, visibleCols: 8, overdueCols: [58, 59], days: 140 }),
+    ).toBe(57);
+  });
+
+  test("keeps today on screen however far back the overdue work is", () => {
+    expect(
+      getOpeningDay({ todayIdx: 60, visibleCols: 8, overdueCols: [20], days: 140 }),
+    ).toBe(54);
+  });
+
+  test("clamps to the range", () => {
+    expect(
+      getOpeningDay({ todayIdx: 1, visibleCols: 24, overdueCols: [], days: 140 }),
+    ).toBe(0);
+    expect(
+      getOpeningDay({ todayIdx: 139, visibleCols: 24, overdueCols: [], days: 140 }),
+    ).toBe(116);
   });
 });

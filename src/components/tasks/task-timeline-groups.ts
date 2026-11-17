@@ -1,4 +1,6 @@
 import type * as React from "react";
+import { cn } from "@/lib/utils";
+import { EYEBROW, WORKSPACE_INSET } from "./task-layout";
 import { getOverdueSpan, getTimelineSpan } from "./task-timeline";
 import type { TaskTimelineBars } from "./task-timeline-row";
 import type { TaskItem } from "./task-types";
@@ -9,8 +11,11 @@ export type RowData = Pick<Bars, "task" | "span" | "slip">;
 // shortcut: fixed window (8 weeks back, 12 ahead), no endless scroll; extend if users need more.
 export const DAYS = 140;
 /** Group header band; identical in both panes so rows stay aligned. */
-export const BAND =
-  "bg-muted/60 text-muted-foreground flex h-7 items-center border-y px-3 text-xs font-medium";
+export const BAND = cn(
+  EYEBROW,
+  WORKSPACE_INSET,
+  "flex h-7 items-center border-y",
+);
 const dueTime = (t: TaskItem) => new Date(t.dueDate ?? 0).getTime();
 
 /** Group rows: "Overdue" (open, due before the window) first, then by context label. */

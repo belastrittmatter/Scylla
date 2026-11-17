@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getTaskCommentsAction, createTaskCommentAction } from "@/actions";
 import type { TaskCommentItem } from "./task-types";
-import { getUserAvatarColor } from "./task-utils";
 
 interface TaskCommentSectionProps {
   taskId: string;
@@ -77,12 +76,11 @@ export function TaskCommentSection({
         <div className="flex max-h-52 flex-col gap-3 overflow-y-auto pr-1">
           {comments.map((c) => {
             const author = c.user?.name || "Team Member";
-            const avatarColor = getUserAvatarColor(author);
             return (
               <div key={c.id} className="flex items-start gap-2.5 text-xs">
                 <Avatar className="mt-0.5 size-6 border border-border text-xs">
                   <AvatarImage src={c.user?.avatarUrl || ""} alt={author} />
-                  <AvatarFallback className={avatarColor}>
+                  <AvatarFallback className="font-code">
                     {c.user?.initials || "U"}
                   </AvatarFallback>
                 </Avatar>
@@ -91,7 +89,7 @@ export function TaskCommentSection({
                     <span className="font-semibold text-foreground">
                       {author}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="font-code text-[11px] text-muted-foreground">
                       {formatDistanceToNow(new Date(c.createdAt), {
                         addSuffix: true,
                       })}

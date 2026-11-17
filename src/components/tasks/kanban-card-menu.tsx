@@ -28,7 +28,8 @@ interface KanbanCardMenuProps {
 }
 
 /**
- * Hover "⋯" menu. Render inside an element that stops click propagation:
+ * "⋯" menu: revealed on hover where hover exists, always shown on touch.
+ * Render inside an element that stops click propagation:
  * portal clicks bubble through the React tree to the card's onClick.
  */
 export function KanbanCardMenu({
@@ -46,7 +47,7 @@ export function KanbanCardMenu({
               variant="ghost"
               size="icon-xs"
               aria-label="Task actions"
-              className="size-5 opacity-0 [grid-area:1/1] focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100"
+              className="-my-0.5 size-6 [@media(hover:hover)]:[grid-area:1/1] [@media(hover:hover)]:opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100"
             />
           }
         >

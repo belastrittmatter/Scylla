@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
 import { KanbanBoardView } from "./kanban-board-view";
+import { WORKSPACE_GUTTER } from "./task-layout";
 import { TaskTableView } from "./task-table-view";
 import { TaskTimelineView } from "./task-timeline-view";
 import {
@@ -62,6 +64,9 @@ export function TaskScopeContent({
           onAddNewTask={onAddNewTask}
           onDeleteTask={(id) => onDeleteTasks([id])}
           canEditTask={canEditTask}
+          // Lanes bleed 8px (-mx-2/px-2) for the drag highlight; scroll-px-2 snaps
+          // a lane's content onto the 16px gutter with the next lane peeking in.
+          className={cn(WORKSPACE_GUTTER, "scroll-px-2 py-4 sm:py-5")}
           {...rowProps}
         />
       )}

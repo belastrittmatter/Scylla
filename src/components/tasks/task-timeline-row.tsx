@@ -10,20 +10,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { getDeadlineStatus, getUserAvatarColor } from "./task-utils";
+import { getDeadlineStatus } from "./task-utils";
+import { MONO_META, WORKSPACE_INSET } from "./task-layout";
+import { getTaskStatusStyle } from "./task-status-icon";
 import type { TimelineSpan } from "./task-timeline";
-import type { TaskItem, TaskStatus } from "./task-types";
+import type { TaskItem } from "./task-types";
 
-// Same hues as TASK_FORM_STATUSES dots; Tailwind needs literal /15 and /30 classes.
-const BAR_BY_STATUS: Record<TaskStatus, string> & Record<string, string> = {
-  todo: "bg-muted-foreground/15 border-muted-foreground/30",
-  in_progress: "bg-blue-500/15 border-blue-500/30",
-  in_review: "bg-purple-500/15 border-purple-500/30",
-  done: "bg-emerald-500/15 border-emerald-500/30 opacity-50",
-  cancelled: "bg-muted border-border",
-};
-
-const BAR = "my-1.5 flex min-w-0 items-center rounded-md border px-1.5 text-xs";
+const BAR = cn(
+  MONO_META,
+  "my-1.5 flex min-w-0 items-center rounded-sm border px-1.5",
+);
 const day = (d: TaskItem["dueDate"] | TaskItem["createdAt"]) =>
   d ? format(new Date(d), "MMM d") : "";
 
@@ -43,19 +39,18 @@ export function TaskTimelineName({ task, onSelect }: TaskTimelineRowProps) {
       onClick={() => onSelect(task)}
       className={cn(
         ROW_H,
-        "hover:bg-accent/40 flex w-full min-w-0 items-center gap-2 px-3 text-left text-sm",
+        WORKSPACE_INSET,
+        "hover:bg-accent/40 flex w-full min-w-0 items-center gap-2 text-left text-sm max-sm:text-xs",
       )}
     >
-      <span className="min-w-0 flex-1 truncate">{task.title}</span>
+      {/* Phones: two short lines instead of a 4-character ellipsis; avatar hidden for room. */}
+      <span className="min-w-0 flex-1 leading-tight max-sm:line-clamp-2 sm:truncate">
+        {task.title}
+      </span>
       {task.assignee && (
-        <Avatar className="size-5">
+        <Avatar className="size-5 max-sm:hidden">
           <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
-          <AvatarFallback
-            className={cn(
-              "text-[10px]",
-              getUserAvatarColor(task.assignee.name),
-            )}
-          >
+          <AvatarFallback className="font-code text-[10px]">
             {task.assignee.initials || "U"}
           </AvatarFallback>
         </Avatar>
@@ -113,8 +108,8 @@ export function TaskTimelineBars({
             data-timeline-bar
             className={cn(
               BAR,
-              "text-foreground/80 gap-1",
-              BAR_BY_STATUS[task.status] ?? BAR_BY_STATUS.todo,
+              "gap-1",
+              getTaskStatusStyle(task.status).bar,
               span.clipped && "rounded-l-none border-l-0 pl-0.5",
               overdue && "border-destructive ring-destructive/30 ring-1",
             )}

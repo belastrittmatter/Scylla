@@ -14,6 +14,8 @@ import {
 import { TaskDrawerDateFields } from "./task-drawer-date-fields";
 import { TaskDrawerEstimateField } from "./task-drawer-estimate-field";
 import { AssigneeCombobox } from "./assignee-combobox";
+import { StatusIcon } from "./task-status-icon";
+import { getQuietPriority } from "./task-utils";
 import {
   TASK_FORM_STATUSES,
   TASK_FORM_PRIORITIES,
@@ -68,9 +70,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
             <SelectTrigger className="h-9 w-full text-sm">
               <SelectValue>
                 <span className="flex items-center gap-2">
-                  <span
-                    className={`size-2 rounded-full ${curStatus?.dot || "bg-muted-foreground"}`}
-                  />
+                  <StatusIcon status={status} />
                   <span>{curStatus?.label || status}</span>
                 </span>
               </SelectValue>
@@ -83,7 +83,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
                   className="text-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`size-2 rounded-full ${item.dot}`} />
+                    <StatusIcon status={item.value} />
                     <span>{item.label}</span>
                   </div>
                 </SelectItem>
@@ -102,9 +102,10 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
           >
             <SelectTrigger className="h-9 w-full text-sm">
               <SelectValue>
-                <span className={curPriority?.color || ""}>
-                  {curPriority?.label || priority}
-                </span>
+                <PriorityLabel
+                  value={priority}
+                  label={curPriority?.label || priority}
+                />
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -114,7 +115,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
                   value={item.value}
                   className="text-sm"
                 >
-                  <span className={item.color}>{item.label}</span>
+                  <PriorityLabel value={item.value} label={item.label} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -160,4 +161,10 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
       </Field>
     </FieldGroup>
   );
+}
+
+/** Same quiet chip as the board and list for urgent/high; plain text otherwise. */
+function PriorityLabel({ value, label }: { value: string; label: string }) {
+  const quiet = getQuietPriority(value, false);
+  return <span className={quiet?.className}>{label}</span>;
 }

@@ -10,24 +10,6 @@ import type {
   TaskDraftDates,
 } from "./task-types";
 
-// Palette for user avatar styling
-const AVATAR_PALETTE = [
-  "bg-violet-100 text-violet-700 dark:bg-violet-900/60 dark:text-violet-200 border-violet-300 dark:border-violet-700",
-  "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200 border-blue-300 dark:border-blue-700",
-  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700",
-  "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-200 border-rose-300 dark:border-rose-800",
-  "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200 border-amber-300 dark:border-amber-700",
-  "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-200 border-cyan-300 dark:border-cyan-700",
-];
-
-export function getUserAvatarColor(name: string): string {
-  if (!name) return AVATAR_PALETTE[0];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++)
-    hash = (hash << 5) - hash + name.charCodeAt(i);
-  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
-}
-
 /**
  * Safely parses any database timestamp string or Date object into a standard UTC ISO-8601 string ("...Z").
  * Prevents timezone shift bugs where database timestamps without timezone offsets (e.g. "YYYY-MM-DD HH:mm:ss.sss")

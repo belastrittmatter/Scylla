@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { KanbanCard } from "./kanban-card";
 import { StatusIcon } from "./task-status-icon";
 import { cn } from "@/lib/utils";
+import { MONO_META } from "./task-layout";
 import type { MoveTask } from "./use-task-board-state";
 import type { TaskItem, TaskStatus } from "./task-types";
 
@@ -82,17 +83,20 @@ export function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      // Unfilled lane: -mx-2/px-2 lets the drag highlight bleed past the cards while
+      // the content stays on the gutter; a dashed rail (before:) divides lanes.
       className={cn(
-        "flex w-[85vw] shrink-0 snap-start flex-col rounded-xl sm:w-auto sm:min-w-72 sm:flex-1 sm:shrink border p-2 transition-colors",
-        isDragOver
-          ? "border-primary/40 bg-primary/5"
-          : "border-transparent bg-muted/40",
+        "relative -mx-2 flex w-[85vw] shrink-0 snap-start flex-col rounded-lg px-2 pb-2 outline-1 -outline-offset-1 transition-colors sm:w-auto sm:min-w-72 sm:flex-1 sm:shrink",
+        "before:pointer-events-none before:absolute before:inset-y-0 before:-left-px before:border-l before:border-dashed before:border-border first:before:hidden",
+        isDragOver ? "bg-primary/5 outline-primary/40" : "outline-transparent",
       )}
     >
-      <div className="sticky top-0 z-10 flex items-center gap-2 rounded-t-xl bg-inherit px-1 pb-2 pt-0.5">
+      <div className="sticky top-0 z-10 flex h-9 items-center gap-2 border-b bg-inherit">
         <StatusIcon status={id} />
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
-        <span className="text-xs text-muted-foreground">{tasks.length}</span>
+        <h2 className="text-sm font-medium text-foreground">{title}</h2>
+        <span className={cn(MONO_META, "text-muted-foreground")}>
+          {tasks.length}
+        </span>
         <div className="ml-auto flex items-center gap-1">
           {headerAction}
           {!readOnly && onAddNewTask && (
@@ -107,7 +111,7 @@ export function KanbanColumn({
           )}
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto pt-3">
         {tasks.map((task, idx) => {
           const editable = !readOnly && canEditTask?.(task) !== false;
           return (
@@ -158,7 +162,7 @@ export function KanbanColumn({
           <Button
             variant="ghost"
             onClick={() => onAddNewTask(id)}
-            className="h-auto justify-start rounded-lg border border-dashed border-border p-3 text-muted-foreground hover:text-foreground"
+            className="h-auto justify-start rounded-md border border-dashed border-border p-3 text-muted-foreground hover:text-foreground"
           >
             <Plus />
             Add task

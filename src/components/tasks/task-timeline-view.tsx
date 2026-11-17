@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   addDays,
   differenceInCalendarDays,
-  format,
   startOfWeek,
 } from "date-fns";
 import {
@@ -13,7 +12,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
-import { getVisibleDays } from "./task-timeline";
+import { getOpeningDay, getVisibleDays } from "./task-timeline";
 import {
   TaskTimelineDayColumns,
   TaskTimelineDayHeader,
@@ -41,21 +40,49 @@ export function TaskTimelineView({
   onCreateRange,
 }: TaskTimelineViewProps) {
   const [colW, setColW] = React.useState(36);
-  const [label, setLabel] = React.useState("");
+  const [visible, setVisible] = React.useState<{
+    first: number;
+    last: number;
+  } | null>(null);
   const scroller = React.useRef<HTMLDivElement>(null);
   const anchor = React.useRef<number | null>(null); // day index to keep left on zoom
+  // Until the user scrolls, re-fit the opening position when the pane resizes
+  // (the resizable panel settles its width after the first layout).
+  const touched = React.useRef(false);
   const [start] = React.useState(() =>
     startOfWeek(addDays(new Date(), -56), { weekStartsOn: 1 }),
   );
-  const today = new Date();
+  const [today] = React.useState(() => new Date());
   const todayIdx = differenceInCalendarDays(today, start);
-  const dayList = Array.from({ length: DAYS }, (_, i) => addDays(start, i));
-  const gridStyle = {
-    gridTemplateColumns: `repeat(${DAYS}, ${colW}px)`,
-    width: DAYS * colW,
-  };
-  const groups = buildGroups(tasks, start, getContextLabel);
-  const unscheduled = tasks.filter((t) => !t.dueDate && t.status !== "done");
+
+  // Scroll only updates `visible`; the grid and rows below are memoized on data and zoom.
+  const dayList = React.useMemo(
+    () => Array.from({ length: DAYS }, (_, i) => addDays(start, i)),
+    [start],
+  );
+  const gridStyle = React.useMemo(
+    () => ({ gridTemplateColumns: `repeat(${DAYS}, ${colW}px)`, width: DAYS * colW }),
+    [colW],
+  );
+  const groups = React.useMemo(
+    () => buildGroups(tasks, start, getContextLabel),
+    [tasks, start, getContextLabel],
+  );
+  const unscheduled = React.useMemo(
+    () => tasks.filter((t) => !t.dueDate && t.status !== "done"),
+    [tasks],
+  );
+  const overdueCols = React.useMemo(
+    () =>
+      tasks.flatMap((t) => {
+        if (!t.dueDate || t.status === "done" || t.status === "cancelled") {
+          return [];
+        }
+        const col = differenceInCalendarDays(new Date(t.dueDate), start);
+        return col >= 0 && col < todayIdx ? [col] : [];
+      }),
+    [tasks, start, todayIdx],
+  );
   const { range, handlers } = useTimelineDragCreate({
     colW,
     days: DAYS,
@@ -63,50 +90,108 @@ export function TaskTimelineView({
     onCreateRange,
   });
 
-  const updateLabel = React.useCallback(() => {
+  const updateVisible = React.useCallback(() => {
     const el = scroller.current;
     if (!el) return;
-    const { first, last } = getVisibleDays(
-      el.scrollLeft,
-      el.clientWidth,
-      colW,
-      DAYS,
+    const next = getVisibleDays(el.scrollLeft, el.clientWidth, colW, DAYS);
+    setVisible((prev) =>
+      prev?.first === next.first && prev?.last === next.last ? prev : next,
     );
-    setLabel(
-      `${format(addDays(start, first), "MMM d")} – ${format(addDays(start, last), "MMM d, yyyy")}`,
-    );
-  }, [colW, start]);
+  }, [colW]);
 
-  // Mount: today into view; zoom: keep the same first visible day.
+  const openingLeft = React.useCallback(
+    (el: HTMLDivElement) =>
+      getOpeningDay({
+        todayIdx,
+        visibleCols: Math.max(1, Math.floor(el.clientWidth / colW)),
+        overdueCols,
+        days: DAYS,
+      }) * colW,
+    [colW, todayIdx, overdueCols],
+  );
+
+  // Mount: open on today with overdue work in view; zoom: keep the same first visible day.
   React.useLayoutEffect(() => {
     const el = scroller.current;
     if (!el) return;
     el.scrollLeft =
-      anchor.current !== null
-        ? anchor.current * colW
-        : Math.max(0, todayIdx * colW - el.clientWidth / 3);
-    updateLabel();
-    const ro = new ResizeObserver(updateLabel);
+      anchor.current !== null ? anchor.current * colW : openingLeft(el);
+    updateVisible();
+    const ro = new ResizeObserver(() => {
+      if (!touched.current && anchor.current === null) {
+        el.scrollLeft = openingLeft(el);
+      }
+      updateVisible();
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [colW, todayIdx, updateLabel]);
+  }, [colW, openingLeft, updateVisible]);
 
-  const scrollByWeek = (dir: 1 | -1) =>
+  const markTouched = () => {
+    touched.current = true;
+  };
+  const scrollByWeek = (dir: 1 | -1) => {
+    markTouched();
     scroller.current?.scrollBy({ left: dir * 7 * colW, behavior: "smooth" });
-  const scrollToToday = () =>
-    scroller.current?.scrollTo({
-      left: Math.max(0, todayIdx * colW - scroller.current.clientWidth / 3),
-      behavior: "smooth",
-    });
+  };
+  const scrollToToday = () => {
+    const el = scroller.current;
+    if (!el) return;
+    markTouched();
+    el.scrollTo({ left: openingLeft(el), behavior: "smooth" });
+  };
   const zoom = (next: number) => {
     anchor.current = Math.floor((scroller.current?.scrollLeft ?? 0) / colW);
     setColW(next);
   };
 
+  const namePane = React.useMemo(
+    () => (
+      <TaskTimelineNamePane
+        groups={groups}
+        unscheduled={unscheduled}
+        onSelect={onSelectTask}
+      />
+    ),
+    [groups, unscheduled, onSelectTask],
+  );
+  const gridBody = React.useMemo(
+    () => (
+      <>
+        <TaskTimelineDayColumns
+          dayList={dayList}
+          today={today}
+          gridStyle={gridStyle}
+        />
+        <TaskTimelineDayHeader
+          dayList={dayList}
+          today={today}
+          colW={colW}
+          gridStyle={gridStyle}
+        />
+        {[...groups].map(([name, rows]) => (
+          <React.Fragment key={name}>
+            {name && <div className={cn(BAND, "relative")} aria-hidden />}
+            {rows.map((r) => (
+              <TaskTimelineBars
+                key={r.task.id}
+                {...r}
+                gridStyle={gridStyle}
+                onSelect={onSelectTask}
+              />
+            ))}
+          </React.Fragment>
+        ))}
+      </>
+    ),
+    [dayList, today, gridStyle, colW, groups, onSelectTask],
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <TaskTimelineToolbar
-        label={label}
+        from={visible ? addDays(start, visible.first) : null}
+        to={visible ? addDays(start, visible.last) : null}
         colW={colW}
         onWeek={scrollByWeek}
         onToday={scrollToToday}
@@ -121,17 +206,17 @@ export function TaskTimelineView({
           style={{ height: "auto", minHeight: "100%", overflow: "visible" }}
         >
           <ResizablePanel defaultSize={25} minSize={15} maxSize={45}>
-            <TaskTimelineNamePane
-              groups={groups}
-              unscheduled={unscheduled}
-              onSelect={onSelectTask}
-            />
+            {namePane}
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel>
             <div
               ref={scroller}
-              onScroll={updateLabel}
+              onScroll={updateVisible}
+              onPointerDown={markTouched}
+              onWheel={markTouched}
+              onTouchStart={markTouched}
+              onKeyDown={markTouched}
               className="h-full overflow-x-auto"
             >
               <div
@@ -139,32 +224,7 @@ export function TaskTimelineView({
                 style={{ width: DAYS * colW }}
                 {...handlers}
               >
-                <TaskTimelineDayColumns
-                  dayList={dayList}
-                  today={today}
-                  gridStyle={gridStyle}
-                />
-                <TaskTimelineDayHeader
-                  dayList={dayList}
-                  today={today}
-                  colW={colW}
-                  gridStyle={gridStyle}
-                />
-                {[...groups].map(([name, rows]) => (
-                  <React.Fragment key={name}>
-                    {name && (
-                      <div className={cn(BAND, "relative")} aria-hidden />
-                    )}
-                    {rows.map((r) => (
-                      <TaskTimelineBars
-                        key={r.task.id}
-                        {...r}
-                        gridStyle={gridStyle}
-                        onSelect={onSelectTask}
-                      />
-                    ))}
-                  </React.Fragment>
-                ))}
+                {gridBody}
                 {range && (
                   <div
                     aria-hidden
