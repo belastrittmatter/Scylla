@@ -5,6 +5,8 @@ export type { TaskUser, Task, Project, Team, TaskComment };
 
 export interface TaskCommentItem extends TaskComment {
   user?: TaskUser | null;
+  source?: "local" | "github";
+  htmlUrl?: string | null;
 }
 
 export type TaskStatus =
@@ -67,6 +69,8 @@ export interface TaskDrawerFormProps {
   dueDateStr: string;
   estimatedMinutes: number;
   users: TaskUser[];
+  /** Linked repository of the task's project; non-empty enforces GitHub assignee rules. */
+  githubRepo?: string | null;
   onTitleChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onStatusChange: (v: TaskStatus) => void;

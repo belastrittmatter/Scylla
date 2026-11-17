@@ -3,6 +3,7 @@ import {
   TaskService,
   TaskAccessError,
   TaskDateRangeError,
+  TaskAssigneeGithubError,
 } from "@/services/task/task-service";
 import { TeamService } from "@/services/team/team-service";
 import { UpdateTaskSchema } from "@/services/api-schemas";
@@ -110,7 +111,10 @@ export async function PATCH(req: Request, context: RouteParams) {
   } catch (err) {
     const denied = taskAccessErrorResponse(err);
     if (denied) return denied;
-    if (err instanceof TaskDateRangeError) {
+    if (
+      err instanceof TaskDateRangeError ||
+      err instanceof TaskAssigneeGithubError
+    ) {
       return Response.json({ error: err.message }, { status: 400 });
     }
     const message =

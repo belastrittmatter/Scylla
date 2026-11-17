@@ -12,6 +12,7 @@ import {
 } from "./task-utils";
 import { TaskDrawerForm } from "./task-drawer-form";
 import { TaskDrawerHeader } from "./task-drawer-header";
+import { TaskGithubDevelopmentCard } from "./task-github-development-card";
 import { TaskCommentSection } from "./task-comment-section";
 import { TaskDrawerDeleteButton } from "./task-drawer-delete-button";
 import type {
@@ -72,6 +73,7 @@ function TaskDrawerInner({
   );
 
   const [isSaving, setIsSaving] = React.useState(false);
+  const githubRepo = task.githubRepo ?? task.project?.githubRepo ?? null;
 
   const handleSave = async () => {
     if (readOnly || !title.trim() || isSaving) return;
@@ -140,6 +142,7 @@ function TaskDrawerInner({
               dueDateStr={dueDateStr}
               estimatedMinutes={estimatedMinutes}
               users={users}
+              githubRepo={githubRepo}
               onTitleChange={setTitle}
               onDescriptionChange={setDescription}
               onStatusChange={setStatus}
@@ -150,6 +153,10 @@ function TaskDrawerInner({
               onEstimatedMinutesChange={setEstimatedMinutes}
             />
           </fieldset>
+
+          {!isDraft && githubRepo?.trim() && (
+            <TaskGithubDevelopmentCard task={task} readOnly={readOnly} />
+          )}
 
           {!isDraft && (
             <TaskCommentSection taskId={task.id} readOnly={readOnly} />

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { task, team, teamMember, project, type Task } from "@/db/schema";
+import { task, team, project, type Task } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
   CreateTaskSchema,
@@ -15,42 +15,32 @@ import {
   MIN_TASK_SESSION_DURATION_SECONDS,
 } from "./task-session-service";
 import { TaskQueryService } from "./task-query-service";
-import { TeamService } from "@/services/team/team-service";
-import { canMutateTasks } from "./task-permissions";
+import {
+  TaskAccessError,
+  assertWriteAccess,
+  getWriteAccess,
+  type TaskWriteAccess,
+} from "./task-access-service";
+import {
+  TaskAssigneeGithubError,
+  assertAssigneeGithubRule,
+  assertAssigneeInTeam,
+  assertProjectInTeam,
+} from "./task-assignee-rules";
+import {
+  createIssueIfLinked,
+  pushTaskChangesToGithub,
+} from "./task-github-hooks";
+import { TaskDateRangeError, assertDateOrder, keepIfUnset } from "./task-rules";
+import type { TaskCommentWithSource } from "./workspace-types";
 
-/** `not_member` must be reported like a missing task so ids can't be probed. */
-export type TaskWriteAccess = "allowed" | "forbidden" | "not_member";
-
-/** Thrown by task mutations; `not_member` reads as "not found" so ids can't be probed. */
-export class TaskAccessError extends Error {
-  constructor(
-    readonly access: Exclude<TaskWriteAccess, "allowed">,
-    message: string,
-  ) {
-    super(message);
-    this.name = "TaskAccessError";
-  }
-}
-
-/** Thrown when a task's startDate is later than its dueDate. */
-export class TaskDateRangeError extends Error {
-  constructor() {
-    super("startDate must be on or before dueDate");
-    this.name = "TaskDateRangeError";
-  }
-}
-
-/** Both dates set → start must not be after due; a null/absent date imposes no constraint. */
-function assertDateOrder(
-  start: Date | null | undefined,
-  due: Date | null | undefined,
-): void {
-  if (start && due && start.getTime() > due.getTime()) {
-    throw new TaskDateRangeError();
-  }
-}
-
-export { MIN_TASK_SESSION_DURATION_SECONDS };
+export {
+  MIN_TASK_SESSION_DURATION_SECONDS,
+  TaskAccessError,
+  TaskAssigneeGithubError,
+  TaskDateRangeError,
+  type TaskWriteAccess,
+};
 
 export class TaskService {
   public static async createTask(input: CreateTaskInput): Promise<Task> {
@@ -58,9 +48,7 @@ export class TaskService {
     assertDateOrder(validated.startDate, validated.dueDate);
 
     const [teamRecord, projectRecord, existing] = await Promise.all([
-      db.query.team.findFirst({
-        where: eq(team.id, validated.teamId),
-      }),
+      db.query.team.findFirst({ where: eq(team.id, validated.teamId) }),
       validated.projectId
         ? db.query.project.findFirst({
             where: eq(project.id, validated.projectId),
@@ -90,33 +78,23 @@ export class TaskService {
         validated,
         validated.creatorId,
       );
-      if (access === "forbidden") {
-        throw new Error("Forbidden: Viewer role cannot create tasks");
-      }
-      if (access === "not_member") {
-        throw new Error("Forbidden: Creator is not a member of this team");
+      if (access !== "allowed") {
+        throw new Error(
+          access === "forbidden"
+            ? "Forbidden: Viewer role cannot create tasks"
+            : "Forbidden: Creator is not a member of this team",
+        );
       }
     }
 
     if (validated.projectId) {
-      if (!projectRecord || projectRecord.teamId !== validated.teamId) {
-        throw new Error(
-          `Project with id "${validated.projectId}" not found in team "${validated.teamId}"`,
-        );
-      }
+      assertProjectInTeam(projectRecord, validated.projectId, validated.teamId);
+    }
+    if (validated.assigneeId) {
+      await assertAssigneeInTeam(validated.teamId, validated.assigneeId);
     }
 
-    if (validated.assigneeId) {
-      const isMember = await TeamService.isTeamMember(
-        validated.teamId,
-        validated.assigneeId,
-      );
-      if (!isMember) {
-        throw new Error(
-          `User "${validated.assigneeId}" is not a member of team "${validated.teamId}"`,
-        );
-      }
-    }
+    await assertAssigneeGithubRule(validated.projectId, validated.assigneeId);
 
     const position =
       validated.position !== undefined
@@ -150,7 +128,7 @@ export class TaskService {
       );
     }
 
-    return newTask;
+    return createIssueIfLinked(newTask, validated.creatorId);
   }
 
   public static async getTaskById(
@@ -181,35 +159,36 @@ export class TaskService {
       "Forbidden: Viewer role cannot update tasks",
     );
 
-    const effectiveStart =
-      validated.startDate !== undefined
-        ? validated.startDate
-        : existing.startDate;
-    const effectiveDue =
-      validated.dueDate !== undefined ? validated.dueDate : existing.dueDate;
-    assertDateOrder(effectiveStart, effectiveDue);
+    assertDateOrder(
+      keepIfUnset(validated.startDate, existing.startDate),
+      keepIfUnset(validated.dueDate, existing.dueDate),
+    );
 
     if (validated.projectId !== undefined && validated.projectId !== null) {
       const projectRecord = await db.query.project.findFirst({
         where: eq(project.id, validated.projectId),
       });
-      if (!projectRecord || projectRecord.teamId !== existing.teamId) {
-        throw new Error(
-          `Project with id "${validated.projectId}" not found in team "${existing.teamId}"`,
-        );
-      }
+      assertProjectInTeam(projectRecord, validated.projectId, existing.teamId);
     }
 
     if (validated.assigneeId !== undefined && validated.assigneeId !== null) {
-      const isMember = await TeamService.isTeamMember(
-        existing.teamId,
-        validated.assigneeId,
-      );
-      if (!isMember) {
-        throw new Error(
-          `User "${validated.assigneeId}" is not a member of team "${existing.teamId}"`,
-        );
-      }
+      await assertAssigneeInTeam(existing.teamId, validated.assigneeId);
+    }
+
+    const effectiveAssignee = keepIfUnset(
+      validated.assigneeId,
+      existing.assigneeId,
+    );
+    const effectiveProject = keepIfUnset(
+      validated.projectId,
+      existing.projectId,
+    );
+    if (
+      effectiveAssignee &&
+      (effectiveAssignee !== existing.assigneeId ||
+        effectiveProject !== existing.projectId)
+    ) {
+      await assertAssigneeGithubRule(effectiveProject, effectiveAssignee);
     }
 
     if (
@@ -226,30 +205,16 @@ export class TaskService {
       }
     }
 
-    const updateData: Partial<typeof task.$inferInsert> = {};
-    if (validated.title !== undefined) updateData.title = validated.title;
-    if (validated.description !== undefined)
-      updateData.description = validated.description;
-    if (validated.status !== undefined) updateData.status = validated.status;
-    if (validated.priority !== undefined)
-      updateData.priority = validated.priority;
-    if (validated.projectId !== undefined)
-      updateData.projectId = validated.projectId;
-    if (validated.assigneeId !== undefined)
-      updateData.assigneeId = validated.assigneeId;
-    if (validated.dueDate !== undefined) updateData.dueDate = validated.dueDate;
-    if (validated.startDate !== undefined)
-      updateData.startDate = validated.startDate;
-    if (validated.position !== undefined)
-      updateData.position = validated.position;
-    if (validated.estimatedMinutes !== undefined)
-      updateData.estimatedMinutes = validated.estimatedMinutes;
+    const updateData = Object.fromEntries(
+      Object.entries(validated).filter(([, v]) => v !== undefined),
+    ) as Partial<typeof task.$inferInsert>;
 
     const [updated] = await db
       .update(task)
       .set(updateData)
       .where(eq(task.id, taskId))
       .returning();
+    await pushTaskChangesToGithub(existing, updated, validated, currentUserId);
     return updated;
   }
 
@@ -269,48 +234,20 @@ export class TaskService {
   }
 
   /** Single write-permission check for create/update/delete (see task-permissions). */
-  public static async getWriteAccess(
+  public static getWriteAccess(
     target: Pick<Task, "teamId">,
     userId: string,
   ): Promise<TaskWriteAccess> {
-    const [teamRecord, membership] = await Promise.all([
-      db.query.team.findFirst({
-        where: eq(team.id, target.teamId),
-        columns: { ownerId: true },
-      }),
-      db.query.teamMember.findFirst({
-        where: and(
-          eq(teamMember.teamId, target.teamId),
-          eq(teamMember.userId, userId),
-        ),
-        columns: { role: true },
-      }),
-    ]);
-    const isTeamOwner = teamRecord?.ownerId === userId;
-    if (!isTeamOwner && !membership) return "not_member";
-    const allowed = canMutateTasks({
-      role: membership?.role,
-      isTeamOwner,
-    });
-    return allowed ? "allowed" : "forbidden";
+    return getWriteAccess(target, userId);
   }
 
   /** Throws TaskAccessError unless `userId` may mutate tasks of `target`'s team. */
-  public static async assertWriteAccess(
+  public static assertWriteAccess(
     target: Pick<Task, "id" | "teamId">,
     userId: string,
     forbiddenMessage: string,
   ): Promise<void> {
-    const access = await TaskService.getWriteAccess(target, userId);
-    if (access === "not_member") {
-      throw new TaskAccessError(
-        access,
-        `Task with id "${target.id}" not found`,
-      );
-    }
-    if (access === "forbidden") {
-      throw new TaskAccessError(access, forbiddenMessage);
-    }
+    return assertWriteAccess(target, userId, forbiddenMessage);
   }
 
   public static async deleteTask(
@@ -327,11 +264,8 @@ export class TaskService {
       currentUserId,
       "Permission denied: only team members (not viewers) can delete tasks",
     );
-    const deleted = await db
-      .delete(task)
-      .where(eq(task.id, taskId))
-      .returning();
-    return deleted.length > 0;
+    const rows = await db.delete(task).where(eq(task.id, taskId)).returning();
+    return rows.length > 0;
   }
 
   public static async reorderTaskPositions(
@@ -345,16 +279,19 @@ export class TaskService {
     return TaskWorkspaceService.getWorkspaceData(currentUserId);
   }
 
-  public static async getTaskComments(taskId: string) {
+  public static async getTaskComments(
+    taskId: string,
+    userId?: string,
+  ): Promise<TaskCommentWithSource[]> {
     const { TaskWorkspaceService } = await import("./task-workspace-service");
-    return TaskWorkspaceService.getTaskComments(taskId);
+    return TaskWorkspaceService.getTaskComments(taskId, userId);
   }
 
   public static async createTaskComment(payload: {
     taskId: string;
     userId: string;
     content: string;
-  }) {
+  }): Promise<TaskCommentWithSource> {
     const { TaskWorkspaceService } = await import("./task-workspace-service");
     return TaskWorkspaceService.createTaskComment(payload);
   }

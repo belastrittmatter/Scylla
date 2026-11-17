@@ -4,6 +4,10 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { KanbanCard } from "./kanban-card";
+import {
+  formatColumnGithubSummary,
+  summarizeColumnGithub,
+} from "./task-github-summary";
 import { StatusIcon } from "./task-status-icon";
 import { cn } from "@/lib/utils";
 import type { MoveTask } from "./use-task-board-state";
@@ -38,6 +42,7 @@ export function KanbanColumn({
   showAssignee,
   headerAction,
 }: KanbanColumnProps) {
+  const githubSummary = formatColumnGithubSummary(summarizeColumnGithub(tasks));
   const canDrag = !readOnly && Boolean(onUpdateStatus);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
@@ -93,6 +98,14 @@ export function KanbanColumn({
         <StatusIcon status={id} />
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         <span className="text-xs text-muted-foreground">{tasks.length}</span>
+        {githubSummary && (
+          <span
+            title="GitHub-linked tasks in this column"
+            className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+          >
+            {githubSummary}
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-1">
           {headerAction}
           {!readOnly && onAddNewTask && (

@@ -5,6 +5,11 @@ import { team, user } from "../../src/db/schema";
 import { seedDefaultWorkspace } from "../../src/services/task-seed";
 import { TeamService } from "../../src/services/team/team-service";
 import { TaskService } from "../../src/services/task/task-service";
+import {
+  createGithubFixture,
+  type GithubFixture,
+} from "../test-utils/github-fixtures";
+import { mockGithubApi } from "../test-utils/mock-github-api";
 import { seedDatabase } from "../../src/db/seed";
 import { mockSessionUser } from "../test-utils/mock-session";
 import {
@@ -394,6 +399,70 @@ describe("Task Server Actions with Core Domain Services", () => {
       });
       expect(res.success).toBe(false);
       expect(res.error).toMatch(/viewer/i);
+    });
+  });
+
+  describe("Assignee GitHub rule in a linked project", () => {
+    let fx: GithubFixture;
+    const memberId = `usr_nogh_${Date.now()}`;
+
+    beforeAll(async () => {
+      delete process.env.GITHUB_TOKEN;
+      fx = await createGithubFixture();
+      await db.insert(user).values({
+        id: memberId,
+        name: "Nora NoGithub",
+        email: `${memberId}@example.com`,
+      });
+      for (const userId of [actingUserId, memberId]) {
+        await TeamService.addTeamMember({
+          teamId: fx.teamId,
+          userId,
+          role: "member",
+        });
+      }
+    });
+
+    afterAll(async () => {
+      await db.delete(user).where(eq(user.id, memberId));
+      await fx.cleanup();
+    });
+
+    test("createTaskAction refuses an assignee without a GitHub connection", async () => {
+      const github = mockGithubApi([]);
+      try {
+        const res = await createTaskAction({
+          title: "Needs GitHub",
+          teamId: fx.teamId,
+          projectId: fx.projectId,
+          assigneeId: memberId,
+        });
+        expect(res.success).toBe(false);
+        expect(res.error).toBe(
+          "Cannot assign task: Nora NoGithub has not connected a GitHub account. Members must connect GitHub in Account Settings before they can be assigned tasks in a project linked to GitHub.",
+        );
+        expect(github.calls).toHaveLength(0);
+      } finally {
+        github.restore();
+      }
+    });
+
+    test("updateTaskAction refuses the same assignee", async () => {
+      const github = mockGithubApi([]);
+      try {
+        const created = await createTaskAction({
+          title: "Unassigned",
+          teamId: fx.teamId,
+          projectId: fx.projectId,
+        });
+        const res = await updateTaskAction(created.data!.id, {
+          assigneeId: memberId,
+        });
+        expect(res.success).toBe(false);
+        expect(res.error).toContain("Nora NoGithub");
+      } finally {
+        github.restore();
+      }
     });
   });
 });

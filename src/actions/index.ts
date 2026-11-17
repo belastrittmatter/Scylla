@@ -14,9 +14,16 @@ export {
   updateTaskAction,
   createProjectAction,
   createTaskAction,
+} from "./task-actions";
+export {
   getTaskCommentsAction,
   createTaskCommentAction,
-} from "./task-actions";
+} from "./task-comment-actions";
+export {
+  getTaskDevelopmentAction,
+  createTaskBranchAction,
+  createTaskIssueAction,
+} from "./task-github-actions";
 export type {
   WorkspaceData,
   TaskUser,

@@ -5,7 +5,22 @@ import {
   ProjectStatusSchema,
   type ProjectStatus,
 } from "@/services/project/project-types";
+import { z } from "zod";
+import { GithubApiError } from "@/services/github/github-errors";
+import { GithubIntegrationService } from "@/services/github/github-integration-service";
+import { GithubRepoService } from "@/services/github/github-repo-service";
+import { GithubSyncService } from "@/services/github/github-sync-service";
 import { isUniqueConstraintError, resolveUserId } from "@/services/api-utils";
+
+const CreateProjectRequestSchema = CreateProjectSchema.extend({
+  createNewRepo: z
+    .object({
+      name: z.string(),
+      isPrivate: z.boolean().optional(),
+      description: z.string().nullish(),
+    })
+    .optional(),
+});
 
 export async function GET(req: Request) {
   try {
@@ -106,10 +121,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const parseResult = CreateProjectSchema.safeParse(body);
+    const parseResult = CreateProjectRequestSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
+        { status: 400 },
+      );
+    }
+
+    if (parseResult.data.githubRepo && parseResult.data.createNewRepo) {
+      return Response.json(
+        { error: "Provide either githubRepo or createNewRepo, not both" },
         { status: 400 },
       );
     }
@@ -133,7 +155,43 @@ export async function POST(req: Request) {
       );
     }
 
-    const newProject = await ProjectService.createProject(parseResult.data);
+    const { createNewRepo, ...projectInput } = parseResult.data;
+    if (createNewRepo) {
+      try {
+        const created = await GithubRepoService.createRepository(
+          {
+            name: createNewRepo.name,
+            description: createNewRepo.description ?? projectInput.description,
+            isPrivate: createNewRepo.isPrivate,
+          },
+          userId,
+        );
+        projectInput.githubRepo = created.fullName;
+      } catch (err) {
+        const status = err instanceof GithubApiError ? 502 : 400;
+        return Response.json(
+          {
+            error:
+              err instanceof Error
+                ? err.message
+                : "Failed to create repository",
+          },
+          { status },
+        );
+      }
+    }
+
+    const newProject = await ProjectService.createProject(projectInput);
+    if (newProject.githubRepo) {
+      await GithubIntegrationService.inviteTeamCollaborators(
+        newProject.teamId,
+        newProject.githubRepo,
+        userId,
+      ).catch((error: unknown) => {
+        console.warn("GitHub collaborator invites failed", error);
+      });
+      void GithubSyncService.startBackgroundSync(newProject.id, userId);
+    }
     return Response.json(newProject, { status: 201 });
   } catch (err) {
     if (isUniqueConstraintError(err)) {

@@ -11,6 +11,18 @@ describe("auth account linking", () => {
     expect(linking?.requireLocalEmailVerified).toBe(false);
   });
 
+  it("registers GitHub with repo scopes, invite-only, linkable by other email", () => {
+    const github = auth.options.socialProviders?.github;
+    expect(github?.scope).toEqual(
+      expect.arrayContaining(["repo", "read:user", "user:email"]),
+    );
+    expect(github?.disableSignUp).toBe(true);
+    const linking = auth.options.account?.accountLinking;
+    expect(linking?.allowDifferentEmails).toBe(true);
+    expect(linking?.trustedProviders).toContain("google");
+    expect(linking?.trustedProviders).not.toContain("github");
+  });
+
   // Linking to unverified users is only safe while nobody can register a password account.
   it("keeps email/password sign-up disabled", () => {
     const options: BetterAuthOptions = auth.options;

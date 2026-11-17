@@ -9,6 +9,8 @@ import { TaskFilterChips } from "./task-filter-chips";
 import { buildTaskFilterDefs } from "./task-filter-defs";
 import { TaskScopeContent } from "./task-scope-content";
 import { TaskScopeEmptyState } from "./task-scope-empty-state";
+import { TaskGithubRepoChip } from "./task-github-repo-chip";
+import { useProjectGithubAutoSync } from "./use-project-github-auto-sync";
 import { TaskDrawer } from "./task-drawer";
 import { TaskWorkspaceSkeleton } from "./task-workspace-skeleton";
 import { useTaskWorkspaceData } from "./use-task-workspace-data";
@@ -42,6 +44,7 @@ export function TaskDashboard() {
   const { data: session, isPending: isSessionPending } = useSession();
   const { scope, team, project, viewMode, setViewMode, navigate } =
     useTaskWorkspaceRouting({ teams, projects });
+  useProjectGithubAutoSync({ project, setTasks });
   const teamId = team?.id ?? "";
   const teamProjects = projects.filter((p) => p.teamId === teamId);
   const projectId = project?.id ?? "";
@@ -149,6 +152,9 @@ export function TaskDashboard() {
             onViewModeChange={setViewMode}
             onNewTask={addTask && (() => addTask())}
           />
+          {project?.githubRepo?.trim() && (
+            <TaskGithubRepoChip repo={project.githubRepo.trim()} />
+          )}
           <TaskFilterChips
             defs={filterDefs}
             searchQuery={filters.searchQuery}

@@ -80,12 +80,21 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
+      // GitHub is linked from an already signed-in session; its email may differ.
+      allowDifferentEmails: true,
       // #111: team invites create unverified placeholder users (team-service addTeamMember);
       // Google must be able to claim them. Safe only while no password sign-up exists.
       requireLocalEmailVerified: false,
     },
   },
   socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || "dummy-github-client-id",
+      clientSecret:
+        process.env.GITHUB_CLIENT_SECRET || "dummy-github-client-secret",
+      scope: ["repo", "read:user", "user:email"],
+      disableSignUp: true,
+    },
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "dummy-client-id",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "dummy-client-secret",

@@ -1,4 +1,8 @@
-import { TaskService, TaskDateRangeError } from "@/services/task/task-service";
+import {
+  TaskService,
+  TaskDateRangeError,
+  TaskAssigneeGithubError,
+} from "@/services/task/task-service";
 import { TeamService } from "@/services/team/team-service";
 import { CreateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
@@ -130,7 +134,10 @@ export async function POST(req: Request) {
 
     return Response.json(newTask, { status: 201 });
   } catch (err) {
-    if (err instanceof TaskDateRangeError) {
+    if (
+      err instanceof TaskDateRangeError ||
+      err instanceof TaskAssigneeGithubError
+    ) {
       return Response.json({ error: err.message }, { status: 400 });
     }
     const message =

@@ -11,6 +11,7 @@ import {
   getQuietPriority,
   getUserAvatarColor,
 } from "./task-utils";
+import { KanbanCardGithubBadges } from "./kanban-card-github-badges";
 import { KanbanCardMenu } from "./kanban-card-menu";
 import { KanbanCardTime } from "./kanban-card-time";
 import { StatusIcon } from "./task-status-icon";
@@ -107,6 +108,8 @@ export function KanbanCard({
           {task.title}
         </button>
       </h4>
+
+      <KanbanCardGithubBadges task={task} />
 
       {(priority || task.dueDate || running) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">

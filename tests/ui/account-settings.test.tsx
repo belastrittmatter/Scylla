@@ -6,6 +6,7 @@ import AccountSettingsPage, {
   metadata,
 } from "@/app/(auth)/account/settings/page";
 import { AccountSettingsView } from "@/components/settings/account-settings-view";
+import { ConnectedAccountRow } from "@/components/settings/connected-account-row";
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import { authClient } from "@/lib/auth-client";
 import { userNameSchema } from "@/lib/validations/user";
@@ -45,6 +46,8 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
     // Verify structured sections and cards
     expect(html).toContain("Profile");
     expect(html).toContain("Connected Accounts");
+    expect(html).toContain("Google");
+    expect(html).toContain("GitHub");
     expect(html).toContain("AI Agents &amp; MCP Integrations");
     expect(html).toContain("AI Agent &amp; MCP Capabilities");
     expect(html).toContain("MCP Server URL");
@@ -103,5 +106,47 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
       workingHoursSchema.safeParse({ dayStartHour: 10, dayEndHour: 10 })
         .success,
     ).toBe(false);
+  });
+});
+
+describe("ConnectedAccountRow", () => {
+  const base = {
+    providerName: "GitHub",
+    icon: null,
+    isLoading: false,
+    isConnected: false,
+    connectedText: "Connected for issues, branches and pull requests",
+    canUnlink: true,
+    isBusy: false,
+    onLink: () => {},
+    onUnlink: () => {},
+  };
+  const render = (over: Partial<typeof base>) =>
+    renderToString(<ConnectedAccountRow {...base} {...over} />);
+
+  it("shows the name while loading, with no status or button text", () => {
+    const html = render({ isLoading: true });
+    expect(html).toContain("GitHub");
+    expect(html).not.toContain("Not connected");
+    expect(html).not.toContain("Link");
+  });
+
+  it("shows Not connected and Link when disconnected", () => {
+    const html = render({});
+    expect(html).toContain("Not connected");
+    expect(html).toContain("Link");
+    expect(html).not.toContain("issues, branches");
+  });
+
+  it("shows the connected text and an enabled Unlink with several accounts", () => {
+    const html = render({ isConnected: true });
+    expect(html).toContain("Connected for issues, branches and pull requests");
+    expect(html).toContain("Unlink");
+    expect(html).not.toContain(' disabled=""');
+  });
+
+  it("disables Unlink when it is the only account", () => {
+    const html = render({ isConnected: true, canUnlink: false });
+    expect(html).toContain(' disabled=""');
   });
 });
