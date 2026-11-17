@@ -14,6 +14,7 @@ import {
   siZedindustries,
   type SimpleIcon,
 } from "simple-icons";
+import { cn } from "@/lib/utils";
 import { CornerTicks } from "@/components/landing/primitives";
 
 // Only clients with a published logo; OpenAI's mark isn't in simple-icons.
@@ -36,7 +37,10 @@ const AGENTS: Array<[string, SimpleIcon]> = [
 function Chips({ hidden = false }: { hidden?: boolean }) {
   return (
     <ul
-      className="flex shrink-0 items-center gap-3 pr-3"
+      className={cn(
+        "flex shrink-0 items-center gap-3 pr-3 motion-reduce:w-full motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:px-4",
+        hidden && "motion-reduce:hidden",
+      )}
       aria-hidden={hidden || undefined}
     >
       {AGENTS.map(([name, icon]) => (
@@ -74,8 +78,8 @@ export function LandingAgentCloud() {
         </div>
         <div className="relative mt-8 border border-line bg-paper py-6">
           <CornerTicks />
-          <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-            <div className="marquee flex w-max">
+          <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] motion-reduce:[mask-image:none]">
+            <div className="marquee flex w-max motion-reduce:w-full">
               <Chips />
               <Chips hidden />
             </div>

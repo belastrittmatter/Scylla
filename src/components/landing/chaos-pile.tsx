@@ -363,7 +363,7 @@ export function ChaosPile() {
           <div
             key={text}
             style={{ left: `${x}%`, top: `${y}%`, rotate: `${deg}deg` }}
-            className={`absolute items-center gap-2.5 rounded-lg border border-line bg-paper px-3 py-2 text-xs whitespace-nowrap text-ink-2 shadow-[0_8px_24px_-12px_rgb(0_0_0/0.18)] sm:text-sm ${wide ? "hidden sm:flex" : "flex"}`}
+            className={`absolute items-center gap-2.5 rounded-lg border border-line bg-paper px-3 py-2 text-xs whitespace-nowrap text-ink-2 motion-reduce:max-sm:whitespace-normal shadow-[0_8px_24px_-12px_rgb(0_0_0/0.18)] sm:text-sm ${wide ? "hidden sm:flex" : "flex"}`}
           >
             <Icon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
             {text}
