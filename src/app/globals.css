@@ -155,7 +155,7 @@
   --ember: #ee4f1c;
   --ember-deep: #c63d10;
   --ember-soft: #fff1ea;
-  font-family: var(--font-bureau), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   background-color: var(--paper);
   color: var(--ink);
 }
