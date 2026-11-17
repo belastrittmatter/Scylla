@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  GITHUB_REPO_FORMAT_ERROR,
+  isValidGithubRepo,
+} from "@/lib/github-validation";
 
 export const ProjectStatusSchema = z.enum([
   "planning",
@@ -18,6 +22,12 @@ export const CreateProjectSchema = z.object({
   color: z
     .string()
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Invalid hex color")
+    .optional(),
+  githubRepo: z
+    .string()
+    .trim()
+    .refine(isValidGithubRepo, GITHUB_REPO_FORMAT_ERROR)
+    .nullable()
     .optional(),
 });
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;

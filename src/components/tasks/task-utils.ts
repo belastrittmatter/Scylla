@@ -161,6 +161,12 @@ export function createDraftTask(
     dueDate: dates?.dueDate ?? null,
     position: 0,
     estimatedMinutes: 60,
+    githubIssueNumber: null,
+    githubIssueUrl: null,
+    githubBranch: null,
+    githubPrNumber: null,
+    githubPrUrl: null,
+    githubPrStatus: null,
     totalSpentSeconds: 0,
     activeSessionStartedAt:
       status === "in_progress" ? new Date().toISOString() : null,

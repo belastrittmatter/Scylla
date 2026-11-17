@@ -6,6 +6,93 @@ import {
   type ProjectStatus,
 } from "@/services/project/project-types";
 import { isUniqueConstraintError, resolveUserId } from "@/services/api-utils";
+import { z } from "zod";
+import { slugify } from "@/lib/utils";
+import { GithubAuthService } from "@/services/github/github-auth-service";
+import { GithubSyncService } from "@/services/github/github-sync-service";
+import {
+  GithubRepoError,
+  GithubRepoService,
+  type GithubRepoErrorCode,
+} from "@/services/github/github-repo-service";
+
+const CreateProjectRequestSchema = CreateProjectSchema.extend({
+  createNewRepo: z
+    .object({
+      name: z.string().min(1, "Repository name is required"),
+      isPrivate: z.boolean().default(true),
+      description: z.string().nullable().optional(),
+    })
+    .optional(),
+});
+
+const REPO_ERROR_STATUS: Record<GithubRepoErrorCode, number> = {
+  not_connected: 400,
+  invalid_name: 400,
+  already_exists: 409,
+  github_error: 502,
+};
+
+function slugConflict(): Response {
+  return Response.json(
+    { error: "A project with this slug already exists" },
+    { status: 409 },
+  );
+}
+
+/** Decides which repository the new project links to, or answers with the error. */
+async function resolveRepoToLink(
+  userId: string,
+  githubRepo: string | null | undefined,
+  createNewRepo: z.infer<typeof CreateProjectRequestSchema>["createNewRepo"],
+): Promise<{ githubRepo: string | null } | Response> {
+  if (githubRepo && createNewRepo) {
+    return Response.json(
+      { error: "Provide either githubRepo or createNewRepo, not both" },
+      { status: 400 },
+    );
+  }
+  if (!githubRepo && !createNewRepo) return { githubRepo: githubRepo ?? null };
+
+  if (!(await GithubAuthService.isConnected(userId))) {
+    return Response.json(
+      {
+        error:
+          "Connect your GitHub account in Account Settings before linking a repository",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (githubRepo) {
+    const repo = await GithubRepoService.getRepository(githubRepo, userId);
+    if (!repo) {
+      return Response.json(
+        {
+          error: `GitHub repository "${githubRepo}" was not found or you do not have access to it`,
+        },
+        { status: 400 },
+      );
+    }
+    return { githubRepo: repo.fullName };
+  }
+
+  try {
+    const created = await GithubRepoService.createRepository(
+      createNewRepo!,
+      userId,
+    );
+    return { githubRepo: created.fullName };
+  } catch (err) {
+    if (err instanceof GithubRepoError) {
+      return Response.json(
+        { error: err.message },
+        { status: REPO_ERROR_STATUS[err.code] },
+      );
+    }
+    throw err;
+  }
+}
 
 export async function GET(req: Request) {
   try {
@@ -106,7 +193,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const parseResult = CreateProjectSchema.safeParse(body);
+    const parseResult = CreateProjectRequestSchema.safeParse(body);
     if (!parseResult.success) {
       return Response.json(
         { error: parseResult.error.issues.map((i) => i.message).join(", ") },
@@ -133,15 +220,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const newProject = await ProjectService.createProject(parseResult.data);
-    return Response.json(newProject, { status: 201 });
-  } catch (err) {
-    if (isUniqueConstraintError(err)) {
-      return Response.json(
-        { error: "A project with this slug already exists" },
-        { status: 409 },
+    const { createNewRepo, ...projectFields } = parseResult.data;
+    const slug = slugify(projectFields.slug || projectFields.name);
+    if (await ProjectService.getProjectBySlug(projectFields.teamId, slug)) {
+      return slugConflict();
+    }
+    const resolved = await resolveRepoToLink(
+      userId,
+      projectFields.githubRepo,
+      createNewRepo,
+    );
+    if (resolved instanceof Response) return resolved;
+
+    const newProject = await ProjectService.createProject({
+      ...projectFields,
+      githubRepo: resolved.githubRepo,
+    });
+    if (resolved.githubRepo) {
+      void GithubSyncService.syncProjectIssuesInBackground(
+        newProject.id,
+        userId,
       );
     }
+    return Response.json(newProject, { status: 201 });
+  } catch (err) {
+    if (isUniqueConstraintError(err)) return slugConflict();
     const message =
       err instanceof Error ? err.message : "Failed to create project";
     if (message.includes("not found")) {

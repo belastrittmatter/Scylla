@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { formatDistanceToNow } from "date-fns";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getTaskCommentsAction, createTaskCommentAction } from "@/actions";
-import type { TaskCommentItem } from "./task-types";
-import { getUserAvatarColor } from "./task-utils";
+import type { TaskCommentView } from "@/services/task/workspace-types";
+import { TaskCommentRow } from "./task-comment-row";
 
 interface TaskCommentSectionProps {
   taskId: string;
@@ -20,7 +19,7 @@ export function TaskCommentSection({
   taskId,
   readOnly,
 }: TaskCommentSectionProps) {
-  const [comments, setComments] = React.useState<TaskCommentItem[]>([]);
+  const [comments, setComments] = React.useState<TaskCommentView[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [newComment, setNewComment] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -30,8 +29,9 @@ export function TaskCommentSection({
     async function loadComments() {
       setIsLoading(true);
       const res = await getTaskCommentsAction(taskId);
-      if (isMounted && res.success && res.data) {
-        setComments(res.data);
+      if (isMounted) {
+        if (res.success && res.data) setComments(res.data);
+        else toast.error(res.error ?? "Failed to load comments");
       }
       if (isMounted) setIsLoading(false);
     }
@@ -49,8 +49,10 @@ export function TaskCommentSection({
     setIsSubmitting(true);
     const res = await createTaskCommentAction({ taskId, content });
     if (res.success && res.data) {
-      setComments((prev) => [...prev, res.data as TaskCommentItem]);
+      setComments((prev) => [...prev, res.data as TaskCommentView]);
       setNewComment("");
+    } else {
+      toast.error(res.error ?? "Failed to add comment");
     }
     setIsSubmitting(false);
   };
@@ -75,35 +77,9 @@ export function TaskCommentSection({
         </p>
       ) : (
         <div className="flex max-h-52 flex-col gap-3 overflow-y-auto pr-1">
-          {comments.map((c) => {
-            const author = c.user?.name || "Team Member";
-            const avatarColor = getUserAvatarColor(author);
-            return (
-              <div key={c.id} className="flex items-start gap-2.5 text-xs">
-                <Avatar className="mt-0.5 size-6 border border-border text-xs">
-                  <AvatarImage src={c.user?.avatarUrl || ""} alt={author} />
-                  <AvatarFallback className={avatarColor}>
-                    {c.user?.initials || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 rounded-lg bg-muted p-2.5">
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="font-semibold text-foreground">
-                      {author}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(c.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </div>
-                  <p className="whitespace-pre-wrap text-foreground">
-                    {c.content}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+          {comments.map((c) => (
+            <TaskCommentRow key={c.id} comment={c} />
+          ))}
         </div>
       )}
 

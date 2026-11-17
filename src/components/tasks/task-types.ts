@@ -67,6 +67,7 @@ export interface TaskDrawerFormProps {
   dueDateStr: string;
   estimatedMinutes: number;
   users: TaskUser[];
+  isProjectLinkedToGithub?: boolean;
   onTitleChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   onStatusChange: (v: TaskStatus) => void;

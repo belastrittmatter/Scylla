@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RowActionsMenu } from "@/components/layout/row-actions-menu";
 import type { ProjectItem } from "@/hooks/use-projects";
@@ -45,6 +45,15 @@ export function ProjectRow({
       >
         <ExternalLink />
         Board
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        render={<Link href={`/projects/${project.id}/settings`} />}
+        aria-label={`Open ${project.name} settings`}
+      >
+        <Settings />
+        Settings
       </Button>
       {canManage && (
         <RowActionsMenu

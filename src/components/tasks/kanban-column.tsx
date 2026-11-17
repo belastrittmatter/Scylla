@@ -6,6 +6,8 @@ import { Plus } from "lucide-react";
 import { KanbanCard } from "./kanban-card";
 import { StatusIcon } from "./task-status-icon";
 import { cn } from "@/lib/utils";
+import { plural } from "@/lib/plural";
+import { countLinkedPullRequests } from "./task-github-badges";
 import type { MoveTask } from "./use-task-board-state";
 import type { TaskItem, TaskStatus } from "./task-types";
 
@@ -38,6 +40,7 @@ export function KanbanColumn({
   showAssignee,
   headerAction,
 }: KanbanColumnProps) {
+  const prCount = countLinkedPullRequests(tasks);
   const canDrag = !readOnly && Boolean(onUpdateStatus);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
@@ -93,6 +96,14 @@ export function KanbanColumn({
         <StatusIcon status={id} />
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         <span className="text-xs text-muted-foreground">{tasks.length}</span>
+        {prCount > 0 && (
+          <span
+            title="Tasks with a linked pull request"
+            className="rounded border px-1.5 text-xs text-muted-foreground"
+          >
+            {plural(prCount, "PR")}
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-1">
           {headerAction}
           {!readOnly && onAddNewTask && (

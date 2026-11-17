@@ -83,9 +83,18 @@ export const auth = betterAuth({
       // #111: team invites create unverified placeholder users (team-service addTeamMember);
       // Google must be able to claim them. Safe only while no password sign-up exists.
       requireLocalEmailVerified: false,
+      // GitHub is linked from Account Settings by a signed-in user, which is why
+      // different e-mails are allowed and GitHub is not a trusted provider.
+      allowDifferentEmails: true,
     },
   },
   socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || "dummy-github-client-id",
+      clientSecret:
+        process.env.GITHUB_CLIENT_SECRET || "dummy-github-client-secret",
+      scope: ["repo", "read:user", "user:email"],
+    },
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "dummy-client-id",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "dummy-client-secret",

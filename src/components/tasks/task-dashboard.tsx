@@ -14,6 +14,7 @@ import { TaskWorkspaceSkeleton } from "./task-workspace-skeleton";
 import { useTaskWorkspaceData } from "./use-task-workspace-data";
 import { useTaskBoardState } from "./use-task-board-state";
 import { useTaskEditor } from "./use-task-editor";
+import { useProjectGithubAutoSync } from "./use-project-github-auto-sync";
 import { useTaskWorkspaceRouting } from "./use-task-workspace-routing";
 import { useTeamAssignees } from "./use-team-assignees";
 import { useTeams } from "@/hooks/use-teams";
@@ -42,6 +43,7 @@ export function TaskDashboard() {
   const { data: session, isPending: isSessionPending } = useSession();
   const { scope, team, project, viewMode, setViewMode, navigate } =
     useTaskWorkspaceRouting({ teams, projects });
+  useProjectGithubAutoSync({ project, setTasks });
   const teamId = team?.id ?? "";
   const teamProjects = projects.filter((p) => p.teamId === teamId);
   const projectId = project?.id ?? "";
@@ -190,6 +192,7 @@ export function TaskDashboard() {
         users={assignees}
         onClose={editor.closeDrawer}
         onSaveTask={editor.saveTask}
+        onTaskPatched={editor.patchTask}
         readOnly={!!selectedTask && !canEdit(selectedTask)}
         onDeleteTask={
           selectedTask && canEdit(selectedTask)

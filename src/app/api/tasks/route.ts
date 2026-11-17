@@ -1,4 +1,5 @@
 import { TaskService, TaskDateRangeError } from "@/services/task/task-service";
+import { TaskAssigneeGithubError } from "@/services/task/task-rules";
 import { TeamService } from "@/services/team/team-service";
 import { CreateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
@@ -130,6 +131,9 @@ export async function POST(req: Request) {
 
     return Response.json(newTask, { status: 201 });
   } catch (err) {
+    if (err instanceof TaskAssigneeGithubError) {
+      return Response.json({ error: err.message }, { status: 400 });
+    }
     if (err instanceof TaskDateRangeError) {
       return Response.json({ error: err.message }, { status: 400 });
     }

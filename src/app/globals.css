@@ -211,3 +211,43 @@
     }
   }
 }
+
+/* Syntax highlighting for fenced code in MarkdownViewer (highlight.js classes). */
+.markdown-body {
+  --hl-keyword: oklch(0.5 0.2 300);
+  --hl-string: oklch(0.5 0.14 150);
+  --hl-number: oklch(0.55 0.16 50);
+  --hl-comment: oklch(0.55 0 0);
+  --hl-title: oklch(0.5 0.16 250);
+  --hl-type: oklch(0.52 0.13 200);
+}
+.dark .markdown-body {
+  --hl-keyword: oklch(0.75 0.15 300);
+  --hl-string: oklch(0.78 0.14 150);
+  --hl-number: oklch(0.8 0.13 60);
+  --hl-comment: oklch(0.65 0 0);
+  --hl-title: oklch(0.78 0.12 250);
+  --hl-type: oklch(0.78 0.1 200);
+}
+.markdown-body .hljs-keyword,
+.markdown-body .hljs-literal {
+  color: var(--hl-keyword);
+}
+.markdown-body .hljs-string {
+  color: var(--hl-string);
+}
+.markdown-body .hljs-number {
+  color: var(--hl-number);
+}
+.markdown-body .hljs-comment {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.markdown-body .hljs-title,
+.markdown-body .hljs-attr {
+  color: var(--hl-title);
+}
+.markdown-body .hljs-built_in,
+.markdown-body .hljs-type {
+  color: var(--hl-type);
+}

@@ -6,37 +6,22 @@ import {
   teamMember,
   project,
   task,
-  taskComment,
   taskTimeSession,
-  type User,
   type Project,
 } from "@/db/schema";
 import { eq, asc, desc, sql, inArray, or } from "drizzle-orm";
 import type {
+  TaskCommentView,
   TaskUser,
   TaskWithDetails,
   WorkspaceData,
   WorkspaceTeamMember,
 } from "./workspace-types";
+import { toTaskUser } from "./task-user";
+import { TaskCommentService } from "./task-comment-service";
+import { GithubAuthService } from "@/services/github/github-auth-service";
 
-function getInitials(name: string): string {
-  if (!name) return "U";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-export function toTaskUser(u: User): TaskUser {
-  return {
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    image: u.image,
-    avatarUrl: u.image || "",
-    initials: getInitials(u.name),
-    role: u.role || "member",
-  };
-}
+export { toTaskUser };
 
 export class TaskWorkspaceService {
   public static async getWorkspaceData(
@@ -134,7 +119,12 @@ export class TaskWorkspaceService {
             .orderBy(asc(user.name))
         : [];
 
-    const users = allUsersRaw.map(toTaskUser);
+    const connected =
+      await GithubAuthService.getConnectedUserIds(relevantUserIds);
+    const users = allUsersRaw.map((u) => ({
+      ...toTaskUser(u),
+      githubConnected: connected.has(u.id),
+    }));
     const userMap = new Map<string, TaskUser>(users.map((u) => [u.id, u]));
     const projectMap = new Map<string, Project>(projects.map((p) => [p.id, p]));
 
@@ -189,40 +179,18 @@ export class TaskWorkspaceService {
     return { teams, projects, tasks, users, teamMembers };
   }
 
-  public static async getTaskComments(taskId: string) {
-    const rows = await db
-      .select({ comment: taskComment, user })
-      .from(taskComment)
-      .leftJoin(user, eq(taskComment.userId, user.id))
-      .where(eq(taskComment.taskId, taskId))
-      .orderBy(asc(taskComment.createdAt));
-
-    return rows.map((r) => ({
-      ...r.comment,
-      user: r.user ? toTaskUser(r.user) : null,
-    }));
+  public static getTaskComments(
+    taskId: string,
+    userId?: string,
+  ): Promise<TaskCommentView[]> {
+    return TaskCommentService.getTaskComments(taskId, userId);
   }
 
-  public static async createTaskComment(payload: {
+  public static createTaskComment(payload: {
     taskId: string;
     userId: string;
     content: string;
-  }) {
-    const [[inserted], [commentUser]] = await Promise.all([
-      db
-        .insert(taskComment)
-        .values({
-          taskId: payload.taskId,
-          userId: payload.userId,
-          content: payload.content.trim(),
-        })
-        .returning(),
-      db.select().from(user).where(eq(user.id, payload.userId)).limit(1),
-    ]);
-
-    return {
-      ...inserted,
-      user: commentUser ? toTaskUser(commentUser) : null,
-    };
+  }): Promise<TaskCommentView> {
+    return TaskCommentService.createTaskComment(payload);
   }
 }
