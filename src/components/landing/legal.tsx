@@ -78,7 +78,7 @@ export function LegalPage({
               aria-label="On this page"
               className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-8rem)] lg:max-w-60 lg:self-start lg:overflow-y-auto"
             >
-              <Eyebrow dot={false} className="mb-5">
+              <Eyebrow dot={false} className="mb-5 text-ink-2">
                 On this page
               </Eyebrow>
               <LegalToc items={toc} />
@@ -132,11 +132,12 @@ export function LegalSection({
   // H2 still drives heading navigation and the id anchors the TOC.
   return (
     <section id={id} className="scroll-mt-24">
-      <h2 className="flex items-baseline gap-2 text-2xl leading-tight font-medium tracking-[-0.02em] text-balance text-ink lg:gap-0">
+      <h2 className="flex items-baseline text-2xl leading-tight font-medium tracking-[-0.02em] text-balance text-ink">
         {num && (
-          // From lg the number hangs in the gutter so every label starts on
-          // the body's left edge.
-          <span className="shrink-0 font-code text-base font-normal tracking-normal text-ink-2 tabular-nums lg:-ml-12 lg:w-12 lg:pr-4 lg:text-right">
+          // A fixed-width number column (fits "10.") gives every label one
+          // left edge; from lg it hangs in the gutter so labels start on the
+          // body's left edge.
+          <span className="w-9 shrink-0 font-code text-base font-normal tracking-normal text-ink-2 tabular-nums lg:-ml-12 lg:w-12 lg:pr-4 lg:text-right">
             {num}
           </span>
         )}{" "}
@@ -149,34 +150,34 @@ export function LegalSection({
 
 export function LegalList({ children }: { children: React.ReactNode }) {
   return (
-    <ul className="list-disc space-y-3 pl-5 text-ink-2 marker:text-ink-3 [&_strong]:font-medium">
+    <ul className="list-disc space-y-3 pl-5 text-ink-2 marker:text-ink-3 [&_strong]:font-medium [&_strong]:text-ink">
       {children}
     </ul>
   );
 }
 
-/** Emphasized clause (e.g. a warranty disclaimer): a hairline rule, ink weight. */
+/**
+ * Emphasized clause (e.g. a warranty disclaimer): ink color and a stronger
+ * rule set it apart; regular weight keeps it below the H2s.
+ */
 export function LegalEmphasis({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="border-l border-line pl-4 font-medium text-ink">{children}</p>
-  );
+  return <p className="border-l border-ink-3 pl-4 text-ink">{children}</p>;
 }
 
-/** Same demo notice at the top of every legal page. */
+/**
+ * Same demo notice at the top of every legal page: a note set between the
+ * same hairlines as the TOC row and Contact, a step smaller than the body.
+ */
 export function DemoNotice({ children }: { children?: React.ReactNode }) {
   return (
     <aside
       aria-labelledby={DEMO_NOTICE_TITLE_ID}
-      className="space-y-3 rounded-xl border border-line p-5 sm:p-6"
+      className="space-y-2.5 border-y border-line py-5 text-sm leading-relaxed"
     >
       <p
         id={DEMO_NOTICE_TITLE_ID}
-        className="flex items-center gap-2.5 text-base leading-snug font-medium text-ink"
+        className="text-base leading-snug font-medium text-ink"
       >
-        <span
-          className="size-1.5 shrink-0 rounded-full bg-ember"
-          aria-hidden="true"
-        />
         This is a demo, not a product
       </p>
       <p>

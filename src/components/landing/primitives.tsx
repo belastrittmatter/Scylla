@@ -25,7 +25,7 @@ export function Section({
   );
 }
 
-/** Display heading role shared by section headings and page titles (legal H1). */
+/** Display heading role (matches SectionHeading's h2); used by the legal H1. */
 export const displayHeadingClass =
   "text-balance text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-ink sm:text-[44px]";
 
@@ -80,7 +80,9 @@ export function SectionHeading({
       )}
     >
       <Eyebrow index={index}>{eyebrow}</Eyebrow>
-      <h2 className={cn("mt-5", displayHeadingClass)}>{title}</h2>
+      <h2 className="mt-5 text-balance text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-ink sm:text-[44px]">
+        {title}
+      </h2>
       {lede && (
         <p className="mt-5 text-pretty text-base leading-relaxed text-ink-2 sm:text-lg">
           {lede}

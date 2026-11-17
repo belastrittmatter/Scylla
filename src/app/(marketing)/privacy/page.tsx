@@ -43,38 +43,37 @@ export default function PrivacyPolicyPage() {
       <LegalSection title="2. What we store">
         <LegalList>
           <li>
-            <strong className="text-ink">Your Google account:</strong> name,
-            email address, profile picture and Google account ID, plus the OAuth
-            access and refresh tokens Google issues, so Scylla can work with
-            your calendar.
+            <strong>Your Google account:</strong> name, email address, profile
+            picture and Google account ID, plus the OAuth access and refresh
+            tokens Google issues, so Scylla can work with your calendar.
           </li>
           <li>
-            <strong className="text-ink">Sign-in sessions:</strong> session
-            tokens, IP address and browser user agent.
+            <strong>Sign-in sessions:</strong> session tokens, IP address and
+            browser user agent.
           </li>
           <li>
-            <strong className="text-ink">Bookings made through Scylla:</strong>{" "}
-            title, time, room, Google Meet link, project link, and the names and
-            email addresses of attendees.
+            <strong>Bookings made through Scylla:</strong> title, time, room,
+            Google Meet link, project link, and the names and email addresses of
+            attendees.
           </li>
           <li>
-            <strong className="text-ink">Meeting rooms:</strong> name, capacity
-            and location of rooms in your Google Workspace.
+            <strong>Meeting rooms:</strong> name, capacity and location of rooms
+            in your Google Workspace.
           </li>
           <li>
-            <strong className="text-ink">Workspace content:</strong> teams and
-            members (including the email addresses of people you invite, even
-            before they sign in), projects, tasks, task comments, time tracking
-            sessions, working hours, event types and booking links.
+            <strong>Workspace content:</strong> teams and members (including the
+            email addresses of people you invite, even before they sign in),
+            projects, tasks, task comments, time tracking sessions, working
+            hours, event types and booking links.
           </li>
           <li>
-            <strong className="text-ink">Booking-link guests:</strong> the name
-            and email address a guest enters, and the slot they pick.
+            <strong>Booking-link guests:</strong> the name and email address a
+            guest enters, and the slot they pick.
           </li>
           <li>
-            <strong className="text-ink">Connected AI assistants:</strong> the
-            client&apos;s registration details, its tokens, the permissions you
-            granted and your consent records.
+            <strong>Connected AI assistants:</strong> the client&apos;s
+            registration details, its tokens, the permissions you granted and
+            your consent records.
           </li>
         </LegalList>
         <p>
@@ -104,23 +103,20 @@ export default function PrivacyPolicyPage() {
         <p>Scylla asks Google for these permissions:</p>
         <LegalList>
           <li>
-            <strong className="text-ink">Basic profile and email</strong>, to
-            sign you in.
+            <strong>Basic profile and email</strong>, to sign you in.
           </li>
           <li>
-            <strong className="text-ink">Calendar read access</strong>, to show
-            your calendar and check free/busy times.
+            <strong>Calendar read access</strong>, to show your calendar and
+            check free/busy times.
           </li>
           <li>
-            <strong className="text-ink">Calendar event access</strong>, to
-            create, change and cancel the meetings you book through Scylla,
-            including Google Meet links and invitations.
+            <strong>Calendar event access</strong>, to create, change and cancel
+            the meetings you book through Scylla, including Google Meet links
+            and invitations.
           </li>
           <li>
-            <strong className="text-ink">
-              Workspace calendar resources (read-only)
-            </strong>
-            , to list your organization&apos;s meeting rooms.
+            <strong>Workspace calendar resources (read-only)</strong>, to list
+            your organization&apos;s meeting rooms.
           </li>
         </LegalList>
         <p>
@@ -154,26 +150,24 @@ export default function PrivacyPolicyPage() {
       <LegalSection title="5. Who else sees your data">
         <LegalList>
           <li>
-            <strong className="text-ink">Your teammates</strong> see what the
-            features show them, such as your availability, shared bookings,
-            projects and tasks.
+            <strong>Your teammates</strong> see what the features show them,
+            such as your availability, shared bookings, projects and tasks.
           </li>
           <li>
-            <strong className="text-ink">Google</strong> receives the bookings,
-            invitations and room reservations Scylla creates for you.
+            <strong>Google</strong> receives the bookings, invitations and room
+            reservations Scylla creates for you.
           </li>
           <li>
-            <strong className="text-ink">AI assistants you connect</strong>{" "}
-            receive what they request within the permissions you granted. What
-            they do with it is governed by their provider&apos;s policies.
+            <strong>AI assistants you connect</strong> receive what they request
+            within the permissions you granted. What they do with it is governed
+            by their provider&apos;s policies.
           </li>
           <li>
-            <strong className="text-ink">Infrastructure providers</strong> that
-            host the Demo and its database process data on our behalf.
+            <strong>Infrastructure providers</strong> that host the Demo and its
+            database process data on our behalf.
           </li>
           <li>
-            <strong className="text-ink">Authorities</strong>, if the law
-            requires it.
+            <strong>Authorities</strong>, if the law requires it.
           </li>
         </LegalList>
       </LegalSection>
