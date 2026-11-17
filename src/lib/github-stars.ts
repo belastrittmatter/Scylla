@@ -1,8 +1,6 @@
 import { cacheLife } from "next/cache";
 import { z } from "zod";
 
-export { GITHUB_REPO_URL } from "./github-repo";
-
 const GITHUB_REPO_API_URL =
   "https://api.github.com/repos/belastrittmatter/Scylla";
 const FETCH_TIMEOUT_MS = 5000;

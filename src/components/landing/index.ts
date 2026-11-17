@@ -9,4 +9,3 @@ export { LandingFaq } from "./faq";
 export { LandingIntegrations } from "./integrations";
 export { LandingCtaBanner } from "./cta-banner";
 export { LandingFooter } from "./footer";
-export { LandingGithubStarsBadge } from "./github-stars-badge";
