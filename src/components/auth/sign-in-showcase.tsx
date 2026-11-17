@@ -80,6 +80,11 @@ const stage =
 /** Ember marks the one result each scene lands on. */
 const result = "text-ember-deep";
 const mono = "font-code text-[11px] tabular-nums";
+/** The Scylla emblem, tinted by the element's background color (same mask the app sidebar uses). */
+const scyllaMark = {
+  mask: "url('/logo.svg') center / contain no-repeat",
+  WebkitMask: "url('/logo.svg') center / contain no-repeat",
+} as const;
 const title = "flex items-center justify-between text-[13px] font-medium";
 const meta = "text-ink-2 mt-1 flex items-center gap-1.5 text-xs";
 
@@ -91,6 +96,9 @@ function Caption({ at, children }: { at: number; children: string }) {
   );
 }
 
+/** A step of the agent's trace: the real MCP tool it calls, then what it found, as on the landing. */
+type Step = [tool: string, text: string];
+
 function Chat({
   question,
   steps,
@@ -98,17 +106,17 @@ function Chat({
   children,
 }: {
   question: string;
-  steps: string[];
+  steps: Step[];
   caption: string;
   children: React.ReactNode;
 }) {
   return (
     <>
-      {/* Bottom-anchored like a chat thread: spare height sits above the question, not under the answer. */}
-      <div className={cn(stage, "flex flex-col justify-end")}>
+      {/* Top-anchored: a shorter scene leaves its spare height under the answer, not above the question. */}
+      <div className={stage}>
         <In
           at={0.2}
-          className="bg-ink/[0.06] slide-in-from-bottom-2 ml-auto w-fit max-w-[250px] rounded-[14px_14px_4px_14px] px-3 py-2 text-[13px] leading-snug"
+          className="bg-ink text-paper slide-in-from-bottom-2 ml-auto w-fit max-w-[250px] rounded-2xl rounded-br-sm px-3 py-2 text-[13px] leading-snug"
         >
           {question}
         </In>
@@ -116,14 +124,18 @@ function Chat({
           at={1.2}
           className="mt-3 flex items-center gap-1.5 text-xs font-medium"
         >
-          <i className="bg-ink size-4 rounded-[5px]" />
+          <span
+            aria-hidden
+            className="bg-ink size-4 shrink-0"
+            style={scyllaMark}
+          />
           Scylla <span className={cn(mono, "text-ink-2")}>via MCP</span>
         </In>
-        {steps.map((step, i) => (
+        {steps.map(([tool, text], i) => (
           <In
-            key={step}
+            key={tool + text}
             at={1.6 + i * 1.1}
-            className="text-ink-2 slide-in-from-bottom-1 mt-1.5 ml-[23px] flex items-center gap-2 text-xs"
+            className="text-ink-2 slide-in-from-bottom-1 mt-1.5 ml-[22px] flex items-center gap-2 text-xs"
           >
             <span className="relative size-[13px] shrink-0">
               <span className="border-ink-3/60 absolute inset-0 animate-spin rounded-full border-[1.5px] border-t-transparent motion-reduce:hidden" />
@@ -131,22 +143,18 @@ function Chat({
                 <Done />
               </In>
             </span>
-            {step}
+            <span className={cn(mono, "shrink-0")}>{tool}</span>
+            <span className="min-w-0">{text}</span>
           </In>
         ))}
-        {/* The result's slot is reserved from the first frame as a dashed outline; the answer fills it and the outline turns solid. */}
-        <div className="border-line relative mt-3 ml-[23px] rounded-lg border border-dashed px-3 py-2.5">
-          <In
-            at={2.6 + steps.length * 1.1}
-            className="border-line absolute -inset-px rounded-lg border"
-          />
-          <In
-            at={2.6 + steps.length * 1.1}
-            className="slide-in-from-bottom-1 relative"
-          >
-            {children}
-          </In>
-        </div>
+        {/* The answer takes its reserved height from the first frame but draws nothing until it lands:
+            no box of its own, only a hairline rule beside it. */}
+        <In
+          at={2.6 + steps.length * 1.1}
+          className="border-line slide-in-from-bottom-1 mt-3.5 ml-[22px] border-l py-0.5 pl-3"
+        >
+          {children}
+        </In>
       </div>
       <Caption at={3 + steps.length * 1.1}>{caption}</Caption>
     </>
@@ -158,9 +166,9 @@ function Book() {
     <Chat
       question="Find an hour with the design team this week and book a room."
       steps={[
-        "Checked 4 calendars",
-        "Everyone is free Thu 14:00",
-        "Booked Room Alpha",
+        ["find_common_meeting_slots", "4 calendars, all free Thu 14:00"],
+        ["list_meeting_rooms", "Room Alpha is open"],
+        ["book_meeting", "Booked Room Alpha"],
       ]}
       caption="On everyone's calendar"
     >
@@ -181,9 +189,9 @@ function Move() {
     <Chat
       question="Push my 1:1 with Lena to tomorrow, same time."
       steps={[
-        'Found "1:1 with Lena" on Wed',
-        "Lena is free Thu 10:00",
-        "Moved and notified Lena",
+        ["get_my_agenda", 'Found "1:1 with Lena" on Wed'],
+        ["find_common_meeting_slots", "Lena is free Thu 10:00"],
+        ["reschedule_meeting", "Moved and notified Lena"],
       ]}
       caption="Rescheduled, no back-and-forth"
     >
@@ -200,7 +208,10 @@ function Briefing() {
   return (
     <Chat
       question="What's on my plate today?"
-      steps={["Read today's calendar", "Checked your open tasks"]}
+      steps={[
+        ["get_my_agenda", "Read today's calendar"],
+        ["get_active_tasks", "Checked your open tasks"],
+      ]}
       caption="Your day in one answer"
     >
       <div className="grid grid-cols-[40px_1fr_auto] items-center gap-x-2 gap-y-1.5 text-[13px]">
@@ -294,24 +305,48 @@ function GitHub() {
   );
 }
 
+/** `summary` stands in for the visual stage (aria-hidden) for screen readers; it is never announced live. */
 const SCENES = [
-  { title: "Book by asking", Scene: Book },
-  { title: "Reschedule", Scene: Move },
-  { title: "Daily briefing", Scene: Briefing },
-  { title: "GitHub sync", Scene: GitHub },
+  {
+    title: "Book by asking",
+    Scene: Book,
+    summary:
+      "Asked to find an hour with the design team and book a room, Scylla checks 4 calendars and books Design sync on Thursday at 14:00 in Room Alpha, with invites sent.",
+  },
+  {
+    title: "Reschedule",
+    Scene: Move,
+    summary:
+      "Asked to push a 1:1 with Lena to tomorrow, Scylla finds it on Wednesday, sees Lena is free Thursday at 10:00, moves it there and notifies her.",
+  },
+  {
+    title: "Daily briefing",
+    Scene: Briefing,
+    summary:
+      "Asked what is on today, Scylla lists Standup at 09:30, Design sync at 14:00 and a 1:1 with Lena at 16:00, plus 2 tasks due.",
+  },
+  {
+    title: "GitHub sync",
+    Scene: GitHub,
+    summary:
+      "As Lena branches, opens PR #318, passes checks and Sam merges it, the task Fix login redirect moves from in progress to in review to done on its own.",
+  },
 ];
 
 /**
  * Feature tour: story-style progress tabs over a vignette; each scene remounts so its animations start from 0.
  *
  * The active progress bar's CSS animation is the clock: its `animationend` advances the tour. So autoplay
- * stops under reduced motion (no animation), while hidden below `lg` (display: none runs no animations),
- * and pauses with the play state on hover, focus, a background tab, or the Pause control (WCAG 2.2.2).
+ * stops under reduced motion (no animation) and while hidden below `lg` (display: none runs no animations).
+ * Hover, keyboard focus and a background tab only hold the clock, so a scene can be read; its entrance
+ * always plays through. Only the Pause control freezes the scene itself (WCAG 2.2.2).
  */
 export function SignInShowcase({ className }: { className?: string }) {
   const [index, setIndex] = React.useState(0);
   const [restart, setRestart] = React.useState(0);
   const [stopped, setStopped] = React.useState(false);
+  /** A scene picked while paused shows its end state at once instead of a frozen first frame. */
+  const [settled, setSettled] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
   const [focused, setFocused] = React.useState(false);
   const [tabHidden, setTabHidden] = React.useState(false);
@@ -323,8 +358,20 @@ export function SignInShowcase({ className }: { className?: string }) {
     return () => document.removeEventListener("visibilitychange", sync);
   }, []);
 
-  const paused = stopped || hovered || focused || tabHidden;
-  const playState = { animationPlayState: paused ? "paused" : "running" };
+  const held = stopped || hovered || focused || tabHidden;
+  const clockState = { animationPlayState: held ? "paused" : "running" };
+
+  const toggle = () => {
+    if (!stopped) {
+      setStopped(true);
+      return;
+    }
+    // An explicit Play wins over the hover or focus hold, so the tour visibly resumes right away.
+    setStopped(false);
+    setSettled(false);
+    setHovered(false);
+    setFocused(false);
+  };
 
   return (
     <div
@@ -343,7 +390,7 @@ export function SignInShowcase({ className }: { className?: string }) {
         <Eyebrow className="text-ink-2 text-[11px]">Product tour</Eyebrow>
         <button
           type="button"
-          onClick={() => setStopped((value) => !value)}
+          onClick={toggle}
           aria-label={stopped ? "Play product tour" : "Pause product tour"}
           className="font-code text-ink-2 hover:text-ink focus-visible:outline-ember -mr-2 inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[11px] tracking-[0.12em] uppercase transition-colors focus-visible:outline-2"
         >
@@ -355,7 +402,11 @@ export function SignInShowcase({ className }: { className?: string }) {
           {stopped ? "Play" : "Pause"}
         </button>
       </div>
-      <div className="mb-5 grid grid-cols-4 gap-3 text-[13px]">
+      <div
+        role="group"
+        aria-label="Product tour scenes"
+        className="mb-5 grid grid-cols-4 gap-3 text-[13px]"
+      >
         {SCENES.map((scene, i) => (
           <button
             type="button"
@@ -364,6 +415,7 @@ export function SignInShowcase({ className }: { className?: string }) {
             onClick={() => {
               setIndex(i);
               setRestart((value) => value + 1);
+              setSettled(stopped);
             }}
             className={cn(
               "focus-visible:outline-ember cursor-pointer rounded-sm text-left outline-offset-4 transition-colors focus-visible:outline-2",
@@ -378,7 +430,7 @@ export function SignInShowcase({ className }: { className?: string }) {
                 <div
                   key={`${index}-${restart}`}
                   className="animate-in slide-in-from-left-full bg-ember h-full ease-linear motion-reduce:animate-none"
-                  style={{ animationDuration: `${SCENE_MS}ms`, ...playState }}
+                  style={{ animationDuration: `${SCENE_MS}ms`, ...clockState }}
                   onAnimationEnd={(e) => {
                     if (e.target !== e.currentTarget) return;
                     setIndex((value) => (value + 1) % SCENES.length);
@@ -390,6 +442,7 @@ export function SignInShowcase({ className }: { className?: string }) {
           </button>
         ))}
       </div>
+      <p className="sr-only">{SCENES[index].summary}</p>
       {/* Inactive scenes stay in the cell, invisible and static, only to size it. */}
       <div aria-hidden className="grid">
         {SCENES.map(({ title, Scene }, i) =>
@@ -398,7 +451,10 @@ export function SignInShowcase({ className }: { className?: string }) {
               key={`${index}-${restart}`}
               className={cn(
                 "animate-in fade-in col-start-1 row-start-1 flex flex-col duration-500",
-                paused && "[&_*]:[animation-play-state:paused]",
+                stopped &&
+                  (settled
+                    ? "[&_*]:animate-none"
+                    : "[&_*]:[animation-play-state:paused]"),
               )}
             >
               <Scene />

@@ -28,7 +28,9 @@ function SignInError() {
       )}
     >
       <CircleAlert />
-      <AlertDescription className={cancelled ? "text-ink-2" : "text-ink"}>
+      <AlertDescription
+        className={cn("md:text-balance", cancelled ? "text-ink-2" : "text-ink")}
+      >
         {cancelled
           ? "Google sign-in was cancelled. Try again when you're ready."
           : "We couldn't sign you in with Google. Please try again."}
@@ -80,13 +82,14 @@ export default function SignInPage() {
             aria-hidden
             className="border-line pointer-events-none absolute inset-y-0 left-1/2 hidden border-l border-dashed lg:block"
           />
-          <div className="grid w-full items-start self-center lg:grid-cols-2">
-            <main className={cn(gutter, "py-14 lg:py-20")}>
+          {/* Top-anchored under the header below lg so the heading sits in the upper third; centered beside the showcase above. */}
+          <div className="grid w-full items-start self-start lg:grid-cols-2 lg:self-center">
+            <main className={cn(gutter, "pt-12 pb-14 lg:py-20")}>
               <div className="max-w-[400px]">
                 <h1 className="text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-balance lg:text-[44px] lg:leading-[1.05]">
                   Sign in to Scylla
                 </h1>
-                <p className="text-ink-2 mt-4 text-base leading-relaxed text-pretty">
+                <p className="text-ink-2 mt-4 text-base leading-relaxed text-balance">
                   Use the Google account your calendar lives in.
                 </p>
 
@@ -100,9 +103,24 @@ export default function SignInPage() {
                   showLastUsed={false}
                   className={cn(
                     focusRing,
-                    "bg-ink text-paper hover:bg-ink/85 mt-8 h-11 w-full gap-2.5 text-sm focus-visible:border-transparent focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:ring-0 [&_svg]:size-[18px]",
+                    // The landing's primary CTA: an ink pill that warms to ember on hover.
+                    "bg-ink text-paper hover:bg-ember mt-8 h-11 w-full gap-2.5 rounded-full text-sm transition-colors hover:text-white focus-visible:border-transparent focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:ring-0 [&_svg]:size-[18px]",
                   )}
                 />
+
+                {/* The terms sit with the action they qualify. */}
+                <p className="text-ink-2 mt-5 text-xs leading-relaxed text-pretty">
+                  By continuing, you agree to our{" "}
+                  <Link href="/terms" className={legalLink}>
+                    Terms
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className={legalLink}>
+                    Privacy Policy
+                  </Link>
+                  . This hosted version is a demo with no guarantees, and its
+                  data can be reset at any time.
+                </p>
 
                 <ProductPromise className="border-line text-ink-2 mt-10 border-t border-dashed pt-5 text-sm leading-relaxed text-pretty lg:hidden" />
               </div>
@@ -118,22 +136,10 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <footer className="border-line border-t">
-          <div className={cn(rails, gutter, "py-6")}>
-            <p className="text-ink-2 max-w-[400px] text-xs leading-relaxed">
-              By continuing, you agree to our{" "}
-              <Link href="/terms" className={legalLink}>
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className={legalLink}>
-                Privacy Policy
-              </Link>
-              . This hosted version is a demo with no guarantees, and its data
-              can be reset at any time.
-            </p>
-          </div>
-        </footer>
+        {/* A slim rail row closes the blueprint frame with a hairline. */}
+        <div aria-hidden className="border-line border-t">
+          <div className={cn(rails, "h-10")} />
+        </div>
       </div>
     </AuthUIProvider>
   );
