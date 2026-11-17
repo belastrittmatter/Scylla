@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CircleAlert } from "lucide-react";
 import { AuthUIProvider } from "@/components/auth-provider";
 import { ProviderButton } from "@/components/auth/provider-button";
 import { SignInShowcase } from "@/components/auth/sign-in-showcase";
+import { Eyebrow, LandingLogo } from "@/components/landing/primitives";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 function SignInError() {
@@ -26,32 +26,38 @@ function SignInError() {
   );
 }
 
+/** Product promise; the showcase headline on desktop, a quiet line under the form on mobile. */
+function ProductPromise({ className }: { className?: string }) {
+  return (
+    <p className={className}>
+      Your team&apos;s calendars, tasks and agents.{" "}
+      <span className="text-ink">One schedule.</span>
+    </p>
+  );
+}
+
+const legalLink =
+  "text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink";
+
 export default function SignInPage() {
   return (
     <AuthUIProvider>
-      <div className="bg-background text-foreground grid min-h-svh lg:grid-cols-2">
-        <div className="flex flex-col p-6 md:p-10">
-          <Link
-            href="/"
-            className="flex w-fit items-center gap-2.5 rounded-md text-base font-semibold tracking-tight"
-          >
-            <Image
-              src="/logo.svg"
-              alt=""
-              width={28}
-              height={28}
-              priority
-              className="size-7 dark:invert"
-            />
-            Scylla
-          </Link>
+      <div className="landing bg-paper text-ink selection:bg-ember grid min-h-svh selection:text-white lg:grid-cols-2">
+        <div className="flex flex-col px-6 py-6 md:px-10 md:py-10">
+          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
+            <Link
+              href="/"
+              className="focus-visible:ring-ember/40 w-fit rounded-md outline-none focus-visible:ring-3"
+            >
+              <LandingLogo />
+            </Link>
 
-          <main className="flex flex-1 items-center justify-center py-12">
-            <div className="w-full max-w-sm">
-              <h1 className="text-2xl font-semibold tracking-tight">
+            <main className="flex flex-1 flex-col pt-16 pb-12 lg:justify-center lg:pt-12">
+              <Eyebrow className="text-ink-2">Team scheduling</Eyebrow>
+              <h1 className="mt-5 text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-balance">
                 Sign in to Scylla
               </h1>
-              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+              <p className="text-ink-2 mt-3 text-[15px] leading-relaxed">
                 Use the Google account your calendar lives in.
               </p>
 
@@ -61,49 +67,36 @@ export default function SignInPage() {
 
               <ProviderButton
                 provider="google"
+                variant="default"
                 showLastUsed={false}
-                className="mt-8 h-11 w-full text-[15px] shadow-xs [&_svg]:size-5"
+                className="bg-ink text-paper hover:bg-ink/85 focus-visible:ring-ember/40 mt-8 h-11 w-full gap-2.5 text-sm [&_svg]:size-[18px]"
               />
-            </div>
-          </main>
 
-          <p className="text-muted-foreground text-center text-xs">
-            By continuing, you agree to our{" "}
-            <Link
-              href="/terms"
-              className="hover:text-foreground underline underline-offset-4"
-            >
-              Terms
-            </Link>{" "}
-            and{" "}
-            <Link
-              href="/privacy"
-              className="hover:text-foreground underline underline-offset-4"
-            >
-              Privacy Policy
-            </Link>
-            . This hosted version is a demo with no guarantees, and its data can
-            be reset at any time.
-          </p>
+              <ProductPromise className="border-line text-ink-2 mt-10 border-t border-dashed pt-5 text-sm leading-relaxed text-pretty lg:hidden" />
+            </main>
+
+            <p className="text-ink-2 text-xs leading-relaxed">
+              By continuing, you agree to our{" "}
+              <Link href="/terms" className={legalLink}>
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className={legalLink}>
+                Privacy Policy
+              </Link>
+              . This hosted version is a demo with no guarantees, and its data
+              can be reset at any time.
+            </p>
+          </div>
         </div>
 
-        <aside className="bg-muted relative hidden overflow-hidden border-l lg:block dark:bg-neutral-900">
-          {/* Light: soft orange wash. Dark: a neutral white lift; orange over near-black reads brown. */}
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_0%,rgb(249_115_22/0.12),transparent_70%)] dark:bg-[radial-gradient(90%_60%_at_50%_0%,rgb(255_255_255/0.13),transparent_75%)]"
-          />
-          <div className="relative mx-auto flex h-full max-w-md flex-col justify-center py-16">
-            <p className="text-2xl leading-snug font-semibold tracking-tight">
-              Your team&apos;s calendars, tasks and agents.{" "}
-              <span className="text-orange-600 dark:text-orange-400">
-                One schedule.
-              </span>
-            </p>
-            <p className="text-muted-foreground mt-3 text-sm">
+        <aside className="border-line hidden border-l border-dashed lg:block">
+          <div className="mx-auto flex h-full max-w-md flex-col justify-center py-16">
+            <ProductPromise className="text-ink-2 text-xl leading-snug font-medium tracking-[-0.02em] text-pretty" />
+            <p className="text-ink-2 mt-2 text-sm">
               A quick look at what Scylla does once you&apos;re in.
             </p>
-            <SignInShowcase className="mt-10" />
+            <SignInShowcase className="mt-8" />
           </div>
         </aside>
       </div>
