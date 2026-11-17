@@ -221,11 +221,15 @@ export function ChaosPile() {
         if (fine) {
           const mouse = Mouse.create(box);
           const handlers = mouse as unknown as Record<
-            "mousemove" | "mouseup" | "mousewheel",
+            "mousemove" | "mousedown" | "mouseup" | "mousewheel",
             EventListener
           >;
-          // Keep page scroll working over the pile.
+          // Keep page scroll working over the pile: matter's wheel and touch handlers
+          // call preventDefault, which also breaks touch scrolling on touchscreen laptops.
           box.removeEventListener("wheel", handlers.mousewheel);
+          box.removeEventListener("touchmove", handlers.mousemove);
+          box.removeEventListener("touchstart", handlers.mousedown);
+          box.removeEventListener("touchend", handlers.mouseup);
           // Track the cursor outside the box too, so fragments can be dragged out and released anywhere.
           addEventListener("mousemove", handlers.mousemove);
           addEventListener("mouseup", handlers.mouseup);
