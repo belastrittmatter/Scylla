@@ -23,9 +23,16 @@ type Props = {
   teamId: string;
   teamSlug: string;
   canManage: boolean;
+  /** Reports the loaded project count (for the page header). */
+  onCountChange?: (count: number) => void;
 };
 
-export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
+export function TeamProjectsTab({
+  teamId,
+  teamSlug,
+  canManage,
+  onCountChange,
+}: Props) {
   const {
     projects,
     isLoading,
@@ -40,6 +47,10 @@ export function TeamProjectsTab({ teamId, teamSlug, canManage }: Props) {
   const [deleting, setDeleting] = React.useState<ProjectItem | null>(null);
   // The empty state carries its own "New project"; don't show it twice.
   const isEmpty = !isLoading && !error && projects.length === 0;
+
+  React.useEffect(() => {
+    if (!isLoading && !error) onCountChange?.(projects.length);
+  }, [isLoading, error, projects.length, onCountChange]);
 
   return (
     <div className="space-y-3">

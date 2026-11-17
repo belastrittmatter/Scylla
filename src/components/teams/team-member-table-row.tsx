@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { ShieldCheck, Trash2, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -11,7 +11,7 @@ import { RowActionsMenu } from "@/components/layout/row-actions-menu";
 import type { TeamMemberItem } from "@/hooks/use-teams";
 import type { TeamRole } from "@/services/team/team-types";
 import { getPersonInitials } from "@/lib/format-person-name";
-import { RoleSelect } from "./role-select";
+import { ASSIGNABLE_ROLES } from "./team-roles";
 
 type Props = {
   member: TeamMemberItem;
@@ -33,6 +33,18 @@ export function TeamMemberTableRow({
   const isOwner = member.role === "owner";
   // Owners can't be demoted or removed (API rejects removing the owner).
   const editable = canManage && !isOwner;
+  // Role changes live in the row menu; the badge stays a quiet label.
+  const roleActions = ASSIGNABLE_ROLES.filter((r) => r !== member.role).map(
+    (r) => ({
+      label: `Make ${r}`,
+      icon: r === "admin" ? <ShieldCheck /> : <User />,
+      onSelect: () => {
+        onUpdateRole(member.userId, r).catch((e: Error) =>
+          toast.error(e.message),
+        );
+      },
+    }),
+  );
 
   return (
     <TableRow>
@@ -58,27 +70,17 @@ export function TeamMemberTableRow({
       <TableCell className="text-muted-foreground hidden truncate px-3 font-mono text-xs sm:table-cell">
         {member.user?.email}
       </TableCell>
-      <TableCell className="px-3">
-        {editable ? (
-          <RoleSelect
-            value={member.role}
-            onChange={(r) =>
-              onUpdateRole(member.userId, r).catch((e: Error) =>
-                toast.error(e.message),
-              )
-            }
-          />
-        ) : (
-          <Badge variant="meta" className="capitalize">
-            {member.role}
-          </Badge>
-        )}
+      <TableCell className="px-2 sm:px-3">
+        <Badge variant="meta" className="capitalize">
+          {member.role}
+        </Badge>
       </TableCell>
-      <TableCell className="pr-2 text-right">
+      <TableCell className="pl-0 pr-2 text-right">
         {editable && (
           <RowActionsMenu
             label={`Actions for ${name}`}
             actions={[
+              ...roleActions,
               {
                 label: "Remove",
                 icon: <Trash2 />,

@@ -23,6 +23,8 @@ type Props = {
   teamId: string;
   userId: string;
   canManage: boolean;
+  /** Reports the loaded member count (for the page header). */
+  onCountChange?: (count: number) => void;
 };
 
 /** Rows shown before "Show all"; keeps the toolbar in reach on big teams. */
@@ -40,12 +42,21 @@ function matches(member: TeamMemberItem, query: string) {
   );
 }
 
-export function TeamMembersTab({ teamId, userId, canManage }: Props) {
+export function TeamMembersTab({
+  teamId,
+  userId,
+  canManage,
+  onCountChange,
+}: Props) {
   const { members, isLoading, addMember, updateRole, removeMember } =
     useTeamMembers(teamId);
   const [adding, setAdding] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [showAll, setShowAll] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isLoading) onCountChange?.(members.length);
+  }, [isLoading, members.length, onCountChange]);
 
   const trimmed = query.trim();
   const filtered = trimmed
@@ -92,8 +103,10 @@ export function TeamMembersTab({ teamId, userId, canManage }: Props) {
                 <TableHead className={`${HEAD} hidden w-[38%] sm:table-cell`}>
                   Email
                 </TableHead>
-                <TableHead className={`${HEAD} w-32`}>Role</TableHead>
-                <TableHead className={`${HEAD} w-12`}>
+                <TableHead className={`${HEAD} w-20 px-2 sm:w-24 sm:px-3`}>
+                  Role
+                </TableHead>
+                <TableHead className={`${HEAD} w-10`}>
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>

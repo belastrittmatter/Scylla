@@ -21,19 +21,14 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { slugify } from "@/lib/utils";
+import { FormError } from "@/components/ui/form-error";
 import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badge";
+import {
+  DEFAULT_PROJECT_COLOR,
+  ProjectColorPicker,
+} from "@/components/projects/project-color-picker";
 import type { ProjectStatus } from "@/services/project/project-types";
 import type { ProjectItem } from "@/hooks/use-projects";
-
-const PRESET_COLORS = [
-  "#3b82f6",
-  "#10b981",
-  "#8b5cf6",
-  "#f59e0b",
-  "#ef4444",
-  "#ec4899",
-  "#6366f1",
-];
 
 interface CreateProjectDialogProps {
   teamId: string;
@@ -59,7 +54,7 @@ export function CreateProjectDialog({
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<ProjectStatus>("active");
-  const [color, setColor] = useState(PRESET_COLORS[0]);
+  const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
   const [isSlugCustomized, setIsSlugCustomized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,17 +97,13 @@ export function CreateProjectDialog({
       <DialogContent className="sm:max-w-[460px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
+            <DialogTitle>New project</DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-3.5 py-4">
-            {error && (
-              <div className="rounded-md bg-red-50 p-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-                {error}
-              </div>
-            )}
+            <FormError>{error}</FormError>
             <div className="grid gap-1">
-              <Label htmlFor="proj-name">Project Name</Label>
+              <Label htmlFor="proj-name">Name</Label>
               <Input
                 id="proj-name"
                 placeholder="e.g. Mobile App Redesign"
@@ -122,7 +113,7 @@ export function CreateProjectDialog({
               />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="proj-slug">Project Slug</Label>
+              <Label htmlFor="proj-slug">Slug</Label>
               <Input
                 id="proj-slug"
                 placeholder="mobile-app-redesign"
@@ -133,7 +124,7 @@ export function CreateProjectDialog({
                 }}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-3">
               <div className="grid gap-1">
                 <Label htmlFor="proj-status">Status</Label>
                 <Select
@@ -142,7 +133,10 @@ export function CreateProjectDialog({
                     val && setStatus(val as ProjectStatus)
                   }
                 >
-                  <SelectTrigger className="h-9 text-xs">
+                  <SelectTrigger
+                    id="proj-status"
+                    className="h-9 w-full text-xs"
+                  >
                     <SelectValue placeholder="Status">
                       {PROJECT_STATUS_CONFIG[status]?.label || "Active"}
                     </SelectValue>
@@ -157,29 +151,19 @@ export function CreateProjectDialog({
                 </Select>
               </div>
               <div className="grid gap-1">
-                <Label>Theme Color</Label>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setColor(c)}
-                      className={`size-6 cursor-pointer rounded-full transition-transform ${
-                        color === c
-                          ? "scale-110 ring-2 ring-neutral-400 ring-offset-1"
-                          : "hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
+                <Label id="proj-color-label">Color</Label>
+                <ProjectColorPicker
+                  value={color}
+                  onChange={setColor}
+                  labelledBy="proj-color-label"
+                />
               </div>
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="proj-desc">Description (Optional)</Label>
+              <Label htmlFor="proj-desc">Description (optional)</Label>
               <Textarea
                 id="proj-desc"
-                placeholder="Brief summary of project goals..."
+                placeholder="Brief summary of project goals…"
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -187,7 +171,7 @@ export function CreateProjectDialog({
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -196,7 +180,7 @@ export function CreateProjectDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? "Creating..." : "Create Project"}
+              {isSubmitting ? "Creating…" : "Create project"}
             </Button>
           </DialogFooter>
         </form>

@@ -21,19 +21,14 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { slugify } from "@/lib/utils";
+import { FormError } from "@/components/ui/form-error";
 import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badge";
+import {
+  DEFAULT_PROJECT_COLOR,
+  ProjectColorPicker,
+} from "@/components/projects/project-color-picker";
 import type { ProjectStatus } from "@/services/project/project-types";
 import type { ProjectItem } from "@/hooks/use-projects";
-
-const PRESET_COLORS = [
-  "#3b82f6",
-  "#10b981",
-  "#8b5cf6",
-  "#f59e0b",
-  "#ef4444",
-  "#ec4899",
-  "#6366f1",
-];
 
 interface EditProjectDialogProps {
   project: ProjectItem | null;
@@ -66,7 +61,7 @@ function EditProjectForm({
   const [slug, setSlug] = useState(project.slug);
   const [description, setDescription] = useState(project.description || "");
   const [status, setStatus] = useState<ProjectStatus>(project.status);
-  const [color, setColor] = useState(project.color || PRESET_COLORS[0]);
+  const [color, setColor] = useState(project.color || DEFAULT_PROJECT_COLOR);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,17 +90,13 @@ function EditProjectForm({
   return (
     <form onSubmit={handleSubmit}>
       <DialogHeader>
-        <DialogTitle>Edit Project</DialogTitle>
+        <DialogTitle>Edit project</DialogTitle>
       </DialogHeader>
 
       <div className="grid gap-3.5 py-4">
-        {error && (
-          <div className="rounded-md bg-red-50 p-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-            {error}
-          </div>
-        )}
+        <FormError>{error}</FormError>
         <div className="grid gap-1">
-          <Label htmlFor="edit-proj-name">Project Name</Label>
+          <Label htmlFor="edit-proj-name">Name</Label>
           <Input
             id="edit-proj-name"
             value={name}
@@ -114,21 +105,24 @@ function EditProjectForm({
           />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor="edit-proj-slug">Project Slug</Label>
+          <Label htmlFor="edit-proj-slug">Slug</Label>
           <Input
             id="edit-proj-slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-3">
           <div className="grid gap-1">
             <Label htmlFor="edit-proj-status">Status</Label>
             <Select
               value={status}
               onValueChange={(val) => val && setStatus(val as ProjectStatus)}
             >
-              <SelectTrigger className="h-9 text-xs">
+              <SelectTrigger
+                id="edit-proj-status"
+                className="h-9 w-full text-xs"
+              >
                 <SelectValue placeholder="Status">
                   {PROJECT_STATUS_CONFIG[status]?.label || "Active"}
                 </SelectValue>
@@ -143,22 +137,12 @@ function EditProjectForm({
             </Select>
           </div>
           <div className="grid gap-1">
-            <Label>Theme Color</Label>
-            <div className="flex items-center gap-1.5 pt-1">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`size-6 cursor-pointer rounded-full transition-transform ${
-                    color === c
-                      ? "scale-110 ring-2 ring-neutral-400 ring-offset-1"
-                      : "hover:scale-105"
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
+            <Label id="edit-proj-color-label">Color</Label>
+            <ProjectColorPicker
+              value={color}
+              onChange={setColor}
+              labelledBy="edit-proj-color-label"
+            />
           </div>
         </div>
         <div className="grid gap-1">
@@ -172,7 +156,7 @@ function EditProjectForm({
         </div>
       </div>
 
-      <DialogFooter className="gap-2 sm:gap-0">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"
@@ -181,7 +165,7 @@ function EditProjectForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting || !name.trim()}>
-          {isSubmitting ? "Saving..." : "Save Changes"}
+          {isSubmitting ? "Saving…" : "Save changes"}
         </Button>
       </DialogFooter>
     </form>

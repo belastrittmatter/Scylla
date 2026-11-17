@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/utils";
 import type { TeamItem } from "@/hooks/use-teams";
-import { Label } from "../ui/label";
+import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
 
 interface CreateTeamDialogProps {
   open: boolean;
@@ -80,17 +81,13 @@ export function CreateTeamDialog({
       <DialogContent className="sm:max-w-[440px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Team</DialogTitle>
+            <DialogTitle>New team</DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            {error && (
-              <div className="rounded-md bg-red-50 p-2.5 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-                {error}
-              </div>
-            )}
+            <FormError>{error}</FormError>
             <div className="grid gap-1.5">
-              <Label htmlFor="team-name">Team Name</Label>
+              <Label htmlFor="team-name">Name</Label>
               <Input
                 id="team-name"
                 placeholder="e.g. Core Engineering"
@@ -100,7 +97,7 @@ export function CreateTeamDialog({
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="team-slug">Team Slug</Label>
+              <Label htmlFor="team-slug">Slug</Label>
               <Input
                 id="team-slug"
                 placeholder="core-engineering"
@@ -109,7 +106,7 @@ export function CreateTeamDialog({
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="team-desc">Description (Optional)</Label>
+              <Label htmlFor="team-desc">Description (optional)</Label>
               <Textarea
                 id="team-desc"
                 placeholder="What is this team working on?"
@@ -120,7 +117,7 @@ export function CreateTeamDialog({
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -129,7 +126,7 @@ export function CreateTeamDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? "Creating..." : "Create Team"}
+              {isSubmitting ? "Creating…" : "Create team"}
             </Button>
           </DialogFooter>
         </form>

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
 import { slugify } from "@/lib/utils";
 import type { TeamItem } from "@/hooks/use-teams";
 
@@ -65,17 +66,13 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       <DialogHeader>
-        <DialogTitle>Edit Team</DialogTitle>
+        <DialogTitle>Edit team</DialogTitle>
       </DialogHeader>
 
       <div className="grid gap-4 py-4">
-        {error && (
-          <div className="rounded-md bg-red-50 p-2.5 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-            {error}
-          </div>
-        )}
+        <FormError>{error}</FormError>
         <div className="grid gap-1.5">
-          <Label htmlFor="edit-team-name">Team Name</Label>
+          <Label htmlFor="edit-team-name">Name</Label>
           <Input
             id="edit-team-name"
             value={name}
@@ -84,7 +81,7 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="edit-team-slug">Team Slug</Label>
+          <Label htmlFor="edit-team-slug">Slug</Label>
           <Input
             id="edit-team-slug"
             value={slug}
@@ -102,7 +99,7 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
         </div>
       </div>
 
-      <DialogFooter className="gap-2 sm:gap-0">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"
@@ -111,7 +108,7 @@ function EditTeamForm({ team, onOpenChange, onUpdateTeam }: EditTeamFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting || !name.trim()}>
-          {isSubmitting ? "Saving..." : "Save Changes"}
+          {isSubmitting ? "Saving…" : "Save changes"}
         </Button>
       </DialogFooter>
     </form>

@@ -12,7 +12,7 @@ interface Props {
 // cacheComponents: request-time data must render inside a Suspense boundary.
 export default function TeamDetailPage(props: Props) {
   return (
-    <Suspense fallback={<TeamsPageSkeleton />}>
+    <Suspense fallback={<TeamsPageSkeleton variant="detail" />}>
       <TeamDetailContent {...props} />
     </Suspense>
   );

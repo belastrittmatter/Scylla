@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
+  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useTeams, type TeamItem } from "@/hooks/use-teams";
@@ -19,33 +19,40 @@ export function TeamsView({ initialTeams }: { initialTeams: TeamItem[] }) {
   const router = useRouter();
   const { teams, createTeam } = useTeams(initialTeams);
   const [creating, setCreating] = React.useState(false);
+  // The empty state carries its own "New team"; don't show it twice.
+  const isEmpty = teams.length === 0;
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6 md:p-8">
-      <div className="flex items-center justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight">Teams</h1>
           <p className="text-muted-foreground text-sm">
             Manage members and projects for the teams you belong to.
           </p>
         </div>
-        <Button onClick={() => setCreating(true)}>
-          <Plus />
-          New team
-        </Button>
+        {!isEmpty && (
+          <Button onClick={() => setCreating(true)}>
+            <Plus />
+            New team
+          </Button>
+        )}
       </div>
 
-      {teams.length === 0 ? (
-        <Empty className="border">
+      {isEmpty ? (
+        <Empty className="border p-6 md:p-8">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Users />
-            </EmptyMedia>
-            <EmptyTitle>You are not in any team yet.</EmptyTitle>
+            <EmptyTitle className="text-sm">
+              You are not in any team yet.
+            </EmptyTitle>
+            <EmptyDescription>
+              Create a team, or ask a teammate to add you to theirs.
+            </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button variant="outline" onClick={() => setCreating(true)}>
-              Create your first team
+            <Button size="sm" onClick={() => setCreating(true)}>
+              <Plus />
+              New team
             </Button>
           </EmptyContent>
         </Empty>

@@ -59,5 +59,17 @@ export async function loadTeamForMember(
   const role = roleInTeam(found, userId);
   if (!role) return null;
   const { members, ...rest } = found;
-  return { team: { ...rest, role, memberCount: members.length }, role };
+  const [projects] = await db
+    .select({ n: count() })
+    .from(project)
+    .where(eq(project.teamId, found.id));
+  return {
+    team: {
+      ...rest,
+      role,
+      memberCount: members.length,
+      projectCount: projects?.n ?? 0,
+    },
+    role,
+  };
 }

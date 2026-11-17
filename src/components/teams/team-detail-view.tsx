@@ -13,7 +13,7 @@ import { canManageTeam } from "./team-roles";
 import { invalidateTaskWorkspaceCache } from "@/components/tasks/use-task-workspace-data";
 
 const TAB_TRIGGER =
-  "h-9 flex-none rounded-none px-0.5 after:bg-primary group-data-horizontal/tabs:after:bottom-[-1px]";
+  "h-9 flex-none rounded-none px-0 after:bg-primary group-data-horizontal/tabs:after:bottom-[-1px]";
 
 type Props = {
   team: TeamItem;
@@ -30,6 +30,9 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
   const current = teams[0] ?? team;
   const canManage = canManageTeam(role);
   const [tab, setTab] = React.useState(initialTab);
+  // Server counts until a tab has loaded its own list, then the live length.
+  const [memberCount, setMemberCount] = React.useState(team.memberCount);
+  const [projectCount, setProjectCount] = React.useState(team.projectCount);
 
   React.useEffect(() => {
     setLabel(current.slug, current.name);
@@ -45,6 +48,8 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
     <div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6 md:p-8">
       <TeamHeader
         team={current}
+        memberCount={memberCount}
+        projectCount={projectCount}
         canManage={canManage}
         canDelete={current.ownerId === userId}
         onUpdate={async (id, data) => {
@@ -79,6 +84,7 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
             teamId={current.id}
             userId={userId}
             canManage={canManage}
+            onCountChange={setMemberCount}
           />
         </TabsContent>
         <TabsContent value="projects">
@@ -86,6 +92,7 @@ export function TeamDetailView({ team, role, userId, initialTab }: Props) {
             teamId={current.id}
             teamSlug={current.slug}
             canManage={canManage}
+            onCountChange={setProjectCount}
           />
         </TabsContent>
       </Tabs>
