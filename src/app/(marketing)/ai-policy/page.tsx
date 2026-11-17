@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Bot } from "lucide-react";
 import {
   DemoNotice,
   LegalContact,
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function AiPolicyPage() {
   return (
-    <LegalPage icon={Bot} badge="Legal" title="AI & MCP Policy">
+    <LegalPage badge="Legal" title="AI & MCP Policy">
       <DemoNotice>
         <LegalLinks
           links={[

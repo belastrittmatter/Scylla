@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Scale } from "lucide-react";
 import { GITHUB_REPO_URL } from "@/lib/github-repo";
 import {
   DemoNotice,
@@ -9,6 +8,7 @@ import {
   LegalList,
   LegalPage,
   LegalSection,
+  legalLinkClass,
 } from "@/components/landing/legal";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <LegalPage icon={Scale} badge="Legal" title="Terms of Service">
+    <LegalPage badge="Legal" title="Terms of Service">
       <DemoNotice>
         <LegalLinks
           links={[
@@ -36,7 +36,7 @@ export default function TermsOfServicePage() {
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ember underline hover:text-ember-deep"
+            className={legalLinkClass}
           >
             GitHub
           </a>
@@ -102,7 +102,7 @@ export default function TermsOfServicePage() {
             actions taken by AI assistants you connect (see the{" "}
             <Link
               href="/ai-policy"
-              className="text-ember underline hover:text-ember-deep"
+              className={legalLinkClass}
             >
               AI &amp; MCP Policy
             </Link>
@@ -154,7 +154,7 @@ export default function TermsOfServicePage() {
       </LegalSection>
 
       <LegalSection title="8. Disclaimer of warranties">
-        <p className="uppercase">
+        <p className="border-l border-line pl-4 font-medium text-ink">
           The Demo is provided &ldquo;as is&rdquo; and &ldquo;as
           available&rdquo;, without warranties of any kind, express or implied,
           including merchantability, fitness for a particular purpose,

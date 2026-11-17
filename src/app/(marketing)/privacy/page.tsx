@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Shield } from "lucide-react";
 import {
   DemoNotice,
   LegalContact,
@@ -7,6 +6,7 @@ import {
   LegalList,
   LegalPage,
   LegalSection,
+  legalLinkClass,
 } from "@/components/landing/legal";
 
 export const metadata: Metadata = {
@@ -15,11 +15,9 @@ export const metadata: Metadata = {
     "What data the hosted Scylla demo stores, why, who it is shared with, and how Google user data is handled under the Limited Use requirements.",
 };
 
-const linkClass = "text-ember underline hover:text-ember-deep";
-
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPage icon={Shield} badge="Legal" title="Privacy Policy">
+    <LegalPage badge="Legal" title="Privacy Policy">
       <DemoNotice>
         <p>
           Because the Demo can be reset or lost at any time, we recommend trying
@@ -132,7 +130,7 @@ export default function PrivacyPolicyPage() {
             href="https://developers.google.com/terms/api-services-user-data-policy"
             target="_blank"
             rel="noopener noreferrer"
-            className={linkClass}
+            className={legalLinkClass}
           >
             Google API Services User Data Policy
           </a>
@@ -201,7 +199,7 @@ export default function PrivacyPolicyPage() {
             href="https://myaccount.google.com/permissions"
             target="_blank"
             rel="noopener noreferrer"
-            className={linkClass}
+            className={legalLinkClass}
           >
             myaccount.google.com/permissions
           </a>
