@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { GITHUB_REPO_URL } from "@/lib/github-repo";
 import { Section, SectionHeading } from "@/components/landing/primitives";
 
 const FAQS = [
@@ -36,7 +37,20 @@ export function LandingFaq() {
           index="04"
           eyebrow="FAQ"
           title="Questions, answered."
-          lede="The short version. The README covers the rest."
+          lede={
+            <>
+              The short version. The{" "}
+              <a
+                href={`${GITHUB_REPO_URL}#readme`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ink underline underline-offset-4 hover:text-ember"
+              >
+                README
+              </a>{" "}
+              covers the rest.
+            </>
+          }
         />
         <div className="reveal divide-y divide-line border-y border-line">
           {FAQS.map((item, i) => (

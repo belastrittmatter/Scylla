@@ -36,7 +36,7 @@ export function LandingIntegrations() {
               Connect an agent
             </Link>
             <a
-              href={GITHUB_REPO_URL}
+              href={`${GITHUB_REPO_URL}#ai-agents--mcp-manage-everything-from-your-editor`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-11 items-center rounded-full border border-line px-6 text-sm font-medium text-ink transition-colors hover:bg-paper"

@@ -14,7 +14,7 @@ const FOOTER_COLUMNS = [
     title: "Resources",
     links: [
       { label: "GitHub", href: GITHUB_REPO_URL },
-      { label: "Support", href: "/support" },
+      { label: "Support", href: `${GITHUB_REPO_URL}/issues` },
     ],
   },
   {
