@@ -327,6 +327,8 @@ export function ChaosPile() {
     observer.observe(box);
     return () => {
       disposed = true;
+      // A permission prompt still open must not attach tilt to this dead run.
+      startTilt.current = null;
       observer.disconnect();
       cleanup();
     };
