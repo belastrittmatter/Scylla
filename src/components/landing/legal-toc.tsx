@@ -46,17 +46,20 @@ export function LegalToc({ items }: { items: LegalTocItem[] }) {
               href={`#${item.id}`}
               aria-current={isActive ? "location" : undefined}
               className={cn(
-                "-ml-px flex gap-2.5 border-l py-1.5 pl-4 leading-snug transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember",
+                // Negative offset keeps the focus ring inside the nav's scroll box.
+                "-ml-px flex gap-2.5 border-l py-1.5 pl-4 leading-snug transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ember",
                 isActive
                   ? "border-ember text-ink"
                   : "border-transparent text-ink-2 hover:border-ink-3 hover:text-ink",
               )}
             >
-              {item.num && (
-                <span className="w-5 shrink-0 font-code text-xs leading-5 tabular-nums">
-                  {item.num}
-                </span>
-              )}
+              {/* Unnumbered items keep the same label edge as numbered ones. */}
+              <span
+                aria-hidden={item.num ? undefined : true}
+                className="w-5 shrink-0 font-code text-xs leading-5 tabular-nums"
+              >
+                {item.num}
+              </span>
               <span className="min-w-0 text-pretty">{item.label}</span>
             </a>
           </li>

@@ -4,6 +4,7 @@ import { GITHUB_REPO_URL } from "@/lib/github-repo";
 import {
   DemoNotice,
   LegalContact,
+  LegalEmphasis,
   LegalLinks,
   LegalList,
   LegalPage,
@@ -154,13 +155,13 @@ export default function TermsOfServicePage() {
       </LegalSection>
 
       <LegalSection title="8. Disclaimer of warranties">
-        <p className="border-l border-line pl-4 font-medium text-ink">
+        <LegalEmphasis>
           The Demo is provided &ldquo;as is&rdquo; and &ldquo;as
           available&rdquo;, without warranties of any kind, express or implied,
           including merchantability, fitness for a particular purpose,
           non-infringement, availability and accuracy, to the fullest extent
           permitted by law.
-        </p>
+        </LegalEmphasis>
       </LegalSection>
 
       <LegalSection title="9. Limitation of liability">

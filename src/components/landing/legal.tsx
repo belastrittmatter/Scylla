@@ -1,8 +1,9 @@
-import { Children, isValidElement } from "react";
+import { Children, Fragment, isValidElement } from "react";
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
+import { ChevronDown, MessageSquare } from "lucide-react";
 import { GITHUB_REPO_URL } from "@/lib/github-repo";
-import { Eyebrow } from "@/components/landing/primitives";
+import { cn } from "@/lib/utils";
+import { displayHeadingClass, Eyebrow } from "@/components/landing/primitives";
 import { LegalToc, type LegalTocItem } from "@/components/landing/legal-toc";
 
 export const LEGAL_LAST_UPDATED = "November 17, 2026";
@@ -15,11 +16,14 @@ export const legalLinkClass =
   "rounded-sm text-ink underline decoration-ember/60 underline-offset-4 transition-colors hover:text-ember-deep hover:decoration-ember focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember";
 
 const CONTACT_TITLE = "Contact";
+const DEMO_NOTICE_TITLE_ID = "legal-demo-notice-title";
 
 /** "4. Google user data" → { num: "4.", label: "Google user data" }. */
 function splitTitle(title: string): { num: string | null; label: string } {
   const match = /^(\d+\.)\s+(.+)$/.exec(title);
-  return match ? { num: match[1], label: match[2] } : { num: null, label: title };
+  return match
+    ? { num: match[1], label: match[2] }
+    : { num: null, label: title };
 }
 
 function sectionId(title: string): string {
@@ -30,10 +34,19 @@ function sectionId(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
-/** Table-of-contents entries, read from the LegalSection titles in order. */
+/**
+ * Table-of-contents entries, read from the LegalSection / LegalContact titles
+ * in order. Fragments are flattened; sections nested inside any other element
+ * are not collected.
+ */
 function tocItems(children: React.ReactNode): LegalTocItem[] {
-  return Children.toArray(children).flatMap((child) => {
-    if (!isValidElement<{ title?: string }>(child)) return [];
+  return Children.toArray(children).flatMap((child): LegalTocItem[] => {
+    if (
+      !isValidElement<{ title?: string; children?: React.ReactNode }>(child)
+    ) {
+      return [];
+    }
+    if (child.type === Fragment) return tocItems(child.props.children);
     const title =
       child.type === LegalSection
         ? child.props.title
@@ -57,7 +70,7 @@ export function LegalPage({
   const toc = tocItems(children);
 
   return (
-    <section>
+    <article>
       <div className="mx-auto w-full max-w-[1200px] border-x border-dashed border-line px-5 sm:px-10">
         <div className="py-16 sm:py-24 lg:grid lg:grid-cols-[minmax(0,1fr)_35rem] lg:gap-x-12 xl:grid-cols-[minmax(0,1fr)_35rem_minmax(0,1fr)]">
           {toc.length > 0 && (
@@ -65,7 +78,9 @@ export function LegalPage({
               aria-label="On this page"
               className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-8rem)] lg:max-w-60 lg:self-start lg:overflow-y-auto"
             >
-              <Eyebrow className="mb-5 text-ink-2">On this page</Eyebrow>
+              <Eyebrow dot={false} className="mb-5">
+                On this page
+              </Eyebrow>
               <LegalToc items={toc} />
             </nav>
           )}
@@ -73,21 +88,33 @@ export function LegalPage({
           <div className="min-w-0">
             <header className="mb-10 sm:mb-12">
               <Eyebrow className="text-ink-2">{badge}</Eyebrow>
-              <h1 className="mt-5 text-balance text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-ink sm:text-[44px]">
-                {title}
-              </h1>
+              <h1 className={cn("mt-5", displayHeadingClass)}>{title}</h1>
               <p className="mt-4 text-sm text-ink-2">
                 Last updated:{" "}
                 <time className="font-code">{LEGAL_LAST_UPDATED}</time>
               </p>
+              {toc.length > 0 && (
+                <details className="group mt-8 border-y border-line lg:hidden">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-code text-xs tracking-[0.12em] text-ink-2 uppercase transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember [&::-webkit-details-marker]:hidden">
+                    On this page
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-ink-3 transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <nav aria-label="On this page" className="pt-1 pb-4">
+                    <LegalToc items={toc} />
+                  </nav>
+                </details>
+              )}
             </header>
-            <div className="space-y-12 text-base leading-relaxed text-pretty text-ink-2 sm:space-y-14">
+            <div className="space-y-10 text-base leading-relaxed text-pretty text-ink-2 sm:space-y-12">
               {children}
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </article>
   );
 }
 
@@ -101,18 +128,15 @@ export function LegalSection({
   const id = sectionId(title);
   const { num, label } = splitTitle(title);
 
+  // A plain <section> (no accessible name) keeps the landmark list short; the
+  // H2 still drives heading navigation and the id anchors the TOC.
   return (
-    <section
-      id={id}
-      aria-labelledby={`${id}-title`}
-      className="scroll-mt-24 border-t border-line pt-10"
-    >
-      <h2
-        id={`${id}-title`}
-        className="flex items-baseline gap-3 text-2xl leading-tight font-medium tracking-[-0.02em] text-balance text-ink"
-      >
+    <section id={id} className="scroll-mt-24">
+      <h2 className="flex items-baseline gap-2 text-2xl leading-tight font-medium tracking-[-0.02em] text-balance text-ink lg:gap-0">
         {num && (
-          <span className="shrink-0 font-code text-base font-normal tracking-normal text-ink-2 tabular-nums">
+          // From lg the number hangs in the gutter so every label starts on
+          // the body's left edge.
+          <span className="shrink-0 font-code text-base font-normal tracking-normal text-ink-2 tabular-nums lg:-ml-12 lg:w-12 lg:pr-4 lg:text-right">
             {num}
           </span>
         )}{" "}
@@ -131,14 +155,30 @@ export function LegalList({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Emphasized clause (e.g. a warranty disclaimer): a hairline rule, ink weight. */
+export function LegalEmphasis({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="border-l border-line pl-4 font-medium text-ink">{children}</p>
+  );
+}
+
 /** Same demo notice at the top of every legal page. */
 export function DemoNotice({ children }: { children?: React.ReactNode }) {
   return (
     <aside
-      aria-label="This is a demo, not a product"
-      className="space-y-3 rounded-xl border border-line bg-surface p-5 sm:p-6"
+      aria-labelledby={DEMO_NOTICE_TITLE_ID}
+      className="space-y-3 rounded-xl border border-line p-5 sm:p-6"
     >
-      <Eyebrow className="text-ink">This is a demo, not a product</Eyebrow>
+      <p
+        id={DEMO_NOTICE_TITLE_ID}
+        className="flex items-center gap-2.5 text-base leading-snug font-medium text-ink"
+      >
+        <span
+          className="size-1.5 shrink-0 rounded-full bg-ember"
+          aria-hidden="true"
+        />
+        This is a demo, not a product
+      </p>
       <p>
         The Scylla instance on this website is a free, non-commercial
         demonstration of an{" "}
@@ -182,6 +222,10 @@ export function LegalLinks({
   );
 }
 
+const ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
+/** "github.com/belastrittmatter/Scylla/issues", split at the slashes. */
+const ISSUES_URL_SEGMENTS = ISSUES_URL.replace(/^https?:\/\//, "").split("/");
+
 export function LegalContact({ children }: { children: React.ReactNode }) {
   return (
     <LegalSection title={CONTACT_TITLE}>
@@ -192,19 +236,22 @@ export function LegalContact({ children }: { children: React.ReactNode }) {
           className="mt-0.5 size-4 shrink-0 text-ink-3"
         />
         <a
-          href={`${GITHUB_REPO_URL}/issues`}
+          href={ISSUES_URL}
           target="_blank"
           rel="noopener noreferrer"
           className={`min-w-0 font-code text-sm [overflow-wrap:anywhere] ${legalLinkClass}`}
         >
           {/* <wbr> lets the URL wrap at its slashes on narrow screens. */}
-          github.com/
-          <wbr />
-          belastrittmatter/
-          <wbr />
-          Scylla/
-          <wbr />
-          issues
+          {ISSUES_URL_SEGMENTS.map((segment, i) => (
+            <Fragment key={i}>
+              {i > 0 && (
+                <>
+                  /<wbr />
+                </>
+              )}
+              {segment}
+            </Fragment>
+          ))}
         </a>
       </div>
       <p className="text-sm">

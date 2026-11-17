@@ -25,15 +25,22 @@ export function Section({
   );
 }
 
+/** Display heading role shared by section headings and page titles (legal H1). */
+export const displayHeadingClass =
+  "text-balance text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-ink sm:text-[44px]";
+
 /** Mono label above a heading: "01 / How it works". */
 export function Eyebrow({
   index,
   children,
   className,
+  dot = true,
 }: {
   index?: string;
   children: React.ReactNode;
   className?: string;
+  /** The ember dot marker; pass false for a secondary, unmarked label. */
+  dot?: boolean;
 }) {
   return (
     <p
@@ -42,7 +49,9 @@ export function Eyebrow({
         className,
       )}
     >
-      <span className="size-1.5 rounded-full bg-ember" aria-hidden="true" />
+      {dot && (
+        <span className="size-1.5 rounded-full bg-ember" aria-hidden="true" />
+      )}
       {index && <span className="text-ember">{index}</span>}
       {index && <span aria-hidden="true">/</span>}
       {children}
@@ -71,9 +80,7 @@ export function SectionHeading({
       )}
     >
       <Eyebrow index={index}>{eyebrow}</Eyebrow>
-      <h2 className="mt-5 text-balance text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-ink sm:text-[44px]">
-        {title}
-      </h2>
+      <h2 className={cn("mt-5", displayHeadingClass)}>{title}</h2>
       {lede && (
         <p className="mt-5 text-pretty text-base leading-relaxed text-ink-2 sm:text-lg">
           {lede}
