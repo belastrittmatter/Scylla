@@ -1,46 +1,21 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
+import { LandingLogo } from "@/components/landing/primitives";
+import { GITHUB_REPO_URL } from "@/lib/github-repo";
 
-interface FooterLinkItem {
-  label: string;
-  href: string;
-  isDashboardLink?: boolean;
-}
-
-interface FooterColumn {
-  title: string;
-  links: FooterLinkItem[];
-}
-
-const FOOTER_COLUMNS: FooterColumn[] = [
+const FOOTER_COLUMNS = [
   {
     title: "Product",
     links: [
-      { label: "Smart Calendar", href: "/calendar", isDashboardLink: true },
-      { label: "Task Kanban Board", href: "/tasks", isDashboardLink: true },
-      {
-        label: "Time Tracking & Analytics",
-        href: "/tasks",
-        isDashboardLink: true,
-      },
-      { label: "Multi-Person Teams", href: "/teams", isDashboardLink: true },
+      { label: "Calendar", href: "/calendar" },
+      { label: "Tasks", href: "/tasks" },
+      { label: "Teams", href: "/teams" },
     ],
   },
   {
     title: "Resources",
     links: [
-      {
-        label: "MCP AI Integrations",
-        href: "/calendar",
-        isDashboardLink: true,
-      },
-      {
-        label: "Documentation & Support",
-        href: "/support",
-        isDashboardLink: true,
-      },
+      { label: "GitHub", href: GITHUB_REPO_URL },
+      { label: "Support", href: `${GITHUB_REPO_URL}/issues` },
     ],
   },
   {
@@ -55,81 +30,42 @@ const FOOTER_COLUMNS: FooterColumn[] = [
 
 export function LandingFooter() {
   return (
-    <footer className="bg-[#09090b]">
-      <div className="container">
-        <div className="border-container pt-15 sm:pt-20 lg:pt-24 xl:pt-[100px] pb-4 sm:pb-5 md:pb-6 lg:pb-20 xl:pb-8 2xl:pb-10">
-          <div
-            className="px-4 py-8 sm:p-8 md:p-10 bg-blue rounded-[20px] border border-lineColor/70"
-            data-sttr-wrapper=""
-          >
-            <div
-              className="flex items-start justify-between gap-10 flex-col lg:flex-row"
-              data-sttr-card=""
-            >
-              <div className="lg:max-w-[320px] w-full flex flex-col sm:flex-row lg:flex-col justify-between gap-5 sm:gap-7">
-                <div className="max-w-[320px] lg:max-w-none w-full">
-                  <div className="mb-4">
-                    <img
-                      src="/images/logo.svg"
-                      alt="Scylla logo"
-                      className="h-7 w-auto"
-                    />
-                  </div>
-                  <h2 className="text-[25px]">Stay in the Flow</h2>
-                  <p className="mt-3 sm:mt-4 text-offWhite/80 text-sm">
-                    Subscribe for the latest product releases, MCP agent
-                    updates, and deep-work strategies.
-                  </p>
-                </div>
+    <footer className="border-t border-line">
+      <div className="mx-auto max-w-[1200px] border-x border-dashed border-line px-5 pt-14 pb-8 sm:px-10">
+        <div className="flex flex-col justify-between gap-12 lg:flex-row">
+          <div>
+            <LandingLogo />
+            <p className="mt-4 max-w-[260px] text-sm text-ink-3">
+              Meetings, rooms and project tasks in one place, for your team and
+              its agents.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-x-12 gap-y-10 sm:grid-cols-3">
+            {FOOTER_COLUMNS.map((column) => (
+              <div key={column.title}>
+                <p className="font-code text-xs tracking-[0.12em] text-ink-3 uppercase">
+                  {column.title}
+                </p>
+                <ul className="mt-4 space-y-2.5">
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        prefetch={false}
+                        href={link.href}
+                        className="text-sm text-ink-2 transition-colors hover:text-ember"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              {/* Navigation Columns */}
-              <div className="lg:max-w-[640px] w-full flex items-start justify-between gap-4 sm:gap-8 lg:gap-10 flex-col sm:flex-row footer-menu-wrapper">
-                {FOOTER_COLUMNS.map((column) => (
-                  <div
-                    key={column.title}
-                    className="w-full sm:w-auto pb-4 sm:pb-0 border-b sm:border-b-0 border-lineColor last:border-b-0 last:pb-0"
-                  >
-                    <button className="!text-lg text-white font-medium -tracking-tight flex items-center justify-between gap-5 w-full footer-menu-toggle">
-                      {column.title}
-                      <img
-                        className="block sm:hidden"
-                        src="/images/footer-arrow.svg"
-                        alt="icon"
-                      />
-                    </button>
-                    <div className="footer-menu-list overflow-hidden">
-                      <ul className="flex flex-col gap-2.5 pt-4.5">
-                        {column.links.map((link) => (
-                          <li key={link.label}>
-                            <Link
-                              prefetch={false}
-                              className="text-offWhite/80 transition-colors duration-300 hover:text-primary cursor-pointer"
-                              href={link.href}
-                            >
-                              {link.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bottom Copyright */}
-            <div
-              className="mt-4 sm:mt-12 flex items-center justify-center pt-5 lg:pt-6 border-t border-lineColor/50 overflow-hidden relative z-50"
-              data-sttr-card=""
-            >
-              <p className="text-white/80 text-center text-sm">
-                © 2026 Scylla. Built for high-velocity teams and seamless
-                scheduling.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
+        <p className="mt-14 border-t border-dashed border-line pt-6 font-code text-xs text-ink-3">
+          © 2026 Scylla
+        </p>
       </div>
     </footer>
   );

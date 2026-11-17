@@ -82,7 +82,8 @@ export default function SignInPage() {
             >
               Privacy Policy
             </Link>
-            .
+            . This hosted version is a demo with no guarantees, and its data can
+            be reset at any time.
           </p>
         </div>
 

@@ -1,263 +1,239 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Shield, Lock, RefreshCw, Mail } from "lucide-react";
+import { Shield } from "lucide-react";
+import {
+  DemoNotice,
+  LegalContact,
+  LegalLinks,
+  LegalList,
+  LegalPage,
+  LegalSection,
+} from "@/components/landing/legal";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Scylla - The AI-Powered Task & Calendar Workspace",
+  title: "Privacy Policy | Scylla",
   description:
-    "Learn how Scylla collects, uses, protects, and handles your data, including our compliance with Google API Services User Data Policy.",
+    "What data the hosted Scylla demo stores, why, who it is shared with, and how Google user data is handled under the Limited Use requirements.",
 };
+
+const linkClass = "text-ember underline hover:text-ember-deep";
 
 export default function PrivacyPolicyPage() {
   return (
-    <section className="section-bottom-border bg-[#09090b] relative z-1 overflow-hidden pt-10">
-      <div className="container">
-        <div className="border-container section-spacing-lg">
-          {/* Header */}
-          <div className="max-w-[800px] mx-auto text-center mb-12 sm:mb-16">
-            <span className="badge-button mb-4 inline-block">
-              <Shield className="size-3.5 text-orange-400 inline-block mr-1.5" />
-              Legal &amp; Trust
-            </span>
-            <h1 className="gradient-text text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight">
-              Privacy Policy
-            </h1>
-            <p className="mt-3 text-offWhite/60 text-sm sm:text-base">
-              Last Updated: November 1, 2026 &bull; Effective Immediately
-            </p>
-          </div>
+    <LegalPage icon={Shield} badge="Legal" title="Privacy Policy">
+      <DemoNotice>
+        <p>
+          Because the Demo can be reset or lost at any time, we recommend trying
+          it with a test Google account rather than your main work account.
+        </p>
+        <LegalLinks
+          links={[
+            { href: "/terms", label: "Terms of Service" },
+            { href: "/ai-policy", label: "AI & MCP Policy" },
+          ]}
+        />
+      </DemoNotice>
 
-          {/* Policy Content Container */}
-          <div className="max-w-[840px] mx-auto text-offWhite/80 text-sm sm:text-base leading-relaxed space-y-10">
-            {/* Overview Box */}
-            <div className="p-6 rounded-2xl border border-white/10 bg-[#121215] space-y-3">
-              <h2 className="text-offWhite font-semibold text-lg flex items-center gap-2">
-                <Lock className="size-5 text-orange-400" />
-                Commitment to User Privacy
-              </h2>
-              <p className="text-offWhite/70 leading-relaxed">
-                At Scylla (&ldquo;Scylla&rdquo;, &ldquo;we&rdquo;,
-                &ldquo;us&rdquo;, or &ldquo;our&rdquo;), we take your privacy
-                and data security seriously. This Privacy Policy describes how
-                we collect, use, store, and disclose information when you access
-                or use our productivity platform, task Kanban boards, calendar
-                synchronization services, and Model Context Protocol (MCP)
-                integrations (collectively, the &ldquo;Service&rdquo;).
-              </p>
-              <p className="text-offWhite/70 leading-relaxed text-xs sm:text-sm pt-2 border-t border-white/5">
-                Please also review our{" "}
-                <Link
-                  href="/terms"
-                  className="text-orange-400 underline hover:text-orange-300"
-                >
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/ai-policy"
-                  className="text-orange-400 underline hover:text-orange-300"
-                >
-                  AI &amp; MCP Policy
-                </Link>{" "}
-                for comprehensive terms governing platform usage and AI
-                integrations.
-              </p>
-            </div>
+      <LegalSection title="1. Who is responsible">
+        <p>
+          The hosted demo on this website (the &ldquo;Demo&rdquo;) is run by the
+          maintainers of the open-source Scylla project (&ldquo;we&rdquo;). This
+          policy only covers the Demo. If someone runs their own copy of Scylla,
+          that operator is responsible for the data in it.
+        </p>
+      </LegalSection>
 
-            {/* Section 1 */}
-            <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
-                1. Information We Collect
-              </h2>
-              <p>
-                We collect information you provide directly to us, as well as
-                information collected automatically when you use our Service:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 text-offWhite/70">
-                <li>
-                  <strong className="text-offWhite">
-                    Account Information:
-                  </strong>{" "}
-                  When you register or sign in via Google OAuth or email, we
-                  collect your name, email address, profile picture, and
-                  organization details.
-                </li>
-                <li>
-                  <strong className="text-offWhite">
-                    Task &amp; Workspace Data:
-                  </strong>{" "}
-                  Kanban task titles, descriptions, due dates, priority tags,
-                  time-tracking logs, comments, and project associations you
-                  create in Scylla.
-                </li>
-                <li>
-                  <strong className="text-offWhite">
-                    Connected Calendar Data:
-                  </strong>{" "}
-                  Calendar IDs, event titles, scheduled timestamps, attendees,
-                  conference call URLs, and availability status necessary to
-                  detect schedule conflicts and book meetings.
-                </li>
-              </ul>
-            </div>
+      <LegalSection title="2. What we store">
+        <LegalList>
+          <li>
+            <strong className="text-ink">Your Google account:</strong> name,
+            email address, profile picture and Google account ID, plus the OAuth
+            access and refresh tokens Google issues, so Scylla can work with
+            your calendar.
+          </li>
+          <li>
+            <strong className="text-ink">Sign-in sessions:</strong> session
+            tokens, IP address and browser user agent.
+          </li>
+          <li>
+            <strong className="text-ink">Bookings made through Scylla:</strong>{" "}
+            title, time, room, Google Meet link, project link, and the names and
+            email addresses of attendees.
+          </li>
+          <li>
+            <strong className="text-ink">Meeting rooms:</strong> name, capacity
+            and location of rooms in your Google Workspace.
+          </li>
+          <li>
+            <strong className="text-ink">Workspace content:</strong> teams and
+            members (including the email addresses of people you invite, even
+            before they sign in), projects, tasks, task comments, time tracking
+            sessions, working hours, event types and booking links.
+          </li>
+          <li>
+            <strong className="text-ink">Booking-link guests:</strong> the name
+            and email address a guest enters, and the slot they pick.
+          </li>
+          <li>
+            <strong className="text-ink">Connected AI assistants:</strong> the
+            client&apos;s registration details, its tokens, the permissions you
+            granted and your consent records.
+          </li>
+        </LegalList>
+        <p>
+          Other events in your Google Calendar are read live from Google when
+          you view your calendar or when availability is checked. They are not
+          copied into our database.
+        </p>
+        <p>
+          We use only the cookies needed to keep you signed in. Your theme
+          choice is saved in your browser. There are no analytics, advertising
+          or tracking tools.
+        </p>
+      </LegalSection>
 
-            {/* Section 2: Google User Data Disclosures (MANDATORY FOR GOOGLE VERIFICATION) */}
-            <div className="space-y-4 p-6 rounded-2xl border border-orange-500/30 bg-orange-500/[0.04]">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight flex items-center gap-2">
-                <RefreshCw className="size-5 text-orange-400" />
-                2. Google Calendar API &amp; User Data Policy Compliance
-              </h2>
-              <p>
-                Scylla connects to Google APIs (including Google Calendar API)
-                to provide automated multi-person schedule comparison and
-                bi-directional event synchronization.
-              </p>
-              <div className="space-y-3 text-offWhite/80">
-                <p>
-                  <strong className="text-offWhite">
-                    How We Use Google Data:
-                  </strong>{" "}
-                  We access your Google Calendar solely to calculate mutual
-                  free/busy times with your teammates, synchronize scheduled
-                  tasks with your calendar timeline, and create confirmed event
-                  invites on your behalf.
-                </p>
-                <p>
-                  <strong className="text-offWhite">
-                    Google API Limited Use Disclosure:
-                  </strong>{" "}
-                  Scylla&apos;s use and transfer of information received from
-                  Google APIs to any other app will strictly adhere to the{" "}
-                  <a
-                    href="https://developers.google.com/terms/api-services-user-data-policy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-400 underline hover:text-orange-300"
-                  >
-                    Google API Services User Data Policy
-                  </a>
-                  , including the Limited Use requirements.
-                </p>
-                <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
-                  <li>
-                    We do <strong>NOT</strong> sell your Google user data to
-                    third parties.
-                  </li>
-                  <li>
-                    We do <strong>NOT</strong> use or transfer Google user data
-                    for serving advertisements, including personalized,
-                    retargeted, or interest-based advertising.
-                  </li>
-                  <li>
-                    We do <strong>NOT</strong> use Google user data to train
-                    generalized AI/ML models without your explicit affirmative
-                    consent.
-                  </li>
-                  <li>
-                    Human access to your calendar data is strictly prohibited
-                    unless required to resolve security incidents, comply with
-                    applicable law, or with your express permission for
-                    technical support.
-                  </li>
-                </ul>
-              </div>
-            </div>
+      <LegalSection title="3. How we use it">
+        <p>
+          Only to run the Demo&apos;s features for you and your teammates:
+          showing calendars and availability, finding slots, booking and
+          changing meetings and rooms, running projects and tasks, and letting
+          assistants you connect do the same on your behalf. We also use it to
+          keep the Demo secure and to fix problems. We don&apos;t sell your
+          data, show ads or build profiles.
+        </p>
+      </LegalSection>
 
-            {/* Section 3 */}
-            <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
-                3. How We Use Your Information
-              </h2>
-              <p>
-                We use the collected information for the following specific
-                purposes:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 text-offWhite/70">
-                <li>
-                  To provide, maintain, and optimize our core task management,
-                  visual time-blocking, and calendar scheduling platform.
-                </li>
-                <li>
-                  To synchronize events bidirectionally with Google Calendar,
-                  Microsoft Outlook, and connected workspace tools.
-                </li>
-                <li>
-                  To enable Model Context Protocol (MCP) server endpoints
-                  allowing authorized AI coding assistants (such as Claude
-                  Desktop and Cursor) to schedule meetings and manage backlog
-                  items at your request.
-                </li>
-                <li>
-                  To detect, prevent, and address technical issues, security
-                  vulnerabilities, or unauthorized activity.
-                </li>
-              </ul>
-            </div>
+      <LegalSection title="4. Google user data">
+        <p>Scylla asks Google for these permissions:</p>
+        <LegalList>
+          <li>
+            <strong className="text-ink">Basic profile and email</strong>, to
+            sign you in.
+          </li>
+          <li>
+            <strong className="text-ink">Calendar read access</strong>, to show
+            your calendar and check free/busy times.
+          </li>
+          <li>
+            <strong className="text-ink">Calendar event access</strong>, to
+            create, change and cancel the meetings you book through Scylla,
+            including Google Meet links and invitations.
+          </li>
+          <li>
+            <strong className="text-ink">
+              Workspace calendar resources (read-only)
+            </strong>
+            , to list your organization&apos;s meeting rooms.
+          </li>
+        </LegalList>
+        <p>
+          Scylla&apos;s use and transfer of information received from Google
+          APIs to any other app will adhere to the{" "}
+          <a
+            href="https://developers.google.com/terms/api-services-user-data-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClass}
+          >
+            Google API Services User Data Policy
+          </a>
+          , including the Limited Use requirements. In particular:
+        </p>
+        <LegalList>
+          <li>We do not sell Google user data.</li>
+          <li>We do not use Google user data for advertising.</li>
+          <li>We do not use Google user data to train AI or ML models.</li>
+          <li>
+            Google user data goes to an AI assistant only when you connect that
+            assistant and it requests the data on your behalf.
+          </li>
+          <li>
+            People only look at your data when needed to fix a problem with the
+            Demo, keep it secure, comply with the law, or when you ask us to.
+          </li>
+        </LegalList>
+      </LegalSection>
 
-            {/* Section 4 */}
-            <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
-                4. Data Storage, Security &amp; Retention
-              </h2>
-              <p>
-                We implement enterprise-grade technical and organizational
-                safeguards to protect your personal data, including TLS 1.3
-                encryption in transit and AES-256 encryption at rest.
-              </p>
-              <p>
-                We retain your information only as long as your account is
-                active or as necessary to provide you the Service. You can
-                disconnect your Google Calendar integration at any time directly
-                through Scylla settings or through your Google Account Security
-                Permissions page.
-              </p>
-            </div>
+      <LegalSection title="5. Who else sees your data">
+        <LegalList>
+          <li>
+            <strong className="text-ink">Your teammates</strong> see what the
+            features show them, such as your availability, shared bookings,
+            projects and tasks.
+          </li>
+          <li>
+            <strong className="text-ink">Google</strong> receives the bookings,
+            invitations and room reservations Scylla creates for you.
+          </li>
+          <li>
+            <strong className="text-ink">AI assistants you connect</strong>{" "}
+            receive what they request within the permissions you granted. What
+            they do with it is governed by their provider&apos;s policies.
+          </li>
+          <li>
+            <strong className="text-ink">Infrastructure providers</strong> that
+            host the Demo and its database process data on our behalf.
+          </li>
+          <li>
+            <strong className="text-ink">Authorities</strong>, if the law
+            requires it.
+          </li>
+        </LegalList>
+      </LegalSection>
 
-            {/* Section 5 */}
-            <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
-                5. Your Data Rights &amp; Choices
-              </h2>
-              <p>
-                Depending on your jurisdiction (including GDPR and CCPA/CPRA),
-                you have the right to:
-              </p>
-              <ul className="list-disc pl-6 space-y-1.5 text-offWhite/70">
-                <li>
-                  Access, download, or export a copy of your personal data.
-                </li>
-                <li>Correct inaccurate or incomplete account information.</li>
-                <li>
-                  Request immediate and permanent deletion of your account and
-                  all associated workspace data.
-                </li>
-                <li>
-                  Revoke third-party authorization (including Google Calendar
-                  OAuth tokens) at any time.
-                </li>
-              </ul>
-            </div>
+      <LegalSection title="6. Security">
+        <p>
+          The Demo is served over HTTPS, and access to its data is limited to
+          the maintainers. It is still a demo run by volunteers, not a hardened,
+          audited service. We cannot guarantee the security of your data, which
+          is another reason not to store anything sensitive in it.
+        </p>
+      </LegalSection>
 
-            {/* Section 6 */}
-            <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold text-offWhite tracking-tight">
-                6. Contact Us
-              </h2>
-              <p>
-                If you have questions, feedback, or requests regarding this
-                Privacy Policy or your data, please contact our Data Protection
-                Officer at:
-              </p>
-              <div className="p-5 rounded-xl border border-white/10 bg-[#121215] flex items-center gap-3">
-                <Mail className="size-5 text-orange-400" />
-                <span className="text-offWhite font-mono text-sm">
-                  privacy@scylla.app
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+      <LegalSection title="7. How long we keep it">
+        <p>
+          We keep your data until you delete your account, or until the Demo is
+          reset or shut down, whichever comes first. Deleting your account in
+          your account settings removes your profile and the data tied to it.
+          Copies in our providers&apos; backups or logs may remain for a short
+          time. You can also remove Scylla&apos;s access to your Google account
+          at any time at{" "}
+          <a
+            href="https://myaccount.google.com/permissions"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClass}
+          >
+            myaccount.google.com/permissions
+          </a>
+          .
+        </p>
+      </LegalSection>
+
+      <LegalSection title="8. Your rights">
+        <p>
+          You can see and change most of your data in the app, and delete your
+          account in your account settings. Depending on where you live (for
+          example, under the GDPR in the EU and UK), you may also have the right
+          to request access to, correction, deletion or a copy of your data, to
+          object to or restrict its processing, and to complain to your data
+          protection authority. To make a request, see Contact below.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="9. Children">
+        <p>The Demo is not meant for anyone under 16.</p>
+      </LegalSection>
+
+      <LegalSection title="10. Changes">
+        <p>
+          We may update this policy. The date at the top shows the latest
+          version.
+        </p>
+      </LegalSection>
+
+      <LegalContact>
+        Questions about this policy or your data? Open an issue on GitHub:
+      </LegalContact>
+    </LegalPage>
   );
 }
