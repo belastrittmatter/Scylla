@@ -3,6 +3,7 @@ import { renderToString } from "react-dom/server";
 import { ProjectSettingsView } from "@/components/projects/settings/project-settings-view";
 import { ProjectGithubCard } from "@/components/projects/settings/project-github-card";
 import { ProjectMembersCard } from "@/components/projects/settings/project-members-card";
+import { ProjectSettingsSkeleton } from "@/components/projects/settings/project-settings-skeleton";
 import { ProjectRow } from "@/components/projects/project-row";
 import type { ProjectItem } from "@/hooks/use-projects";
 import type { TeamRole } from "@/services/team/team-types";
@@ -26,9 +27,9 @@ const view = (githubRepo: string | null, role: TeamRole) =>
 describe("ProjectSettingsView", () => {
   test("admin with a linked repo sees the repo, sync, link and member controls", () => {
     const html = view("acme/widgets", "admin");
-    expect(html).toContain("Project Settings");
-    expect(html).toContain("Apollo");
-    expect(html).toContain("Core Team");
+    // The project name is the page heading; the context line names the team.
+    expect(html).toMatch(/<h1[^>]*>Apollo<\/h1>/);
+    expect(html).toContain("Settings · Core Team");
     expect(html).toContain("acme/widgets");
     expect(html).toContain('href="https://github.com/acme/widgets"');
     expect(html).toContain("Sync issues");
@@ -80,6 +81,13 @@ describe("settings cards on their own", () => {
     expect(html).toContain("Team Members");
     expect(html).toContain("Loading members");
     expect(html).toContain("Add member");
+  });
+
+  test("the page skeleton announces loading and hides its shapes", () => {
+    const html = renderToString(<ProjectSettingsSkeleton />);
+    expect(html).toContain('role="status"');
+    expect(html).toContain("Loading project settings");
+    expect(html).toContain('aria-hidden="true"');
   });
 });
 
@@ -198,6 +206,21 @@ describe("ProjectMembersCard member rows", () => {
     const html = renderToString(<ProjectMembersCard teamId="t1" canManage />);
     expect(html.match(/>mia@example\.com</g)).toHaveLength(1);
     expect(html).toContain('aria-label="Remove mia@example.com"');
+  });
+
+  test("an empty or failed member load says so instead of a blank card", () => {
+    mock.module("@/components/teams/use-team-members", () => ({
+      useTeamMembers: () => ({
+        members: [],
+        isLoading: false,
+        addMember: async () => {},
+        updateRole: async () => {},
+        removeMember: async () => {},
+      }),
+    }));
+    const html = renderToString(<ProjectMembersCard teamId="t1" canManage />);
+    expect(html).toContain("No members to show.");
+    expect(html).not.toContain("<ul");
   });
 
   test("without canManage there is no Remove and no Add member", () => {

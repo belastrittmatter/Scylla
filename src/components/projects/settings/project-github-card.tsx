@@ -49,8 +49,9 @@ export function ProjectGithubCard({ projectId, githubRepo, canSync }: Props) {
       </CardHeader>
       <CardContent>
         {githubRepo ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <code className="bg-muted rounded px-2 py-1 text-sm">
+          // The repository leads; its two actions follow as one group.
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <code className="text-foreground min-w-0 break-all text-sm font-medium">
               {githubRepo}
             </code>
             <div className="flex flex-wrap items-center gap-2">

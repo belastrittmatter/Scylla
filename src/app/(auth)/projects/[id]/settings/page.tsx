@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
+import { ProjectSettingsSkeleton } from "@/components/projects/settings/project-settings-skeleton";
 import { ProjectSettingsView } from "@/components/projects/settings/project-settings-view";
-import { TeamsPageSkeleton } from "@/components/teams/teams-page-skeleton";
 import { getCurrentUserId } from "@/lib/team-pages";
 import { loadProjectForMember } from "@/lib/project-pages";
 
@@ -12,7 +12,7 @@ interface Props {
 // cacheComponents: request-time data must render inside a Suspense boundary.
 export default function ProjectSettingsPage(props: Props) {
   return (
-    <Suspense fallback={<TeamsPageSkeleton />}>
+    <Suspense fallback={<ProjectSettingsSkeleton />}>
       <ProjectSettingsContent {...props} />
     </Suspense>
   );

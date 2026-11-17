@@ -10,10 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AddMemberDialog } from "@/components/teams/add-member-dialog";
 import { useTeamMembers } from "@/components/teams/use-team-members";
 import { ProjectMemberRow } from "./project-member-row";
+import { MemberSkeletonRows } from "./project-settings-skeleton";
 
 type Props = { teamId: string; canManage: boolean };
 
@@ -24,12 +24,13 @@ export function ProjectMembersCard({ teamId, canManage }: Props) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="items-center">
         <CardTitle>
           <h2>Team Members</h2>
         </CardTitle>
         {canManage && (
-          <CardAction>
+          // One row, centred with the title (CardAction defaults to two rows, top-aligned).
+          <CardAction className="row-span-1 self-center">
             <Button size="sm" onClick={() => setAdding(true)}>
               <UserPlus />
               Add member
@@ -40,6 +41,9 @@ export function ProjectMembersCard({ teamId, canManage }: Props) {
       <CardContent>
         {isLoading ? (
           <MembersSkeleton />
+        ) : members.length === 0 ? (
+          // A failed load only toasts; keep saying so after the toast fades.
+          <p className="text-muted-foreground text-sm">No members to show.</p>
         ) : (
           <ul className="divide-y">
             {members.map((m) => (
@@ -69,14 +73,7 @@ function MembersSkeleton() {
   return (
     <div role="status">
       <span className="sr-only">Loading members…</span>
-      <ul aria-hidden className="divide-y">
-        {[0, 1, 2].map((i) => (
-          <li key={i} className="space-y-1.5 py-2.5">
-            <Skeleton className="h-3.5 w-32" />
-            <Skeleton className="h-3 w-44" />
-          </li>
-        ))}
-      </ul>
+      <MemberSkeletonRows />
     </div>
   );
 }

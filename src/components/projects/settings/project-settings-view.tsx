@@ -5,6 +5,7 @@ import { useBreadcrumb } from "@/components/layout/breadcrumb-context";
 import { hasTeamRole, type TeamRole } from "@/services/team/team-types";
 import { ProjectGithubCard } from "./project-github-card";
 import { ProjectMembersCard } from "./project-members-card";
+import { projectSettingsPageClass } from "./project-settings-skeleton";
 
 type Props = {
   project: {
@@ -27,12 +28,13 @@ export function ProjectSettingsView({ project, team, role }: Props) {
   }, [project.id, project.name, setLabel]);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6 md:p-8">
+    <div className={projectSettingsPageClass}>
+      {/* The project leads, like the team page's h1; the crumb above ends in Settings. */}
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold">Project Settings</h1>
-        <p className="text-muted-foreground text-sm">
-          {project.name} · {team.name}
-        </p>
+        <h1 className="truncate text-xl font-semibold tracking-tight">
+          {project.name}
+        </h1>
+        <p className="text-muted-foreground text-sm">{`Settings · ${team.name}`}</p>
       </header>
       <ProjectGithubCard
         projectId={project.id}
