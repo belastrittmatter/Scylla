@@ -11,7 +11,10 @@ export function LandingHeader({ stars }: { stars?: number | null }) {
           <LandingLogo />
         </Link>
         <div className="flex shrink-0 items-center gap-2">
-          <LandingGithubStarsBadge stars={stars ?? null} />
+          {/* The hero's Star button carries the count on phones; the row is too tight here. */}
+          <div className="hidden sm:block">
+            <LandingGithubStarsBadge stars={stars ?? null} />
+          </div>
           <LandingThemeToggle />
           <Link
             prefetch={false}
