@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getDeadlineStatus } from "./task-utils";
 import { MONO_META, WORKSPACE_INSET } from "./task-layout";
+import { OverdueMark } from "./task-overdue-mark";
 import { getTaskStatusStyle } from "./task-status-icon";
 import type { TimelineSpan } from "./task-timeline";
 import type { TaskItem } from "./task-types";
@@ -84,7 +85,7 @@ export function TaskTimelineBars({
     <button
       type="button"
       tabIndex={-1}
-      aria-label={task.title}
+      aria-label={overdue ? `${task.title}, overdue` : task.title}
       onClick={() => onSelect(task)}
       className={cn(ROW_H, "hover:bg-accent/40 relative grid w-full text-left")}
       style={gridStyle}
@@ -94,11 +95,13 @@ export function TaskTimelineBars({
           data-timeline-bar
           className={cn(
             BAR,
-            "bg-destructive/15 border-destructive/40 text-destructive rounded-l-none border-l-0",
+            "bg-muted border-destructive text-destructive rounded-l-none border-l-0",
           )}
           style={col(slip)}
         >
-          <span className="truncate">Due {day(task.dueDate)}</span>
+          <span className="truncate">
+            Due {day(task.dueDate)} <OverdueMark />
+          </span>
         </span>
       )}
       {span && (
@@ -111,13 +114,29 @@ export function TaskTimelineBars({
               "gap-1",
               getTaskStatusStyle(task.status).bar,
               span.clipped && "rounded-l-none border-l-0 pl-0.5",
-              overdue && "border-destructive ring-destructive/30 ring-1",
+              // One hairline; the words below carry the meaning (WCAG 1.4.1).
+              overdue && "border-destructive",
             )}
             style={col(span)}
           >
             {span.clipped && <ChevronLeft className="size-3 shrink-0" />}
             {span.span > 1 && (
-              <span className="ml-auto truncate">{day(task.dueDate)}</span>
+              // Sticky to the scroller's right edge so a bar running past the
+              // visible days still shows its due date.
+              <span
+                className={cn(
+                  "sticky right-1.5 ml-auto min-w-0 truncate",
+                  overdue && "text-destructive",
+                )}
+              >
+                {day(task.dueDate)}
+                {overdue && (
+                  <>
+                    {" "}
+                    <OverdueMark />
+                  </>
+                )}
+              </span>
             )}
           </TooltipTrigger>
           <TooltipContent>
@@ -126,6 +145,7 @@ export function TaskTimelineBars({
               ? `Start ${day(task.startDate)}`
               : `Created ${day(task.createdAt)}`}{" "}
             → Due {day(task.dueDate)}
+            {overdue && " · overdue"}
           </TooltipContent>
         </Tooltip>
       )}

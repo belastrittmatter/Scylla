@@ -73,7 +73,7 @@ export function TaskHeaderBar({
           >
             /
           </span>
-          <Breadcrumb className="order-2 min-w-0 md:order-none">
+          <Breadcrumb className="order-2 min-w-0 max-md:flex-1 max-md:basis-0 md:order-none">
             <BreadcrumbList className="flex-nowrap gap-1 text-[13px] sm:gap-1">
               {crumbs}
             </BreadcrumbList>

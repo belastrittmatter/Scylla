@@ -40,7 +40,7 @@ interface TaskTableRowProps {
   selectable?: boolean;
 }
 
-/** Row: status, title + context, priority, due date, assignee. Below sm the project drops under a 2-line title. */
+/** Row: status, title + context, priority, due date, assignee. Below sm, project, priority and due share one meta line under a 2-line title. */
 export function TaskTableRow({
   task,
   onSelectTask,
@@ -109,11 +109,9 @@ export function TaskTableRow({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <span
-            aria-label={`Status: ${status.label}`}
-            className="flex size-6 items-center justify-center"
-          >
+          <span className="flex size-6 items-center justify-center">
             <StatusIcon status={task.status as TaskStatus} />
+            <span className="sr-only">Status: {status.label}</span>
           </span>
         )}
       </TableCell>
@@ -132,22 +130,42 @@ export function TaskTableRow({
               {task.title}
             </span>
           </button>
-          {project && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span className="min-w-0 shrink truncate text-xs text-muted-foreground sm:max-w-[40%]" />
-                }
-              >
-                {project}
-              </TooltipTrigger>
-              <TooltipContent>{contextLabel}</TooltipContent>
-            </Tooltip>
+          {/* Phones: priority and due date join the project here, so the title gets the row's width. */}
+          {(project || priority || task.dueDate) && (
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-muted-foreground sm:max-w-[40%] sm:flex-nowrap">
+              {project && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={<span className="min-w-0 max-w-full truncate" />}
+                  >
+                    {project}
+                  </TooltipTrigger>
+                  <TooltipContent>{contextLabel}</TooltipContent>
+                </Tooltip>
+              )}
+              {priority && (
+                <span className={cn(priority.className, "sm:hidden")}>
+                  {priority.label}
+                </span>
+              )}
+              {task.dueDate && (
+                <span
+                  className={cn(
+                    MONO_META,
+                    "inline-flex items-baseline gap-1 whitespace-nowrap sm:hidden",
+                    deadline.isOverdue && "text-destructive",
+                  )}
+                >
+                  {format(new Date(task.dueDate), "MMM d")}
+                  {deadline.isOverdue && <OverdueMark />}
+                </span>
+              )}
+            </div>
           )}
         </div>
       </TableCell>
 
-      <TableCell>
+      <TableCell className="max-sm:hidden">
         {priority && (
           <span className={priority.className}>{priority.label}</span>
         )}
@@ -156,20 +174,14 @@ export function TaskTableRow({
       <TableCell
         className={cn(
           MONO_META,
-          "text-right",
+          "text-right max-sm:hidden",
           deadline.isOverdue ? "text-destructive" : "text-muted-foreground",
         )}
       >
         {task.dueDate ? (
-          <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            {deadline.isOverdue && (
-              <span
-                aria-hidden="true"
-                className="size-1.5 rotate-45 bg-current sm:hidden"
-              />
-            )}
+          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
             {format(new Date(task.dueDate), "MMM d")}
-            {deadline.isOverdue && <OverdueMark collapse />}
+            {deadline.isOverdue && <OverdueMark />}
           </span>
         ) : (
           "—"
@@ -187,7 +199,12 @@ export function TaskTableRow({
                     alt={task.assignee.name}
                   />
                   <AvatarFallback className="font-code text-[10px]">
-                    {task.assignee.initials || "U"}
+                    <span aria-hidden="true">
+                      {task.assignee.initials || "U"}
+                    </span>
+                    <span className="sr-only">
+                      Assignee: {task.assignee.name}
+                    </span>
                   </AvatarFallback>
                 </Avatar>
               </TooltipTrigger>

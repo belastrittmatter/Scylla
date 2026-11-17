@@ -56,7 +56,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Task summary..."
-          className="h-9 text-sm"
+          className="h-9"
         />
       </Field>
 
@@ -157,7 +157,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Provide context, acceptance criteria or links..."
-          className="resize-none text-sm"
+          className="resize-none"
         />
       </Field>
     </FieldGroup>

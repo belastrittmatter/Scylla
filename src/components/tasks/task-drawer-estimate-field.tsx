@@ -9,6 +9,8 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
+import { MONO_META } from "./task-layout";
 
 interface TaskDrawerEstimateFieldProps {
   estimatedMinutes: number;
@@ -36,26 +38,37 @@ export function TaskDrawerEstimateField({
             )
           }
           placeholder="e.g. 60"
-          className="text-sm"
+          className="font-code tabular-nums"
         />
         <InputGroupAddon align="inline-end">
-          <InputGroupText className="text-xs">mins</InputGroupText>
+          <InputGroupText className={MONO_META}>mins</InputGroupText>
         </InputGroupAddon>
       </InputGroup>
-      <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs">
-        <span>Presets:</span>
-        {[30, 60, 120, 240].map((mins) => (
-          <Button
-            key={mins}
-            type="button"
-            variant={estimatedMinutes === mins ? "default" : "outline"}
-            size="xs"
-            onClick={() => onEstimatedMinutesChange(mins)}
-            className="h-5 px-1.5 text-xs font-medium"
-          >
-            {mins < 60 ? `${mins}m` : `${mins / 60}h`}
-          </Button>
-        ))}
+      <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+        <span id="task-estimate-presets">Presets:</span>
+        {/* Selected preset is a quiet active segment; ember stays on Save. */}
+        {[30, 60, 120, 240].map((mins) => {
+          const active = estimatedMinutes === mins;
+          return (
+            <Button
+              key={mins}
+              type="button"
+              variant="outline"
+              size="xs"
+              aria-pressed={active}
+              aria-describedby="task-estimate-presets"
+              onClick={() => onEstimatedMinutesChange(mins)}
+              className={cn(
+                MONO_META,
+                "text-muted-foreground",
+                active &&
+                  "bg-muted text-foreground hover:bg-muted dark:bg-muted",
+              )}
+            >
+              {mins < 60 ? `${mins}m` : `${mins / 60}h`}
+            </Button>
+          );
+        })}
       </div>
     </Field>
   );

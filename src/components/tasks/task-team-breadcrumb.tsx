@@ -39,7 +39,8 @@ export function TaskTeamBreadcrumb({
 }: TaskTeamBreadcrumbProps) {
   return (
     <>
-      <BreadcrumbItem>
+      {/* Below md the team crumb takes row 1's free space and truncates only on real overflow. */}
+      <BreadcrumbItem className="min-w-0">
         <EntityCombobox
           items={teams}
           getKey={(t) => t.id}
@@ -53,7 +54,7 @@ export function TaskTeamBreadcrumb({
           searchPlaceholder="Search teams..."
           emptyText="No teams found."
           variant="ghost"
-          className={CRUMB}
+          className={cn(CRUMB, "max-md:max-w-full")}
           footer={(close) => (
             <>
               {team && (
@@ -88,7 +89,7 @@ export function TaskTeamBreadcrumb({
       <BreadcrumbSeparator className="text-muted-foreground/50">
         /
       </BreadcrumbSeparator>
-      <BreadcrumbItem>
+      <BreadcrumbItem className="shrink-0">
         <EntityCombobox
           items={projects}
           getKey={(p) => p.id}

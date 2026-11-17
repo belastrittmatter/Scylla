@@ -91,10 +91,11 @@ export function TaskTableView({
             <TableHead className={HEAD}>
               <span className={headLabel}>Task</span>
             </TableHead>
-            <TableHead className={HEAD}>
+            {/* Phones fold priority and due into the title cell's meta line. */}
+            <TableHead className={cn(HEAD, "max-sm:hidden")}>
               <span className={headLabel}>Priority</span>
             </TableHead>
-            <TableHead className={cn(HEAD, "text-right")}>
+            <TableHead className={cn(HEAD, "text-right max-sm:hidden")}>
               <span className={headLabel}>Due</span>
             </TableHead>
             {rowProps.showAssignee && (

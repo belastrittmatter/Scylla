@@ -117,7 +117,8 @@ export function TaskCommentSection({
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment or status update..."
             rows={2}
-            className="min-h-16 resize-none text-xs"
+            // 16px on phones so iOS does not zoom on focus.
+            className="min-h-16 resize-none text-base md:text-xs"
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                 // The drawer saves on ⌘+Enter too; keep this one to the comment.
@@ -129,18 +130,19 @@ export function TaskCommentSection({
           />
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              Press ⌘+Enter to comment
+              Press <kbd className="font-code text-[11px]">⌘+Enter</kbd> to
+              comment
             </span>
             <Button
               type="submit"
+              variant="outline"
               size="sm"
               disabled={!newComment.trim() || isSubmitting}
-              className="h-7 px-3 text-xs"
             >
               {isSubmitting ? (
-                <Loader2 className="mr-1 size-3 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <Send className="mr-1 size-3" />
+                <Send className="size-3.5" />
               )}
               Comment
             </Button>

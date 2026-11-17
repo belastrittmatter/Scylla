@@ -1,15 +1,19 @@
 "use client";
 
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { MONO_META, WORKSPACE_GUTTER } from "./task-layout";
 
+/**
+ * Day widths. Desktop names the span it shows; phones show a fraction of
+ * that, so they get zoom icons (named "Zoom in"/"Zoom out") instead of counts.
+ */
 const ZOOMS = [
-  { colW: 64, label: "2 weeks", short: "2w" },
-  { colW: 36, label: "4 weeks", short: "4w" },
+  { colW: 64, label: "2 weeks", short: "Zoom in", Icon: ZoomIn },
+  { colW: 36, label: "4 weeks", short: "Zoom out", Icon: ZoomOut },
 ] as const;
 
 interface TaskTimelineToolbarProps {
@@ -77,8 +81,12 @@ export function TaskTimelineToolbar({
       >
         <TabsList variant="segmented" aria-label="Timeline zoom">
           {ZOOMS.map((z) => (
-            <TabsTrigger key={z.colW} value={String(z.colW)} aria-label={z.label}>
-              <span className="sm:hidden">{z.short}</span>
+            // The visible label (or the phone's sr-only name) is the accessible name.
+            <TabsTrigger key={z.colW} value={String(z.colW)}>
+              <span className="sm:hidden">
+                <z.Icon aria-hidden="true" />
+                <span className="sr-only">{z.short}</span>
+              </span>
               <span className="max-sm:hidden">{z.label}</span>
             </TabsTrigger>
           ))}

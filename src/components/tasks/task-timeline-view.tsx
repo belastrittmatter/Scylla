@@ -41,7 +41,7 @@ export function TaskTimelineView({
   onCreateRange,
 }: TaskTimelineViewProps) {
   const [colW, setColW] = React.useState(36);
-  // Phones need a wider name pane so bands and titles stay readable (3-4 words).
+  // Phones: a ~35% name pane fits two-line titles and leaves the grid ~a week.
   const isPhone = useIsMobile();
   const [visible, setVisible] = React.useState<{
     first: number;
@@ -205,13 +205,14 @@ export function TaskTimelineView({
       <div className="bg-background min-h-0 flex-1 overflow-y-auto">
         <ResizablePanelGroup
           direction="horizontal"
-          // Separate saved layouts so a desktop width never squeezes the phone pane.
-          autoSaveId={isPhone ? "task-timeline-pane-phone" : "task-timeline-pane"}
+          // Separate saved layouts so a desktop width never squeezes the phone pane
+          // (v2: the phone default narrowed, so older saved widths are dropped).
+          autoSaveId={isPhone ? "task-timeline-pane-phone-v2" : "task-timeline-pane"}
           style={{ height: "auto", minHeight: "100%", overflow: "visible" }}
         >
           <ResizablePanel
-            defaultSize={isPhone ? 44 : 25}
-            minSize={isPhone ? 35 : 15}
+            defaultSize={isPhone ? 35 : 25}
+            minSize={isPhone ? 30 : 15}
             maxSize={isPhone ? 60 : 45}
           >
             {namePane}
