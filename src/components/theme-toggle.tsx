@@ -4,6 +4,11 @@ import * as React from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const emptySubscribe = () => () => {};
 
@@ -20,17 +25,24 @@ export function ThemeToggle() {
   }
 
   const isDark = resolvedTheme === "dark";
+  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="size-8 p-0 text-muted-foreground hover:text-foreground"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      aria-label="Toggle theme"
-    >
-      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            aria-label={label}
+          />
+        }
+      >
+        {isDark ? <Sun /> : <Moon />}
+      </TooltipTrigger>
+      <TooltipContent side="top">{label}</TooltipContent>
+    </Tooltip>
   );
 }

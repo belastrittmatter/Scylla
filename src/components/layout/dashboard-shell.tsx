@@ -16,7 +16,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* No Suspense here: a deferred boundary would hydrate after useIsMobile flips and mismatch. */}
         <AppSidebar />
 
-        <SidebarInset className="relative flex h-[calc(100svh)] flex-1 flex-col overflow-hidden bg-background">
+        <SidebarInset className="relative flex h-svh flex-1 flex-col overflow-hidden bg-background">
           {/* Fixed Header */}
           <div className="shrink-0">
             <React.Suspense fallback={null}>

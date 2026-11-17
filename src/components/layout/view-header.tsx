@@ -12,7 +12,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { WORKSPACE_INFO } from "@/constants/navigation";
 import { useBreadcrumb } from "./breadcrumb-context";
 
 function formatSegment(segment: string): string {
@@ -36,7 +35,6 @@ function formatSegment(segment: string): string {
 
 interface ViewHeaderProps {
   title?: string;
-  parent?: string;
 }
 
 function DynamicBreadcrumbSegments({ title }: { title?: string }) {
@@ -73,12 +71,12 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
             <BreadcrumbItem>
               <BreadcrumbLink
                 render={<Link href={item.path} />}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-ink-3 hover:text-foreground"
               >
                 {item.label}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator className="text-muted-foreground/50" />
+            <BreadcrumbSeparator className="text-ink-3" />
           </React.Fragment>
         );
       })}
@@ -86,33 +84,17 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
   );
 }
 
-export function ViewHeader({
-  title,
-  parent = WORKSPACE_INFO.brand,
-}: ViewHeaderProps) {
+export function ViewHeader({ title }: ViewHeaderProps) {
   const { setHeaderSlot } = useBreadcrumb();
   return (
-    <div className="group/header sticky top-0 z-20 flex min-h-14 flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-border bg-background px-5 py-2 transition-colors">
+    <header className="group/header sticky top-0 z-20 flex min-h-14 flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-border bg-background px-5 py-2 transition-colors">
       <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:text-foreground" />
 
-      <div className="mx-1 h-3 w-px bg-border" />
+      <div aria-hidden className="mx-1 h-4 w-px bg-line-strong" />
 
-      {/* Pages that fill the HeaderSlot bring their own breadcrumb. */}
+      {/* Pages that fill the HeaderSlot bring their own breadcrumb. The trail starts at the section. */}
       <Breadcrumb className="group-has-[[data-header-slot]>*]/header:hidden">
-        <BreadcrumbList className="text-[13px] font-normal">
-          {/* Root item: Brand (Scylla) */}
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              render={<Link href="/calendar" />}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {parent}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-
-          <BreadcrumbSeparator className="text-muted-foreground/50" />
-
-          {/* Dynamic path segments */}
+        <BreadcrumbList className="text-sm font-normal">
           <React.Suspense fallback={null}>
             <DynamicBreadcrumbSegments title={title} />
           </React.Suspense>
@@ -125,6 +107,6 @@ export function ViewHeader({
         data-header-slot
         className="contents md:flex md:min-w-0 md:flex-1 md:items-center md:gap-2"
       />
-    </div>
+    </header>
   );
 }

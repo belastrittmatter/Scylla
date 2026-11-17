@@ -75,7 +75,8 @@ describe("Proxy Authentication and Authorization", () => {
       join(ROOT_DIR, "src/components/layout/view-header.tsx"),
       "utf8",
     );
-    expect(viewHeader).toContain('render={<Link href="/calendar" />}');
+    // The breadcrumb has no brand root; a bare "/" still resolves to the Calendar crumb.
+    expect(viewHeader).toContain('? "/calendar"');
     expect(viewHeader).not.toContain('render={<Link href="/" />}');
 
     const appSidebar = readFileSync(

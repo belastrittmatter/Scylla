@@ -51,9 +51,6 @@ export function activeTasksTeam(
   return teamRef.toLowerCase();
 }
 
-const buttonClass =
-  "h-9 rounded-lg text-[13px] font-normal tracking-[-0.01em] text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
-
 export function TasksNavItem({
   item,
   pathname,
@@ -86,7 +83,6 @@ export function TasksNavItem({
       <SidebarMenuButton
         isActive={onTasks}
         tooltip={item.title}
-        className={buttonClass}
         render={<Link href={item.url} />}
       >
         <item.icon className="size-4 shrink-0" />
@@ -98,7 +94,7 @@ export function TasksNavItem({
         render={
           <SidebarMenuAction
             aria-label="Toggle task shortcuts"
-            className="top-2 data-panel-open:[&>svg]:rotate-90"
+            className="data-panel-open:[&>svg]:rotate-90"
           />
         }
       >
