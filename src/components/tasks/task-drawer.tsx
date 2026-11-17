@@ -5,11 +5,10 @@ import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import {
-  dueDateToInput,
+  dateToInput,
   getTaskDateRangeError,
   inputToDueDate,
   inputToStartDate,
-  startDateToInput,
 } from "./task-utils";
 import { TaskDrawerForm } from "./task-drawer-form";
 import { TaskDrawerHeader } from "./task-drawer-header";
@@ -65,11 +64,9 @@ function TaskDrawerInner({
     task.assigneeId || "unassigned",
   );
   const [startDateStr, setStartDateStr] = React.useState(
-    startDateToInput(task.startDate),
+    dateToInput(task.startDate),
   );
-  const [dueDateStr, setDueDateStr] = React.useState(
-    dueDateToInput(task.dueDate),
-  );
+  const [dueDateStr, setDueDateStr] = React.useState(dateToInput(task.dueDate));
   const [estimatedMinutes, setEstimatedMinutes] = React.useState<number>(
     task.estimatedMinutes ?? 60,
   );

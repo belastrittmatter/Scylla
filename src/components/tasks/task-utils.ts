@@ -209,19 +209,13 @@ export function inputToDueDate(value: string): Date | null {
   return value ? new Date(`${value}T18:00:00`) : null;
 }
 
-export function dueDateToInput(date: Date | string | null | undefined): string {
+export function dateToInput(date: Date | string | null | undefined): string {
   return date ? format(new Date(date), "yyyy-MM-dd") : "";
 }
 
 /** Picker value (`yyyy-MM-dd`) -> local 09:00 (start of the working day). */
 export function inputToStartDate(value: string): Date | null {
   return value ? new Date(`${value}T09:00:00`) : null;
-}
-
-export function startDateToInput(
-  date: Date | string | null | undefined,
-): string {
-  return date ? format(new Date(date), "yyyy-MM-dd") : "";
 }
 
 /** Error when both picker values are set and the start day is after the due day. */

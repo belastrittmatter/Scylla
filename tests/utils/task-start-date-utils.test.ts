@@ -4,7 +4,7 @@ import {
   createDraftTask,
   getTaskDateRangeError,
   inputToStartDate,
-  startDateToInput,
+  dateToInput,
 } from "../../src/components/tasks/task-utils";
 import type { TaskItem } from "../../src/components/tasks/task-types";
 
@@ -70,7 +70,7 @@ describe("createDraftTask dates", () => {
   });
 });
 
-describe("inputToStartDate / startDateToInput", () => {
+describe("inputToStartDate / dateToInput", () => {
   const originalTz = process.env.TZ;
   afterEach(() => restoreTz(originalTz));
 
@@ -95,20 +95,20 @@ describe("inputToStartDate / startDateToInput", () => {
     expect(inputToStartDate("")).toBeNull();
   });
 
-  test("startDateToInput formats a Date as local yyyy-MM-dd", () => {
-    expect(startDateToInput(new Date(2026, 10, 10, 9))).toBe("2026-11-10");
+  test("dateToInput formats a Date as local yyyy-MM-dd", () => {
+    expect(dateToInput(new Date(2026, 10, 10, 9))).toBe("2026-11-10");
   });
 
-  test("startDateToInput returns an empty string for null and undefined", () => {
-    expect(startDateToInput(null)).toBe("");
-    expect(startDateToInput(undefined)).toBe("");
+  test("dateToInput returns an empty string for null and undefined", () => {
+    expect(dateToInput(null)).toBe("");
+    expect(dateToInput(undefined)).toBe("");
   });
 
-  test("startDateToInput formats an ISO string as the local day", () => {
+  test("dateToInput formats an ISO string as the local day", () => {
     process.env.TZ = "Asia/Bangkok"; // UTC+7: 20:00Z is 03:00 the next day
-    expect(startDateToInput("2026-11-10T20:00:00.000Z")).toBe("2026-11-11");
+    expect(dateToInput("2026-11-10T20:00:00.000Z")).toBe("2026-11-11");
     process.env.TZ = "America/Los_Angeles"; // UTC-8: 02:00Z is the previous evening
-    expect(startDateToInput("2026-11-10T02:00:00.000Z")).toBe("2026-11-09");
+    expect(dateToInput("2026-11-10T02:00:00.000Z")).toBe("2026-11-09");
   });
 
   test("round trip keeps the same day in any timezone", () => {
@@ -118,9 +118,7 @@ describe("inputToStartDate / startDateToInput", () => {
       "America/Los_Angeles",
     ]) {
       process.env.TZ = tz;
-      expect(startDateToInput(inputToStartDate("2026-11-10"))).toBe(
-        "2026-11-10",
-      );
+      expect(dateToInput(inputToStartDate("2026-11-10"))).toBe("2026-11-10");
     }
   });
 });
