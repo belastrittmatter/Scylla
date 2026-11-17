@@ -97,7 +97,7 @@ export function BookingSuccessView({
                 href={meetUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-ember hover:text-ember-deep font-medium underline underline-offset-4"
+                className="text-ember-deep hover:text-ink font-medium underline underline-offset-4"
               >
                 Google Meet Video Call
               </a>
@@ -149,7 +149,7 @@ export function BookingSuccessView({
             rel="noreferrer"
             className={cn(
               buttonVariants({ variant: "default" }),
-              "hover:bg-ember-deep h-10 flex-1 gap-2",
+              "h-10 flex-1 gap-2 hover:bg-[color-mix(in_oklch,var(--primary),var(--ink)_15%)]",
             )}
           >
             <CalendarPlus className="size-4" aria-hidden="true" />

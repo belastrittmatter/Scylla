@@ -51,11 +51,11 @@ export function BookingFormStep({
         Back to available slots
       </Button>
 
-      <div className="border-line space-y-2 rounded-lg border p-4">
+      <div className="space-y-1.5">
         <Eyebrow as="h2" className="text-ink-2">
           Selected meeting time
         </Eyebrow>
-        <p className="text-ink text-base font-medium">
+        <p className="text-ink pt-1 text-base font-medium">
           {formatFullDate(selectedSlot.start, timeZone)}
         </p>
         <p className="text-ink-2 font-code text-sm tabular-nums">
@@ -65,7 +65,7 @@ export function BookingFormStep({
       </div>
 
       {invite.isRestricted && (
-        <div className="border-line flex items-start gap-3 rounded-lg border p-4 text-sm">
+        <div className="flex items-start gap-3 text-sm">
           <ShieldCheck
             className="text-ink-3 mt-0.5 size-4 shrink-0"
             aria-hidden="true"
@@ -82,7 +82,10 @@ export function BookingFormStep({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form
+        onSubmit={onSubmit}
+        className="border-line space-y-4 border-t pt-6"
+      >
         <div className="space-y-1.5">
           <Label
             htmlFor="guestName"
@@ -146,7 +149,7 @@ export function BookingFormStep({
           <Button
             type="submit"
             disabled={isBooking}
-            className="hover:bg-ember-deep dark:hover:bg-ember-deep h-11 w-full gap-2 text-sm"
+            className="h-11 w-full gap-2 text-sm hover:bg-[color-mix(in_oklch,var(--primary),var(--ink)_15%)]"
           >
             {isBooking ? (
               <>

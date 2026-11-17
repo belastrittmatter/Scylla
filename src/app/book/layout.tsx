@@ -20,6 +20,8 @@ const mapleMono = localFont({
  * Public booking frame: the landing's paper/ink/line palette scoped to this
  * route, with the app's shadcn tokens bridged onto it so shared controls
  * (calendar, inputs, buttons) pick up the same surfaces and ember accent.
+ * Ember fills carry text at AA: light fills with ember-deep under surface
+ * text, dark keeps the brighter ember under paper text.
  * The app-wide :root/.dark tokens are untouched.
  */
 const tokenBridge = [
@@ -33,8 +35,10 @@ const tokenBridge = [
   "[--accent-foreground:var(--ink)]",
   "[--border:var(--line)]",
   "[--input:var(--line)]",
-  "[--primary:var(--ember)]",
-  "[--primary-foreground:white]",
+  "[--primary:var(--ember-deep)]",
+  "[--primary-foreground:var(--surface)]",
+  "dark:[--primary:var(--ember)]",
+  "dark:[--primary-foreground:var(--paper)]",
   "[--ring:var(--ember)]",
 ].join(" ");
 
@@ -45,7 +49,7 @@ export default function BookingLayout({
 }) {
   return (
     <div
-      className={`landing ${mapleMono.variable} ${tokenBridge} flex min-h-screen flex-col overflow-x-clip selection:bg-ember selection:text-white`}
+      className={`landing ${mapleMono.variable} ${tokenBridge} flex min-h-screen flex-col overflow-x-clip selection:bg-primary selection:text-primary-foreground`}
     >
       <header className="border-line border-b">
         <div className="border-line mx-auto flex h-14 w-full max-w-[1200px] items-center justify-between gap-3 border-x border-dashed px-4 sm:px-10">

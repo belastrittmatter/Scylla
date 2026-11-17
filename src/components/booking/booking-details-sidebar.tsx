@@ -1,15 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Clock, Building2, Users, Video, Lock } from "lucide-react";
+import { Clock, Building2, Users, Video, Lock, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Eyebrow } from "@/components/landing/primitives";
 import type {
   InviteData,
   InviteOrganizer,
   InviteRoom,
   InviteMember,
 } from "./booking-types";
+import { getInitials } from "./booking-utils";
 
 interface BookingDetailsSidebarProps {
   invite: InviteData;
@@ -33,10 +33,11 @@ export function BookingDetailsSidebar({
   members,
 }: BookingDetailsSidebarProps) {
   const organizerName = organizer?.name || "Organizer";
-  const attendees = [
-    ...(organizer ? [`${organizer.name} (host)`] : []),
-    ...members.map((m) => m.name),
-  ];
+  const initials = getInitials(organizer?.name);
+  // The organizer is already named in the byline; list only the others.
+  const attendees = members
+    .map((m) => m.name)
+    .filter((name) => name && name !== organizer?.name);
 
   return (
     <div className="flex flex-col gap-6 p-5 sm:p-8">
@@ -46,11 +47,15 @@ export function BookingDetailsSidebar({
             <AvatarImage src={organizer.image} alt={organizerName} />
           )}
           <AvatarFallback className="bg-paper text-ink font-code text-xs">
-            {organizer?.name ? organizer.name.slice(0, 2).toUpperCase() : "AG"}
+            {initials || (
+              <User className="text-ink-2 size-4" aria-hidden="true" />
+            )}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <Eyebrow className="text-ink-2 text-[11px]">Invited by</Eyebrow>
+          <p className="font-code text-ink-2 text-[11px] uppercase tracking-[0.12em]">
+            Invited by
+          </p>
           <p className="text-ink mt-0.5 truncate text-sm font-medium">
             {organizerName}
           </p>

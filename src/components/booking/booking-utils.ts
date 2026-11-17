@@ -63,3 +63,26 @@ export const buildGoogleCalendarUrl = (
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
+
+/** Hour of day (0-23) of an ISO instant in the given time zone. */
+export const getSlotHour = (isoString: string, timeZone: string) => {
+  try {
+    const hour = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(new Date(isoString));
+    return Number.parseInt(hour, 10) % 24;
+  } catch {
+    return new Date(isoString).getHours();
+  }
+};
+
+/** Initials from the first and last name words ("Alex Rivera" → "AR"). */
+export const getInitials = (name: string | null | undefined) => {
+  const words = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  const first = words[0][0] ?? "";
+  const last = words.length > 1 ? (words[words.length - 1][0] ?? "") : "";
+  return `${first}${last}`.toUpperCase();
+};

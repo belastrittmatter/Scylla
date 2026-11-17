@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { toast } from "sonner";
 import type { InviteDetails, Slot, BookedResult } from "./booking-types";
 import { BookingSuccessView } from "./booking-success-view";
@@ -17,25 +17,56 @@ export type {
   InviteDetails,
 } from "./booking-types";
 
+/** Client-only values: undefined on the server and during hydration. */
+const subscribeNever = () => () => {};
+const getServerSnapshot = () => null;
+
+function readTimeZone() {
+  try {
+    return (
+      Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Ho_Chi_Minh"
+    );
+  } catch {
+    return "Asia/Ho_Chi_Minh";
+  }
+}
+
+/** The invitee's local calendar date as a stable "yyyy-MM-dd" key. */
+function readTodayKey() {
+  return format(new Date(), "yyyy-MM-dd");
+}
+
 export function MeetingBookingClient({ details }: { details: InviteDetails }) {
   const { invite, organizer, room, members } = details;
 
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-    () => new Date(),
+  // The zone and today belong to the invitee's browser, not the server, so
+  // both resolve after mount; until then the slot step shows its loading state.
+  const timeZone = React.useSyncExternalStore(
+    subscribeNever,
+    readTimeZone,
+    getServerSnapshot,
+  );
+  const todayKey = React.useSyncExternalStore(
+    subscribeNever,
+    readTodayKey,
+    getServerSnapshot,
+  );
+  const today = React.useMemo(
+    () => (todayKey ? parse(todayKey, "yyyy-MM-dd", new Date()) : undefined),
+    [todayKey],
   );
 
-  const [timeZone] = React.useState<string>(() => {
-    try {
-      return (
-        Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Ho_Chi_Minh"
-      );
-    } catch {
-      return "Asia/Ho_Chi_Minh";
-    }
-  });
+  const [pickedDate, setPickedDate] = React.useState<Date | undefined>();
+  const selectedDate = pickedDate ?? today;
+  const ready = timeZone !== null && today !== undefined;
+  // The form and success steps are reachable only after slots load (ready).
+  const bookingZone = timeZone ?? "UTC";
 
   const [slots, setSlots] = React.useState<Slot[]>([]);
-  const [loadingSlots, setLoadingSlots] = React.useState<boolean>(false);
+  // Starts true: the first paint is "checking", never a false "no times".
+  const [loadingSlots, setLoadingSlots] = React.useState<boolean>(true);
+  const [slotsError, setSlotsError] = React.useState(false);
+  const [reloadKey, setReloadKey] = React.useState(0);
   const [selectedSlot, setSelectedSlot] = React.useState<Slot | null>(null);
 
   const [guestName, setGuestName] = React.useState("");
@@ -47,26 +78,24 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
     null,
   );
 
+  const selectedKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+
   React.useEffect(() => {
+    if (!timeZone || !selectedKey) return;
     let active = true;
 
     queueMicrotask(async () => {
       if (!active) return;
 
-      if (!selectedDate) {
-        setSlots([]);
-        return;
-      }
-
-      const dateStr = format(selectedDate, "yyyy-MM-dd");
       setLoadingSlots(true);
+      setSlotsError(false);
       setSelectedSlot(null);
 
       try {
         const res = await fetch(`/api/meeting-invites/${invite.slug}/slots`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ date: dateStr, timeZone }),
+          body: JSON.stringify({ date: selectedKey, timeZone }),
         });
 
         if (!res.ok) {
@@ -81,8 +110,8 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
       } catch (err) {
         if (active) {
           console.error("Slots fetch error:", err);
-          toast.error("Could not load available slots for this date");
           setSlots([]);
+          setSlotsError(true);
         }
       } finally {
         if (active) {
@@ -94,7 +123,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
     return () => {
       active = false;
     };
-  }, [selectedDate, timeZone, invite.slug]);
+  }, [selectedKey, timeZone, invite.slug, reloadKey]);
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +149,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
           startTime: selectedSlot.start,
           endTime: selectedSlot.end,
           notes: guestNotes.trim() || undefined,
-          timeZone,
+          timeZone: bookingZone,
         }),
       });
 
@@ -153,7 +182,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
         bookedResult={bookedResult}
         guestEmail={guestEmail}
         guestName={guestName}
-        timeZone={timeZone}
+        timeZone={bookingZone}
         organizer={organizer}
         room={room}
         members={members}
@@ -175,10 +204,13 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
         <div className="min-w-0 p-5 sm:p-8">
           {!selectedSlot ? (
             <BookingSlotsStep
+              ready={ready}
               selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
+              onSelectDate={setPickedDate}
               slots={slots}
               loadingSlots={loadingSlots}
+              slotsError={slotsError}
+              onRetry={() => setReloadKey((key) => key + 1)}
               timeZone={timeZone}
               includesRoom={invite.locationType === "room"}
               onSelectSlot={setSelectedSlot}
@@ -187,7 +219,7 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
             <BookingFormStep
               invite={invite}
               selectedSlot={selectedSlot}
-              timeZone={timeZone}
+              timeZone={bookingZone}
               guestName={guestName}
               setGuestName={setGuestName}
               guestEmail={guestEmail}
