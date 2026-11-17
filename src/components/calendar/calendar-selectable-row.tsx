@@ -59,9 +59,9 @@ export function CalendarSelectableRow({
         checked={checked}
         aria-hidden
         tabIndex={-1}
-        // border-input is ~1.3:1 on the light card; muted-foreground/80
-        // clears the 3:1 non-text minimum. Dark keeps the stock border.
-        className="pointer-events-none ml-auto border-muted-foreground/80 dark:not-data-checked:border-input"
+        // border-input is ~1.3:1 on the card in both themes; muted-foreground
+        // at 80% clears the 3:1 non-text minimum in light and dark alike.
+        className="pointer-events-none ml-auto border-muted-foreground/80"
       />
     </button>
   );

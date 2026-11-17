@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -103,15 +104,21 @@ export function CalendarToolbar({
           }
         />
         <DropdownMenuContent align="end" className="w-36">
-          {VIEWS.map((item) => (
-            <DropdownMenuItem
-              key={item.id}
-              onClick={() => setView(item.id)}
-              className="cursor-pointer text-xs"
-            >
-              {item.label}
-            </DropdownMenuItem>
-          ))}
+          {/* A radio group, so the menu marks and announces the current view. */}
+          <DropdownMenuRadioGroup
+            value={view}
+            onValueChange={(next) => setView(next as CalendarView)}
+          >
+            {VIEWS.map((item) => (
+              <DropdownMenuRadioItem
+                key={item.id}
+                value={item.id}
+                className="cursor-pointer text-xs"
+              >
+                {item.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

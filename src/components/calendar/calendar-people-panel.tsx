@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, SearchX } from "lucide-react";
+import { Search } from "lucide-react";
 import { useUserSearch } from "@/hooks/use-user-search";
 import { formatPersonName, getPersonInitials } from "@/lib/format-person-name";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,12 +12,13 @@ import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
 /** Results listed before "Show all"; selected people always stay visible. */
-const COLLAPSED_RESULT_COUNT = 6;
+const COLLAPSED_RESULT_COUNT = 5;
 
 interface CalendarPeoplePanelProps {
   selectedAttendees: CalendarAttendeeItem[];
   onToggleAttendee: (item: CalendarAttendeeItem) => void;
   currentUserEmail?: string;
+  defaultOpen?: boolean;
 }
 
 function PeoplePanelSkeleton(): React.ReactElement {
@@ -40,6 +41,7 @@ export function CalendarPeoplePanel({
   selectedAttendees,
   onToggleAttendee,
   currentUserEmail,
+  defaultOpen,
 }: CalendarPeoplePanelProps): React.ReactElement {
   const { query, setQuery, results, isLoading, hasLoaded } = useUserSearch({
     limit: 20,
@@ -83,6 +85,7 @@ export function CalendarPeoplePanel({
       title="People"
       meta={`${selectedPeople.length} selected`}
       active={selectedPeople.length > 0}
+      defaultOpen={defaultOpen}
     >
       <div className="relative">
         <Search
@@ -127,10 +130,9 @@ export function CalendarPeoplePanel({
           <PeoplePanelSkeleton />
         ) : items.length === 0 ? (
           selectedPeople.length === 0 && (
-            <div className="flex flex-col items-center gap-1.5 py-8 text-center text-xs text-muted-foreground">
-              <SearchX aria-hidden className="size-4" />
-              <span>No teammates found</span>
-            </div>
+            <p className="px-1.5 py-2 text-xs text-muted-foreground">
+              No teammates found
+            </p>
           )
         ) : (
           listedItems.map(({ item, name }) => (

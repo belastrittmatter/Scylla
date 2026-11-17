@@ -16,6 +16,8 @@ interface CalendarAttendeePickerProps {
   onChange: (attendees: SelectedAttendee[]) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Input id, so a <Label htmlFor> can name the search field. */
+  id?: string;
 }
 
 /** Multi-select attendee search (directory users or a typed external email). */
@@ -24,6 +26,7 @@ export function CalendarAttendeePicker({
   onChange,
   placeholder = "Search colleagues or enter email...",
   disabled,
+  id,
 }: CalendarAttendeePickerProps) {
   const [query, setQuery] = React.useState("");
   const { items, isLoading } = useTeammateOptions(query, { showEmpty: true });
@@ -43,6 +46,7 @@ export function CalendarAttendeePicker({
       onQueryChange={setQuery}
       selected={selectedUsers}
       autoHighlight
+      id={id}
       disabled={disabled}
       placeholder={value.length ? "Add more attendees..." : placeholder}
       emptyText={

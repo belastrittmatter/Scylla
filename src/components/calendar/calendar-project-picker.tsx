@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { PROJECT_FALLBACK_COLOR } from "./calendar-event-colors";
 
 export interface ProjectOption {
   id: string;
@@ -26,6 +27,11 @@ export interface CalendarProjectPickerProps {
   onChange: (projectId: string | null, project?: ProjectOption | null) => void;
   disabled?: boolean;
   hideLabel?: boolean;
+  /**
+   * Id of an external label. The trigger is then named "<label> <value>"
+   * (e.g. "Project None"); without it the built-in label names it.
+   */
+  labelledBy?: string;
 }
 
 export function CalendarProjectPicker({
@@ -33,7 +39,11 @@ export function CalendarProjectPicker({
   onChange,
   disabled = false,
   hideLabel = false,
+  labelledBy,
 }: CalendarProjectPickerProps) {
+  const ownId = React.useId();
+  const labelId = labelledBy ?? `${ownId}-label`;
+  const triggerId = `${ownId}-trigger`;
   const [projects, setProjects] = React.useState<ProjectOption[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -81,7 +91,11 @@ export function CalendarProjectPicker({
 
   return (
     <div className="space-y-1.5">
-      {!hideLabel && <Label className="text-xs font-medium">Project</Label>}
+      {!hideLabel && (
+        <Label id={labelId} className="text-xs font-medium">
+          Project
+        </Label>
+      )}
       <Popover
         open={isOpen}
         onOpenChange={(open) => {
@@ -91,6 +105,10 @@ export function CalendarProjectPicker({
       >
         <PopoverTrigger
           type="button"
+          id={triggerId}
+          aria-labelledby={
+            !hideLabel || labelledBy ? `${labelId} ${triggerId}` : undefined
+          }
           disabled={disabled || isLoading}
           className={cn(
             "border-input focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -103,7 +121,9 @@ export function CalendarProjectPicker({
             <div className="flex items-center gap-2 truncate">
               <span
                 className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: selectedProject.color || "#3b82f6" }}
+                style={{
+                  backgroundColor: selectedProject.color || PROJECT_FALLBACK_COLOR,
+                }}
               />
               <span className="truncate font-medium">
                 {selectedProject.name}
@@ -184,7 +204,9 @@ export function CalendarProjectPicker({
                   <div className="flex items-center gap-2 truncate">
                     <span
                       className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: proj.color || "#3b82f6" }}
+                      style={{
+                        backgroundColor: proj.color || PROJECT_FALLBACK_COLOR,
+                      }}
                     />
                     <span className="truncate">{proj.name}</span>
                     {proj.teamName && (

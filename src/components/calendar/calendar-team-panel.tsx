@@ -17,7 +17,7 @@ import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
 
 /** Members listed before "Show all"; selected members always stay visible. */
-const COLLAPSED_MEMBER_COUNT = 8;
+const COLLAPSED_MEMBER_COUNT = 5;
 
 type TeamMember = Awaited<ReturnType<typeof apiClient.teams.members>>[number];
 
@@ -132,6 +132,7 @@ export function CalendarTeamPanel({
             <CalendarSelectableRow
               key={member.id}
               label={name}
+              sublabel={member.user.email}
               // "member" is the default role and says nothing; any other
               // role rides after the name as a quiet mono badge.
               meta={member.role !== "member" ? member.role : undefined}

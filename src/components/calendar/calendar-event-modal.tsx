@@ -270,27 +270,29 @@ export function CalendarEventModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`${mapleMono.variable} max-h-[88vh] max-w-lg overflow-y-auto rounded-lg border bg-card p-5 text-card-foreground shadow-lg`}
+        className={`${mapleMono.variable} max-h-[88vh] max-w-lg overflow-y-auto`}
       >
         <DialogHeader className="pb-1">
           <div>
-            {isLive ? (
-              <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-primary px-2.5 text-[11px] font-semibold text-primary-foreground">
-                <span
-                  aria-hidden
-                  className="size-1.5 animate-pulse rounded-full bg-primary-foreground motion-reduce:animate-none"
-                />
-                Live now
-              </span>
-            ) : isPast ? (
-              <span className="inline-flex h-[22px] items-center rounded-full bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground">
-                Completed
-              </span>
-            ) : (
-              <span className="inline-flex h-[22px] items-center rounded-full bg-primary px-2.5 text-[11px] font-semibold text-primary-foreground">
-                Confirmed
-              </span>
-            )}
+            {/* A quiet mono status label in the rail's eyebrow language; only
+                "Live now" carries the ember dot (ember marks "now"). */}
+            <span
+              className={`inline-flex h-5 items-center gap-1.5 rounded-[4px] border px-1.5 font-code text-[11px] font-medium uppercase tracking-[0.12em] ${
+                isLive ? "text-foreground" : "text-muted-foreground"
+              }`}
+            >
+              <span
+                aria-hidden
+                className={`size-1.5 rounded-full ${
+                  isLive
+                    ? "bg-primary"
+                    : isPast
+                      ? "bg-muted-foreground/40"
+                      : "bg-muted-foreground"
+                }`}
+              />
+              {isLive ? "Live now" : isPast ? "Completed" : "Confirmed"}
+            </span>
           </div>
 
           <DialogTitle className="mt-2 break-words text-xl font-bold tracking-tight text-foreground">
@@ -335,11 +337,19 @@ export function CalendarEventModal({
           {event.data?.project && (
             <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
               <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                {/* A project's own color fills the tile; without one it takes
+                    the neutral tile the Meet row uses. */}
                 <div
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
-                  style={{
-                    backgroundColor: event.data.project.color || "#2563eb",
-                  }}
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                    event.data.project.color
+                      ? "text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                  style={
+                    event.data.project.color
+                      ? { backgroundColor: event.data.project.color }
+                      : undefined
+                  }
                 >
                   <FolderGit2 className="size-4" />
                 </div>
@@ -470,7 +480,7 @@ export function CalendarEventModal({
           <DialogFooter className="mt-4 flex items-center justify-between border-t pt-3 sm:justify-between">
             <Button
               type="button"
-              variant="ghost"
+              variant="destructive"
               size="sm"
               disabled={isDeleting}
               onClick={() => {
@@ -480,7 +490,7 @@ export function CalendarEventModal({
                   handleDeleteSingle();
                 }
               }}
-              className="h-8 cursor-pointer gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
+              className="h-8 cursor-pointer gap-1.5"
             >
               {isDeleting ? (
                 <>

@@ -3,9 +3,12 @@
 import * as React from "react";
 import { Building2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-import { CalendarPanelCard } from "./calendar-panel-card";
+import { CalendarPanelCard, CalendarPanelShowAll } from "./calendar-panel-card";
 import { CalendarSelectableRow } from "./calendar-selectable-row";
 import type { CalendarAttendeeItem } from "./calendar-attendee-types";
+
+/** Rooms listed before "Show all"; selected rooms always stay visible. */
+const COLLAPSED_ROOM_COUNT = 5;
 
 interface CalendarRoomsPanelProps {
   selectedAttendees: CalendarAttendeeItem[];
@@ -19,6 +22,7 @@ export function CalendarRoomsPanel({
   defaultOpen,
 }: CalendarRoomsPanelProps): React.ReactElement {
   const [rooms, setRooms] = React.useState<CalendarAttendeeItem[]>([]);
+  const [showAll, setShowAll] = React.useState(false);
 
   React.useEffect(() => {
     let active = true;
@@ -33,7 +37,8 @@ export function CalendarRoomsPanel({
             email: room.email,
             image: null,
             type: "room",
-            details: room.building || "Main Office",
+            // No building on record: the row shows seats only.
+            details: room.building || undefined,
             capacity: room.capacity,
           })),
         );
@@ -56,21 +61,28 @@ export function CalendarRoomsPanel({
   const orderedRooms = [...rooms].sort(
     (a, b) => Number(selectedIds.has(b.id)) - Number(selectedIds.has(a.id)),
   );
+  const listedRooms = showAll
+    ? orderedRooms
+    : orderedRooms.filter(
+        (room, index) =>
+          index < COLLAPSED_ROOM_COUNT || selectedIds.has(room.id),
+      );
+  const hiddenCount = orderedRooms.length - listedRooms.length;
 
   return (
     <CalendarPanelCard
       title="Rooms"
-      meta={`${rooms.length}`}
+      meta={`${rooms.length} ${rooms.length === 1 ? "room" : "rooms"}`}
       active={hasSelection}
       defaultOpen={defaultOpen}
     >
       <div className="space-y-0.5">
         {orderedRooms.length === 0 ? (
-          <p className="px-2 py-3 text-xs text-muted-foreground">
+          <p className="px-1.5 py-2 text-xs text-muted-foreground">
             No rooms found
           </p>
         ) : (
-          orderedRooms.map((room) => (
+          listedRooms.map((room) => (
             <CalendarSelectableRow
               key={room.id}
               label={room.name}
@@ -82,7 +94,7 @@ export function CalendarRoomsPanel({
                   {room.details}
                   {room.capacity !== undefined && (
                     <>
-                      <span aria-hidden> · </span>
+                      {room.details && <span aria-hidden> · </span>}
                       <span className="font-code text-[11px] tabular-nums">
                         {room.capacity} {room.capacity === 1 ? "seat" : "seats"}
                       </span>
@@ -92,6 +104,13 @@ export function CalendarRoomsPanel({
               }
             />
           ))
+        )}
+        {hiddenCount > 0 && (
+          <CalendarPanelShowAll
+            noun="rooms"
+            hiddenCount={hiddenCount}
+            onShowAll={() => setShowAll(true)}
+          />
         )}
       </div>
     </CalendarPanelCard>

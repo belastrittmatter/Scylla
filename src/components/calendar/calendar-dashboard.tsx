@@ -35,10 +35,10 @@ import { useSession } from "@/lib/auth-client";
 import { useCalendarSettings } from "@/hooks/use-calendar-settings";
 import { getViewChipLabel } from "./calendar-toolbar-lib";
 import {
+  CALENDAR_SCOPE_CLASS,
   GOOGLE_EVENT_FALLBACK_COLOR,
   LOCAL_EVENT_FALLBACK_COLOR,
 } from "./calendar-event-colors";
-
 
 const CalendarAddDialog = dynamic(
   () =>
@@ -353,6 +353,8 @@ export function CalendarDashboard() {
   );
 
   const weekChipLabel = getViewChipLabel(viewInfo.view, viewInfo.date);
+  // At lg the time grid stretches its hours to fill the card (see timeGrid).
+  const visibleHours = Math.max(1, settings.dayEndHour - settings.dayStartHour);
   const timePattern = settings.timeFormat === "24h" ? "HH:mm" : "h a";
 
   const openAddEvent = (): void => {
@@ -364,8 +366,10 @@ export function CalendarDashboard() {
     <div
       className={cn(
         mapleMono.variable,
+        CALENDAR_SCOPE_CLASS,
         "flex w-full flex-col gap-4 p-4 sm:gap-5 sm:p-6 lg:h-full lg:min-h-0",
       )}
+      style={{ "--cal-hours": visibleHours } as React.CSSProperties}
     >
       <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <div className="min-w-0">
@@ -422,35 +426,44 @@ export function CalendarDashboard() {
       </header>
 
       <div className="grid gap-4 sm:gap-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="order-last flex min-w-0 flex-col divide-y self-start overflow-hidden rounded-lg border bg-card lg:order-none lg:max-h-full lg:overflow-y-auto">
-          <CalendarTeamPanel
-            selectedAttendees={selectedAttendees}
-            onToggleAttendee={handleToggleAttendee}
-            currentUserEmail={session?.user?.email}
-            defaultOpen={!compact}
-          />
-          <CalendarPeoplePanel
-            selectedAttendees={selectedAttendees}
-            onToggleAttendee={handleToggleAttendee}
-            currentUserEmail={session?.user?.email}
-          />
-          <CalendarRoomsPanel
-            selectedAttendees={selectedAttendees}
-            onToggleAttendee={handleToggleAttendee}
-            defaultOpen={!compact}
+        {/* At lg the rail and the card both fill the row, so the two
+            bordered columns end on one line. The rail scrolls inside; a short
+            fade at its bottom edge says so, instead of a row cut in half.
+            Below lg it sits under the calendar at content height. */}
+        <div className="order-last min-w-0 self-start overflow-hidden rounded-lg border bg-card lg:order-none lg:h-full lg:overflow-y-auto lg:[scrollbar-width:thin]">
+          <div className="flex flex-col divide-y lg:pb-3">
+            <CalendarTeamPanel
+              selectedAttendees={selectedAttendees}
+              onToggleAttendee={handleToggleAttendee}
+              currentUserEmail={session?.user?.email}
+              defaultOpen={!compact}
+            />
+            <CalendarPeoplePanel
+              selectedAttendees={selectedAttendees}
+              onToggleAttendee={handleToggleAttendee}
+              currentUserEmail={session?.user?.email}
+              defaultOpen={!compact}
+            />
+            <CalendarRoomsPanel
+              selectedAttendees={selectedAttendees}
+              onToggleAttendee={handleToggleAttendee}
+              defaultOpen={!compact}
+            />
+          </div>
+          <div
+            aria-hidden
+            className="pointer-events-none sticky bottom-0 -mt-6 hidden h-6 bg-linear-to-t from-card lg:block"
           />
         </div>
 
-        {/* Sized to its content, capped by the space left: the card ends under
-            the last hour row and the grid scrolls inside once it is taller. A
-            grid (not flex) container lets the 1fr row clamp to max-height, so
-            the time grid's own scroller gets a definite height. Month view is
-            a fill-the-space layout, so it takes the whole cap. */}
+        {/* Below lg: sized to its content, capped by the space left, and the
+            grid scrolls inside once it is taller (a grid container lets the
+            1fr row clamp to max-height). Month view fills the whole cap.
+            At lg the card fills the row and the time grid stretches its hour
+            rows to fit (timeGrid below), so the grid ends on the card's edge. */}
         <div
-          className={`order-first grid max-h-[max(480px,calc(100svh-10rem))] min-w-0 grid-rows-[minmax(0,1fr)] self-start overflow-hidden rounded-lg border bg-card lg:order-none lg:max-h-full ${
-            viewInfo.view === "month"
-              ? "h-[max(480px,calc(100svh-10rem))] lg:h-full"
-              : ""
+          className={`order-first grid max-h-[max(480px,calc(100svh-10rem))] min-w-0 grid-rows-[minmax(0,1fr)] self-start overflow-hidden rounded-lg border bg-card lg:order-none lg:h-full lg:max-h-full ${
+            viewInfo.view === "month" ? "h-[max(480px,calc(100svh-10rem))]" : ""
           }`}
         >
           <EventCalendar<CustomEventData>
@@ -488,12 +501,25 @@ export function CalendarDashboard() {
             onEventUpdate={handleEventUpdate}
             className="flex h-full min-h-0 flex-col"
             classNames={{
-              timeGrid: "border-border/70",
+              // At lg the time track (the grid's last child) is a size
+              // container, and each hour takes an equal share of its height:
+              // --cal-hours rows fill it exactly, never below 3rem (then it
+              // scrolls). The track's 0.5rem top inset keeps the first hour
+              // label, centred on its line like the rest, from clipping.
+              timeGrid: cn(
+                "border-border/70 [&_[data-slot=scroll-area-viewport]]:pt-2",
+                "lg:[&>div:last-child]:[container-type:size]",
+                "lg:[--ec-hour-height:max(3rem,calc((100cqh_-_0.5rem_-_1px)/var(--cal-hours)))]!",
+              ),
               timeGridHeader: "border-border/70",
-              timeGutter: "w-18 border-border/70",
-              dayColumn: "border-border/70",
+              // The track's top inset carries the gutter and column rules up
+              // to the all-day row, so the inset reads as part of the grid.
+              timeGutter:
+                "w-18 border-border/70 before:absolute before:bottom-full before:-right-px before:h-2 before:border-e before:border-border/70",
+              dayColumn:
+                "border-border/70 before:absolute before:bottom-full before:-right-px before:h-2 before:border-e before:border-border/70 last:before:hidden",
               allDaySection: "border-border/70",
-              allDayLabel: "text-[11px]",
+              allDayLabel: "font-code text-[11px] tabular-nums",
               timeGutterLabel:
                 "font-code text-[11px] tabular-nums text-muted-foreground",
               event: "rounded-md border transition-colors",
@@ -511,20 +537,19 @@ export function CalendarDashboard() {
                 <button
                   type="button"
                   onClick={openAddEvent}
-                  className="font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:underline"
+                  className="rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:underline focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
                   Add event
                 </button>
               </p>
             )}
             // The default gutter skips the day-start label (it would clip at
-            // the grid's top edge); this one sits just inside that edge.
+            // the grid's top edge). The track's top inset (timeGrid) makes
+            // room, so it is labelled and centred on its line like the rest.
             renderTimeGutterSlot={({ time, hour, minute }) =>
-              hour === settings.dayStartHour && minute === 0 ? (
-                <span className="relative top-2">
-                  {format(time, timePattern)}
-                </span>
-              ) : undefined
+              hour === settings.dayStartHour && minute === 0
+                ? format(time, timePattern)
+                : undefined
             }
             // Solid hairlines mark the hours (the grid's own slot lines);
             // dashed rules mark the half-hours, echoing the landing's rails.
@@ -537,16 +562,25 @@ export function CalendarDashboard() {
               ) {
                 if (m > boundsStartMin) marks.push(m);
               }
-              return marks.map((m) => (
+              return [
+                // The first hour's rule: its label is centred on it, like
+                // every other hour's.
                 <div
-                  key={m}
+                  key="start"
                   aria-hidden
-                  className="absolute inset-x-0 border-t border-dashed border-border/70"
-                  style={{
-                    top: `calc(var(--ec-hour-height) * ${(m - boundsStartMin) / 60})`,
-                  }}
-                />
-              ));
+                  className="absolute inset-x-0 top-0 border-t"
+                />,
+                ...marks.map((m) => (
+                  <div
+                    key={m}
+                    aria-hidden
+                    className="absolute inset-x-0 border-t border-dashed border-border/70"
+                    style={{
+                      top: `calc(var(--ec-hour-height) * ${(m - boundsStartMin) / 60})`,
+                    }}
+                  />
+                )),
+              ];
             }}
             onEventClick={(occurrence) => {
               setSelectedEvent(occurrence.event);
@@ -687,12 +721,17 @@ export function CalendarDashboard() {
                 <span className="hidden min-w-0 truncate text-muted-foreground md:inline">
                   Link it to see your Google events here.
                 </span>
-                <Link
-                  href="/account/settings"
-                  className="ml-auto shrink-0 font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:underline"
+                <Button
+                  variant="outline"
+                  size="xs"
+                  className="ml-auto shrink-0"
+                  render={<Link href="/account/settings" />}
                 >
-                  Connect
-                </Link>
+                  <span className="sm:hidden">Connect</span>
+                  <span className="hidden sm:inline">
+                    Connect Google Calendar
+                  </span>
+                </Button>
               </div>
             )}
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">

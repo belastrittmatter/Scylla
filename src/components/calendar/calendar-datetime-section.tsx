@@ -36,6 +36,13 @@ export function CalendarDateTimeSection({
   onSetDuration,
 }: CalendarDateTimeSectionProps) {
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+  // Inputs take their label through htmlFor; the date trigger is a button,
+  // so it is named "<label> <value>" (e.g. "Date Tue, Nov 17, 2026").
+  const fieldId = React.useId();
+  const dateLabelId = `${fieldId}-date-label`;
+  const dateTriggerId = `${fieldId}-date`;
+  const startId = `${fieldId}-start`;
+  const endId = `${fieldId}-end`;
 
   const dateObj = React.useMemo(() => {
     if (!dateStr) return undefined;
@@ -50,7 +57,10 @@ export function CalendarDateTimeSection({
       {/* Date & Time Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-muted-foreground">
+          <Label
+            id={dateLabelId}
+            className="text-xs font-medium text-muted-foreground"
+          >
             Date
           </Label>
           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
@@ -59,6 +69,8 @@ export function CalendarDateTimeSection({
                 <Button
                   type="button"
                   variant="outline"
+                  id={dateTriggerId}
+                  aria-labelledby={`${dateLabelId} ${dateTriggerId}`}
                   className={cn(
                     "h-8.5 w-full justify-start px-2.5 text-left text-xs font-normal",
                     !dateStr && "text-muted-foreground",
@@ -86,10 +98,14 @@ export function CalendarDateTimeSection({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label
+              htmlFor={startId}
+              className="text-xs font-medium text-muted-foreground"
+            >
               Start
             </Label>
             <Input
+              id={startId}
               type="time"
               value={startTime}
               onChange={(e) => onStartTimeChange(e.target.value)}
@@ -98,10 +114,14 @@ export function CalendarDateTimeSection({
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label
+              htmlFor={endId}
+              className="text-xs font-medium text-muted-foreground"
+            >
               End
             </Label>
             <Input
+              id={endId}
               type="time"
               value={endTime}
               onChange={(e) => onEndTimeChange(e.target.value)}

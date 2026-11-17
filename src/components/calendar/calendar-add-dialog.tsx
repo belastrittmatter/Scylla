@@ -453,6 +453,16 @@ export function CalendarAddDialog({
     }
   };
 
+  // Every label names its control: inputs through htmlFor, trigger buttons
+  // through aria-labelledby (label + current value, e.g. "Template Custom").
+  const fieldId = React.useId();
+  const titleId = `${fieldId}-title`;
+  const templateLabelId = `${fieldId}-template-label`;
+  const templateTriggerId = `${fieldId}-template`;
+  const projectLabelId = `${fieldId}-project-label`;
+  const attendeesId = `${fieldId}-attendees`;
+  const notesId = `${fieldId}-notes`;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -470,7 +480,9 @@ export function CalendarAddDialog({
         <form onSubmit={handleSubmit} className="space-y-3 pt-1">
           {/* Title with Team Prefix */}
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-foreground">Title</Label>
+            <Label htmlFor={titleId} className="text-xs font-medium text-foreground">
+              Title
+            </Label>
             <InputGroup className="h-9">
               {selectedProject?.teamName && (
                 <InputGroupAddon
@@ -481,6 +493,7 @@ export function CalendarAddDialog({
                 </InputGroupAddon>
               )}
               <InputGroupInput
+                id={titleId}
                 placeholder="Event title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -494,7 +507,10 @@ export function CalendarAddDialog({
           {/* Template & Project Picker Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label
+                id={templateLabelId}
+                className="text-xs font-medium text-muted-foreground"
+              >
                 Template
               </Label>
               <Select
@@ -507,7 +523,11 @@ export function CalendarAddDialog({
                     );
                 }}
               >
-                <SelectTrigger className="h-8.5 w-full text-xs">
+                <SelectTrigger
+                  id={templateTriggerId}
+                  aria-labelledby={`${templateLabelId} ${templateTriggerId}`}
+                  className="h-8.5 w-full text-xs"
+                >
                   <SelectValue placeholder="Custom">
                     {selectedEventType
                       ? `${selectedEventType.name} (${selectedEventType.duration}m)`
@@ -526,7 +546,10 @@ export function CalendarAddDialog({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label
+                id={projectLabelId}
+                className="text-xs font-medium text-muted-foreground"
+              >
                 Project
               </Label>
               <CalendarProjectPicker
@@ -534,6 +557,7 @@ export function CalendarAddDialog({
                 onChange={handleProjectChange}
                 disabled={isSubmitting}
                 hideLabel
+                labelledBy={projectLabelId}
               />
             </div>
           </div>
@@ -569,10 +593,14 @@ export function CalendarAddDialog({
 
           {/* Invite Colleagues */}
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-foreground">
+            <Label
+              htmlFor={attendeesId}
+              className="text-xs font-medium text-foreground"
+            >
               Attendees
             </Label>
             <CalendarAttendeePicker
+              id={attendeesId}
               value={selectedAttendees}
               onChange={setSelectedAttendees}
               placeholder="Add attendees..."
@@ -581,8 +609,11 @@ export function CalendarAddDialog({
 
           {/* Agenda / Notes */}
           <div className="space-y-1">
-            <Label className="text-xs font-medium text-foreground">Notes</Label>
+            <Label htmlFor={notesId} className="text-xs font-medium text-foreground">
+              Notes
+            </Label>
             <Textarea
+              id={notesId}
               rows={2}
               placeholder="Add notes..."
               value={description}
