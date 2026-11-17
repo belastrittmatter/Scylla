@@ -3,6 +3,10 @@ import { renderToString } from "react-dom/server";
 import { describe, it, expect } from "bun:test";
 import { ProjectGithubCard } from "@/components/projects/settings/project-github-card";
 import { ProjectSettingsView } from "@/components/projects/settings/project-settings-view";
+import {
+  PROJECT_SETTINGS_FRAME,
+  ProjectSettingsSkeleton,
+} from "@/components/projects/settings/project-settings-skeleton";
 import { ProjectRow } from "@/components/projects/project-row";
 import ProjectSettingsPage, {
   metadata,
@@ -34,6 +38,19 @@ describe("ProjectGithubCard", () => {
     );
     expect(html).toContain("Sync now");
     expect(html).not.toContain("<input");
+  });
+
+  it("names the section with an h2 and marks the new-tab link for screen readers", () => {
+    const html = renderToString(
+      <ProjectGithubCard
+        githubRepo="octo/repo"
+        canSync
+        isSyncing={false}
+        onSync={noop}
+      />,
+    );
+    expect(html).toMatch(/<h2[^>]*>GitHub Integration<\/h2>/);
+    expect(html).toContain("(opens in a new tab)");
   });
 
   it("shows Syncing… and disables the button while syncing", () => {
@@ -164,6 +181,8 @@ describe("ProjectSettingsView", () => {
     expect(html).toContain("Sync now");
     expect(html).toContain("Team Members");
     expect(html).toContain("Add member");
+    expect(html).toMatch(/<h1[^>]*>Alpha Settings<\/h1>/);
+    expect(html).toMatch(/<h2[^>]*>Team Members<\/h2>/);
   });
 
   it("members can sync but not add members", () => {
@@ -214,6 +233,14 @@ describe("ProjectRow settings link", () => {
       expect(html).toContain('aria-label="Open Alpha board"');
     });
   }
+});
+
+describe("ProjectSettingsSkeleton", () => {
+  it("uses the same frame as the view so loading does not shift", () => {
+    const skeleton = renderToString(<ProjectSettingsSkeleton />);
+    expect(skeleton).toContain(PROJECT_SETTINGS_FRAME);
+    expect(view("admin")).toContain(PROJECT_SETTINGS_FRAME);
+  });
 });
 
 describe("project settings page module", () => {
