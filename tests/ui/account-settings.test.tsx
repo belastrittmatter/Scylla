@@ -23,13 +23,20 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
     expect(html).toContain("Account Settings");
     // Ensure "Go to Calendar" has been removed as requested
     expect(html).not.toContain("Go to Calendar");
-    // Verify card structure
-    expect(html).toContain("Interface Theme");
-    expect(html).toContain("Default Calendar View");
-    expect(html).toContain("Date &amp; Time Formatting");
-    expect(html).toContain("Working Hours Window");
-    expect(html).toContain("Calendar Overlays");
-    expect(html).toContain("Restore Defaults");
+    // Verify the settings rows (label | control) and their sections
+    expect(html).toContain("Appearance");
+    expect(html).toContain("Theme");
+    expect(html).toContain("Default view");
+    expect(html).toContain("Time format");
+    expect(html).toContain("Week starts on");
+    expect(html).toContain("Grid slots");
+    expect(html).toContain("Working hours");
+    expect(html).toContain("Show weekends");
+    expect(html).toContain("Current time indicator");
+    expect(html).toContain("Restore defaults");
+    // Option groups are exposed as radio groups with a checked state
+    expect(html).toContain('role="radiogroup"');
+    expect(html).toContain('aria-checked="true"');
   });
 
   it("renders AccountSettingsView with Profile, single Connected Accounts, Danger Zone, and without Set Password", () => {
@@ -46,8 +53,8 @@ describe("Account & App Settings (Issue #34 & #37)", () => {
     expect(html).toContain("Profile");
     expect(html).toContain("Connected Accounts");
     expect(html).toContain("AI Agents &amp; MCP Integrations");
-    expect(html).toContain("AI Agent &amp; MCP Capabilities");
-    expect(html).toContain("MCP Server URL");
+    expect(html).toContain("Authorized agents");
+    expect(html).toContain("MCP server URL");
     expect(html).toContain("Copy");
     expect(html).toContain("/api/mcp");
     expect(html).toContain("Danger Zone");

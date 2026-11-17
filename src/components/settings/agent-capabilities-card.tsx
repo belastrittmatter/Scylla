@@ -1,20 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, Ghost } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { copyToClipboard } from "@/lib/clipboard";
 import { AgentRow, type ConnectedMcpClientItem } from "./agent-row";
@@ -110,86 +99,74 @@ export function AgentCapabilitiesCard() {
   };
 
   return (
-    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
-      <CardHeader className="gap-1.5 px-6">
-        <CardTitle className="text-lg font-semibold md:text-xl">
-          AI Agent & MCP Capabilities
-        </CardTitle>
-        <CardDescription className="text-xs text-muted-foreground md:text-sm">
-          Audit and revoke active capabilities granted to autonomous AI agents
-          and MCP integrations.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6 px-6 pb-6">
-        {/* MCP Server URL Copy Input */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="mcp-server-url"
-            className="text-xs font-medium text-muted-foreground"
-          >
-            MCP Server URL
-          </Label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="mcp-server-url"
-              readOnly
-              value={mcpUrl}
-              className="font-mono text-xs select-all"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCopyUrl}
-              className="shrink-0 gap-1.5 text-xs"
-            >
-              {copied ? (
-                <Check className="size-3.5 text-primary" />
-              ) : (
-                <Copy className="size-3.5" />
-              )}
-              {copied ? "Copied" : "Copy"}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
+    <>
+      <div className="space-y-2 px-4 py-3.5 sm:px-5">
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium text-foreground">
+            MCP server URL
+          </p>
+          <p className="text-xs text-pretty text-muted-foreground">
             Paste this URL into your MCP client (Cursor, Claude Desktop, Codex)
             to connect.
           </p>
         </div>
+        <div className="flex items-start gap-2">
+          <code
+            id="mcp-server-url"
+            className="min-w-0 flex-1 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-xs leading-4 break-all text-foreground select-all"
+          >
+            {mcpUrl}
+          </code>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCopyUrl}
+            className="shrink-0 gap-1.5 text-xs"
+          >
+            {copied ? (
+              <Check className="size-3.5" aria-hidden="true" />
+            ) : (
+              <Copy className="size-3.5" aria-hidden="true" />
+            )}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        </div>
+      </div>
 
-        <Separator />
+      <div>
+        <div className="flex items-baseline justify-between gap-4 px-4 pt-3.5 pb-2 sm:px-5">
+          <p className="text-sm font-medium text-foreground">
+            Authorized agents
+          </p>
+          {!isLoading ? (
+            <span className="font-mono text-xs text-muted-foreground">
+              {clients.length}
+            </span>
+          ) : null}
+        </div>
 
-        {/* Authorized AI Agents List */}
-        <div className="space-y-3">
-          <Label className="text-xs font-medium text-muted-foreground">
-            Authorized Agents
-          </Label>
-
-          {isLoading ? (
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-9 rounded-lg" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
+        {isLoading ? (
+          <div className="flex items-center justify-between gap-4 border-t border-border px-4 py-3.5 sm:px-5">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-8 rounded-md" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-48" />
               </div>
-              <Skeleton className="h-8 w-24" />
             </div>
-          ) : clients.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center text-muted-foreground">
-              <Ghost className="mb-2 size-8 opacity-40" />
-              <p className="text-sm font-medium">No Active AI Agents</p>
-              <p className="text-xs text-muted-foreground">
-                No active AI agents or MCP integrations are currently
-                authorized.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {clients.map((client) => (
+            <Skeleton className="h-7 w-24" />
+          </div>
+        ) : clients.length === 0 ? (
+          <p className="px-4 pb-3.5 text-xs text-muted-foreground sm:px-5">
+            No AI agents or MCP integrations are authorized yet. Connect a
+            client with the URL above.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border border-t border-border">
+            {clients.map((client) => (
+              <li key={client.clientId}>
                 <AgentRow
-                  key={client.clientId}
                   agent={client}
                   isRevoking={revokingId === client.clientId}
                   onRevoke={() => handleRevoke(client.clientId)}
@@ -197,17 +174,11 @@ export function AgentCapabilitiesCard() {
                     handleScopesChange(client.clientId, newScopes)
                   }
                 />
-              ))}
-            </div>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="rounded-b-xl border-t bg-sidebar !py-4 px-6 text-xs text-muted-foreground">
-        <span>
-          Authorized AI agents and MCP servers access your calendar, tasks, and
-          teams under strict capability boundaries.
-        </span>
-      </CardFooter>
-    </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }

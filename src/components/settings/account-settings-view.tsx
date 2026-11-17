@@ -15,130 +15,109 @@ import {
 import { useSession } from "@/lib/auth-client";
 import { ConnectedAccountsCard } from "@/components/settings/connected-accounts-card";
 import { AgentCapabilitiesCard } from "@/components/settings/agent-capabilities-card";
+import {
+  SettingsPageHeader,
+  SettingsSection,
+} from "@/components/settings/settings-primitives";
 import { userNameSchema } from "@/lib/validations/user";
+
+/**
+ * Brings the better-auth-ui cards in line with the settings groups: a 1px
+ * border with no shadow, row-sized titles, and an untinted footer (this also
+ * removes the destructive wash on the delete card).
+ */
+const authCardClassNames = {
+  base: "gap-4 rounded-lg pt-4 pb-0 shadow-none",
+  header: "px-4 sm:px-5",
+  title: "text-sm font-medium md:text-sm",
+  description: "text-xs md:text-xs",
+  content: "px-4 sm:px-5",
+  instructions: "text-start text-xs md:text-xs",
+  footer: "items-start bg-transparent px-4 !py-3 sm:px-5 md:items-center",
+};
 
 export function AccountSettingsView() {
   const { data: session } = useSession();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10 p-4 sm:p-6 lg:p-8">
-      {/* Header with Title, Description, and Navigation back to App Settings */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-            Account Settings
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Manage your personal profile, credentials, connected accounts, and
-            security preferences.
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-3xl space-y-8 p-4 sm:p-6 lg:p-8">
+      <SettingsPageHeader
+        title="Account Settings"
+        description="Your profile, connected accounts, AI agent access and sessions."
+        action={
+          <Link
+            href="/settings"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "gap-1.5 text-xs",
+            )}
+          >
+            <ArrowLeft className="size-3.5" aria-hidden="true" />
+            Calendar & Display Preferences
+          </Link>
+        }
+      />
 
-        <Link
-          href="/settings"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "gap-1.5 border-neutral-200 text-xs text-neutral-700 dark:border-neutral-800 dark:text-neutral-300",
-          )}
-        >
-          <ArrowLeft className="size-3.5" />
-          Calendar & Display Preferences
-        </Link>
-      </div>
+      <SettingsSection
+        eyebrow="Profile"
+        description="Your avatar, name and primary email address."
+        framed={false}
+      >
+        <UpdateAvatarCard classNames={authCardClassNames} />
+        <UpdateFieldCard
+          classNames={authCardClassNames}
+          name="name"
+          label="Name"
+          value={session?.user.name}
+          description="Please enter your full name, or a display name you are comfortable with."
+          instructions="Please use 32 characters at maximum."
+          placeholder="Enter your name"
+          required
+          validate={(val: string) => userNameSchema.safeParse(val).success}
+          errorMessage={{
+            required: "Name cannot be empty.",
+            validate: "Name must be between 1 and 32 characters.",
+          }}
+        />
+        <ChangeEmailCard classNames={authCardClassNames} disabled />
+      </SettingsSection>
 
-      <div className="space-y-8">
-        {/* Profile Section */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              Profile
-            </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Manage your public avatar, name, and primary email address.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <UpdateAvatarCard />
-            <UpdateFieldCard
-              name="name"
-              label="Name"
-              value={session?.user.name}
-              description="Please enter your full name, or a display name you are comfortable with."
-              instructions="Please use 32 characters at maximum."
-              placeholder="Enter your name"
-              required
-              validate={(val: string) => userNameSchema.safeParse(val).success}
-              errorMessage={{
-                required: "Name cannot be empty.",
-                validate: "Name must be between 1 and 32 characters.",
-              }}
-            />
-            <ChangeEmailCard disabled />
-          </div>
-        </section>
+      <SettingsSection
+        eyebrow="Connected Accounts"
+        description="Sign-in providers linked to your account. Google also connects your calendars."
+      >
+        <ConnectedAccountsCard />
+      </SettingsSection>
 
-        {/* Connected Accounts Section */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              Connected Accounts
-            </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Manage third-party OAuth providers and linked logins.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <ConnectedAccountsCard />
-          </div>
-        </section>
+      <SettingsSection
+        eyebrow="AI Agents & MCP Integrations"
+        description="Connect MCP clients and choose what each authorized agent can do."
+      >
+        <AgentCapabilitiesCard />
+      </SettingsSection>
 
-        {/* AI Agents & Capabilities Section */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              AI Agents &amp; MCP Integrations
-            </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Manage capability grants and access permissions for autonomous AI
-              agents.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <AgentCapabilitiesCard />
-          </div>
-        </section>
+      <SettingsSection
+        eyebrow="Security & Sessions"
+        description="View active browser and device sessions and revoke access remotely."
+        framed={false}
+      >
+        <SessionsCard classNames={authCardClassNames} />
+      </SettingsSection>
 
-        {/* Security & Sessions Section */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              Security & Sessions
-            </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              View active browser and device sessions and revoke access
-              remotely.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <SessionsCard />
-          </div>
-        </section>
-
-        {/* Danger Zone */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-red-600 dark:text-red-400">
-              Danger Zone
-            </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Irreversible account deletion and permanent data purge.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <DeleteAccountCard />
-          </div>
-        </section>
-      </div>
+      <SettingsSection
+        eyebrow="Danger Zone"
+        description="Permanently deletes your account and its data. This cannot be undone."
+        tone="destructive"
+        framed={false}
+      >
+        <DeleteAccountCard
+          classNames={{
+            ...authCardClassNames,
+            base: cn(authCardClassNames.base, "border-destructive/40"),
+            footer: cn(authCardClassNames.footer, "border-destructive/30"),
+          }}
+        />
+      </SettingsSection>
     </div>
   );
 }

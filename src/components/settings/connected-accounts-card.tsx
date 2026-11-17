@@ -5,14 +5,6 @@ import type { Account } from "better-auth";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { GoogleIcon, AuthUIContext } from "@daveyplate/better-auth-ui";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -77,42 +69,32 @@ export function ConnectedAccountsCard() {
   };
 
   return (
-    <Card className="w-full gap-6 pt-6 pb-0 text-start shadow-xs">
-      <CardHeader className="gap-1.5 px-6">
-        <CardTitle className="text-lg font-semibold md:text-xl">
-          Connected Accounts
-        </CardTitle>
-        <CardDescription className="text-xs text-muted-foreground md:text-sm">
-          Connect third-party OAuth providers for single sign-on and calendar
-          sync.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="px-6 pb-6">
+    <div>
+      <div className="flex items-center justify-between gap-4 px-4 py-3.5 sm:px-5">
         {isPending ? (
-          <div className="flex items-center justify-between rounded-lg border p-4">
+          <>
             <div className="flex items-center gap-3">
-              <Skeleton className="size-5 rounded-full" />
+              <Skeleton className="size-8 rounded-md" />
               <div className="space-y-1.5">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-3 w-36" />
               </div>
             </div>
-            <Skeleton className="h-8 w-20" />
-          </div>
+            <Skeleton className="h-7 w-16" />
+          </>
         ) : (
-          <div className="flex items-center justify-between rounded-lg border p-4 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-lg border bg-background shadow-2xs">
+          <>
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-background">
                 <GoogleIcon className="size-4 shrink-0" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">Google</span>
-                <span className="text-xs text-muted-foreground">
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">Google</p>
+                <p className="text-xs text-muted-foreground">
                   {isGoogleConnected
-                    ? "Connected for calendar sync & authentication"
+                    ? "Connected for sign-in and calendar sync"
                     : "Not connected"}
-                </span>
+                </p>
               </div>
             </div>
 
@@ -126,23 +108,22 @@ export function ConnectedAccountsCard() {
               onClick={
                 isGoogleConnected ? handleUnlinkGoogle : handleLinkGoogle
               }
-              className="gap-1.5 text-xs"
+              aria-label={isGoogleConnected ? "Unlink Google" : "Link Google"}
+              className="shrink-0 gap-1.5 text-xs"
             >
-              {isActionLoading && <Loader2 className="size-3.5 animate-spin" />}
+              {isActionLoading && (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+              )}
               {isGoogleConnected ? "Unlink" : "Link"}
             </Button>
-          </div>
+          </>
         )}
-        {isGoogleConnected && !canUnlinkGoogle ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Keep at least one connected account for sign-in.
-          </p>
-        ) : null}
-      </CardContent>
-
-      <CardFooter className="rounded-b-xl border-t bg-sidebar !py-4 px-6 text-xs text-muted-foreground">
-        <span>Google OAuth connects your calendars, agenda, and identity.</span>
-      </CardFooter>
-    </Card>
+      </div>
+      {isGoogleConnected && !canUnlinkGoogle ? (
+        <p className="-mt-1.5 px-4 pb-3.5 text-xs text-muted-foreground sm:px-5">
+          Keep at least one connected account for sign-in.
+        </p>
+      ) : null}
+    </div>
   );
 }
