@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import type { InviteDetails, Slot, BookedResult } from "./booking-types";
 import { BookingSuccessView } from "./booking-success-view";
@@ -164,46 +163,44 @@ export function MeetingBookingClient({ details }: { details: InviteDetails }) {
   }
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center px-4 py-8">
-      <Card className="border-border bg-card w-full max-w-5xl overflow-hidden rounded-3xl shadow-2xl">
-        <div className="divide-border grid grid-cols-1 divide-y md:grid-cols-12 md:divide-x md:divide-y-0">
-          <BookingDetailsSidebar
-            invite={invite}
-            organizer={organizer}
-            room={room}
-            members={members}
-            timeZone={timeZone}
-          />
+    <div className="border-line bg-surface overflow-hidden rounded-xl border">
+      <div className="divide-line grid grid-cols-1 divide-y lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:divide-x lg:divide-y-0">
+        <BookingDetailsSidebar
+          invite={invite}
+          organizer={organizer}
+          room={room}
+          members={members}
+        />
 
-          <div className="p-6 md:col-span-8 lg:p-8">
-            {!selectedSlot ? (
-              <BookingSlotsStep
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                slots={slots}
-                loadingSlots={loadingSlots}
-                timeZone={timeZone}
-                onSelectSlot={setSelectedSlot}
-              />
-            ) : (
-              <BookingFormStep
-                invite={invite}
-                selectedSlot={selectedSlot}
-                timeZone={timeZone}
-                guestName={guestName}
-                setGuestName={setGuestName}
-                guestEmail={guestEmail}
-                setGuestEmail={setGuestEmail}
-                guestNotes={guestNotes}
-                setGuestNotes={setGuestNotes}
-                isBooking={isBooking}
-                onBackToSlots={() => setSelectedSlot(null)}
-                onSubmit={handleBookingSubmit}
-              />
-            )}
-          </div>
+        <div className="min-w-0 p-5 sm:p-8">
+          {!selectedSlot ? (
+            <BookingSlotsStep
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              slots={slots}
+              loadingSlots={loadingSlots}
+              timeZone={timeZone}
+              includesRoom={invite.locationType === "room"}
+              onSelectSlot={setSelectedSlot}
+            />
+          ) : (
+            <BookingFormStep
+              invite={invite}
+              selectedSlot={selectedSlot}
+              timeZone={timeZone}
+              guestName={guestName}
+              setGuestName={setGuestName}
+              guestEmail={guestEmail}
+              setGuestEmail={setGuestEmail}
+              guestNotes={guestNotes}
+              setGuestNotes={setGuestNotes}
+              isBooking={isBooking}
+              onBackToSlots={() => setSelectedSlot(null)}
+              onSubmit={handleBookingSubmit}
+            />
+          )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

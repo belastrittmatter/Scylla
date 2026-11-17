@@ -2,9 +2,12 @@
 
 import * as React from "react";
 import { format, isBefore, startOfToday } from "date-fns";
-import { Calendar as CalendarIcon, Clock, Loader2 } from "lucide-react";
+import { getDefaultClassNames } from "react-day-picker";
+import { Globe, Loader2 } from "lucide-react";
+import { cn } from "cn";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { Eyebrow } from "@/components/landing/primitives";
 import type { Slot } from "./booking-types";
 import { formatSlotTime } from "./booking-utils";
 
@@ -14,6 +17,8 @@ interface BookingSlotsStepProps {
   slots: Slot[];
   loadingSlots: boolean;
   timeZone: string;
+  /** The invite books a physical room, so free times include the room too. */
+  includesRoom?: boolean;
   onSelectSlot: (slot: Slot) => void;
 }
 
@@ -23,78 +28,120 @@ export function BookingSlotsStep({
   slots,
   loadingSlots,
   timeZone,
+  includesRoom = false,
   onSelectSlot,
 }: BookingSlotsStepProps) {
+  const rdp = getDefaultClassNames();
+
+  const status = !selectedDate
+    ? "Pick a date to view available times"
+    : loadingSlots
+      ? "Checking availability…"
+      : slots.length === 0
+        ? "No open times"
+        : `${slots.length} ${slots.length === 1 ? "time" : "times"} available`;
+
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-      <div className="flex flex-col items-center sm:items-start lg:col-span-7">
-        <h2 className="text-foreground mb-4 flex items-center gap-2 text-base font-semibold">
-          <CalendarIcon className="h-4 w-4 text-orange-500" />
-          Select a Date
-        </h2>
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
+      <section aria-labelledby="booking-date-heading" className="min-w-0">
+        <Eyebrow as="h2" id="booking-date-heading" className="text-ink-2">
+          Select a date
+        </Eyebrow>
 
-        <div className="border-border shadow-xs bg-card w-full rounded-2xl border p-2 sm:w-auto">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              if (date) onSelectDate(date);
-            }}
-            disabled={(date) => isBefore(date, startOfToday())}
-            className="rounded-xl"
-          />
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={(date) => {
+            if (date) onSelectDate(date);
+          }}
+          disabled={(date) => isBefore(date, startOfToday())}
+          className="mt-4 bg-transparent p-0 tabular-nums [--cell-size:--spacing(9)] md:[--cell-size:--spacing(10)]"
+          classNames={{
+            root: cn("w-full md:w-fit", rdp.root),
+            caption_label: cn(
+              "font-code text-ink text-sm select-none",
+              rdp.caption_label,
+            ),
+            weekday: cn(
+              "font-code text-ink-3 flex-1 text-[11px] uppercase select-none",
+              rdp.weekday,
+            ),
+            // Today reads as ember text; once selected, the ember chip alone marks it.
+            today: cn("text-ember font-medium", rdp.today),
+          }}
+        />
+      </section>
+
+      <section aria-labelledby="booking-time-heading" className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <Eyebrow as="h2" id="booking-time-heading" className="text-ink-2">
+            Select a time
+          </Eyebrow>
+          <p className="text-ink-2 font-code flex items-center gap-1.5 text-xs">
+            <Globe className="size-3.5" aria-hidden="true" />
+            <span className="sr-only">Time zone:</span>
+            {timeZone}
+          </p>
         </div>
-      </div>
 
-      <div className="flex flex-col lg:col-span-5">
-        <h2 className="text-foreground mb-1 flex items-center gap-2 text-base font-semibold">
-          <Clock className="h-4 w-4 text-orange-500" />
-          Select a Time
-        </h2>
-        <p className="text-muted-foreground mb-4 text-xs">
-          {selectedDate
-            ? format(selectedDate, "EEEE, MMMM d")
-            : "Pick a date to view available times"}
+        <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <p className="text-ink text-base font-medium">
+            {selectedDate
+              ? format(selectedDate, "EEEE, MMMM d")
+              : "No date selected"}
+          </p>
+          <p
+            role="status"
+            aria-live="polite"
+            className="text-ink-2 font-code text-xs tabular-nums"
+          >
+            {status}
+          </p>
+        </div>
+        <p className="text-ink-2 mt-1 text-xs">
+          Times shown are when everyone{includesRoom ? " and the room" : ""} is
+          free.
         </p>
 
-        <div className="max-h-[380px] flex-1 space-y-2 overflow-y-auto pr-1">
+        <div className="mt-4">
           {loadingSlots ? (
-            <div className="text-muted-foreground flex h-48 flex-col items-center justify-center gap-2 text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
-              <span className="text-xs font-medium">
-                Checking mutual availability...
-              </span>
+            <div className="border-line text-ink-2 flex h-32 items-center justify-center gap-2 rounded-lg border border-dashed text-sm">
+              <Loader2
+                className="text-ink-3 size-4 animate-spin"
+                aria-hidden="true"
+              />
+              Checking mutual availability…
             </div>
           ) : slots.length === 0 ? (
-            <div className="border-border flex h-48 flex-col items-center justify-center rounded-2xl border border-dashed p-4 text-center">
-              <Clock className="text-muted-foreground/40 mb-2 h-8 w-8" />
-              <p className="text-foreground text-xs font-semibold">
-                No open slots
-              </p>
-              <p className="text-muted-foreground mt-1 text-[11px]">
+            <div className="border-line rounded-lg border border-dashed p-5">
+              <p className="text-ink text-sm font-medium">No open slots</p>
+              <p className="text-ink-2 mt-1 text-xs">
                 No mutual free time found for all required attendees on this
-                date.
+                date. Try another day.
               </p>
             </div>
           ) : (
-            slots.map((slot, idx) => (
-              <Button
-                key={idx}
-                variant="outline"
-                onClick={() => onSelectSlot(slot)}
-                className="border-border group h-11 w-full justify-between rounded-xl text-xs font-medium transition-all hover:border-orange-500 hover:bg-orange-500/5 hover:text-orange-600 sm:text-sm dark:hover:text-orange-400"
-              >
-                <span className="text-foreground font-semibold group-hover:text-orange-600 dark:group-hover:text-orange-400">
-                  {formatSlotTime(slot.start, timeZone)}
-                </span>
-                <span className="text-muted-foreground text-xs group-hover:text-orange-600 dark:group-hover:text-orange-400">
-                  {formatSlotTime(slot.end, timeZone)}
-                </span>
-              </Button>
-            ))
+            <ul className="grid grid-cols-3 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {slots.map((slot) => {
+                const start = formatSlotTime(slot.start, timeZone);
+                const end = formatSlotTime(slot.end, timeZone);
+                return (
+                  <li key={slot.start}>
+                    <Button
+                      variant="outline"
+                      onClick={() => onSelectSlot(slot)}
+                      aria-label={`${start} to ${end}`}
+                      className="font-code text-ink hover:border-ember hover:text-ember dark:hover:border-ember h-11 w-full rounded-lg text-sm tabular-nums hover:bg-transparent dark:hover:bg-transparent"
+                    >
+                      {start}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

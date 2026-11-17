@@ -30,13 +30,19 @@ export function Eyebrow({
   index,
   children,
   className,
+  as: Tag = "p",
+  id,
 }: {
   index?: string;
   children: React.ReactNode;
   className?: string;
+  /** Render as a heading when the label names a section (default: p). */
+  as?: "p" | "h2" | "h3";
+  id?: string;
 }) {
   return (
-    <p
+    <Tag
+      id={id}
       className={cn(
         "flex items-center gap-2 font-code text-xs uppercase tracking-[0.12em] text-ink-3",
         className,
@@ -46,7 +52,7 @@ export function Eyebrow({
       {index && <span className="text-ember">{index}</span>}
       {index && <span aria-hidden="true">/</span>}
       {children}
-    </p>
+    </Tag>
   );
 }
 

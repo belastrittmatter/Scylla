@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Eyebrow } from "@/components/landing/primitives";
 import type { InviteData, Slot } from "./booking-types";
 import { formatFullDate, formatSlotTime } from "./booking-utils";
 
@@ -39,38 +40,41 @@ export function BookingFormStep({
   onSubmit,
 }: BookingFormStepProps) {
   return (
-    <div className="mx-auto max-w-md space-y-6">
+    <div className="max-w-md space-y-6">
       <Button
         variant="ghost"
         size="sm"
         onClick={onBackToSlots}
-        className="text-muted-foreground hover:text-foreground -ml-2 gap-2 rounded-lg text-xs"
+        className="text-ink-2 hover:text-ink -ml-2 gap-2 text-xs"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
         Back to available slots
       </Button>
 
-      <div className="bg-muted/30 border-border space-y-1 rounded-2xl border p-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-orange-500">
-          Selected Meeting Time
-        </p>
-        <p className="text-foreground text-base font-bold">
+      <div className="border-line space-y-2 rounded-lg border p-4">
+        <Eyebrow as="h2" className="text-ink-2">
+          Selected meeting time
+        </Eyebrow>
+        <p className="text-ink text-base font-medium">
           {formatFullDate(selectedSlot.start, timeZone)}
         </p>
-        <p className="text-muted-foreground text-sm font-medium">
-          {formatSlotTime(selectedSlot.start, timeZone)} -{" "}
-          {formatSlotTime(selectedSlot.end, timeZone)} ({timeZone})
+        <p className="text-ink-2 font-code text-sm tabular-nums">
+          {formatSlotTime(selectedSlot.start, timeZone)} –{" "}
+          {formatSlotTime(selectedSlot.end, timeZone)} · {timeZone}
         </p>
       </div>
 
       {invite.isRestricted && (
-        <div className="flex items-start gap-2.5 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-3.5 text-xs">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+        <div className="border-line flex items-start gap-3 rounded-lg border p-4 text-sm">
+          <ShieldCheck
+            className="text-ink-3 mt-0.5 size-4 shrink-0"
+            aria-hidden="true"
+          />
           <div>
-            <p className="text-foreground font-semibold">
-              Restricted Meeting Invitation
+            <p className="text-ink font-medium">
+              Restricted meeting invitation
             </p>
-            <p className="text-muted-foreground mt-0.5 text-[11px]">
+            <p className="text-ink-2 mt-0.5 text-xs">
               Only email addresses pre-approved by the meeting organizer can
               confirm this booking.
             </p>
@@ -82,9 +86,9 @@ export function BookingFormStep({
         <div className="space-y-1.5">
           <Label
             htmlFor="guestName"
-            className="text-foreground text-xs font-medium"
+            className="text-ink text-xs font-medium"
           >
-            Your Full Name <span className="text-destructive">*</span>
+            Your full name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="guestName"
@@ -93,16 +97,16 @@ export function BookingFormStep({
             onChange={(e) => setGuestName(e.target.value)}
             disabled={isBooking}
             required
-            className="rounded-xl focus-visible:ring-orange-500"
+            className="h-10"
           />
         </div>
 
         <div className="space-y-1.5">
           <Label
             htmlFor="guestEmail"
-            className="text-foreground text-xs font-medium"
+            className="text-ink text-xs font-medium"
           >
-            Your Email Address <span className="text-destructive">*</span>
+            Your email address <span className="text-destructive">*</span>
           </Label>
           <Input
             id="guestEmail"
@@ -112,9 +116,9 @@ export function BookingFormStep({
             onChange={(e) => setGuestEmail(e.target.value)}
             disabled={isBooking}
             required
-            className="rounded-xl focus-visible:ring-orange-500"
+            className="h-10"
           />
-          <p className="text-muted-foreground text-[11px]">
+          <p className="text-ink-2 text-xs">
             Meeting confirmation and calendar invites will be sent to this
             address.
           </p>
@@ -123,9 +127,9 @@ export function BookingFormStep({
         <div className="space-y-1.5">
           <Label
             htmlFor="guestNotes"
-            className="text-foreground text-xs font-medium"
+            className="text-ink text-xs font-medium"
           >
-            Additional Notes or Agenda Items (Optional)
+            Additional notes or agenda items (optional)
           </Label>
           <Textarea
             id="guestNotes"
@@ -134,7 +138,7 @@ export function BookingFormStep({
             value={guestNotes}
             onChange={(e) => setGuestNotes(e.target.value)}
             disabled={isBooking}
-            className="rounded-xl focus-visible:ring-orange-500"
+            className="min-h-24"
           />
         </div>
 
@@ -142,15 +146,15 @@ export function BookingFormStep({
           <Button
             type="submit"
             disabled={isBooking}
-            className="h-11 w-full gap-2 rounded-xl bg-orange-600 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orange-500"
+            className="hover:bg-ember-deep dark:hover:bg-ember-deep h-11 w-full gap-2 text-sm"
           >
             {isBooking ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                 Scheduling meeting...
               </>
             ) : (
-              "Confirm & Schedule Meeting"
+              "Confirm & schedule meeting"
             )}
           </Button>
         </div>

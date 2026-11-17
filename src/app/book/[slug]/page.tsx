@@ -6,7 +6,7 @@ import {
   toPublicInviteDetails,
 } from "@/services/meeting-invite";
 import { MeetingBookingClient } from "@/components/booking/meeting-booking-client";
-import { CalendarX } from "lucide-react";
+import { Eyebrow } from "@/components/landing/primitives";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "cn";
 import Link from "next/link";
@@ -47,30 +47,21 @@ async function BookingContent(props: BookingPageProps) {
 
   if (!details || !details.invite.isActive) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
-        <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
-            <CalendarX className="h-6 w-6" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Meeting Link Unavailable
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            This invitation link does not exist, has expired, or is no longer
-            accepting new bookings.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "text-xs",
-              )}
-            >
-              Return to Home
-            </Link>
-          </div>
-        </div>
+      <div className="max-w-xl py-6 sm:py-16">
+        <Eyebrow className="text-ink-2">Booking link</Eyebrow>
+        <h1 className="text-ink mt-4 text-balance text-3xl font-medium leading-tight tracking-[-0.02em]">
+          This meeting link is unavailable
+        </h1>
+        <p className="text-ink-2 mt-3 text-pretty text-base leading-relaxed">
+          This invitation link does not exist, has expired, or is no longer
+          accepting new bookings.
+        </p>
+        <Link
+          href="/"
+          className={cn(buttonVariants({ variant: "outline" }), "mt-6 h-9 px-4")}
+        >
+          Return to home
+        </Link>
       </div>
     );
   }
@@ -82,9 +73,9 @@ export default function BookingPage(props: BookingPageProps) {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-neutral-400 dark:bg-slate-950">
-          Loading booking details...
-        </div>
+        <p role="status" className="text-ink-2 py-16 text-sm">
+          Loading booking details…
+        </p>
       }
     >
       <BookingContent {...props} />

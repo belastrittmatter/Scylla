@@ -9,9 +9,8 @@ import {
   CheckCircle2,
   CalendarPlus,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Eyebrow } from "@/components/landing/primitives";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "cn";
 import type {
   BookedResult,
@@ -24,6 +23,9 @@ import {
   formatFullDate,
   buildGoogleCalendarUrl,
 } from "./booking-utils";
+
+const chipClass =
+  "border-line text-ink inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs";
 
 interface BookingSuccessViewProps {
   bookedResult: BookedResult;
@@ -49,148 +51,136 @@ export function BookingSuccessView({
   const meetUrl =
     bookedResult.booking.googleMeetUrl || bookedResult.booking.meetingUrl;
 
+  const attendeeCount = (organizer ? 1 : 0) + members.length + 1;
+  const rowClass = "text-ink flex items-start gap-3 text-sm";
+  const iconClass = "text-ink-3 mt-0.5 size-4 shrink-0";
+
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <Card className="border-border bg-card w-full max-w-xl shadow-xl">
-        <CardHeader className="pb-2 pt-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500/10 ring-8 ring-orange-500/5">
-            <CheckCircle2 className="h-10 w-10 text-orange-600 dark:text-orange-400" />
-          </div>
-          <CardTitle className="text-foreground text-2xl font-bold tracking-tight">
-            You&apos;re Scheduled!
-          </CardTitle>
-          <p className="text-muted-foreground mt-1 text-sm">
-            A calendar invitation has been sent to{" "}
-            <span className="text-foreground font-semibold">{guestEmail}</span>
-          </p>
-        </CardHeader>
+    <div className="border-line bg-surface mx-auto max-w-xl rounded-xl border">
+      <div className="border-line border-b p-5 sm:p-8">
+        <CheckCircle2 className="text-ember size-6" aria-hidden="true" />
+        <h1 className="text-ink mt-4 text-balance text-3xl font-medium leading-tight tracking-[-0.02em]">
+          You&apos;re scheduled
+        </h1>
+        <p className="text-ink-2 mt-2 text-sm">
+          A calendar invitation has been sent to{" "}
+          <span className="text-ink font-medium">{guestEmail}</span>
+        </p>
+      </div>
 
-        <CardContent className="space-y-6 pb-8 pt-4">
-          <div className="bg-muted/30 border-border space-y-3 rounded-2xl border p-4">
-            <h3 className="text-foreground text-base font-semibold">
-              {bookedResult.booking.title}
-            </h3>
+      <div className="space-y-6 p-5 sm:p-8">
+        <div className="space-y-3">
+          <h2 className="text-ink text-base font-medium">
+            {bookedResult.booking.title}
+          </h2>
 
-            <div className="text-foreground/80 flex items-center gap-2.5 text-sm">
-              <CalendarIcon className="h-4 w-4 shrink-0 text-orange-500" />
-              <span>
-                {formatFullDate(bookedResult.booking.startTime, timeZone)}
-              </span>
-            </div>
-
-            <div className="text-foreground/80 flex items-center gap-2.5 text-sm">
-              <Clock className="h-4 w-4 shrink-0 text-orange-500" />
-              <span>
-                {formatSlotTime(bookedResult.booking.startTime, timeZone)} -{" "}
-                {formatSlotTime(bookedResult.booking.endTime, timeZone)} (
-                {timeZone})
-              </span>
-            </div>
-
-            {meetUrl ? (
-              <div className="text-foreground/80 flex items-center gap-2.5 text-sm">
-                <Video className="h-4 w-4 shrink-0 text-orange-500" />
-                <a
-                  href={meetUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-orange-600 underline hover:text-orange-500 dark:text-orange-400"
-                >
-                  Google Meet Video Call
-                </a>
-              </div>
-            ) : room ? (
-              <div className="text-foreground/80 flex items-center gap-2.5 text-sm">
-                <Building2 className="h-4 w-4 shrink-0 text-orange-500" />
-                <div>
-                  <span className="font-semibold">{room.name}</span>
-                  {room.building && <span> • {room.building}</span>}
-                  {room.floor && <span> (Floor {room.floor})</span>}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-              Confirmed Attendees ({1 + members.length + 1})
+          <div className={rowClass}>
+            <CalendarIcon className={iconClass} aria-hidden="true" />
+            <span>
+              {formatFullDate(bookedResult.booking.startTime, timeZone)}
             </span>
-            <div className="flex flex-wrap gap-2">
-              {organizer && (
-                <Badge
-                  variant="outline"
-                  className="text-foreground gap-1.5 border-orange-500/30 bg-orange-500/5 px-2.5 py-1"
-                >
-                  <span className="h-2 w-2 rounded-full bg-orange-500" />
-                  {organizer.name} (Host)
-                </Badge>
-              )}
-              {members.map((m) => (
-                <Badge
-                  key={m.id}
-                  variant="outline"
-                  className="border-border gap-1.5 px-2.5 py-1"
-                >
-                  <span className="bg-muted-foreground h-2 w-2 rounded-full" />
-                  {m.name}
-                </Badge>
-              ))}
-              <Badge
-                variant="secondary"
-                className="gap-1.5 px-2.5 py-1 font-medium"
-              >
-                <span className="bg-foreground h-2 w-2 rounded-full" />
-                {guestName} (Guest)
-              </Badge>
-            </div>
           </div>
 
-          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-            <a
-              href={buildGoogleCalendarUrl(
-                bookedResult.booking,
-                bookedResult.invite,
-                room,
-              )}
-              target="_blank"
-              rel="noreferrer"
-              className={cn(
-                buttonVariants({ variant: "default" }),
-                "h-10 flex-1 gap-2 rounded-xl bg-orange-600 font-medium text-white shadow-sm hover:bg-orange-500",
-              )}
-            >
-              <CalendarPlus className="h-4 w-4" />
-              Add to Google Calendar
-            </a>
+          <div className={rowClass}>
+            <Clock className={iconClass} aria-hidden="true" />
+            <span className="font-code tabular-nums">
+              {formatSlotTime(bookedResult.booking.startTime, timeZone)} –{" "}
+              {formatSlotTime(bookedResult.booking.endTime, timeZone)} ·{" "}
+              {timeZone}
+            </span>
+          </div>
 
-            {meetUrl && (
+          {meetUrl ? (
+            <div className={rowClass}>
+              <Video className={iconClass} aria-hidden="true" />
               <a
                 href={meetUrl}
                 target="_blank"
                 rel="noreferrer"
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "border-border text-foreground hover:bg-muted/60 h-10 flex-1 gap-2 rounded-xl font-medium",
-                )}
+                className="text-ember hover:text-ember-deep font-medium underline underline-offset-4"
               >
-                <Video className="h-4 w-4" />
-                Open Google Meet
+                Google Meet Video Call
               </a>
-            )}
-          </div>
+            </div>
+          ) : room ? (
+            <div className={rowClass}>
+              <Building2 className={iconClass} aria-hidden="true" />
+              <div>
+                <span className="font-medium">{room.name}</span>
+                {room.building && <span> · {room.building}</span>}
+                {room.floor && <span> (Floor {room.floor})</span>}
+              </div>
+            </div>
+          ) : null}
+        </div>
 
-          <div className="pt-2 text-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground text-xs"
-              onClick={onReset}
+        <div className="border-line space-y-3 border-t pt-6">
+          <Eyebrow as="h3" className="text-ink-2">
+            Confirmed attendees{" "}
+            <span className="tabular-nums">({attendeeCount})</span>
+          </Eyebrow>
+          <ul className="flex flex-wrap gap-2">
+            {organizer && (
+              <li className={chipClass}>
+                {organizer.name}
+                <span className="text-ink-2">(host)</span>
+              </li>
+            )}
+            {members.map((m) => (
+              <li key={m.id} className={chipClass}>
+                {m.name}
+              </li>
+            ))}
+            <li className={chipClass}>
+              {guestName}
+              <span className="text-ink-2">(guest)</span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <a
+            href={buildGoogleCalendarUrl(
+              bookedResult.booking,
+              bookedResult.invite,
+              room,
+            )}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(
+              buttonVariants({ variant: "default" }),
+              "hover:bg-ember-deep h-10 flex-1 gap-2",
+            )}
+          >
+            <CalendarPlus className="size-4" aria-hidden="true" />
+            Add to Google Calendar
+          </a>
+
+          {meetUrl && (
+            <a
+              href={meetUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-10 flex-1 gap-2",
+              )}
             >
-              Book another meeting
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <Video className="size-4" aria-hidden="true" />
+              Open Google Meet
+            </a>
+          )}
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-ink-2 hover:text-ink -ml-2 text-xs"
+          onClick={onReset}
+        >
+          Book another meeting
+        </Button>
+      </div>
     </div>
   );
 }
