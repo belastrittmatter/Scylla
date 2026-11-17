@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Urbanist } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -13,6 +14,24 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+/** The landing's mono face, loaded once for every route (font-code / font-mono). */
+const mapleMono = localFont({
+  src: [
+    {
+      path: "../fonts/maple-mono-nf-italic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../fonts/maple-mono-nf-regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-maple",
+  display: "swap",
 });
 
 import { Toaster } from "@/components/ui/sonner";
@@ -38,6 +57,7 @@ export default function RootLayout({
         "antialiased",
         geistSans.variable,
         geistMono.variable,
+        mapleMono.variable,
         urbanist.variable,
         "font-sans",
         inter.variable,

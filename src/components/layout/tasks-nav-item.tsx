@@ -15,10 +15,12 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { buildTasksUrl } from "@/components/tasks/use-task-workspace-routing";
 import type { NavItem } from "@/constants/navigation";
 import type { TeamItem } from "@/hooks/use-teams";
+import { cn } from "@/lib/utils";
 
 /** Slug of the team the URL points at, or null for My tasks. */
 export function activeTasksTeam(
@@ -62,10 +64,14 @@ export function TasksNavItem({
   searchParams: Pick<URLSearchParams, "get">;
   teams: TeamItem[];
 }) {
+  const { state, isMobile } = useSidebar();
   const onTasks = pathname === "/tasks" || pathname.startsWith("/tasks/");
   const activeTeam = onTasks
     ? activeTasksTeam(pathname, searchParams, teams)
     : null;
+  const subMatch =
+    onTasks &&
+    (!activeTeam || teams.some((t) => t.slug.toLowerCase() === activeTeam));
   // Controlled: pathname starts empty (Suspense fallback), so defaultOpen would change after mount.
   const [open, setOpen] = React.useState(onTasks);
   const [wasOnTasks, setWasOnTasks] = React.useState(onTasks);
@@ -74,14 +80,21 @@ export function TasksNavItem({
     if (onTasks) setOpen(true);
   }
 
+  const collapsed = state === "collapsed" && !isMobile;
+  const subRowShown = subMatch && open && !collapsed;
+
   return (
     <Collapsible
       open={open}
       onOpenChange={setOpen}
       render={<SidebarMenuItem />}
     >
+      {/* One "you are here": the parent carries the marker only while no visible sub-row does. */}
       <SidebarMenuButton
-        isActive={onTasks}
+        isActive={onTasks && !subRowShown}
+        className={cn(
+          onTasks && subRowShown && "font-medium text-sidebar-foreground",
+        )}
         tooltip={item.title}
         render={<Link href={item.url} />}
       >

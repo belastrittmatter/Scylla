@@ -87,7 +87,7 @@ function DynamicBreadcrumbSegments({ title }: { title?: string }) {
 export function ViewHeader({ title }: ViewHeaderProps) {
   const { setHeaderSlot } = useBreadcrumb();
   return (
-    <header className="group/header sticky top-0 z-20 flex min-h-14 flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-border bg-background px-5 py-2 transition-colors">
+    <header className="group/header sticky top-0 z-20 flex min-h-14 flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-dashed border-border bg-background px-5 py-2 transition-colors">
       <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:text-foreground" />
 
       <div aria-hidden className="mx-1 h-4 w-px bg-line-strong" />
