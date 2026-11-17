@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingLogo } from "@/components/landing/primitives";
 import { GITHUB_REPO_URL } from "@/lib/github-repo";
 
 const FOOTER_COLUMNS = [
@@ -33,16 +34,7 @@ export function LandingFooter() {
       <div className="mx-auto max-w-[1200px] border-x border-dashed border-line px-5 pt-14 pb-8 sm:px-10">
         <div className="flex flex-col justify-between gap-12 lg:flex-row">
           <div>
-            <img
-              src="/images/logo-dark.svg"
-              alt="Scylla"
-              className="h-6 w-auto dark:hidden"
-            />
-            <img
-              src="/images/logo.svg"
-              alt="Scylla"
-              className="hidden h-6 w-auto dark:block"
-            />
+            <LandingLogo />
             <p className="mt-4 max-w-[260px] text-sm text-ink-3">
               Meetings, rooms and project tasks in one place, for your team and
               its agents.

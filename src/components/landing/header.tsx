@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingLogo } from "@/components/landing/primitives";
 import { LandingGithubStarsBadge } from "@/components/landing/github-stars-badge";
 import { LandingThemeToggle } from "@/components/landing/theme-toggle";
 
@@ -7,16 +8,7 @@ export function LandingHeader({ stars }: { stars?: number | null }) {
     <header className="sticky top-0 z-50 border-b border-line bg-paper/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 border-x border-dashed border-line px-5 sm:px-10">
         <Link prefetch={false} href="/" className="shrink-0">
-          <img
-            src="/images/logo-dark.svg"
-            alt="Scylla"
-            className="h-6 w-auto dark:hidden"
-          />
-          <img
-            src="/images/logo.svg"
-            alt="Scylla"
-            className="hidden h-6 w-auto dark:block"
-          />
+          <LandingLogo />
         </Link>
         <div className="flex shrink-0 items-center gap-2">
           <LandingGithubStarsBadge stars={stars ?? null} />

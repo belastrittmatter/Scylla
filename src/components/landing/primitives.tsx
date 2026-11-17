@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /** Page frame: centered column with the blueprint rails left and right. */
@@ -100,6 +101,28 @@ export function CornerTicks() {
       <span
         aria-hidden="true"
         className={cn(tick, "-right-[5px] -bottom-[5px]")}
+      />
+    </>
+  );
+}
+
+/** Scylla wordmark: dark ink in light mode, light ink in dark mode. */
+export function LandingLogo() {
+  return (
+    <>
+      <Image
+        src="/images/logo-dark.svg"
+        alt="Scylla"
+        width={140}
+        height={32}
+        className="h-6 w-auto dark:hidden"
+      />
+      <Image
+        src="/images/logo.svg"
+        alt="Scylla"
+        width={140}
+        height={32}
+        className="hidden h-6 w-auto dark:block"
       />
     </>
   );
