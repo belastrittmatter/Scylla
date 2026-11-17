@@ -16,12 +16,25 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
     expect(html).toContain('href="/"');
   });
 
-  it("renders ConsentSignInRequired with link to /sign-in", () => {
+  it("renders ConsentSignInRequired with link to /auth/sign-in", () => {
     const html = renderToString(<ConsentSignInRequired />);
     expect(html).toContain("Sign In Required");
     expect(html).toMatch(/<h1[^>]*>Sign In Required<\/h1>/);
-    expect(html).toContain('href="/sign-in"');
+    expect(html).toContain('href="/auth/sign-in"');
     expect(html).toContain("Sign In to Continue");
+  });
+
+  it("sends sign-in back to the consent request it came from", () => {
+    const returnTo = "/consent?client_id=https%3A%2F%2Fa.test&scope=openid";
+    const html = renderToString(<ConsentSignInRequired returnTo={returnTo} />);
+    expect(html).toContain(
+      `href="/auth/sign-in?redirectTo=${encodeURIComponent(returnTo)}"`,
+    );
+
+    const offsite = renderToString(
+      <ConsentSignInRequired returnTo="//evil.test/x" />,
+    );
+    expect(offsite).toContain('href="/auth/sign-in"');
   });
 
   it("renders ConsentScopeItem with title, description, and destructive badge for destructive scopes", () => {
@@ -56,6 +69,12 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
     expect(deleteHtml).toContain(deleteScope.label);
     expect(deleteHtml).toContain(deleteScope.description);
     expect(deleteHtml).toContain("Destructive");
+    // The destructive tag is part of the switch's accessible description.
+    const tagId = deleteHtml.match(/id="([^"]+-destructive)"/)?.[1];
+    expect(tagId).toBeDefined();
+    expect(deleteHtml).toMatch(
+      new RegExp(`aria-describedby="${tagId} [^"]+-description"`),
+    );
   });
 
   it("renders ConsentScopeList with preset buttons, categories, and destructive warning banner", () => {
@@ -77,6 +96,10 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
     expect(standardHtml).toContain("Grant All");
     expect(standardHtml).toContain("Standard Only");
     expect(standardHtml).toContain("Clear");
+    // Least privilege leads the presets.
+    expect(standardHtml.indexOf("Standard Only")).toBeLessThan(
+      standardHtml.indexOf("Grant All"),
+    );
     expect(standardHtml).toContain("Calendar");
     expect(standardHtml).toContain("Tasks &amp; Work");
     expect(standardHtml).not.toContain("Destructive Scopes Granted:");

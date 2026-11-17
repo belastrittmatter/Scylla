@@ -20,6 +20,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const PRESET_BUTTON = "h-8 px-2.5 text-xs";
 
+/** Row hairlines inset to the text edge, so only group breaks run full width. */
+const ROW_DIVIDERS =
+  "[&>li]:relative [&>li+li]:before:absolute [&>li+li]:before:top-0 [&>li+li]:before:right-0 [&>li+li]:before:left-5 sm:[&>li+li]:before:left-6 [&>li+li]:before:h-px [&>li+li]:before:bg-line";
+
 export interface ConsentScopeListProps {
   selectedScopes: string[];
   onToggleScope: (scopeId: string, checked: boolean) => void;
@@ -54,7 +58,8 @@ export function ConsentScopeList({
 
   return (
     <section aria-labelledby={headingId} className="border-line mt-6 border-t">
-      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      {/* Mobile: title, description, presets. Desktop: presets beside the title, description full width below. */}
+      <div className="grid gap-y-1 px-5 py-4 sm:grid-cols-[1fr_auto] sm:gap-x-6 sm:px-6">
         <div className="flex items-baseline gap-3">
           <h2 id={headingId} className="text-ink text-sm font-medium">
             Permissions
@@ -66,20 +71,15 @@ export function ConsentScopeList({
             {enabledCount}/{ALL_MCP_CAPABILITIES.length} granted
           </span>
         </div>
+        <p className="text-ink-2 text-sm sm:col-span-2">
+          Grant only the capabilities it needs.
+        </p>
 
         <div
           role="group"
           aria-label="Presets"
-          className="flex flex-wrap items-center gap-1.5"
+          className="mt-2 flex flex-wrap items-center gap-1.5 sm:col-start-2 sm:row-start-1 sm:mt-0 sm:-my-1.5"
         >
-          <Button
-            type="button"
-            variant="outline"
-            className={PRESET_BUTTON}
-            onClick={onSelectAll}
-          >
-            Grant All
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -87,6 +87,14 @@ export function ConsentScopeList({
             onClick={onSelectStandard}
           >
             Standard Only
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className={PRESET_BUTTON}
+            onClick={onSelectAll}
+          >
+            Grant All
           </Button>
           <Button
             type="button"
@@ -102,11 +110,16 @@ export function ConsentScopeList({
       {Object.entries(capabilitiesByCategory).map(([categoryKey, items]) => {
         const label = CATEGORY_LABELS[categoryKey] || categoryKey;
         return (
-          <div key={categoryKey} role="group" aria-label={label}>
-            <Eyebrow className="text-ink-2 border-line border-t px-5 pt-4 pb-1 sm:px-6">
+          <div
+            key={categoryKey}
+            role="group"
+            aria-label={label}
+            className="border-line border-t pt-1 pb-2"
+          >
+            <Eyebrow dot={false} className="text-ink-2 px-5 pt-4 pb-1 sm:px-6">
               {label}
             </Eyebrow>
-            <ul className="divide-line divide-y">
+            <ul className={ROW_DIVIDERS}>
               {items.map((cap) => (
                 <ConsentScopeItem
                   key={cap.id}

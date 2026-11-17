@@ -4,7 +4,6 @@ import * as React from "react";
 import { AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import type { McpCapabilityDefinition } from "@/constants/agent-capabilities";
-import { cn } from "cn";
 
 export interface ConsentScopeItemProps {
   capability: McpCapabilityDefinition;
@@ -21,22 +20,21 @@ export function ConsentScopeItem({
   const id = React.useId();
   const labelId = `${id}-label`;
   const descriptionId = `${id}-description`;
+  const destructiveId = `${id}-destructive`;
 
   return (
     <li>
-      <label
-        className={cn(
-          "has-[:focus-visible]:bg-ink/[0.03] hover:bg-ink/[0.03] flex cursor-pointer items-start gap-4 px-5 py-3.5 transition-colors select-none sm:px-6",
-          isChecked && capability.isDestructive && "bg-destructive/[0.05]",
-        )}
-      >
+      <label className="has-[:focus-visible]:bg-ink/[0.03] hover:bg-ink/[0.03] flex cursor-pointer items-start gap-4 px-5 py-3 transition-colors select-none sm:px-6">
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <span id={labelId} className="text-ink text-sm font-medium">
               {capability.label}
             </span>
             {capability.isDestructive && (
-              <span className="font-code text-destructive inline-flex items-center gap-1 text-[11px] tracking-[0.08em] uppercase">
+              <span
+                id={destructiveId}
+                className="font-code text-destructive inline-flex items-center gap-1 text-xs tracking-[0.12em] uppercase"
+              >
                 <AlertTriangle className="size-3" aria-hidden="true" />
                 Destructive
               </span>
@@ -44,7 +42,7 @@ export function ConsentScopeItem({
           </span>
           <span
             id={descriptionId}
-            className="text-ink-2 mt-0.5 block text-[13px] leading-snug"
+            className="text-ink-2 mt-0.5 block text-sm leading-snug"
           >
             {capability.description}
           </span>
@@ -57,7 +55,11 @@ export function ConsentScopeItem({
           checked={isChecked}
           onCheckedChange={(checked) => onToggle(capability.id, checked)}
           aria-labelledby={labelId}
-          aria-describedby={descriptionId}
+          aria-describedby={
+            capability.isDestructive
+              ? `${destructiveId} ${descriptionId}`
+              : descriptionId
+          }
           className="data-unchecked:bg-ink-3 dark:data-unchecked:bg-ink-3 mt-0.5"
         />
       </label>

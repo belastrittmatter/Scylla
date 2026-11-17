@@ -28,10 +28,13 @@ export function Section({
 /** Mono label above a heading: "01 / How it works". */
 export function Eyebrow({
   index,
+  dot = true,
   children,
   className,
 }: {
   index?: string;
+  /** Show the ember dot; turn it off for secondary labels so the accent stays rare. */
+  dot?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -42,7 +45,9 @@ export function Eyebrow({
         className,
       )}
     >
-      <span className="size-1.5 rounded-full bg-ember" aria-hidden="true" />
+      {dot && (
+        <span className="size-1.5 rounded-full bg-ember" aria-hidden="true" />
+      )}
       {index && <span className="text-ember">{index}</span>}
       {index && <span aria-hidden="true">/</span>}
       {children}
