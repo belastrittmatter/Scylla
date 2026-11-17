@@ -28,7 +28,7 @@ describe("ProjectGithubCard", () => {
     );
     expect(html).toContain("GitHub Integration");
     expect(html).toContain("octo/repo");
-    expect(html).toContain("Linked");
+    expect(html).not.toContain("Linked<");
     expect(html).toContain("Open in GitHub");
     expect(html).toContain('href="https://github.com/octo/repo"');
     expect(html).toContain('target="_blank"');
@@ -50,6 +50,9 @@ describe("ProjectGithubCard", () => {
       />,
     );
     expect(html).toMatch(/<h2[^>]*>GitHub Integration<\/h2>/);
+    expect(html).toMatch(
+      /<\/h2><p[^>]*text-sm[^>]*>The repository link is read-only/,
+    );
     expect(html).toContain("(opens in a new tab)");
   });
 
@@ -88,8 +91,10 @@ describe("ProjectGithubCard", () => {
         onSync={noop}
       />,
     );
-    expect(html).toContain("No GitHub repository linked");
     expect(html).toContain(
+      "No GitHub repository linked. A repository can only be linked when the project is created.",
+    );
+    expect(html).not.toContain(
       "A repository can be linked when the project is created.",
     );
     expect(html).not.toContain("github.com/");
@@ -134,7 +139,7 @@ describe("ProjectGithubCard extra states", () => {
       />,
     );
     expect(html).toContain("octo/repo");
-    expect(html).toContain("Linked");
+    expect(html).toContain("read-only");
     expect(html).toContain('href="https://github.com/octo/repo"');
   });
 

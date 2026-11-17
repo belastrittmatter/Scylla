@@ -79,9 +79,11 @@ export function ProjectSettingsView({
   return (
     <div className={PROJECT_SETTINGS_FRAME}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">{`${project.name} Settings`}</h1>
-          <p className="text-muted-foreground text-sm">{team.name}</p>
+        <div className="min-w-0">
+          <h1 className="break-words text-xl font-semibold tracking-tight">{`${project.name} Settings`}</h1>
+          <p className="text-muted-foreground break-words text-sm">
+            {team.name}
+          </p>
         </div>
         <Button variant="outline" size="sm" render={<Link href={boardHref} />}>
           <ArrowLeft />

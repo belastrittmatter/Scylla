@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /** The page frame, shared with ProjectSettingsView so loading doesn't shift. */
 export const PROJECT_SETTINGS_FRAME =
-  "mx-auto w-full max-w-4xl space-y-8 p-6 md:p-8";
+  "mx-auto w-full max-w-4xl space-y-6 p-6 md:p-8";
 
 export function ProjectSettingsSkeleton() {
   return (

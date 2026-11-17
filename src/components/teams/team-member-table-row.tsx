@@ -41,19 +41,35 @@ export function TeamMemberTableRow({
   return (
     <TableRow>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            // Cap the cell below `sm` so a long name or email ellipsizes
+            // instead of pushing Role and the row menu off screen.
+            compactEmail && "max-w-[calc(100vw-15rem)] sm:max-w-none",
+          )}
+        >
           <Avatar size="sm">
             <AvatarImage src={member.user?.image || undefined} alt={name} />
             <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
           </Avatar>
           {compactEmail ? (
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{name}</span>
-                {isSelf && <Badge variant="outline">You</Badge>}
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate font-medium" title={name}>
+                  {name}
+                </span>
+                {isSelf && (
+                  <Badge variant="outline" className="shrink-0">
+                    You
+                  </Badge>
+                )}
               </div>
               {member.user?.email && (
-                <div className="text-muted-foreground truncate text-xs sm:hidden">
+                <div
+                  className="text-muted-foreground truncate text-xs sm:hidden"
+                  title={member.user.email}
+                >
                   {member.user.email}
                 </div>
               )}

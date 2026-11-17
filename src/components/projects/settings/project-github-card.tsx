@@ -1,5 +1,4 @@
 import { ExternalLink, RefreshCw } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -20,29 +19,21 @@ export function ProjectGithubCard({
     <section className="space-y-3">
       <div>
         <h2 className="text-base font-semibold">GitHub Integration</h2>
-        {!githubRepo && (
+        {githubRepo && (
           <p className="text-muted-foreground text-sm">
-            A repository can be linked when the project is created.
+            The repository link is read-only and cannot be changed after the
+            project is created.
           </p>
         )}
       </div>
       <Card>
-        <CardContent className="space-y-3">
+        <CardContent>
           {githubRepo ? (
-            <>
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="break-all font-mono text-sm">
-                    {githubRepo}
-                  </span>
-                  <Badge variant="secondary">Linked</Badge>
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  The repository link is read-only and cannot be changed after
-                  the project is created.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="min-w-0 break-all font-mono text-sm">
+                {githubRepo}
+              </span>
+              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -71,10 +62,11 @@ export function ProjectGithubCard({
                   </Button>
                 )}
               </div>
-            </>
+            </div>
           ) : (
             <p className="text-muted-foreground text-sm">
-              No GitHub repository linked
+              No GitHub repository linked. A repository can only be linked when
+              the project is created.
             </p>
           )}
         </CardContent>
