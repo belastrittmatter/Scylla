@@ -5,9 +5,14 @@ import { ConsentBrandHeader } from "./consent-brand-header";
 /**
  * App tokens remapped onto the landing palette for this page only, so the
  * shared Button and Switch read as ember plus warm hairlines. Light uses
- * ember-deep (white text, AA); dark uses ember with dark text. `--caution` and
- * `--caution-soft` are consent-only, for the Unverified client note (kept
- * gold, apart from ember).
+ * ember-deep (white text, AA); dark uses ember with dark text.
+ *
+ * Two meanings sit next to ember here, so each gets a hue clearly apart from it
+ * (T3), at 4.5:1 or more on --surface in both themes:
+ * - `--destructive`: crimson (hue ~0) instead of the app's orange-red, which
+ *   read as ember on the Destructive tags and the decision-bar warning.
+ * - `--caution` / `--caution-soft`: gold, for the Unverified client note. The
+ *   repo has no warning token, so the pair lives here once.
  */
 const CONSENT_TOKENS = [
   "[--primary:var(--ember-deep)] dark:[--primary:var(--ember)]",
@@ -16,6 +21,7 @@ const CONSENT_TOKENS = [
   "[--border:var(--line)] [--input:var(--line)]",
   "[--background:var(--surface)] [--foreground:var(--ink)]",
   "[--muted:color-mix(in_oklab,var(--ink)_6%,var(--surface))] [--muted-foreground:var(--ink-2)]",
+  "[--destructive:oklch(0.52_0.2_5)] dark:[--destructive:oklch(0.72_0.17_0)]",
   "[--caution:oklch(0.476_0.114_61.9)] dark:[--caution:oklch(0.879_0.169_91.6)]",
   "[--caution-soft:oklch(0.987_0.022_95.3)] dark:[--caution-soft:oklch(0.879_0.169_91.6/0.06)]",
 ].join(" ");
@@ -38,7 +44,7 @@ export function ConsentShell({
   return (
     <main
       className={cn(
-        "landing selection:bg-ember flex min-h-dvh flex-1 flex-col selection:text-white",
+        "landing selection:bg-ember flex min-h-dvh flex-1 flex-col selection:text-surface",
         CONSENT_TOKENS,
       )}
     >
@@ -67,7 +73,7 @@ export function ConsentHeading({
 }) {
   return (
     <div className="px-5 pt-6 sm:px-6">
-      <Eyebrow className="text-ink-2">OAuth 2.1 · MCP consent</Eyebrow>
+      <Eyebrow className="text-ink-2">OAuth 2.1</Eyebrow>
       <h1 className="text-ink mt-3 text-2xl font-medium tracking-[-0.02em] text-balance">
         {title}
       </h1>

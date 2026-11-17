@@ -1,33 +1,17 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import {
   LandingHeader,
   LandingCtaBanner,
   LandingFooter,
 } from "@/components/landing";
 import { getGitHubRepoStars } from "@/lib/github-stars";
+import { mapleMono } from "@/fonts/maple";
 
 /**
  * Two-family type system:
  * - Inter (from the root layout, --font-sans) → body, UI, headlines
- * - Maple Mono NF (Italic + Regular) → eyebrows, accents, terminal
+ * - Maple Mono NF (Italic + Regular, src/fonts/maple.ts) → eyebrows, accents, terminal
  */
-const mapleMono = localFont({
-  src: [
-    {
-      path: "../../fonts/maple-mono-nf-italic.woff2",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../../fonts/maple-mono-nf-regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-  ],
-  variable: "--font-maple",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Scylla | AI-Powered Multi-Person Calendar & Room Scheduling",

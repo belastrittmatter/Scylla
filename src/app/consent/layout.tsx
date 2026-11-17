@@ -1,17 +1,4 @@
-import localFont from "next/font/local";
-
-/** Maple Mono for the landing-style eyebrows, scope ids and counts on /consent. */
-const mapleMono = localFont({
-  src: [
-    {
-      path: "../../fonts/maple-mono-nf-regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-  ],
-  variable: "--font-maple",
-  display: "swap",
-});
+import { mapleMono } from "@/fonts/maple";
 
 export default function ConsentLayout({
   children,

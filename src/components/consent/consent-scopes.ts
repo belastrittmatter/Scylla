@@ -6,3 +6,10 @@ export function initialConsentScopes(requestedScopeParam: string): string[] {
     .split(/[\s,]+/)
     .filter((s) => ALL_MCP_CAPABILITIES.some((c) => c.id === s));
 }
+
+/** How many of the selected scopes can permanently delete data. */
+export function countDestructiveScopes(selectedScopes: string[]): number {
+  return ALL_MCP_CAPABILITIES.filter(
+    (c) => c.isDestructive && selectedScopes.includes(c.id),
+  ).length;
+}

@@ -20,18 +20,22 @@ export function useConsentForm(clientId: string, requestedScopeParam: string) {
   const [selectedScopes, setSelectedScopes] = React.useState<string[]>(() =>
     initialConsentScopes(requestedScopeParam),
   );
-  const [client, setClient] = React.useState<ConsentClient | null>(null);
+  // undefined while the lookup runs, null once it resolved with no client.
+  const [fetchedClient, setFetchedClient] = React.useState<
+    ConsentClient | null | undefined
+  >(undefined);
+  const client = clientId ? fetchedClient : null;
 
   React.useEffect(() => {
     if (!clientId) return;
     consentClient.oauth2
       .publicClient({ query: { client_id: clientId } })
       .then(({ data }) =>
-        setClient(
+        setFetchedClient(
           data ? { name: data.client_name, uri: data.client_uri } : null,
         ),
       )
-      .catch(() => setClient(null));
+      .catch(() => setFetchedClient(null));
   }, [clientId]);
 
   const [isLoading, setIsLoading] = React.useState(false);

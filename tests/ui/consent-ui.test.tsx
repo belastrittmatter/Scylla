@@ -6,7 +6,11 @@ import { ConsentSignInRequired } from "@/components/consent/consent-sign-in-requ
 import { ConsentScopeItem } from "@/components/consent/consent-scope-item";
 import { ConsentScopeList } from "@/components/consent/consent-scope-list";
 import { ConsentClientInfo } from "@/components/consent/consent-client-info";
-import { initialConsentScopes } from "@/components/consent/consent-scopes";
+import { ConsentDecisionBar } from "@/components/consent/consent-decision-bar";
+import {
+  countDestructiveScopes,
+  initialConsentScopes,
+} from "@/components/consent/consent-scopes";
 import { ALL_MCP_CAPABILITIES } from "@/constants/agent-capabilities";
 
 describe("Consent UI Sub-components (#36 / #43)", () => {
@@ -77,7 +81,7 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
     );
   });
 
-  it("renders ConsentScopeList with preset buttons, categories, and destructive warning banner", () => {
+  it("renders ConsentScopeList with preset buttons, categories, and a spoken granted count", () => {
     const allScopes = ALL_MCP_CAPABILITIES.map((c) => c.id);
     const standardOnly = ALL_MCP_CAPABILITIES.filter(
       (c) => !c.isDestructive,
@@ -102,9 +106,14 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
     );
     expect(standardHtml).toContain("Calendar");
     expect(standardHtml).toContain("Tasks &amp; Work");
-    expect(standardHtml).not.toContain("Destructive Scopes Granted:");
+    // Screen readers hear "n of total", not "n slash total".
+    const total = ALL_MCP_CAPABILITIES.length;
+    expect(standardHtml).toContain(
+      `${standardOnly.length} of ${total} granted`,
+    );
+    // The destructive warning lives in the decision bar, not after the list.
+    expect(standardHtml).not.toContain("destructive scope");
 
-    // All scopes (including destructive): shows warning banner
     const allHtml = renderToString(
       <ConsentScopeList
         selectedScopes={allScopes}
@@ -114,7 +123,48 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
         onClearAll={() => {}}
       />,
     );
-    expect(allHtml).toContain("Destructive Scopes Granted:");
+    expect(allHtml).toContain("Grant All");
+  });
+
+  it("warns in the decision bar when the grant includes destructive scopes", () => {
+    const allScopes = ALL_MCP_CAPABILITIES.map((c) => c.id);
+    const standardOnly = ALL_MCP_CAPABILITIES.filter(
+      (c) => !c.isDestructive,
+    ).map((c) => c.id);
+    const destructiveTotal = ALL_MCP_CAPABILITIES.filter(
+      (c) => c.isDestructive,
+    ).length;
+
+    expect(countDestructiveScopes(standardOnly)).toBe(0);
+    expect(countDestructiveScopes(allScopes)).toBe(destructiveTotal);
+    expect(countDestructiveScopes(["tasks.delete"])).toBe(1);
+
+    const bar = (destructiveCount: number) =>
+      renderToString(
+        <ConsentDecisionBar
+          email="alex@example.com"
+          grantedCount={allScopes.length}
+          destructiveCount={destructiveCount}
+          isLoading={false}
+          error={null}
+          onDeny={() => {}}
+          onAllow={() => {}}
+        />,
+      );
+
+    const safe = bar(0);
+    expect(safe).toContain("alex@example.com");
+    expect(safe).toContain("Deny Access");
+    expect(safe).toContain("Allow Access");
+    // The live region is mounted even when empty, so the warning is announced when it appears.
+    expect(safe).toContain('role="status"');
+    expect(safe).not.toContain("destructive scope");
+
+    const risky = bar(destructiveTotal);
+    expect(risky).toContain('role="status"');
+    expect(risky).toMatch(/destructive scopes/);
+    expect(risky).toContain("permanently delete");
+    expect(bar(1)).toMatch(/destructive scope that/);
   });
 
   it("pre-selects nothing unless the client requested known scopes (#99)", () => {
@@ -137,5 +187,12 @@ describe("Consent UI Sub-components (#36 / #43)", () => {
 
     const unknown = renderToString(<ConsentClientInfo client={null} />);
     expect(unknown).toContain("Unknown client");
+    expect(unknown).toContain("Unverified");
+
+    // While the lookup runs the client is not called unknown yet.
+    const pending = renderToString(<ConsentClientInfo client={undefined} />);
+    expect(pending).toContain("Identifying client");
+    expect(pending).not.toContain("Unknown client");
+    expect(pending).toContain("Unverified");
   });
 });

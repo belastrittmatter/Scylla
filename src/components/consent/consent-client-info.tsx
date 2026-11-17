@@ -14,34 +14,42 @@ function hostOf(uri: string | null | undefined): string | null {
 }
 
 /**
- * Client identity on the consent screen: the requesting client gets its own
- * row, and because names are self-registered the Unverified note sits right
- * under it.
+ * Client identity on the consent screen: the requesting client's name and host
+ * lead, one sentence says what it wants, and because names are self-registered
+ * the Unverified note sits right under it.
+ *
+ * `client` is `undefined` while the lookup runs and `null` once it resolved
+ * with no registered client, so a real client never flashes as unknown.
  */
 export function ConsentClientInfo({
   client,
 }: {
-  client: ConsentClient | null;
+  client: ConsentClient | null | undefined;
 }) {
   const host = hostOf(client?.uri);
   return (
     <div className="mt-4 space-y-3">
-      <p className="text-ink-2 text-sm leading-relaxed text-pretty">
-        <span className="block">The external AI client</span>
-        <span className="my-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-ink text-lg leading-snug font-medium break-words">
-            {client?.name || "Unknown client"}
-          </span>
-          {host && (
-            <span className="font-code text-ink-2 text-xs [overflow-wrap:anywhere]">
-              {host}
+      <div className="space-y-0.5">
+        {client === undefined ? (
+          <p className="text-ink-2 text-sm leading-relaxed">
+            Identifying client…
+          </p>
+        ) : (
+          <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-ink text-lg leading-snug font-medium break-words">
+              {client?.name || "Unknown client"}
             </span>
-          )}
-        </span>
-        <span className="block">
-          is requesting access to interact with your Scylla workspace and tools.
-        </span>
-      </p>
+            {host && (
+              <span className="font-code text-ink-2 text-xs [overflow-wrap:anywhere]">
+                {host}
+              </span>
+            )}
+          </p>
+        )}
+        <p className="text-ink-2 text-sm leading-relaxed text-pretty">
+          wants access to your Scylla workspace and tools.
+        </p>
+      </div>
       <div
         role="note"
         className="border-(--caution)/30 bg-(--caution-soft) text-(--caution) flex gap-2.5 rounded-lg border px-3.5 py-3 text-sm leading-relaxed"

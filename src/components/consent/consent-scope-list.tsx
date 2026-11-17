@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/landing/primitives";
 import {
@@ -52,9 +51,7 @@ export function ConsentScopeList({
   }, []);
 
   const enabledCount = selectedScopes.length;
-  const hasDestructiveSelected = ALL_MCP_CAPABILITIES.some(
-    (c) => c.isDestructive && selectedScopes.includes(c.id),
-  );
+  const total = ALL_MCP_CAPABILITIES.length;
 
   return (
     <section aria-labelledby={headingId} className="border-line mt-6 border-t">
@@ -68,7 +65,8 @@ export function ConsentScopeList({
             aria-live="polite"
             className="font-code text-ink-2 text-xs tabular-nums"
           >
-            {enabledCount}/{ALL_MCP_CAPABILITIES.length} granted
+            <span aria-hidden="true">{`${enabledCount}/${total} granted`}</span>
+            <span className="sr-only">{`${enabledCount} of ${total} granted`}</span>
           </span>
         </div>
         <p className="text-ink-2 text-sm sm:col-span-2">
@@ -78,11 +76,11 @@ export function ConsentScopeList({
         <div
           role="group"
           aria-label="Presets"
-          className="mt-2 flex flex-wrap items-center gap-1.5 sm:col-start-2 sm:row-start-1 sm:mt-0 sm:-my-1.5"
+          className="mt-2 -mx-2.5 flex flex-wrap items-center gap-1 sm:col-start-2 sm:row-start-1 sm:mt-0 sm:-my-1.5 sm:ml-0"
         >
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             className={PRESET_BUTTON}
             onClick={onSelectStandard}
           >
@@ -114,7 +112,7 @@ export function ConsentScopeList({
             key={categoryKey}
             role="group"
             aria-label={label}
-            className="border-line border-t pt-1 pb-2"
+            className="border-line border-t pb-1.5"
           >
             <Eyebrow dot={false} className="text-ink-2 px-5 pt-4 pb-1 sm:px-6">
               {label}
@@ -132,25 +130,6 @@ export function ConsentScopeList({
           </div>
         );
       })}
-
-      {hasDestructiveSelected && (
-        <div
-          role="status"
-          className="border-line text-ink-2 flex items-start gap-2.5 border-t px-5 py-4 text-sm sm:px-6"
-        >
-          <ShieldAlert
-            className="text-destructive mt-0.5 size-4 shrink-0"
-            aria-hidden="true"
-          />
-          <p>
-            <span className="text-destructive font-semibold">
-              Destructive Scopes Granted:
-            </span>{" "}
-            You have enabled permanent deletion capabilities for this client.
-            The client will be able to delete resources within your permissions.
-          </p>
-        </div>
-      )}
     </section>
   );
 }

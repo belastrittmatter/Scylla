@@ -11,6 +11,14 @@ export interface ConsentScopeItemProps {
   onToggle: (scopeId: string, checked: boolean) => void;
 }
 
+/**
+ * A click that ends a text selection on the scope id copies, not toggles:
+ * cancelling it stops the label from activating the switch.
+ */
+function keepSelection(event: React.MouseEvent) {
+  if (window.getSelection()?.toString()) event.preventDefault();
+}
+
 /** One scope row: the whole row is the switch's label, so a click anywhere toggles it. */
 export function ConsentScopeItem({
   capability,
@@ -24,8 +32,9 @@ export function ConsentScopeItem({
 
   return (
     <li>
-      <label className="has-[:focus-visible]:bg-ink/[0.03] hover:bg-ink/[0.03] flex cursor-pointer items-start gap-4 px-5 py-3 transition-colors select-none sm:px-6">
-        <span className="min-w-0 flex-1">
+      <label className="has-[:focus-visible]:bg-ink/[0.03] hover:bg-ink/[0.03] flex cursor-pointer items-start gap-4 px-5 py-2.5 transition-colors select-none sm:px-6">
+        {/* Mobile: label, description, id. sm+: the id joins the label line, description below. */}
+        <span className="grid min-w-0 flex-1 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-baseline sm:gap-x-3">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <span id={labelId} className="text-ink text-sm font-medium">
               {capability.label}
@@ -42,11 +51,14 @@ export function ConsentScopeItem({
           </span>
           <span
             id={descriptionId}
-            className="text-ink-2 mt-0.5 block text-sm leading-snug"
+            className="text-ink-2 mt-0.5 block text-sm leading-snug sm:col-span-2 sm:row-start-2"
           >
             {capability.description}
           </span>
-          <code className="font-code text-ink-2 mt-1 block text-xs">
+          <code
+            onClick={keepSelection}
+            className="font-code text-ink-2 mt-1 block w-fit cursor-text text-xs select-text [overflow-wrap:anywhere] sm:col-start-2 sm:row-start-1 sm:mt-0"
+          >
             {capability.id}
           </code>
         </span>
