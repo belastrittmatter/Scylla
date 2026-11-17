@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { db } from "@/db";
-import { user, project, task } from "@/db/schema";
+import { account, user, project, task } from "@/db/schema";
+import { TaskService } from "@/services/task/task-service";
 import { inArray } from "drizzle-orm";
 import { TeamService } from "@/services/team/team-service";
 import { TaskWorkspaceService } from "@/services/task/task-workspace-service";
@@ -115,6 +116,80 @@ describe("TaskWorkspaceService multi-tenant scoping", () => {
       await TeamService.deleteTeam(teamA.id);
       await TeamService.deleteTeam(teamB.id);
       await db.delete(user).where(inArray(user.id, [userA.id, userB.id]));
+    },
+    { timeout: 30000 },
+  );
+});
+
+describe("TaskWorkspaceService githubConnected flag", () => {
+  it(
+    "flags users with a github account and not others, on users and assignee",
+    async () => {
+      const tag = crypto.randomUUID();
+      const mk = async (n: string) =>
+        (
+          await db
+            .insert(user)
+            .values({
+              id: crypto.randomUUID(),
+              name: n,
+              email: `${n}-${tag}@example.com`,
+            })
+            .returning()
+        )[0];
+      const owner = await mk("owner");
+      const connected = await mk("conn");
+      const plain = await mk("plain");
+      const google = await mk("goog");
+      await db.insert(account).values([
+        {
+          id: crypto.randomUUID(),
+          accountId: "1",
+          providerId: "github",
+          userId: connected.id,
+          accessToken: "gho_test",
+        },
+        {
+          id: crypto.randomUUID(),
+          accountId: "2",
+          providerId: "google",
+          userId: google.id,
+          accessToken: "g_test",
+        },
+      ]);
+      const t = await TeamService.createTeam({
+        name: `T ${tag}`,
+        ownerId: owner.id,
+      });
+      for (const u of [connected, plain, google]) {
+        await TeamService.addTeamMember({
+          teamId: t.id,
+          userId: u.id,
+          role: "member",
+        });
+      }
+      await TaskService.createTask({
+        title: "assigned",
+        teamId: t.id,
+        creatorId: owner.id,
+        assigneeId: connected.id,
+        status: "todo",
+        priority: "medium",
+      });
+
+      const ws = await TaskWorkspaceService.getWorkspaceData(owner.id);
+      const flag = (id: string) =>
+        ws.users.find((u) => u.id === id)?.githubConnected;
+      expect(flag(connected.id)).toBe(true);
+      expect(flag(plain.id)).toBe(false);
+      expect(flag(google.id)).toBe(false);
+      expect(flag(owner.id)).toBe(false);
+      expect(ws.tasks[0].assignee?.githubConnected).toBe(true);
+      expect(ws.tasks[0].creator?.githubConnected).toBe(false);
+
+      await db
+        .delete(user)
+        .where(inArray(user.id, [owner.id, connected.id, plain.id, google.id]));
     },
     { timeout: 30000 },
   );

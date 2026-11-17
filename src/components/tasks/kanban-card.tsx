@@ -14,6 +14,7 @@ import {
 import { KanbanCardMenu } from "./kanban-card-menu";
 import { KanbanCardTime } from "./kanban-card-time";
 import { StatusIcon } from "./task-status-icon";
+import { TaskGithubBadges } from "./task-github-badges";
 
 interface KanbanCardProps {
   task: TaskItem;
@@ -107,6 +108,8 @@ export function KanbanCard({
           {task.title}
         </button>
       </h4>
+
+      <TaskGithubBadges task={task} className="mt-2" />
 
       {(priority || task.dueDate || running) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">

@@ -13,6 +13,7 @@ import {
 import { TaskDrawerForm } from "./task-drawer-form";
 import { TaskDrawerHeader } from "./task-drawer-header";
 import { TaskCommentSection } from "./task-comment-section";
+import { TaskGithubDevelopmentCard } from "./task-github-development-card";
 import { TaskDrawerDeleteButton } from "./task-drawer-delete-button";
 import type {
   TaskItem,
@@ -32,6 +33,8 @@ interface TaskDrawerProps {
   onDeleteTask?: () => Promise<boolean>;
   /** Viewers: fields disabled, no save or comment input. */
   readOnly?: boolean;
+  /** Called when GitHub data on the task changed (branch, PR, issue). */
+  onTaskPatched?: (taskId: string, patch: Partial<TaskItem>) => void;
 }
 
 export function TaskDrawer({ task, isOpen, ...props }: TaskDrawerProps) {
@@ -50,8 +53,10 @@ function TaskDrawerInner({
   onSaveTask,
   onDeleteTask,
   readOnly,
+  onTaskPatched,
 }: TaskDrawerProps & { task: TaskItem }) {
   const isDraft = task.id.startsWith("draft-");
+  const isLinked = Boolean(task.project?.githubRepo);
   const [title, setTitle] = React.useState(task.title);
   const [description, setDescription] = React.useState(task.description || "");
   const [status, setStatus] = React.useState<TaskStatus>(
@@ -140,6 +145,7 @@ function TaskDrawerInner({
               dueDateStr={dueDateStr}
               estimatedMinutes={estimatedMinutes}
               users={users}
+              isProjectLinkedToGithub={isLinked}
               onTitleChange={setTitle}
               onDescriptionChange={setDescription}
               onStatusChange={setStatus}
@@ -150,6 +156,14 @@ function TaskDrawerInner({
               onEstimatedMinutesChange={setEstimatedMinutes}
             />
           </fieldset>
+
+          {!isDraft && isLinked && (
+            <TaskGithubDevelopmentCard
+              task={task}
+              canEdit={!readOnly}
+              onTaskPatched={onTaskPatched}
+            />
+          )}
 
           {!isDraft && (
             <TaskCommentSection taskId={task.id} readOnly={readOnly} />

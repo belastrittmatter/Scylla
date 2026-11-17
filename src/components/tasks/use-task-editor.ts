@@ -50,6 +50,7 @@ export type TaskEditor = {
   ) => void;
   saveTask: (item: TaskItem) => Promise<boolean>;
   closeDrawer: () => void;
+  patchTask: (taskId: string, patch: Partial<TaskItem>) => void;
 };
 
 /** Drawer state plus create/update persistence for a single task. */
@@ -135,6 +136,18 @@ export function useTaskEditor({
     }
   };
 
+  const patchTask = React.useCallback(
+    (taskId: string, patch: Partial<TaskItem>) => {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, ...patch } : t)),
+      );
+      setSelectedTask((prev) =>
+        prev && prev.id === taskId ? { ...prev, ...patch } : prev,
+      );
+    },
+    [setTasks],
+  );
+
   return {
     selectedTask,
     isDrawerOpen,
@@ -142,5 +155,6 @@ export function useTaskEditor({
     openDraft,
     saveTask,
     closeDrawer: () => setIsDrawerOpen(false),
+    patchTask,
   };
 }

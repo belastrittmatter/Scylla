@@ -16,6 +16,12 @@ export function toTaskItem(t: KanbanTask): TaskItem {
     startDate: null,
     dueDate: due && !Number.isNaN(due.getTime()) ? due : null,
     estimatedMinutes: t.estimatedMinutes ?? null,
+    githubIssueNumber: null,
+    githubIssueUrl: null,
+    githubBranch: null,
+    githubPrNumber: null,
+    githubPrUrl: null,
+    githubPrStatus: null,
     totalSpentSeconds: t.totalSpentSeconds,
     activeSessionStartedAt: t.activeSessionStartedAt,
     // Not in the board payload; the read-only board never displays them.

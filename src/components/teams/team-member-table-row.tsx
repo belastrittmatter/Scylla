@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { cn } from "cn";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { RowActionsMenu } from "@/components/layout/row-actions-menu";
 import type { TeamMemberItem } from "@/hooks/use-teams";
@@ -19,6 +20,8 @@ type Props = {
   isSelf: boolean;
   onUpdateRole: (userId: string, role: TeamRole) => Promise<void>;
   onRemove: (userId: string) => Promise<void>;
+  /** Below `sm`, show the email under the name instead of in its own column. */
+  compactEmail?: boolean;
 };
 
 export function TeamMemberTableRow({
@@ -27,6 +30,7 @@ export function TeamMemberTableRow({
   isSelf,
   onUpdateRole,
   onRemove,
+  compactEmail = false,
 }: Props) {
   const [confirming, setConfirming] = React.useState(false);
   const name = member.user?.name || member.user?.email || member.userId;
@@ -37,22 +41,60 @@ export function TeamMemberTableRow({
   return (
     <TableRow>
       <TableCell>
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            // Cap the cell below `sm` so a long name or email ellipsizes
+            // instead of pushing Role and the row menu off screen.
+            compactEmail && "max-w-[calc(100vw-15rem)] sm:max-w-none",
+          )}
+        >
           <Avatar size="sm">
             <AvatarImage src={member.user?.image || undefined} alt={name} />
             <AvatarFallback>{getPersonInitials(name)}</AvatarFallback>
           </Avatar>
-          <span className="font-medium">{name}</span>
-          {isSelf && <Badge variant="outline">You</Badge>}
+          {compactEmail ? (
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate font-medium" title={name}>
+                  {name}
+                </span>
+                {isSelf && (
+                  <Badge variant="outline" className="shrink-0">
+                    You
+                  </Badge>
+                )}
+              </div>
+              {member.user?.email && (
+                <div
+                  className="text-muted-foreground truncate text-xs sm:hidden"
+                  title={member.user.email}
+                >
+                  {member.user.email}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <span className="font-medium">{name}</span>
+              {isSelf && <Badge variant="outline">You</Badge>}
+            </>
+          )}
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell
+        className={cn(
+          "text-muted-foreground",
+          compactEmail && "hidden sm:table-cell",
+        )}
+      >
         {member.user?.email}
       </TableCell>
       <TableCell>
         {editable ? (
           <RoleSelect
             value={member.role}
+            aria-label={`Role for ${name}`}
             onChange={(r) =>
               onUpdateRole(member.userId, r).catch((e: Error) =>
                 toast.error(e.message),

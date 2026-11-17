@@ -22,6 +22,7 @@ const PROTECTED_API_PREFIXES = [
   "/api/projects",
   "/api/teams",
   "/api/bookings",
+  "/api/github",
 ];
 
 export async function proxy(request: NextRequest) {

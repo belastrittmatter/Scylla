@@ -1,4 +1,4 @@
-import type { Team, Project, Task } from "@/db/schema";
+import type { Team, Project, Task, TaskComment } from "@/db/schema";
 
 export interface TaskUser {
   id: string;
@@ -8,6 +8,13 @@ export interface TaskUser {
   avatarUrl?: string;
   initials?: string;
   role: string;
+  githubConnected?: boolean;
+}
+
+export interface TaskCommentView extends TaskComment {
+  user: TaskUser | null;
+  source: "local" | "github";
+  htmlUrl: string | null;
 }
 
 export interface WorkspaceTeamMember {

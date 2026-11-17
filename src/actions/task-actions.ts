@@ -5,10 +5,9 @@ import { TaskService } from "@/services/task/task-service";
 import { ProjectService } from "@/services/project/project-service";
 import { TeamService } from "@/services/team/team-service";
 import { hasTeamRole } from "@/services/team/team-types";
-import type { Task, Project, TaskComment } from "@/db/schema";
+import type { Task, Project } from "@/db/schema";
 import type {
   WorkspaceData,
-  TaskUser,
   CreateTaskActionPayload,
   UpdateTaskActionPayload,
   CreateProjectActionPayload,
@@ -18,9 +17,12 @@ import {
   UpdateTaskPayloadSchema,
   CreateProjectPayloadSchema,
   CreateTaskPayloadSchema,
-  CreateTaskCommentPayloadSchema,
 } from "./schemas";
 import { resolveActionUserId, type ActionResult } from "./auth-helper";
+import {
+  pushNewTaskToGithub,
+  pushTaskChangesToGithub,
+} from "./task-github-sync";
 
 const ASSIGNEE_NOT_MEMBER = "Assignee must be a member of the team";
 
@@ -81,6 +83,12 @@ export async function updateTaskStatusAction(
       { status: statusParse.data.status },
       userId,
     );
+    await pushTaskChangesToGithub(
+      existingTask,
+      { status: statusParse.data.status },
+      idParse.data,
+      userId,
+    );
     return { success: true, data: updated };
   } catch (err) {
     return {
@@ -139,6 +147,18 @@ export async function updateTaskAction(
     const updated = await TaskService.updateTask(
       idParse.data,
       { ...parsedData, dueDate, startDate },
+      userId,
+    );
+    await pushTaskChangesToGithub(
+      existingTask,
+      {
+        title: parsedData.title,
+        description: parsedData.description,
+        status: parsedData.status,
+        priority: parsedData.priority,
+        assigneeId: parsedData.assigneeId,
+      },
+      idParse.data,
       userId,
     );
     return { success: true, data: updated };
@@ -230,82 +250,16 @@ export async function createTaskAction(
       startDate,
       estimatedMinutes: parsedData.estimatedMinutes ?? 60,
     });
-    return { success: true, data: created };
+    return {
+      success: true,
+      data: created.projectId
+        ? await pushNewTaskToGithub(created, creatorId)
+        : created,
+    };
   } catch (err) {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to create task",
-    };
-  }
-}
-
-export async function getTaskCommentsAction(
-  taskId: string,
-): Promise<ActionResult<Array<TaskComment & { user: TaskUser | null }>>> {
-  try {
-    if (!taskId) return { success: false, error: "Task ID is required" };
-    const userId = await resolveActionUserId();
-    const existingTask = await TaskService.getTaskById(taskId);
-    if (!existingTask) {
-      return { success: false, error: "Task not found" };
-    }
-    const isMember = await TeamService.isTeamMember(
-      existingTask.teamId,
-      userId,
-    );
-    if (!isMember) {
-      return { success: false, error: "Access denied" };
-    }
-
-    const comments = await TaskService.getTaskComments(taskId);
-    return { success: true, data: comments };
-  } catch (err) {
-    return {
-      success: false,
-      error:
-        err instanceof Error ? err.message : "Failed to fetch task comments",
-    };
-  }
-}
-
-export async function createTaskCommentAction(payload: {
-  taskId: string;
-  content: string;
-}): Promise<ActionResult<TaskComment & { user: TaskUser | null }>> {
-  try {
-    const parseResult = CreateTaskCommentPayloadSchema.safeParse(payload);
-    if (!parseResult.success)
-      return {
-        success: false,
-        error: parseResult.error.issues.map((i) => i.message).join(", "),
-      };
-
-    const userId = await resolveActionUserId();
-    const existingTask = await TaskService.getTaskById(parseResult.data.taskId);
-    if (!existingTask) {
-      return { success: false, error: "Task not found" };
-    }
-    const access = await TaskService.getWriteAccess(existingTask, userId);
-    if (access === "not_member") {
-      return { success: false, error: "Access denied" };
-    }
-    if (access === "forbidden") {
-      return {
-        success: false,
-        error: "Permission denied: viewers cannot comment on tasks",
-      };
-    }
-
-    const comment = await TaskService.createTaskComment({
-      taskId: parseResult.data.taskId,
-      userId,
-      content: parseResult.data.content,
-    });
-    return { success: true, data: comment };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to add comment",
     };
   }
 }

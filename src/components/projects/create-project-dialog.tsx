@@ -24,6 +24,14 @@ import { slugify } from "@/lib/utils";
 import { PROJECT_STATUS_CONFIG } from "@/components/projects/project-status-badge";
 import type { ProjectStatus } from "@/services/project/project-types";
 import type { ProjectItem } from "@/hooks/use-projects";
+import { GithubRepoSelector } from "@/components/projects/github-repo-selector";
+import {
+  NO_GITHUB_REPO,
+  getGithubRepoSelectionError,
+  toProjectRepoPayload,
+  type GithubRepoSelection,
+} from "@/components/projects/github-repo-selection";
+import { useGithubRepositories } from "@/components/projects/use-github-repositories";
 
 const PRESET_COLORS = [
   "#3b82f6",
@@ -46,6 +54,8 @@ interface CreateProjectDialogProps {
     description?: string;
     status?: ProjectStatus;
     color?: string;
+    githubRepo?: string;
+    createNewRepo?: { name: string; isPrivate: boolean };
   }) => Promise<ProjectItem>;
 }
 
@@ -63,6 +73,10 @@ export function CreateProjectDialog({
   const [isSlugCustomized, setIsSlugCustomized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [repoSelection, setRepoSelection] =
+    useState<GithubRepoSelection>(NO_GITHUB_REPO);
+  const repos = useGithubRepositories(open);
+  const repoError = getGithubRepoSelectionError(repoSelection);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -72,7 +86,7 @@ export function CreateProjectDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || repoError) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -84,11 +98,13 @@ export function CreateProjectDialog({
         description: description.trim() || undefined,
         status,
         color,
+        ...toProjectRepoPayload(repoSelection),
       });
       setName("");
       setSlug("");
       setDescription("");
       setIsSlugCustomized(false);
+      setRepoSelection(NO_GITHUB_REPO);
       onOpenChange(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create project");
@@ -185,6 +201,14 @@ export function CreateProjectDialog({
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
+            <GithubRepoSelector
+              value={repoSelection}
+              onChange={setRepoSelection}
+              repositories={repos.repositories}
+              connected={repos.connected}
+              isLoading={repos.isLoading}
+              disabled={isSubmitting}
+            />
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -195,7 +219,10 @@ export function CreateProjectDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !name.trim()}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !name.trim() || repoError !== null}
+            >
               {isSubmitting ? "Creating..." : "Create Project"}
             </Button>
           </DialogFooter>

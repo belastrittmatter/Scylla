@@ -24,6 +24,7 @@ import {
   getUserAvatarColor,
 } from "./task-utils";
 import { StatusIcon } from "./task-status-icon";
+import { TaskGithubBadges } from "./task-github-badges";
 import { TASK_FORM_STATUSES } from "./task-types";
 import type { TaskItem, TaskStatus } from "./task-types";
 
@@ -140,6 +141,7 @@ export function TaskTableRow({
               <TooltipContent>{contextLabel}</TooltipContent>
             </Tooltip>
           )}
+          <TaskGithubBadges task={task} className="shrink-0" />
         </div>
       </TableCell>
 

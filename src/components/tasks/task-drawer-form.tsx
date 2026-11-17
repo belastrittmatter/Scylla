@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import {
   Select,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { TaskDrawerDateFields } from "./task-drawer-date-fields";
 import { TaskDrawerEstimateField } from "./task-drawer-estimate-field";
-import { AssigneeCombobox } from "./assignee-combobox";
+import { AssigneeSearchPicker } from "./assignee-search-picker";
 import {
   TASK_FORM_STATUSES,
   TASK_FORM_PRIORITIES,
@@ -33,6 +33,7 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
     dueDateStr,
     estimatedMinutes,
     users,
+    isProjectLinkedToGithub,
     onTitleChange,
     onDescriptionChange,
     onStatusChange,
@@ -125,8 +126,9 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
       <div className="grid grid-cols-2 gap-3">
         <Field>
           <FieldLabel>Assignee</FieldLabel>
-          <AssigneeCombobox
+          <AssigneeSearchPicker
             users={users}
+            isProjectLinkedToGithub={isProjectLinkedToGithub}
             assigneeId={assigneeId}
             onAssigneeChange={onAssigneeChange}
           />
@@ -149,13 +151,12 @@ export function TaskDrawerForm(props: TaskDrawerFormProps) {
         <FieldLabel htmlFor="task-description">
           Description / Acceptance Criteria
         </FieldLabel>
-        <Textarea
+        <MarkdownEditor
           id="task-description"
           rows={4}
           value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
+          onChange={onDescriptionChange}
           placeholder="Provide context, acceptance criteria or links..."
-          className="resize-none text-sm"
         />
       </Field>
     </FieldGroup>

@@ -30,9 +30,12 @@ const taskDateSchema = (field: "dueDate" | "startDate") =>
 export const TaskDueDateSchema = taskDateSchema("dueDate");
 export const TaskStartDateSchema = taskDateSchema("startDate");
 
+// GitHub's own issue body limit, so a synced issue fits.
+export const TASK_DESCRIPTION_MAX_LENGTH = 65536;
+
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, "Task title cannot be empty").max(200),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(TASK_DESCRIPTION_MAX_LENGTH).optional(),
   status: TaskStatusSchema.default("todo"),
   priority: TaskPrioritySchema.default("medium"),
   teamId: z.string().min(1, "Team ID is required"),
@@ -48,7 +51,11 @@ export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 
 export const UpdateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  description: z.string().max(5000).nullable().optional(),
+  description: z
+    .string()
+    .max(TASK_DESCRIPTION_MAX_LENGTH)
+    .nullable()
+    .optional(),
   status: TaskStatusSchema.optional(),
   priority: TaskPrioritySchema.optional(),
   projectId: z.string().nullable().optional(),

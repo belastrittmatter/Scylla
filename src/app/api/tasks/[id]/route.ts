@@ -4,6 +4,7 @@ import {
   TaskAccessError,
   TaskDateRangeError,
 } from "@/services/task/task-service";
+import { TaskAssigneeGithubError } from "@/services/task/task-rules";
 import { TeamService } from "@/services/team/team-service";
 import { UpdateTaskSchema } from "@/services/api-schemas";
 import { resolveUserId } from "@/services/api-utils";
@@ -110,6 +111,9 @@ export async function PATCH(req: Request, context: RouteParams) {
   } catch (err) {
     const denied = taskAccessErrorResponse(err);
     if (denied) return denied;
+    if (err instanceof TaskAssigneeGithubError) {
+      return Response.json({ error: err.message }, { status: 400 });
+    }
     if (err instanceof TaskDateRangeError) {
       return Response.json({ error: err.message }, { status: 400 });
     }
